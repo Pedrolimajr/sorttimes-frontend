@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import socket from '../services/socket';
-import api, { pagamentosAPI } from '../services/api';
+import api, { pagamentosAPI, pagamentosService } from '../services/api';
 import { financeiroService } from '../services/financeiroService';
 import {
   FaMoneyBillWave,
@@ -344,7 +344,7 @@ export default function Financeiro() {
       }
 
       // Atualização otimista do estado
-      setJogadores(prev => prev.map(j => 
+      const jogadoresAtualizados = jogadores.map(j => 
         j._id === jogadorId 
           ? {
               ...j,
@@ -352,16 +352,48 @@ export default function Financeiro() {
               statusFinanceiro: novoStatus ? 'Adimplente' : 'Inadimplente'
             }
           : j
-      ));
+      );
 
-      const response = await pagamentosAPI.atualizarPagamento(jogadorId, mesIndex, {
+      setJogadores(jogadoresAtualizados);
+
+      // Atualiza localStorage
+      localStorage.setItem('dadosFinanceiro', JSON.stringify({
+        jogadoresCache: jogadoresAtualizados,
+        transacoesCache: transacoes,
+        lastUpdate: new Date().toISOString()
+      }));
+
+      // Chama o serviço de pagamentos
+      const response = await pagamentosService.atualizarPagamento(jogadorId, mesIndex, {
         pago: novoStatus,
         valor: 100,
         dataPagamento: novoStatus ? new Date().toISOString() : null
       });
 
-      if (!response.success) {
-        throw new Error(response.message || 'Erro ao atualizar pagamento');
+      if (response.success && novoStatus) {
+        // Se foi um pagamento (não um cancelamento), registra a transação
+        const transacaoData = {
+          descricao: `Mensalidade - ${jogador.nome} (${mesIndex + 1}/${new Date().getFullYear()})`,
+          valor: 100,
+          tipo: 'receita',
+          categoria: 'mensalidade',
+          data: new Date().toISOString(),
+          jogadorId: jogadorId,
+          jogadorNome: jogador.nome
+        };
+
+        const transacaoResponse = await api.post('/api/financeiro/transacoes', transacaoData);
+        
+        if (transacaoResponse.data.success) {
+          setTransacoes(prev => [transacaoResponse.data.data, ...prev]);
+          
+          // Atualiza localStorage com nova transação
+          localStorage.setItem('dadosFinanceiro', JSON.stringify({
+            jogadoresCache: jogadoresAtualizados,
+            transacoesCache: [transacaoResponse.data.data, ...transacoes],
+            lastUpdate: new Date().toISOString()
+          }));
+        }
       }
 
       toast.success(`Pagamento ${novoStatus ? 'registrado' : 'removido'} com sucesso!`);
@@ -370,8 +402,12 @@ export default function Financeiro() {
       console.error("Erro ao atualizar pagamento:", error);
       toast.error('Erro ao atualizar status de pagamento');
       
-      // Reverte o estado em caso de erro
-      setJogadores(prev => [...prev]);
+      // Recupera estado anterior do localStorage
+      const cachedData = JSON.parse(localStorage.getItem('dadosFinanceiro'));
+      if (cachedData) {
+        setJogadores(cachedData.jogadoresCache);
+        setTransacoes(cachedData.transacoesCache);
+      }
     }
   };
 
