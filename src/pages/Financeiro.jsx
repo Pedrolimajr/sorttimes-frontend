@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
 import {
   FaMoneyBillWave,
   FaArrowUp,
@@ -30,6 +30,7 @@ import jsPDF from 'jspdf';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import socket from '../services/socket';
+import api from '../services/api';
 
 Chart.register(...registerables);
 
@@ -74,36 +75,22 @@ export default function Financeiro() {
     carregarDados();
   }, []); // Executar apenas uma vez
 
+  // Carregar dados
   const carregarDados = async () => {
+    setCarregando(true);
     try {
-      setCarregando(true);
-      
+      // Use a instância do axios configurada
       const [jogadoresRes, transacoesRes] = await Promise.all([
-        fetch(`${API_URL}/jogadores`),
-        fetch(`${API_URL}/financeiro/transacoes`)
+        api.get('/api/jogadores'),
+        api.get('/api/financeiro/transacoes')
       ]);
 
-      if (!jogadoresRes.ok) throw new Error('Erro ao carregar jogadores');
-      if (!transacoesRes.ok) throw new Error('Erro ao carregar transações');
+      setJogadores(jogadoresRes.data.data || []);
+      setTransacoes(transacoesRes.data.data || []);
 
-      const jogadoresData = await jogadoresRes.json();
-      const transacoesData = await transacoesRes.json();
-
-      // Normaliza os dados dos jogadores com validação
-      const jogadoresProcessados = (Array.isArray(jogadoresData.data) ? jogadoresData.data : [])
-        .map(jogador => ({
-          ...jogador,
-          pagamentos: Array.isArray(jogador.pagamentos) && jogador.pagamentos.length === 12
-            ? jogador.pagamentos
-            : Array(12).fill(false)
-        }));
-
-      setJogadores(jogadoresProcessados);
-      setTransacoes(Array.isArray(transacoesData) ? transacoesData : []);
-
-    } catch (error) {
-      console.error("Erro ao carregar dados:", error);
-      toast.error('Erro ao carregar dados');
+    } catch (erro) {
+      console.error("Erro ao carregar dados:", erro);
+      toast.error("Erro ao carregar dados: " + erro.message);
     } finally {
       setCarregando(false);
     }
