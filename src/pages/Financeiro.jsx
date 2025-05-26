@@ -1,4 +1,7 @@
 import { useState, useEffect } from 'react';
+import socket from '../services/socket';
+import api from '../services/api';
+import { financeiroService } from '../services/financeiroService';
 import {
   FaMoneyBillWave,
   FaArrowUp,
@@ -29,12 +32,8 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import socket from '../services/socket';
-import api from '../services/api';
 
 Chart.register(...registerables);
-
-const API_URL = 'http://localhost:5000/api';
 
 export default function Financeiro() {
   const navigate = useNavigate();
@@ -77,11 +76,11 @@ export default function Financeiro() {
       try {
         const [jogadoresRes, transacoesRes] = await Promise.all([
           api.get('/api/jogadores'),
-          financeiroService.listarTransacoes()
+          api.get('/api/financeiro/transacoes')
         ]);
 
         setJogadores(jogadoresRes.data.data);
-        setTransacoes(transacoesRes.data);
+        setTransacoes(transacoesRes.data.data);
       } catch (erro) {
         console.error("Erro ao carregar dados:", erro);
         toast.error("Erro ao carregar dados: " + erro.message);
@@ -221,7 +220,7 @@ export default function Financeiro() {
         });
 
         // Depois faz a chamada à API
-        const pagamentoResponse = await fetch(`${API_URL}/jogadores/${payload.jogadorId}/pagamentos/${mesTransacao}`, {
+        const pagamentoResponse = await fetch(`/api/jogadores/${payload.jogadorId}/pagamentos/${mesTransacao}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -237,7 +236,7 @@ export default function Financeiro() {
       }
 
       // Continua com o registro da transação...
-      const response = await fetch(`${API_URL}/financeiro/transacoes`, {
+      const response = await fetch(`/api/financeiro/transacoes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -288,71 +287,43 @@ export default function Financeiro() {
       const novoStatus = !jogador.pagamentos[mesIndex];
       const mesAtual = new Date().getMonth();
 
-      // Previne mudança de meses futuros
       if (mesIndex > mesAtual) {
         toast.warning('Não é possível marcar pagamentos de meses futuros');
         return;
       }
 
       // Atualização otimista do estado
-      const jogadoresAtualizados = jogadores.map(j => {
-        if (j._id === jogadorId) {
-          const pagamentosAtualizados = [...j.pagamentos];
-          pagamentosAtualizados[mesIndex] = novoStatus;
+      setJogadores(prev => prev.map(j => 
+        j._id === jogadorId 
+          ? {
+              ...j,
+              pagamentos: j.pagamentos.map((p, i) => i === mesIndex ? novoStatus : p),
+              statusFinanceiro: novoStatus ? 'Adimplente' : 'Inadimplente'
+            }
+          : j
+      ));
 
-          // Verifica pagamentos até o mês atual para definir status
-          const mesesDevendo = pagamentosAtualizados
-            .slice(0, mesAtual + 1)
-            .filter(pago => !pago).length;
-
-          return {
-            ...j,
-            pagamentos: pagamentosAtualizados,
-            statusFinanceiro: mesesDevendo === 0 ? 'Adimplente' : 'Inadimplente'
-          };
-        }
-        return j;
+      // Chamada à API usando axios
+      await api.put(`/api/jogadores/${jogadorId}/pagamentos/${mesIndex}`, {
+        pago: novoStatus,
+        valor: 100,
+        dataPagamento: novoStatus ? new Date().toISOString() : null
       });
-
-      setJogadores(jogadoresAtualizados);
-
-      // Chamada à API
-      const response = await fetch(`${API_URL}/jogadores/${jogadorId}/pagamentos/${mesIndex}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          pago: novoStatus,
-          valor: 100,
-          dataPagamento: novoStatus ? new Date().toISOString() : null
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Erro ao atualizar pagamento');
-      }
 
       // Se for um novo pagamento, registra a transação
       if (novoStatus) {
-        const transacaoResponse = await fetch(`${API_URL}/financeiro/transacoes`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            descricao: `Mensalidade - ${jogador.nome} (${mesIndex + 1}/${new Date().getFullYear()})`,
-            valor: 100,
-            tipo: 'receita',
-            categoria: 'mensalidade',
-            data: new Date().toISOString(),
-            jogadorId: jogadorId,
-            jogadorNome: jogador.nome
-          })
-        });
+        const transacaoData = {
+          descricao: `Mensalidade - ${jogador.nome} (${mesIndex + 1}/${new Date().getFullYear()})`,
+          valor: 100,
+          tipo: 'receita',
+          categoria: 'mensalidade',
+          data: new Date().toISOString(),
+          jogadorId: jogadorId,
+          jogadorNome: jogador.nome
+        };
 
-        if (!transacaoResponse.ok) {
-          throw new Error('Erro ao registrar transação');
-        }
-
-        const novaTransacao = await transacaoResponse.json();
-        setTransacoes(prev => [novaTransacao, ...prev]);
+        const response = await api.post('/api/financeiro/transacoes', transacaoData);
+        setTransacoes(prev => [response.data.data, ...prev]);
       }
 
       toast.success(`Pagamento ${novoStatus ? 'registrado' : 'removido'} com sucesso!`);
@@ -408,7 +379,7 @@ export default function Financeiro() {
         });
 
         // Depois faz a chamada à API para atualizar o pagamento
-        await fetch(`${API_URL}/jogadores/${transacao.jogadorId}/pagamentos/${mesTransacao}`, {
+        await fetch(`/api/jogadores/${transacao.jogadorId}/pagamentos/${mesTransacao}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -420,7 +391,7 @@ export default function Financeiro() {
       }
 
       // Faz a chamada à API para deletar a transação
-      const response = await fetch(`${API_URL}/financeiro/transacoes/${id}`, {
+      const response = await fetch(`/api/financeiro/transacoes/${id}`, {
         method: 'DELETE'
       });
 
@@ -450,7 +421,7 @@ export default function Financeiro() {
 
   const editarJogador = async () => {
     try {
-      const response = await fetch(`${API_URL}/jogadores/${jogadorSelecionado._id}`, {
+      const response = await fetch(`/api/jogadores/${jogadorSelecionado._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(jogadorSelecionado)
@@ -470,7 +441,7 @@ export default function Financeiro() {
 
   const deletarJogador = async (id) => {
     try {
-      const response = await fetch(`${API_URL}/jogadores/${id}`, {
+      const response = await fetch(`/api/jogadores/${id}`, {
         method: 'DELETE'
       });
 
