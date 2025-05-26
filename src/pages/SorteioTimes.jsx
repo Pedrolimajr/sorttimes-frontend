@@ -14,6 +14,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { io } from 'socket.io-client';
 import { BACKEND_URL } from '../config/config';
 import { FaWhatsapp } from "react-icons/fa";
+import socket from '../services/socket';
 
 // Constantes para organizar os valores fixos
 const POSICOES = {
@@ -70,13 +71,31 @@ export default function SorteioTimes() {
     const newSocket = io(BACKEND_URL);
     setSocket(newSocket);
 
-    newSocket.on('presencaAtualizada', ({ jogadorId, presente }) => {
+    return () => newSocket.disconnect();
+  }, []);
+
+  useEffect(() => {
+    // Conecta ao socket quando o componente monta
+    socket.connect();
+
+    // Listener para atualizações de times
+    socket.on('times-atualizados', (novosTimes) => {
+      setTimes(novosTimes);
+    });
+
+    // Listener para presença
+    socket.on('presencaAtualizada', ({ jogadorId, presente }) => {
       setJogadoresSelecionados(prev => 
         prev.map(j => j._id === jogadorId ? { ...j, presente } : j)
       );
     });
 
-    return () => newSocket.disconnect();
+    // Cleanup quando o componente desmonta
+    return () => {
+      socket.off('times-atualizados');
+      socket.off('presencaAtualizada');
+      socket.disconnect();
+    };
   }, []);
 
   /**

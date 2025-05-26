@@ -1,21 +1,31 @@
 import { io } from 'socket.io-client';
 
-const socket = io(import.meta.env.VITE_BACKEND_URL, {
+// Usando a URL do backend no Render
+const SOCKET_URL = import.meta.env.VITE_BACKEND_URL || 'https://sorttimes-backend.onrender.com';
+
+const socket = io(SOCKET_URL, {
   autoConnect: false,
-  withCredentials: true
+  withCredentials: true,
+  transports: ['websocket', 'polling'],
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000
 });
 
-// Listeners de conexão
+// Listeners de conexão com logs melhorados
 socket.on('connect', () => {
-  console.log('Conectado ao servidor Socket.IO');
+  console.log('[Socket.IO] Conectado ao servidor:', SOCKET_URL);
 });
 
-socket.on('disconnect', () => {
-  console.log('Desconectado do servidor Socket.IO');
+socket.on('disconnect', (reason) => {
+  console.log('[Socket.IO] Desconectado:', reason);
+});
+
+socket.on('connect_error', (error) => {
+  console.error('[Socket.IO] Erro de conexão:', error.message);
 });
 
 socket.on('error', (error) => {
-  console.error('Erro na conexão Socket.IO:', error);
+  console.error('[Socket.IO] Erro geral:', error);
 });
 
 export default socket;

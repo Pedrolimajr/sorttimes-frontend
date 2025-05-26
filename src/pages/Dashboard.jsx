@@ -1,6 +1,6 @@
 // src/pages/Dashboard.jsx
 import { Link } from "react-router-dom";
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from "framer-motion";
 import { 
   FaUserPlus, 
@@ -15,6 +15,7 @@ import {
   FaTachometerAlt,
   FaCog
 } from 'react-icons/fa';
+import socket from '../services/socket';
 
 // Array de cards do dashboard com cores mais sóbrias
 const cardsDashboard = [
@@ -99,6 +100,22 @@ const cardsDashboard = [
 ];
 
 export default function Dashboard() {
+  const [dadosDashboard, setDadosDashboard] = useState([]);
+
+  useEffect(() => {
+    socket.connect();
+
+    socket.on('dados-atualizados', (novosDados) => {
+      // Atualiza os dados do dashboard
+      setDadosDashboard(novosDados);
+    });
+
+    return () => {
+      socket.off('dados-atualizados');
+      socket.disconnect();
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-900 px-4 py-6 sm:py-8">
       {/* Cabeçalho com animação */}
