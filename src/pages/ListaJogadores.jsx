@@ -1,0 +1,828 @@
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { 
+  FaArrowLeft, FaUsers, FaEdit, FaTrash, FaPlus,
+  FaSave, FaTimes, FaSearch, FaFilter, FaUserCircle,
+  FaCheck, FaMoneyBillWave, FaTshirt, FaMapMarkerAlt, 
+  FaStar, FaCalendarAlt, FaPhone, FaEnvelope
+} from 'react-icons/fa';
+import { RiArrowLeftDoubleLine } from 'react-icons/ri';
+import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+const posicoes = [
+  'Goleiro', 'Defensor', 'Lateral-Esquerdo', 'Lateral-Direito', 
+  'Volante', 'Meia-Esquerda', 'Meia-Direita', 'Centroavante'
+];
+
+const statusFinanceiroOptions = ['Adimplente', 'Inadimplente'];
+const niveisOptions = ['Associado', 'Convidado', 'Visitante'];
+
+export default function ListaJogadores({ 
+  modoSelecao = false, 
+  onJogadorSelecionado = () => {}, 
+  closeModal = () => {} 
+}) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [jogadores, setJogadores] = useState([]);
+  const [filtro, setFiltro] = useState('');
+  const [filtroPosicao, setFiltroPosicao] = useState('');
+  const [filtroStatus, setFiltroStatus] = useState('');
+  const [editando, setEditando] = useState(null);
+  const [carregando, setCarregando] = useState(true);
+  const [mensagemSucesso, setMensagemSucesso] = useState(null);
+  
+  const [formData, setFormData] = useState({
+    nome: '',
+    dataNascimento: '',
+    posicao: '',
+    telefone: '',
+    email: '',
+    dataIngresso: '',
+    statusFinanceiro: 'Adimplente',
+    foto: null,
+    endereco: '',
+    numeroCamisa: '',
+    nivel: 'Associado'
+  });
+
+  useEffect(() => {
+    const carregarJogadores = async () => {
+      try {
+        setCarregando(true);
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/jogadores`);
+  
+        if (!response.ok) {
+          throw new Error('Erro ao carregar jogadores');
+        }
+  
+        const result = await response.json();
+        const jogadoresArray = Array.isArray(result.data) ? result.data : [];
+  
+        if (location.state?.novoJogador) {
+          const jogadorExiste = jogadoresArray.some(j => j._id === location.state.novoJogador._id);
+          if (!jogadorExiste) {
+            jogadoresArray.unshift(location.state.novoJogador);
+          }
+          setMensagemSucesso(location.state.mensagem);
+          navigate(location.pathname, { replace: true, state: {} });
+        }
+  
+        setJogadores(jogadoresArray);
+      } catch (error) {
+        console.error("Erro ao carregar jogadores:", error);
+        toast.error(error.message || 'Erro ao carregar jogadores');
+        setJogadores([]);
+      } finally {
+        setCarregando(false);
+      }
+    };
+  
+    carregarJogadores();
+  }, [location.state, navigate, location.pathname]);
+
+  useEffect(() => {
+    if (mensagemSucesso) {
+      const timer = setTimeout(() => {
+        setMensagemSucesso(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [mensagemSucesso]);
+
+  const jogadoresFiltrados = jogadores.filter(jogador => {
+    const matchesNome = jogador.nome?.toLowerCase().includes(filtro.toLowerCase());
+    const matchesPosicao = filtroPosicao ? jogador.posicao === filtroPosicao : true;
+    const matchesStatus = filtroStatus ? jogador.statusFinanceiro === filtroStatus : true;
+    return matchesNome && matchesPosicao && matchesStatus;
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleFileChange = (e) => {
+    setFormData(prev => ({ ...prev, foto: e.target.files[0] }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const formDataToSend = new FormData();
+      
+      // Ajustando as datas para garantir o dia correto
+      if (formData.dataNascimento) {
+        const nascimento = new Date(formData.dataNascimento + 'T12:00:00');
+        formDataToSend.append('dataNascimento', nascimento.toISOString());
+      }
+
+      if (formData.dataIngresso) {
+        const ingresso = new Date(formData.dataIngresso + 'T12:00:00');
+        formDataToSend.append('dataIngresso', ingresso.toISOString());
+      }
+
+      // Adiciona os outros campos
+      Object.keys(formData).forEach(key => {
+        if (key !== 'dataNascimento' && key !== 'dataIngresso' && 
+            formData[key] !== null && formData[key] !== undefined) {
+          formDataToSend.append(key, formData[key]);
+        }
+      });
+
+      if (editando) {
+        formDataToSend.append('id', editando);
+      }
+
+      const url = editando 
+        ? `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/jogadores/${editando}`
+        : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/jogadores`;
+
+      const response = await fetch(url, {
+        method: editando ? 'PUT' : 'POST',
+        body: formDataToSend
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao salvar jogador');
+      }
+
+      const data = await response.json();
+      toast.success(`Jogador ${data.data.nome} ${editando ? 'atualizado' : 'cadastrado'} com sucesso!`);
+      
+      setJogadores(prev => {
+        if (editando) {
+          return prev.map(j => j._id === editando ? data.data : j);
+        } else {
+          return [data.data, ...prev];
+        }
+      });
+      
+      setEditando(null);
+      setFormData({
+        nome: '',
+        dataNascimento: '',
+        posicao: '',
+        telefone: '',
+        email: '',
+        dataIngresso: '',
+        statusFinanceiro: 'Adimplente',
+        foto: null,
+        endereco: '',
+        numeroCamisa: '',
+        nivel: 'Associado'
+      });
+    } catch (error) {
+      console.error("Erro ao salvar jogador:", error);
+      toast.error(error.message || 'Erro ao salvar jogador');
+    }
+  };
+
+  const handleEditar = (jogador) => {
+    setEditando(jogador._id);
+    setFormData({
+      nome: jogador.nome,
+      dataNascimento: jogador.dataNascimento?.split('T')[0] || '',
+      posicao: jogador.posicao,
+      telefone: jogador.telefone,
+      email: jogador.email,
+      dataIngresso: jogador.dataIngresso?.split('T')[0] || '',
+      statusFinanceiro: jogador.statusFinanceiro || 'Adimplente',
+      foto: jogador.foto || null,
+      endereco: jogador.endereco || '',
+      numeroCamisa: jogador.numeroCamisa || '',
+      nivel: jogador.nivel || 'Associado'
+    });
+  };
+
+  const handleExcluir = async (id) => {
+    if (window.confirm('Tem certeza que deseja excluir este jogador?')) {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/jogadores/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Erro ao excluir jogador');
+        }
+        
+        const data = await response.json();
+        toast.success(data.message || 'Jogador excluído com sucesso');
+        setJogadores(prev => prev.filter(j => j._id !== id));
+      } catch (error) {
+        console.error("Erro ao excluir jogador:", error);
+        toast.error(error.message || 'Erro ao excluir jogador');
+      }
+    }
+  };
+
+  const atualizarStatus = async (id, status) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/jogadores/${id}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status })
+      });
+        
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao atualizar status');
+      }
+      
+      const data = await response.json();
+      toast.success(`Status atualizado para ${status}`);
+      
+      setJogadores(prev => 
+        prev.map(j => 
+          j._id === id ? { ...j, statusFinanceiro: status } : j
+        )
+      );
+    } catch (error) {
+      console.error("Erro ao atualizar status:", error);
+      toast.error(error.message || 'Erro ao atualizar status');
+    }
+  };
+
+  return (
+    <div className={`${!modoSelecao ? 'min-h-screen' : ''} bg-gray-900 p-4 sm:p-6`}>
+      {!modoSelecao && (
+        <AnimatePresence>
+          {mensagemSucesso && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50"
+            >
+              <div className="bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
+                <FaCheck className="text-white" />
+                <span>{mensagemSucesso}</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
+
+      <div className="max-w-7xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8 relative pt-16 sm:pt-0 text-center"
+        >
+          {/* Botão Voltar */}
+          <motion.button 
+            onClick={() => navigate('/dashboard')}
+            whileHover={{ 
+              scale: 1.05,
+              x: -5,
+              backgroundColor: "rgba(37, 99, 235, 0.1)"
+            }}
+            whileTap={{ scale: 0.95 }}
+            className="absolute left-3 top-4 sm:top-8 w-11 h-11 flex items-center justify-center bg-gray-800/40 hover:bg-gray-700/40 text-gray-200 rounded-full transition-all duration-300 backdrop-blur-sm border border-gray-700/50 shadow-lg hover:shadow-blue-500/20"
+            title="Voltar para o Dashboard"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <RiArrowLeftDoubleLine className="text-blue-400 text-2xl transform transition-transform group-hover:translate-x-1" />
+            <div className="absolute inset-0 rounded-full bg-blue-400/10 animate-pulse" style={{ animationDuration: '3s' }} />
+          </motion.button>
+
+          {/* Título e Subtítulo */}
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex items-center justify-center gap-3">
+              <FaUsers className="text-blue-400 text-2xl sm:text-3xl" />
+              <motion.h1 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.1 }}
+                className="text-2xl sm:text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300"
+              >
+                Lista de Jogadores
+              </motion.h1>
+            </div>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.8 }}
+              transition={{ delay: 0.2 }}
+              className="text-gray-400 text-sm sm:text-base"
+            >
+              Gerencie todos os jogadores cadastrados no sistema
+            </motion.p>
+          </div>
+        </motion.div>
+
+        {!modoSelecao ? (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4"
+          >
+            <div className="flex items-center gap-4">
+              {carregando && (
+                <span className="text-sm text-gray-400">(Carregando...)</span>
+              )}
+            </div>
+            
+            <motion.div 
+              whileHover={{ scale: 1.02 }} 
+              whileTap={{ scale: 0.98 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              <Link 
+                to="/cadastro-jogadores"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white rounded-lg shadow-lg transition-all duration-300 text-sm"
+              >
+                <FaPlus />
+                Cadastrar Novo Jogador
+              </Link>
+            </motion.div>
+          </motion.div>
+        ) : (
+          <div className="mb-6 flex justify-between items-center">
+            <h2 className="text-xl font-bold text-white flex items-center gap-3">
+              <FaUsers className="text-blue-400" /> 
+              Selecione um Jogador
+            </h2>
+            <button 
+              onClick={closeModal}
+              className="text-gray-400 hover:text-white p-2"
+            >
+              <FaTimes size={20} />
+            </button>
+          </div>
+        )}
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-gray-800 bg-opacity-50 backdrop-blur-sm rounded-xl shadow-xl border border-gray-700 overflow-hidden"
+        >
+          <div className="p-6 border-b border-gray-700">
+            <h2 className="text-lg font-semibold text-gray-300 mb-4 flex items-center gap-2">
+              <FaFilter className="text-blue-400" /> Filtros
+            </h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-400 flex items-center gap-2">
+                  <FaSearch /> Buscar por nome
+                </label>
+                <input 
+                  type="text" 
+                  placeholder="Digite o nome..." 
+                  className="w-full p-2 text-sm bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                  value={filtro} 
+                  onChange={(e) => setFiltro(e.target.value)} 
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-400">
+                  Posição
+                </label>
+                <select 
+                  className="w-full p-2 text-sm bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                  value={filtroPosicao} 
+                  onChange={(e) => setFiltroPosicao(e.target.value)} 
+                >
+                  <option value="" className="bg-gray-800">Todas as posições</option>
+                  {posicoes.map(posicao => (
+                    <option key={posicao} value={posicao} className="bg-gray-800">
+                      {posicao}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-400">
+                  Status Financeiro
+                </label>
+                <select 
+                  className="w-full p-2 text-sm bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                  value={filtroStatus} 
+                  onChange={(e) => setFiltroStatus(e.target.value)} 
+                >
+                  <option value="" className="bg-gray-800">Todos os status</option>
+                  {statusFinanceiroOptions.map(status => (
+                    <option key={status} value={status} className="bg-gray-800">
+                      {status}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {!modoSelecao && (
+            <AnimatePresence>
+              {editando !== null && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="overflow-hidden"
+                >
+                  <form onSubmit={handleSubmit} className="p-6 border-b border-gray-700 bg-gray-700/30">
+                  <h2 className="text-lg font-semibold text-gray-300 mb-4 flex items-center gap-2">
+                    {editando ? (
+                      <>
+                        <FaEdit className="text-yellow-400" /> Editar Jogador
+                      </>
+                    ) : (
+                      <>
+                        <FaPlus className="text-green-400" /> Adicionar Jogador
+                      </>
+                    )}
+                  </h2>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-400">Nome Completo</label>
+                      <input 
+                        type="text" 
+                        name="nome" 
+                        value={formData.nome} 
+                        onChange={handleChange} 
+                        className="w-full p-2 text-sm bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                        required 
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-400">Data de Nascimento</label>
+                      <input 
+                        type="date" 
+                        name="dataNascimento" 
+                        value={formData.dataNascimento} 
+                        onChange={handleChange} 
+                        className="w-full p-2 text-sm bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                        required 
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-400">Posição</label>
+                      <select 
+                        name="posicao" 
+                        value={formData.posicao} 
+                        onChange={handleChange} 
+                        className="w-full p-2 text-sm bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                        required 
+                      >
+                        <option value="" className="bg-gray-800">Selecione uma posição</option>
+                        {posicoes.map(posicao => (
+                          <option key={posicao} value={posicao} className="bg-gray-800">
+                            {posicao}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-400 flex items-center gap-2">
+                        <FaPhone /> Telefone
+                      </label>
+                      <input 
+                        type="tel" 
+                        name="telefone" 
+                        value={formData.telefone} 
+                        onChange={handleChange} 
+                        className="w-full p-2 text-sm bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                        required 
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-400 flex items-center gap-2">
+                        <FaEnvelope /> E-mail
+                      </label>
+                      <input 
+                        type="email" 
+                        name="email" 
+                        value={formData.email} 
+                        onChange={handleChange} 
+                        className="w-full p-2 text-sm bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                        required 
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-400 flex items-center gap-2">
+                        <FaCalendarAlt /> Data de Ingresso
+                      </label>
+                      <input 
+                        type="date" 
+                        name="dataIngresso" 
+                        value={formData.dataIngresso} 
+                        onChange={handleChange} 
+                        className="w-full p-2 text-sm bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                        required 
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-400 flex items-center gap-2">
+                        <FaMoneyBillWave /> Status Financeiro
+                      </label>
+                      <select 
+                        name="statusFinanceiro" 
+                        value={formData.statusFinanceiro} 
+                        onChange={handleChange} 
+                        className="w-full p-2 text-sm bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                        required 
+                      >
+                        {statusFinanceiroOptions.map(status => (
+                          <option key={status} value={status} className="bg-gray-800">
+                            {status}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-400 flex items-center gap-2">
+                        <FaMapMarkerAlt /> Endereço
+                      </label>
+                      <input 
+                        type="text" 
+                        name="endereco" 
+                        value={formData.endereco} 
+                        onChange={handleChange} 
+                        className="w-full p-2 text-sm bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-400 flex items-center gap-2">
+                        <FaTshirt /> Número da Camisa
+                      </label>
+                      <input 
+                        type="number" 
+                        name="numeroCamisa" 
+                        value={formData.numeroCamisa} 
+                        onChange={handleChange} 
+                        className="w-full p-2 text-sm bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-400 flex items-center gap-2">
+                        <FaStar /> Nível
+                      </label>
+                      <select 
+                        name="nivel" 
+                        value={formData.nivel} 
+                        onChange={handleChange} 
+                        className="w-full p-2 text-sm bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        {niveisOptions.map(nivel => (
+                          <option key={nivel} value={nivel} className="bg-gray-800">
+                            {nivel}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-400">Foto do Atleta</label>
+                      <input 
+                        type="file" 
+                        name="foto" 
+                        onChange={handleFileChange} 
+                        className="w-full p-2 text-sm bg-gray-700 border border-gray-600 text-white rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-500 file:text-white hover:file:bg-blue-600" 
+                        accept="image/*" 
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="mt-6 flex justify-end gap-3">
+                    <motion.button
+                      type="button" 
+                      onClick={() => {
+                        setEditando(null);
+                        setFormData({
+                          nome: '',
+                          dataNascimento: '',
+                          posicao: '',
+                          telefone: '',
+                          email: '',
+                          dataIngresso: '',
+                          statusFinanceiro: 'Adimplente',
+                          foto: null,
+                          endereco: '',
+                          numeroCamisa: '',
+                          nivel: 'Associado'
+                        });
+                      }}
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      className="flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-all text-sm"
+                    >
+                      <FaTimes /> Cancelar
+                    </motion.button>
+                    
+                    <motion.button
+                      type="submit"
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white rounded-lg transition-all shadow-md text-sm"
+                    >
+                      <FaSave /> {editando ? 'Atualizar' : 'Adicionar'}
+                    </motion.button>
+                  </div>
+                  </form>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          )}
+
+          <div className="p-4 overflow-x-auto">
+            {carregando ? (
+              <div className="text-center py-12">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                <p className="mt-2 text-gray-400">Carregando jogadores...</p>
+              </div>
+            ) : jogadoresFiltrados.length === 0 ? (
+              <div className="text-center py-12 text-gray-500 text-sm">
+                Nenhum jogador encontrado
+              </div>
+            ) : modoSelecao ? (
+              <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-2">
+                {jogadoresFiltrados.map((jogador) => (
+                  <motion.div
+                    key={jogador._id}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      onJogadorSelecionado(jogador);
+                      closeModal();
+                    }}
+                    className="p-4 bg-gray-700 rounded-lg cursor-pointer flex items-center gap-4"
+                  >
+                    {jogador.foto ? (
+                      <img 
+                        className="h-12 w-12 rounded-full object-cover" 
+                        src={jogador.foto} 
+                        alt={jogador.nome} 
+                      />
+                    ) : (
+                      <div className="h-12 w-12 rounded-full bg-gray-600 flex items-center justify-center">
+                        <FaUserCircle className="text-gray-400 text-xl" />
+                      </div>
+                    )}
+                    <div>
+                      <div className="font-medium text-white">{jogador.nome}</div>
+                      <div className="text-sm text-gray-400">
+                        {jogador.posicao} • {jogador.telefone}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-700">
+                  <thead className="bg-gray-700">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">Jogador</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">Informações</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">Contato</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-gray-800/50 divide-y divide-gray-700">
+                    {jogadoresFiltrados.map((jogador) => (
+                      <motion.tr 
+                        key={jogador._id}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        whileHover={{ backgroundColor: 'rgba(55, 65, 81, 0.3)' }}
+                        className="transition-colors"
+                      >
+                        <td className="px-6 py-4">
+                          <div className="flex items-center space-x-4">
+                            {jogador.foto ? (
+                              <div className="flex-shrink-0 h-12 w-12">
+                                <img 
+                                  className="h-12 w-12 rounded-full object-cover" 
+                                  src={jogador.foto} 
+                                  alt={jogador.nome} 
+                                />
+                              </div>
+                            ) : (
+                              <div className="flex-shrink-0 h-12 w-12 rounded-full bg-gray-700 flex items-center justify-center">
+                                <FaUserCircle className="text-gray-400 text-xl" />
+                              </div>
+                            )}
+                            <div>
+                              <div className="text-sm font-medium text-white">
+                                {jogador.nome}
+                              </div>
+                              <div className="text-xs text-gray-400 mt-1">
+                                {jogador.dataNascimento ? 
+                                  `${new Date().getFullYear() - new Date(jogador.dataNascimento).getFullYear()} anos` : 
+                                  'Idade não informada'}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        
+                        <td className="px-6 py-4 space-y-1">
+                          <div className="text-sm text-white flex items-center gap-2">
+                            <FaTshirt className="text-gray-400" />
+                            {jogador.posicao} {jogador.numeroCamisa && `#${jogador.numeroCamisa}`}
+                          </div>
+                          <div className="text-xs text-gray-400 flex items-center gap-2">
+                            <FaStar className="text-yellow-400" />
+                            {jogador.nivel || 'Associado'}
+                          </div>
+                          <div className="text-xs text-gray-400 flex items-center gap-2">
+                            <FaCalendarAlt />
+                            {jogador.dataIngresso ? 
+                              `Ingresso: ${new Date(jogador.dataIngresso).toLocaleDateString()}` : 
+                              'Sem data'}
+                          </div>
+                        </td>
+                        
+                        <td className="px-6 py-4 space-y-1">
+                          <div className="text-sm text-white flex items-center gap-2">
+                            <FaPhone />
+                            {jogador.telefone || 'Não informado'}
+                          </div>
+                          <div className="text-sm text-white flex items-center gap-2">
+                            <FaEnvelope />
+                            {jogador.email || 'Não informado'}
+                          </div>
+                          <div className="text-xs text-gray-400 flex items-center gap-2">
+                            <FaMapMarkerAlt />
+                            {jogador.endereco || 'Endereço não informado'}
+                          </div>
+                        </td>
+                        
+                        <td className="px-6 py-4">
+                          <select
+                            value={jogador.statusFinanceiro || 'Adimplente'}
+                            onChange={(e) => atualizarStatus(jogador._id, e.target.value)}
+                            className={`px-3 py-2 text-sm rounded ${
+                              jogador.statusFinanceiro === 'Adimplente' ? 
+                              'bg-green-900/70 text-green-100' : 
+                              'bg-red-900/70 text-red-100'
+                            }`}
+                          >
+                            <option value="Adimplente">Adimplente</option>
+                            <option value="Inadimplente">Inadimplente</option>
+                          </select>
+                        </td>
+                        
+                        <td className="px-6 py-4 text-sm font-medium">
+                          <div className="flex gap-3">
+                            <motion.button
+                              onClick={() => handleEditar(jogador)}
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              className="text-blue-400 hover:text-blue-300"
+                              title="Editar"
+                            >
+                              <FaEdit size={16} />
+                            </motion.button>
+                            
+                            <motion.button
+                              onClick={() => handleExcluir(jogador._id)}
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              className="text-red-400 hover:text-red-300"
+                              title="Excluir"
+                            >
+                              <FaTrash size={16} />
+                            </motion.button>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
