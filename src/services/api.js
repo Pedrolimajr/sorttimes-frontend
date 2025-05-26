@@ -6,34 +6,46 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json'
   },
-  withCredentials: true
+  withCredentials: true,
+  timeout: 10000
 });
 
-// Interceptador para logs
-api.interceptors.request.use(config => {
-  console.log('📡 Request:', {
-    method: config.method?.toUpperCase(),
-    url: config.url,
-    data: config.data
-  });
-  return config;
-});
+// Interceptador de requisição
+api.interceptors.request.use(
+  (config) => {
+    console.log('📡 Request:', {
+      method: config.method?.toUpperCase(),
+      url: config.url,
+      data: config.data
+    });
+    return config;
+  },
+  (error) => {
+    console.error('❌ Request Error:', error);
+    return Promise.reject(error);
+  }
+);
 
 // Interceptador de resposta
 api.interceptors.response.use(
-  response => {
+  (response) => {
     console.log('✅ Response:', {
       status: response.status,
       data: response.data
     });
     return response;
   },
-  error => {
-    console.error('❌ Error:', {
-      status: error.response?.status,
-      message: error.message,
-      data: error.response?.data
-    });
+  (error) => {
+    console.error('❌ Response Error:', error);
+    
+    if (error.code === 'ERR_NETWORK') {
+      toast.error('Erro de conexão com o servidor');
+    } else if (error.response?.status === 403) {
+      toast.error('Acesso não autorizado');
+    } else {
+      toast.error(error.response?.data?.message || 'Erro ao processar requisição');
+    }
+    
     return Promise.reject(error);
   }
 );
