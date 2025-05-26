@@ -72,29 +72,49 @@ export default function Financeiro() {
 
   // Carregar dados iniciais
   useEffect(() => {
+    const carregarDados = async () => {
+      setCarregando(true);
+      try {
+        const [jogadoresRes, transacoesRes] = await Promise.all([
+          api.get('/api/jogadores'),
+          financeiroService.listarTransacoes()
+        ]);
+
+        setJogadores(jogadoresRes.data.data);
+        setTransacoes(transacoesRes.data);
+      } catch (erro) {
+        console.error("Erro ao carregar dados:", erro);
+        toast.error("Erro ao carregar dados: " + erro.message);
+      } finally {
+        setCarregando(false);
+      }
+    };
+
     carregarDados();
+
+    // Configurar listeners do socket
+    socket.connect();
+    
+    socket.on('nova-transacao', (transacao) => {
+      setTransacoes(prev => [...prev, transacao]);
+    });
+
+    socket.on('pagamento-atualizado', ({ jogadorId, mes }) => {
+      setJogadores(prev => 
+        prev.map(jogador => 
+          jogador._id === jogadorId 
+            ? { ...jogador, pagamentos: { ...jogador.pagamentos, [mes]: true } }
+            : jogador
+        )
+      );
+    });
+
+    return () => {
+      socket.off('nova-transacao');
+      socket.off('pagamento-atualizado');
+      socket.disconnect();
+    };
   }, []); // Executar apenas uma vez
-
-  // Carregar dados
-  const carregarDados = async () => {
-    setCarregando(true);
-    try {
-      // Use a instância do axios configurada
-      const [jogadoresRes, transacoesRes] = await Promise.all([
-        api.get('/api/jogadores'),
-        api.get('/api/financeiro/transacoes')
-      ]);
-
-      setJogadores(jogadoresRes.data.data || []);
-      setTransacoes(transacoesRes.data.data || []);
-
-    } catch (erro) {
-      console.error("Erro ao carregar dados:", erro);
-      toast.error("Erro ao carregar dados: " + erro.message);
-    } finally {
-      setCarregando(false);
-    }
-  };
 
   // Atualizar estatísticas
   useEffect(() => {
