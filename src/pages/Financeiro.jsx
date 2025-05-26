@@ -70,12 +70,11 @@ export default function Financeiro() {
     totalJogadores: 0
   });
 
-  // Carregar dados iniciais
+  // 1. Efeito para carregar dados iniciais
   useEffect(() => {
     const carregarDados = async () => {
       setCarregando(true);
       try {
-        // Use a instância do axios configurada
         const [jogadoresRes, transacoesRes] = await Promise.all([
           api.get('/api/jogadores'),
           api.get('/api/financeiro/transacoes')
@@ -91,35 +90,38 @@ export default function Financeiro() {
           statusFinanceiro: jogador.statusFinanceiro || 'Inadimplente'
         }));
 
-        // Atualiza o estado e o localStorage
         setJogadores(jogadoresFormatados);
         setTransacoes(transacoesData);
         
         localStorage.setItem('jogadoresFinanceiro', JSON.stringify(jogadoresFormatados));
         localStorage.setItem('transacoesFinanceiro', JSON.stringify(transacoesData));
-
       } catch (erro) {
         console.error("Erro ao carregar dados:", erro);
-        // Tenta recuperar do localStorage
-        const jogadoresCache = JSON.parse(localStorage.getItem('jogadoresFinanceiro') || '[]');
-        const transacoesCache = JSON.parse(localStorage.getItem('transacoesFinanceiro') || '[]');
-        
-        if (jogadoresCache.length > 0) {
-          setJogadores(jogadoresCache);
-        }
-        if (transacoesCache.length > 0) {
-          setTransacoes(transacoesCache);
-        }
-        
-        toast.error("Erro ao carregar dados do servidor. Usando dados em cache.");
+        toast.error("Erro ao carregar dados: " + erro.message);
       } finally {
         setCarregando(false);
       }
     };
 
     carregarDados();
+  }, []);
 
-    // Socket connection
+  // 2. Efeito para atualizar localStorage quando jogadores mudam
+  useEffect(() => {
+    if (jogadores.length > 0) {
+      localStorage.setItem('jogadoresFinanceiro', JSON.stringify(jogadores));
+    }
+  }, [jogadores]);
+
+  // 3. Efeito para atualizar localStorage quando transações mudam
+  useEffect(() => {
+    if (transacoes.length > 0) {
+      localStorage.setItem('transacoesFinanceiro', JSON.stringify(transacoes));
+    }
+  }, [transacoes]);
+
+  // 4. Efeito para socket connection
+  useEffect(() => {
     if (socket) {
       socket.connect();
       
@@ -1577,16 +1579,4 @@ export default function Financeiro() {
     </div>
   );
 }
-
-useEffect(() => {
-  if (jogadores.length > 0) {
-    localStorage.setItem('jogadoresFinanceiro', JSON.stringify(jogadores));
-  }
-}, [jogadores]);
-
-useEffect(() => {
-  if (transacoes.length > 0) {
-    localStorage.setItem('transacoesFinanceiro', JSON.stringify(transacoes));
-  }
-}, [transacoes]);
 
