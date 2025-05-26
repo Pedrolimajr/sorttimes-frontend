@@ -381,51 +381,72 @@ export default function Financeiro() {
 
       setJogadores(jogadoresAtualizados);
 
-      // Chama o serviço de pagamentos
-      const response = await pagamentosService.atualizarPagamento(jogadorId, mesIndex, {
-        pago: novoStatus,
-        valor: 100,
-        dataPagamento: new Date().toISOString()
+      // Chamada à API com fetch
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/jogadores/${jogadorId}/pagamentos`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          mes: mesIndex,
+          pago: novoStatus,
+          valor: 100,
+          dataPagamento: new Date().toISOString()
+        }),
+        credentials: 'include'
       });
 
-      if (response.success) {
-        // Se foi um pagamento, registra a transação
-        if (novoStatus) {
-          const transacaoData = {
-            descricao: `Mensalidade - ${jogador.nome} (${mesIndex + 1}/${new Date().getFullYear()})`,
-            valor: 100,
-            tipo: 'receita',
-            categoria: 'mensalidade',
-            data: new Date().toISOString(),
-            jogadorId: jogadorId,
-            jogadorNome: jogador.nome
-          };
+      if (!response.ok) {
+        throw new Error('Erro ao atualizar pagamento');
+      }
 
-          const transacaoResponse = await api.post('/financeiro/transacoes', transacaoData);
-          
-          if (transacaoResponse.data.success) {
-            setTransacoes(prev => [transacaoResponse.data.data, ...prev]);
-            
-            // Atualiza localStorage
-            const dadosAtualizados = {
-              jogadoresCache: jogadoresAtualizados,
-              transacoesCache: [transacaoResponse.data.data, ...transacoes],
-              lastUpdate: new Date().toISOString()
-            };
-            
-            localStorage.setItem('dadosFinanceiro', JSON.stringify(dadosAtualizados));
-            
-            // Atualiza estatísticas
-            setEstatisticas(prev => ({
-              ...prev,
-              totalReceitas: prev.totalReceitas + 100,
-              saldo: prev.saldo + 100
-            }));
-          }
+      const data = await response.json();
+
+      // Se foi um pagamento (não um cancelamento), registra a transação
+      if (novoStatus) {
+        const transacaoData = {
+          descricao: `Mensalidade - ${jogador.nome} (${mesIndex + 1}/${new Date().getFullYear()})`,
+          valor: 100,
+          tipo: 'receita',
+          categoria: 'mensalidade',
+          data: new Date().toISOString(),
+          jogadorId: jogadorId,
+          jogadorNome: jogador.nome
+        };
+
+        const transacaoResponse = await fetch(`${import.meta.env.VITE_API_URL}/financeiro/transacoes`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(transacaoData),
+          credentials: 'include'
+        });
+
+        if (!transacaoResponse.ok) {
+          throw new Error('Erro ao registrar transação');
         }
 
-        toast.success(`Pagamento ${novoStatus ? 'registrado' : 'removido'} com sucesso!`);
+        const transacaoResult = await transacaoResponse.json();
+        
+        setTransacoes(prev => [transacaoResult.data, ...prev]);
+        
+        // Atualiza localStorage
+        localStorage.setItem('dadosFinanceiro', JSON.stringify({
+          jogadoresCache: jogadoresAtualizados,
+          transacoesCache: [transacaoResult.data, ...transacoes],
+          lastUpdate: new Date().toISOString()
+        }));
+        
+        // Atualiza estatísticas
+        setEstatisticas(prev => ({
+          ...prev,
+          totalReceitas: prev.totalReceitas + 100,
+          saldo: prev.saldo + 100
+        }));
       }
+
+      toast.success(`Pagamento ${novoStatus ? 'registrado' : 'removido'} com sucesso!`);
 
     } catch (error) {
       console.error("Erro ao atualizar pagamento:", error);
