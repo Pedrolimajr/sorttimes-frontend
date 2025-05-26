@@ -11,9 +11,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { io } from 'socket.io-client';
-import { BACKEND_URL } from '../config/config';
-import { FaWhatsapp } from "react-icons/fa";
 import socket from '../services/socket';
 
 // Constantes para organizar os valores fixos
@@ -63,19 +60,10 @@ export default function SorteioTimes() {
   const [carregandoJogadores, setCarregandoJogadores] = useState(false);
   const [modoEdicao, setModoEdicao] = useState(false);
   const [filtroPosicao, setFiltroPosicao] = useState('');
-  const [socket, setSocket] = useState(null);
   const [dataJogo, setDataJogo] = useState('');
 
   // Configuração do socket.io para atualizações em tempo real
   useEffect(() => {
-    const newSocket = io(BACKEND_URL);
-    setSocket(newSocket);
-
-    return () => newSocket.disconnect();
-  }, []);
-
-  useEffect(() => {
-    // Conecta ao socket quando o componente monta
     socket.connect();
 
     // Listener para atualizações de times
@@ -159,7 +147,7 @@ export default function SorteioTimes() {
     const carregarDados = async () => {
       setCarregandoJogadores(true);
       try {
-        const response = await fetch(`${BACKEND_URL}/api/jogadores`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/jogadores`);
         if (!response.ok) throw new Error('Erro ao carregar jogadores');
         
         const { data: jogadores } = await response.json();
@@ -171,8 +159,8 @@ export default function SorteioTimes() {
           presente: false,
           posicao: jogador.posicao || POSICOES.MEIA,
           nivel: jogador.nivel === 'Associado' ? NIVEL_JOGADOR.ASSOCIADO : 
-                jogador.nivel === 'Convidado' ? NIVEL_JOGADOR.CONVIDADO : 
-                NIVEL_JOGADOR.INICIANTE
+                 jogador.nivel === 'Convidado' ? NIVEL_JOGADOR.CONVIDADO : 
+                 NIVEL_JOGADOR.INICIANTE
         })));
 
       } catch (erro) {
