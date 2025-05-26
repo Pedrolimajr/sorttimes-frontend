@@ -61,6 +61,7 @@ export default function Financeiro() {
     jogadorNome: ""
   });
 
+  // Adicione valores iniciais para evitar erros de undefined
   const [estatisticas, setEstatisticas] = useState({
     totalReceitas: 0,
     totalDespesas: 0,
@@ -79,8 +80,18 @@ export default function Financeiro() {
           api.get('/api/financeiro/transacoes')
         ]);
 
-        setJogadores(jogadoresRes.data.data);
-        setTransacoes(transacoesRes.data.data);
+        const jogadoresData = jogadoresRes.data.data || [];
+        const transacoesData = transacoesRes.data.data || [];
+
+        // Certifique-se que os jogadores têm um array de pagamentos
+        const jogadoresFormatados = jogadoresData.map(jogador => ({
+          ...jogador,
+          pagamentos: jogador.pagamentos || Array(12).fill(false)
+        }));
+
+        setJogadores(jogadoresFormatados);
+        setTransacoes(transacoesData);
+
       } catch (erro) {
         console.error("Erro ao carregar dados:", erro);
         toast.error("Erro ao carregar dados: " + erro.message);
@@ -91,28 +102,39 @@ export default function Financeiro() {
 
     carregarDados();
 
-    // Configurar listeners do socket
-    socket.connect();
-    
-    socket.on('nova-transacao', (transacao) => {
-      setTransacoes(prev => [...prev, transacao]);
-    });
+    // Socket connection
+    if (socket) {
+      socket.connect();
+      
+      socket.on('nova-transacao', (transacao) => {
+        if (transacao) {
+          setTransacoes(prev => [...prev, transacao]);
+        }
+      });
 
-    socket.on('pagamento-atualizado', ({ jogadorId, mes }) => {
-      setJogadores(prev => 
-        prev.map(jogador => 
-          jogador._id === jogadorId 
-            ? { ...jogador, pagamentos: { ...jogador.pagamentos, [mes]: true } }
-            : jogador
-        )
-      );
-    });
+      socket.on('pagamento-atualizado', ({ jogadorId, mes }) => {
+        if (jogadorId && typeof mes !== 'undefined') {
+          setJogadores(prev => 
+            prev.map(jogador => 
+              jogador._id === jogadorId 
+                ? { 
+                    ...jogador, 
+                    pagamentos: jogador.pagamentos.map((p, i) => 
+                      i === mes ? true : p
+                    )
+                  }
+                : jogador
+            )
+          );
+        }
+      });
 
-    return () => {
-      socket.off('nova-transacao');
-      socket.off('pagamento-atualizado');
-      socket.disconnect();
-    };
+      return () => {
+        socket.off('nova-transacao');
+        socket.off('pagamento-atualizado');
+        socket.disconnect();
+      };
+    }
   }, []); // Executar apenas uma vez
 
   // Atualizar estatísticas
@@ -457,32 +479,29 @@ export default function Financeiro() {
   };
 
   // Filtrar transações por mês/ano
-  const transacoesFiltradas = transacoes
+  const transacoesFiltradas = (transacoes || [])
     .filter(t => {
-      if (!t.data) return false;
+      if (!t?.data) return false;
       
-      // Filtro por ano (não por mês)
       try {
         const dataStr = typeof t.data === 'string' 
           ? t.data 
           : new Date(t.data).toISOString();
-        return dataStr.startsWith(filtroMes.slice(0, 4)); // Filtra por ano apenas
+        return dataStr.startsWith(filtroMes.slice(0, 4));
       } catch {
         return false;
       }
     })
     .filter(t => {
-      // Filtro por jogador
-      if (filtroHistorico.jogador && t.jogadorId) {
+      if (filtroHistorico.jogador && t?.jogadorId) {
         const jogador = jogadores.find(j => j._id === t.jogadorId);
         return jogador?.nome.toLowerCase().includes(filtroHistorico.jogador.toLowerCase());
       }
       return true;
     })
     .filter(t => {
-      // Filtro por tipo
       if (filtroHistorico.tipo !== 'todos') {
-        return t.tipo === filtroHistorico.tipo;
+        return t?.tipo === filtroHistorico.tipo;
       }
       return true;
     })
