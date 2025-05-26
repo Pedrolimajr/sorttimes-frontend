@@ -291,11 +291,7 @@ export default function Financeiro() {
       }
 
       // Continua com o registro da transação...
-      const response = await fetch(`/api/financeiro/transacoes`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+      const response = await api.post('/financeiro/transacoes', payload);
 
       if (!response.ok) throw new Error('Erro ao adicionar transação');
 
@@ -367,8 +363,9 @@ export default function Financeiro() {
         lastUpdate: new Date().toISOString()
       }));
 
-      // Chamada à API usando axios com método POST
-      const response = await api.post(`/api/jogadores/${jogadorId}/pagamentos/${mesIndex}`, {
+      // Correção do método e URL da API
+      const response = await api.post(`/jogadores/${jogadorId}/pagamentos`, {
+        mes: mesIndex,
         pago: novoStatus,
         valor: 100,
         dataPagamento: novoStatus ? new Date().toISOString() : null
@@ -408,12 +405,6 @@ export default function Financeiro() {
 
     } catch (error) {
       console.error("Erro ao atualizar pagamento:", error);
-      // Recupera estado anterior do localStorage
-      const cachedData = JSON.parse(localStorage.getItem('dadosFinanceiro'));
-      if (cachedData) {
-        setJogadores(cachedData.jogadoresCache);
-        setTransacoes(cachedData.transacoesCache);
-      }
       toast.error('Erro ao atualizar status de pagamento');
     }
   };
