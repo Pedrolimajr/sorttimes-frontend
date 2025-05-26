@@ -8,7 +8,6 @@ const api = axios.create({
   withCredentials: true
 });
 
-// Serviço específico para pagamentos
 export const pagamentosService = {
   async atualizarPagamento(jogadorId, mes, dados) {
     try {
@@ -16,6 +15,26 @@ export const pagamentosService = {
         mes,
         ...dados
       });
+      
+      // Atualiza o localStorage com os novos dados
+      const cachedData = JSON.parse(localStorage.getItem('dadosFinanceiro') || '{}');
+      
+      if (response.data.data.jogador) {
+        const jogadoresAtualizados = (cachedData.jogadoresCache || []).map(j => 
+          j._id === jogadorId ? response.data.data.jogador : j
+        );
+        
+        const transacoesAtualizadas = response.data.data.transacao 
+          ? [response.data.data.transacao, ...(cachedData.transacoesCache || [])]
+          : cachedData.transacoesCache || [];
+
+        localStorage.setItem('dadosFinanceiro', JSON.stringify({
+          jogadoresCache: jogadoresAtualizados,
+          transacoesCache: transacoesAtualizadas,
+          lastUpdate: new Date().toISOString()
+        }));
+      }
+
       return response.data;
     } catch (error) {
       console.error('❌ Erro ao atualizar pagamento:', error);

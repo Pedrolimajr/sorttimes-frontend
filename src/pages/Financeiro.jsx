@@ -61,7 +61,6 @@ export default function Financeiro() {
     jogadorNome: ""
   });
 
-  // Adicione valores iniciais para evitar erros de undefined
   const [estatisticas, setEstatisticas] = useState({
     totalReceitas: 0,
     totalDespesas: 0,
@@ -81,9 +80,26 @@ export default function Financeiro() {
           const { jogadoresCache, transacoesCache } = JSON.parse(cachedData);
           setJogadores(jogadoresCache);
           setTransacoes(transacoesCache);
+          
+          // Calcula estatísticas dos dados em cache
+          const totalReceitas = transacoesCache
+            .filter(t => t.tipo === 'receita')
+            .reduce((sum, t) => sum + (t.valor || 0), 0);
+            
+          const totalDespesas = transacoesCache
+            .filter(t => t.tipo === 'despesa')
+            .reduce((sum, t) => sum + (t.valor || 0), 0);
+            
+          setEstatisticas(prev => ({
+            ...prev,
+            totalReceitas,
+            totalDespesas,
+            saldo: totalReceitas - totalDespesas,
+            totalJogadores: jogadoresCache.length
+          }));
         }
 
-        // Faz a requisição à API
+        // Busca dados atualizados da API
         const [jogadoresRes, transacoesRes] = await Promise.all([
           api.get('/api/jogadores'),
           api.get('/api/financeiro/transacoes')
@@ -92,19 +108,12 @@ export default function Financeiro() {
         const jogadoresData = jogadoresRes.data.data || [];
         const transacoesData = transacoesRes.data.data || [];
 
-        // Formata os jogadores
-        const jogadoresFormatados = jogadoresData.map(jogador => ({
-          ...jogador,
-          pagamentos: jogador.pagamentos || Array(12).fill(false),
-          statusFinanceiro: jogador.statusFinanceiro || 'Inadimplente'
-        }));
-
-        // Atualiza o estado e o localStorage
-        setJogadores(jogadoresFormatados);
+        setJogadores(jogadoresData);
         setTransacoes(transacoesData);
         
+        // Salva no localStorage
         localStorage.setItem('dadosFinanceiro', JSON.stringify({
-          jogadoresCache: jogadoresFormatados,
+          jogadoresCache: jogadoresData,
           transacoesCache: transacoesData,
           lastUpdate: new Date().toISOString()
         }));
@@ -118,6 +127,22 @@ export default function Financeiro() {
     };
 
     carregarDados();
+
+    // Socket listeners
+    if (socket) {
+      socket.on('atualizacaoFinanceira', (dados) => {
+        setEstatisticas(prev => ({
+          ...prev,
+          ...dados
+        }));
+      });
+    }
+
+    return () => {
+      if (socket) {
+        socket.off('atualizacaoFinanceira');
+      }
+    };
   }, []);
 
   // 2. Efeito para atualizar localStorage quando jogadores mudam
