@@ -29,18 +29,26 @@ export const authService = {
 
   async cadastrar(dados) {
     try {
-      const response = await api.post('/api/auth/cadastro', dados);
+      console.log('Tentando cadastrar usuário:', dados);
+      console.log('URL da API:', import.meta.env.VITE_API_URL);
       
-      if (response.data.token) {
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/cadastro`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify(dados)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erro ${response.status}: ${await response.text()}`);
       }
-      
-      return response.data;
+
+      return await response.json();
     } catch (error) {
-      const mensagem = error.response?.data?.message || 'Erro ao cadastrar usuário';
-      console.error('Erro no cadastro:', error);
-      throw new Error(mensagem);
+      console.error('Erro no serviço de cadastro:', error);
+      throw error;
     }
   },
 
