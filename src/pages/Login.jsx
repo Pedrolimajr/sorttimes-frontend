@@ -102,7 +102,7 @@ export default function Login() {
               <div className="flex justify-center mb-2 xs:mb-3 sm:mb-4">
                 <div className="bg-gradient-to-r from-blue-500 to-cyan-400 p-1 xs:p-1.5 sm:p-2 rounded-lg shadow-lg">
                   <img 
-                    src="/src/img/logo_time.png" 
+                    src="/img/logo_time.png" 
                     alt="Logo" 
                     className="w-14 h-14 xs:w-16 xs:h-16 sm:w-20 sm:h-20 object-contain"
                   />

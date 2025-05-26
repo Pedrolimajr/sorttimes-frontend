@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaArrowLeft, FaUserPlus } from "react-icons/fa";
 import { authService } from "../services/authService";
-
+import { RiArrowLeftDoubleLine } from "react-icons/ri";
 export default function Cadastro() {
   // Estados para armazenar os dados do formulário
   const [nome, setNome] = useState("");
@@ -80,14 +80,24 @@ export default function Cadastro() {
 
       {/* Container principal - ajustado para diferentes tamanhos de tela */}
       <div className="w-full max-w-xs xs:max-w-sm sm:max-w-md mx-2">
-        {/* Botão Voltar - ajustes de tamanho para mobile */}
-        <motion.button
+        {/* Botão Voltar - Atualizado para ficar igual ao do Login */}
+        <motion.button 
+          type="button"
           onClick={voltarParaHome}
-          whileHover={{ x: -3 }}
+          whileHover={{ 
+            scale: 1.05,
+            x: -5,
+            backgroundColor: "rgba(37, 99, 235, 0.1)"
+          }}
           whileTap={{ scale: 0.95 }}
-          className="mb-3 xs:mb-4 flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-gray-200 px-3 py-2 xs:px-4 xs:py-2 rounded-lg transition-all shadow-md text-xs xs:text-sm sm:text-base"
+          className="mb-6 w-10 h-10 flex items-center justify-center bg-gray-800/40 hover:bg-gray-700/40 text-gray-200 rounded-full transition-all duration-300 backdrop-blur-sm border border-gray-700/50 shadow-lg hover:shadow-blue-500/20"
+          title="Voltar para Home"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3 }}
         >
-          <FaArrowLeft className="text-xs xs:text-sm" /> Voltar
+          <RiArrowLeftDoubleLine className="text-blue-400 text-xl transform transition-transform group-hover:translate-x-1" />
+          <div className="absolute inset-0 rounded-full bg-blue-400/10 animate-pulse" style={{ animationDuration: '3s' }} />
         </motion.button>
 
         {/* Formulário de cadastro */}

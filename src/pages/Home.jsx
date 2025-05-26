@@ -47,7 +47,7 @@ export default function PaginaInicial() {
           <div className="inline-flex items-center gap-2 sm:gap-3">
             <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 flex items-center justify-center bg-gradient-to-r from-blue-500 to-cyan-400 p-1 sm:p-2 rounded-lg shadow-lg">
               <img
-                src="/src/img/logo_time.png"
+                src="/img/logo_time.png" // Caminho corrigido
                 alt="Logo"
                 className="max-w-full max-h-full object-contain"
               />
@@ -85,7 +85,7 @@ export default function PaginaInicial() {
               {/* Container da imagem */}
               <div className="absolute inset-0 overflow-hidden rounded-lg">
                 <img
-                  src="./src/img/sorttimes-img.jpg"
+                  src="/img/sorttimes-img.jpg" // Caminho corrigido
                   alt="Painel de Controle"
                   className="w-full h-full object-cover brightness-90 group-hover:brightness-110 scale-100 group-hover:scale-105 transition-all duration-500 ease-out"
                 />
@@ -129,7 +129,7 @@ export default function PaginaInicial() {
             {/* Container da imagem */}
             <div className="absolute inset-0 overflow-hidden rounded-lg">
               <img
-                src="./src/img/sorttimes-img.jpg"
+                src="/img/sorttimes-img.jpg" // Caminho corrigido
                 alt="Painel de Controle"
                 className="w-full h-full object-cover brightness-90 group-hover:brightness-110 scale-100 group-hover:scale-105 transition-all duration-500 ease-out"
               />
