@@ -75,6 +75,15 @@ export default function Financeiro() {
     const carregarDados = async () => {
       setCarregando(true);
       try {
+        // Tenta carregar do localStorage primeiro
+        const cachedData = localStorage.getItem('dadosFinanceiro');
+        if (cachedData) {
+          const { jogadoresCache, transacoesCache } = JSON.parse(cachedData);
+          setJogadores(jogadoresCache);
+          setTransacoes(transacoesCache);
+        }
+
+        // Faz a requisição à API
         const [jogadoresRes, transacoesRes] = await Promise.all([
           api.get('/api/jogadores'),
           api.get('/api/financeiro/transacoes')
@@ -90,11 +99,16 @@ export default function Financeiro() {
           statusFinanceiro: jogador.statusFinanceiro || 'Inadimplente'
         }));
 
+        // Atualiza o estado e o localStorage
         setJogadores(jogadoresFormatados);
         setTransacoes(transacoesData);
         
-        localStorage.setItem('jogadoresFinanceiro', JSON.stringify(jogadoresFormatados));
-        localStorage.setItem('transacoesFinanceiro', JSON.stringify(transacoesData));
+        localStorage.setItem('dadosFinanceiro', JSON.stringify({
+          jogadoresCache: jogadoresFormatados,
+          transacoesCache: transacoesData,
+          lastUpdate: new Date().toISOString()
+        }));
+
       } catch (erro) {
         console.error("Erro ao carregar dados:", erro);
         toast.error("Erro ao carregar dados: " + erro.message);
@@ -334,7 +348,7 @@ export default function Financeiro() {
       }
 
       // Atualização otimista do estado
-      setJogadores(prev => prev.map(j => 
+      const jogadoresAtualizados = jogadores.map(j => 
         j._id === jogadorId 
           ? {
               ...j,
@@ -342,7 +356,16 @@ export default function Financeiro() {
               statusFinanceiro: novoStatus ? 'Adimplente' : 'Inadimplente'
             }
           : j
-      ));
+      );
+
+      setJogadores(jogadoresAtualizados);
+
+      // Atualiza localStorage imediatamente
+      localStorage.setItem('dadosFinanceiro', JSON.stringify({
+        jogadoresCache: jogadoresAtualizados,
+        transacoesCache: transacoes,
+        lastUpdate: new Date().toISOString()
+      }));
 
       // Chamada à API usando axios com método POST
       const response = await api.post(`/api/jogadores/${jogadorId}/pagamentos/${mesIndex}`, {
@@ -369,12 +392,15 @@ export default function Financeiro() {
 
         const transacaoResponse = await api.post('/api/financeiro/transacoes', transacaoData);
         if (transacaoResponse.data.success) {
-          setTransacoes(prev => [transacaoResponse.data.data, ...prev]);
+          const novasTransacoes = [transacaoResponse.data.data, ...transacoes];
+          setTransacoes(novasTransacoes);
           
-          // Salva no localStorage
-          localStorage.setItem('transacoesFinanceiro', 
-            JSON.stringify([transacaoResponse.data.data, ...transacoes])
-          );
+          // Atualiza localStorage com novas transações
+          localStorage.setItem('dadosFinanceiro', JSON.stringify({
+            jogadoresCache: jogadoresAtualizados,
+            transacoesCache: novasTransacoes,
+            lastUpdate: new Date().toISOString()
+          }));
         }
       }
 
@@ -382,8 +408,12 @@ export default function Financeiro() {
 
     } catch (error) {
       console.error("Erro ao atualizar pagamento:", error);
-      // Reverte o estado em caso de erro
-      setJogadores(prev => [...prev]);
+      // Recupera estado anterior do localStorage
+      const cachedData = JSON.parse(localStorage.getItem('dadosFinanceiro'));
+      if (cachedData) {
+        setJogadores(cachedData.jogadoresCache);
+        setTransacoes(cachedData.transacoesCache);
+      }
       toast.error('Erro ao atualizar status de pagamento');
     }
   };
