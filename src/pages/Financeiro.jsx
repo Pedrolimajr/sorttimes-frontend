@@ -86,15 +86,32 @@ export default function Financeiro() {
         // Certifique-se que os jogadores têm um array de pagamentos
         const jogadoresFormatados = jogadoresData.map(jogador => ({
           ...jogador,
-          pagamentos: jogador.pagamentos || Array(12).fill(false)
+          pagamentos: jogador.pagamentos || Array(12).fill(false),
+          statusFinanceiro: jogador.statusFinanceiro || 'Inadimplente'
         }));
+
+        // Salva no localStorage
+        localStorage.setItem('jogadoresFinanceiro', JSON.stringify(jogadoresFormatados));
+        localStorage.setItem('transacoesFinanceiro', JSON.stringify(transacoesData));
 
         setJogadores(jogadoresFormatados);
         setTransacoes(transacoesData);
 
       } catch (erro) {
         console.error("Erro ao carregar dados:", erro);
-        toast.error("Erro ao carregar dados: " + erro.message);
+        
+        // Tenta recuperar do localStorage
+        const jogadoresCache = JSON.parse(localStorage.getItem('jogadoresFinanceiro') || '[]');
+        const transacoesCache = JSON.parse(localStorage.getItem('transacoesFinanceiro') || '[]');
+        
+        if (jogadoresCache.length > 0) {
+          setJogadores(jogadoresCache);
+        }
+        if (transacoesCache.length > 0) {
+          setTransacoes(transacoesCache);
+        }
+        
+        toast.error("Erro ao carregar dados do servidor. Usando dados em cache.");
       } finally {
         setCarregando(false);
       }
@@ -326,7 +343,7 @@ export default function Financeiro() {
       ));
 
       // Chamada à API usando axios
-      await api.put(`/api/jogadores/${jogadorId}/pagamentos/${mesIndex}`, {
+      await api.post(`/api/jogadores/${jogadorId}/pagamentos/${mesIndex}`, {
         pago: novoStatus,
         valor: 100,
         dataPagamento: novoStatus ? new Date().toISOString() : null
@@ -1549,4 +1566,16 @@ export default function Financeiro() {
     </div>
   );
 }
+
+useEffect(() => {
+  if (jogadores.length > 0) {
+    localStorage.setItem('jogadoresFinanceiro', JSON.stringify(jogadores));
+  }
+}, [jogadores]);
+
+useEffect(() => {
+  if (transacoes.length > 0) {
+    localStorage.setItem('transacoesFinanceiro', JSON.stringify(transacoes));
+  }
+}, [transacoes]);
 
