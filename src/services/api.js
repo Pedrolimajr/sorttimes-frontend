@@ -13,6 +13,11 @@ const api = axios.create({
 // Interceptador de requisição
 api.interceptors.request.use(
   (config) => {
+    // Remove 'api/' do início da URL se existir
+    if (config.url.startsWith('api/')) {
+      config.url = config.url.substring(4);
+    }
+    
     console.log('📡 Request:', {
       method: config.method?.toUpperCase(),
       url: config.url,
@@ -51,14 +56,21 @@ api.interceptors.response.use(
 );
 
 // Serviço de pagamentos
-export const pagamentosService = {
+export const pagamentosAPI = {
   async atualizarPagamento(jogadorId, mes, dados) {
     try {
-      // Aqui removemos /api do início da URL
-      const response = await api.post(`/jogadores/${jogadorId}/pagamentos`, {
+      const payload = {
         mes,
         ...dados
+      };
+
+      console.log('🔄 Atualizando pagamento:', {
+        jogadorId,
+        mes,
+        dados: payload
       });
+
+      const response = await api.post(`jogadores/${jogadorId}/pagamentos`, payload);
 
       if (!response.data.success) {
         throw new Error(response.data.message || 'Erro ao atualizar pagamento');
@@ -67,7 +79,23 @@ export const pagamentosService = {
       return response.data;
     } catch (error) {
       console.error('❌ Erro ao atualizar pagamento:', error);
-      toast.error('Erro ao atualizar pagamento: ' + error.message);
+      
+      const mensagemErro = error.response?.status === 405 
+        ? 'Método não permitido. Por favor, contate o suporte.'
+        : error.message || 'Erro ao atualizar pagamento';
+      
+      toast.error(mensagemErro);
+      throw error;
+    }
+  },
+
+  async buscarPagamentos(jogadorId) {
+    try {
+      const response = await api.get(`jogadores/${jogadorId}/pagamentos`);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Erro ao buscar pagamentos:', error);
+      toast.error('Erro ao buscar pagamentos: ' + error.message);
       throw error;
     }
   }

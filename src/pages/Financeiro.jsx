@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import socket from '../services/socket';
-import api, { pagamentosAPI, pagamentosService } from '../services/api';
+import api, { pagamentosAPI } from '../services/api';
 import { financeiroService } from '../services/financeiroService';
 import {
   FaMoneyBillWave,
