@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: import.meta.env.VITE_API_URL || 'https://sorttimes-backend.onrender.com',
   headers: {
     'Content-Type': 'application/json'
   },
@@ -11,33 +11,19 @@ const api = axios.create({
 export const pagamentosService = {
   async atualizarPagamento(jogadorId, mes, dados) {
     try {
-      const response = await api.post(`/api/jogadores/${jogadorId}/pagamentos`, {
+      // Removido /api do início da URL
+      const response = await api.post(`/jogadores/${jogadorId}/pagamentos`, {
         mes,
         ...dados
       });
-      
-      // Atualiza o localStorage com os novos dados
-      const cachedData = JSON.parse(localStorage.getItem('dadosFinanceiro') || '{}');
-      
-      if (response.data.data.jogador) {
-        const jogadoresAtualizados = (cachedData.jogadoresCache || []).map(j => 
-          j._id === jogadorId ? response.data.data.jogador : j
-        );
-        
-        const transacoesAtualizadas = response.data.data.transacao 
-          ? [response.data.data.transacao, ...(cachedData.transacoesCache || [])]
-          : cachedData.transacoesCache || [];
 
-        localStorage.setItem('dadosFinanceiro', JSON.stringify({
-          jogadoresCache: jogadoresAtualizados,
-          transacoesCache: transacoesAtualizadas,
-          lastUpdate: new Date().toISOString()
-        }));
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Erro ao atualizar pagamento');
       }
 
       return response.data;
     } catch (error) {
-      console.error('❌ Erro ao atualizar pagamento:', error);
+      console.error('Erro ao atualizar pagamento:', error);
       throw error;
     }
   }

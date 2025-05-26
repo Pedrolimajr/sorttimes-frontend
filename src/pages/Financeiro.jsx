@@ -381,53 +381,57 @@ export default function Financeiro() {
 
       setJogadores(jogadoresAtualizados);
 
-      // Atualiza localStorage
-      localStorage.setItem('dadosFinanceiro', JSON.stringify({
-        jogadoresCache: jogadoresAtualizados,
-        transacoesCache: transacoes,
-        lastUpdate: new Date().toISOString()
-      }));
-
       // Chama o serviço de pagamentos
       const response = await pagamentosService.atualizarPagamento(jogadorId, mesIndex, {
         pago: novoStatus,
         valor: 100,
-        dataPagamento: novoStatus ? new Date().toISOString() : null
+        dataPagamento: new Date().toISOString()
       });
 
-      if (response.success && novoStatus) {
-        // Se foi um pagamento (não um cancelamento), registra a transação
-        const transacaoData = {
-          descricao: `Mensalidade - ${jogador.nome} (${mesIndex + 1}/${new Date().getFullYear()})`,
-          valor: 100,
-          tipo: 'receita',
-          categoria: 'mensalidade',
-          data: new Date().toISOString(),
-          jogadorId: jogadorId,
-          jogadorNome: jogador.nome
-        };
+      if (response.success) {
+        // Se foi um pagamento, registra a transação
+        if (novoStatus) {
+          const transacaoData = {
+            descricao: `Mensalidade - ${jogador.nome} (${mesIndex + 1}/${new Date().getFullYear()})`,
+            valor: 100,
+            tipo: 'receita',
+            categoria: 'mensalidade',
+            data: new Date().toISOString(),
+            jogadorId: jogadorId,
+            jogadorNome: jogador.nome
+          };
 
-        const transacaoResponse = await api.post('/api/financeiro/transacoes', transacaoData);
-        
-        if (transacaoResponse.data.success) {
-          setTransacoes(prev => [transacaoResponse.data.data, ...prev]);
+          const transacaoResponse = await api.post('/financeiro/transacoes', transacaoData);
           
-          // Atualiza localStorage com nova transação
-          localStorage.setItem('dadosFinanceiro', JSON.stringify({
-            jogadoresCache: jogadoresAtualizados,
-            transacoesCache: [transacaoResponse.data.data, ...transacoes],
-            lastUpdate: new Date().toISOString()
-          }));
+          if (transacaoResponse.data.success) {
+            setTransacoes(prev => [transacaoResponse.data.data, ...prev]);
+            
+            // Atualiza localStorage
+            const dadosAtualizados = {
+              jogadoresCache: jogadoresAtualizados,
+              transacoesCache: [transacaoResponse.data.data, ...transacoes],
+              lastUpdate: new Date().toISOString()
+            };
+            
+            localStorage.setItem('dadosFinanceiro', JSON.stringify(dadosAtualizados));
+            
+            // Atualiza estatísticas
+            setEstatisticas(prev => ({
+              ...prev,
+              totalReceitas: prev.totalReceitas + 100,
+              saldo: prev.saldo + 100
+            }));
+          }
         }
-      }
 
-      toast.success(`Pagamento ${novoStatus ? 'registrado' : 'removido'} com sucesso!`);
+        toast.success(`Pagamento ${novoStatus ? 'registrado' : 'removido'} com sucesso!`);
+      }
 
     } catch (error) {
       console.error("Erro ao atualizar pagamento:", error);
       toast.error('Erro ao atualizar status de pagamento');
       
-      // Recupera estado anterior do localStorage
+      // Reverte estado em caso de erro
       const cachedData = JSON.parse(localStorage.getItem('dadosFinanceiro'));
       if (cachedData) {
         setJogadores(cachedData.jogadoresCache);
