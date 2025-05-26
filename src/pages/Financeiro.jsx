@@ -75,6 +75,7 @@ export default function Financeiro() {
     const carregarDados = async () => {
       setCarregando(true);
       try {
+        // Use a instância do axios configurada
         const [jogadoresRes, transacoesRes] = await Promise.all([
           api.get('/api/jogadores'),
           api.get('/api/financeiro/transacoes')
@@ -83,23 +84,22 @@ export default function Financeiro() {
         const jogadoresData = jogadoresRes.data.data || [];
         const transacoesData = transacoesRes.data.data || [];
 
-        // Certifique-se que os jogadores têm um array de pagamentos
+        // Formata os jogadores
         const jogadoresFormatados = jogadoresData.map(jogador => ({
           ...jogador,
           pagamentos: jogador.pagamentos || Array(12).fill(false),
           statusFinanceiro: jogador.statusFinanceiro || 'Inadimplente'
         }));
 
-        // Salva no localStorage
+        // Atualiza o estado e o localStorage
+        setJogadores(jogadoresFormatados);
+        setTransacoes(transacoesData);
+        
         localStorage.setItem('jogadoresFinanceiro', JSON.stringify(jogadoresFormatados));
         localStorage.setItem('transacoesFinanceiro', JSON.stringify(transacoesData));
 
-        setJogadores(jogadoresFormatados);
-        setTransacoes(transacoesData);
-
       } catch (erro) {
         console.error("Erro ao carregar dados:", erro);
-        
         // Tenta recuperar do localStorage
         const jogadoresCache = JSON.parse(localStorage.getItem('jogadoresFinanceiro') || '[]');
         const transacoesCache = JSON.parse(localStorage.getItem('transacoesFinanceiro') || '[]');
@@ -342,12 +342,16 @@ export default function Financeiro() {
           : j
       ));
 
-      // Chamada à API usando axios
-      await api.post(`/api/jogadores/${jogadorId}/pagamentos/${mesIndex}`, {
+      // Chamada à API usando axios com método POST
+      const response = await api.post(`/api/jogadores/${jogadorId}/pagamentos/${mesIndex}`, {
         pago: novoStatus,
         valor: 100,
         dataPagamento: novoStatus ? new Date().toISOString() : null
       });
+
+      if (!response.data.success) {
+        throw new Error('Erro ao atualizar pagamento');
+      }
 
       // Se for um novo pagamento, registra a transação
       if (novoStatus) {
@@ -361,8 +365,15 @@ export default function Financeiro() {
           jogadorNome: jogador.nome
         };
 
-        const response = await api.post('/api/financeiro/transacoes', transacaoData);
-        setTransacoes(prev => [response.data.data, ...prev]);
+        const transacaoResponse = await api.post('/api/financeiro/transacoes', transacaoData);
+        if (transacaoResponse.data.success) {
+          setTransacoes(prev => [transacaoResponse.data.data, ...prev]);
+          
+          // Salva no localStorage
+          localStorage.setItem('transacoesFinanceiro', 
+            JSON.stringify([transacaoResponse.data.data, ...transacoes])
+          );
+        }
       }
 
       toast.success(`Pagamento ${novoStatus ? 'registrado' : 'removido'} com sucesso!`);
