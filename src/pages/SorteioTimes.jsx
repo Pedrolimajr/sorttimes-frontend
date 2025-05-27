@@ -96,7 +96,7 @@ export default function SorteioTimes() {
     }
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/gerar-link-presenca`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/gerar-link-presenca`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -232,7 +232,7 @@ const aplicarFiltroPosicao = () => {
   
     setCarregando(true);
     try {
-      const response = await fetch(`${BACKEND_URL}/api/sorteio-times/sortear`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/sorteio-times/sortear`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
