@@ -13,8 +13,6 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import socket from '../services/socket';
 
-const BACKEND_URL = import.meta.env.VITE_API_URL;
-
 // Constantes para organizar os valores fixos
 const POSICOES = {
   GOLEIRO: "Goleiro",
@@ -98,30 +96,22 @@ export default function SorteioTimes() {
     }
 
     try {
-      // Gera um ID único para o link
-      const linkId = Math.random().toString(36).substr(2, 9);
-      
-      const response = await fetch(`${BACKEND_URL}/api/presenca`, {
+      const response = await fetch(`${BACKEND_URL}/api/gerar-link-presenca`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          linkId,
-          dataJogo,
           jogadores: jogadoresSelecionados.map(j => ({
             id: j._id,
             nome: j.nome,
             presente: j.presente
-          }))
+          })),
+          dataJogo
         })
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Erro ao gerar link');
-      }
-
+      const { linkId } = await response.json();
       const linkCompleto = `${window.location.origin}/confirmar-presenca/${linkId}`;
       
       const dataFormatada = new Date(dataJogo).toLocaleDateString('pt-BR', {
@@ -129,19 +119,13 @@ export default function SorteioTimes() {
         day: 'numeric',
         month: 'long'
       });
-
-      const mensagem = 
-`⚽ *Confirmação de Presença - Fut de ${dataFormatada}*
-
-Fala galera! Chegou a hora de confirmar presença para o nosso fut!
-
-🗓️ *Data:* ${dataFormatada}
-⏰ *Horário:* ${new Date(dataJogo).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-
-📲 *Confirme sua presença acessando:*
-${linkCompleto}
-
-_Clique no link acima para confirmar sua participação._`;
+      
+      const mensagem = `*⚽ Confirmação de Presença - Fut de ${dataFormatada}!*\n\n` +
+        `Fala galera! Chegou a hora de confirmar presença para o nosso fut!\n\n` +
+        `🗓️ Data: ${dataFormatada}\n\n` +
+        `📲 *Confirme sua presença acessando:*\n\n`+
+        `${linkCompleto}\n\n` +
+        `_Clique no link acima para confirmar sua participação._`;
 
       if (navigator.share) {
         await navigator.share({
@@ -152,10 +136,9 @@ _Clique no link acima para confirmar sua participação._`;
         await navigator.clipboard.writeText(mensagem);
         toast.success('Link copiado para área de transferência!');
       }
-
     } catch (error) {
       console.error('Erro ao gerar link:', error);
-      toast.error('Erro ao gerar link de presença: ' + error.message);
+      toast.error('Erro ao gerar link de presença');
     }
   };
 
@@ -246,25 +229,48 @@ const aplicarFiltroPosicao = () => {
       toast.error("Mínimo de 2 jogadores necessários");
       return;
     }
-
+  
     setCarregando(true);
     try {
-      const response = await api.post('/sorteio/sortear', {
-        jogadoresIds: jogadoresPresentes.map(j => j._id),
-        balanceamento,
-        posicaoUnica: filtroPosicao || null,
-        jogadoresPorTime: 7 // ou outro número desejado
+      const response = await fetch(`${BACKEND_URL}/api/sorteio-times/sortear`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          jogadoresIds: jogadoresPresentes.map(j => j._id),
+          posicaoUnica: filtroPosicao,
+          balanceamento,
+          posicoesEspecificas: balanceamento === TIPOS_BALANCEAMENTO.POSICAO ? 
+            { [POSICOES.GOLEIRO]: 1 } : null,
+          jogadoresPorTime: Math.ceil(jogadoresPresentes.length / 2)
+        })
       });
-
-      if (!response.data.success) {
-        throw new Error(response.data.message);
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao sortear times');
       }
-
-      const { times } = response.data.data;
-      setTimes(times);
+  
+      const { data } = await response.json();
+      
+      if (!data?.times) {
+        throw new Error('Resposta inválida do servidor');
+      }
+  
+      const timesComIds = data.times.map(time => ({
+        ...time,
+        jogadores: time.jogadores.map(j => ({ 
+          ...j, 
+          id: j._id || Math.random().toString(36).substr(2, 9),
+          posicao: filtroPosicao || j.posicao
+        }))
+      }));
+      
+      setTimes(timesComIds);
       
       const novoSorteio = {
-        times,
+        times: timesComIds,
         data: new Date(),
         jogadoresPresentes: jogadoresPresentes.length,
         balanceamento,
@@ -272,10 +278,10 @@ const aplicarFiltroPosicao = () => {
       };
       
       setHistorico([novoSorteio, ...historico.slice(0, 4)]);
-      toast.success('Times sorteados com sucesso!');
-
+      toast.success(`Times sorteados com sucesso! ${data.times.length} times formados`);
+  
     } catch (error) {
-      console.error("Erro ao sortear:", error);
+      console.error("Erro detalhado:", error);
       toast.error(error.message || 'Erro ao sortear times');
     } finally {
       setCarregando(false);
@@ -527,18 +533,6 @@ const aplicarFiltroPosicao = () => {
     </motion.div>
   );
 
-  const validarData = (data) => {
-    const dataJogo = new Date(data);
-    const agora = new Date();
-    
-    if (dataJogo < agora) {
-      toast.error('Não é possível selecionar uma data passada');
-      return false;
-    }
-    
-    return true;
-  };
-
   return (
     <div className="min-h-screen bg-gray-900 px-4 py-8 sm:px-6 lg:px-8">
       {/* Efeito de fundo com partículas */}
@@ -639,12 +633,9 @@ const aplicarFiltroPosicao = () => {
       <input
         type="datetime-local"
         value={dataJogo}
-        onChange={(e) => {
-          if (validarData(e.target.value)) {
-            setDataJogo(e.target.value);
-          }
-        }}
-        className="px-0 py-0.5 bg-transparent text-white focus:outline-none text-xs h-full w-[140px] max-sm:w-full"
+        onChange={(e) => setDataJogo(e.target.value)}
+        className="px-0 py-0.5 bg-transparent text-white focus:outline-none text-xs 
+                   h-full w-[140px] max-sm:w-full"
       />
     </div>
 

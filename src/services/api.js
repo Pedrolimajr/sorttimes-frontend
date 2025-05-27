@@ -2,19 +2,18 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL + '/api',
+  baseURL: import.meta.env.VITE_API_URL,
   headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json'
-  }
+    'Content-Type': 'application/json'
+  },
+  withCredentials: true
 });
 
 // Serviço de pagamentos
 export const pagamentosAPI = {
   async atualizarPagamento(jogadorId, mes, dados) {
     try {
-      // Correção na URL - mudando de 'pagamentos' para 'pagamento'
-      const url = `jogadores/${jogadorId}/pagamento`;
+      const url = `jogadores/${jogadorId}/pagamentos`;
       console.log('🔄 Atualizando pagamento:', { url, dados });
       
       const response = await api.post(url, {
@@ -26,50 +25,42 @@ export const pagamentosAPI = {
         throw new Error(response.data.message || 'Erro ao atualizar pagamento');
       }
 
-      console.log('✅ Pagamento atualizado:', response.data);
       return response.data;
     } catch (error) {
       console.error('❌ Erro ao atualizar pagamento:', error);
       throw error;
     }
-  },
-
-  // Novo método para buscar pagamentos
-  async buscarPagamentos(jogadorId) {
-    try {
-      const response = await api.get(`jogadores/${jogadorId}/pagamentos`);
-      return response.data;
-    } catch (error) {
-      console.error('❌ Erro ao buscar pagamentos:', error);
-      throw error;
-    }
   }
 };
 
-// Interceptor melhorado para requisições
+// Interceptador de requisição
 api.interceptors.request.use(
-  config => {
-    // Remove qualquer /api duplicado
-    if (config.url.includes('/api/api/')) {
-      config.url = config.url.replace('/api/api/', '/api/');
+  (config) => {
+    // Remove 'api/' do início da URL
+    if (config.url.startsWith('api/')) {
+      config.url = config.url.substring(4);
     }
-
+    
+    // Remove barras duplas na URL
+    config.url = config.url.replace(/\/\//g, '/');
+    
     console.log('📡 Request:', {
       method: config.method?.toUpperCase(),
-      url: `${config.baseURL}${config.url}`,
+      url: config.url,
       data: config.data
     });
+    
     return config;
   },
-  error => {
+  (error) => {
     console.error('❌ Request Error:', error);
     return Promise.reject(error);
   }
 );
 
-// Interceptor melhorado para respostas
+// Interceptador de resposta com tratamento detalhado de erros
 api.interceptors.response.use(
-  response => {
+  (response) => {
     console.log('✅ Response:', {
       status: response.status,
       url: response.config.url,
@@ -77,7 +68,7 @@ api.interceptors.response.use(
     });
     return response;
   },
-  error => {
+  (error) => {
     console.error('❌ Response Error:', {
       status: error.response?.status,
       url: error.config?.url,
@@ -85,12 +76,27 @@ api.interceptors.response.use(
       data: error.response?.data
     });
 
-    // Mensagem amigável baseada no erro
-    const mensagem = error.response?.status === 404 
-      ? 'Recurso não encontrado'
-      : error.response?.data?.message || 'Erro ao processar requisição';
-    
-    toast.error(mensagem);
+    let mensagemErro = 'Erro ao processar requisição';
+
+    switch (error.response?.status) {
+      case 405:
+        mensagemErro = 'Operação não permitida. Por favor, contate o suporte.';
+        break;
+      case 404:
+        mensagemErro = 'Recurso não encontrado';
+        break;
+      case 401:
+        mensagemErro = 'Não autorizado. Faça login novamente';
+        break;
+      case 403:
+        mensagemErro = 'Acesso negado';
+        break;
+      case 500:
+        mensagemErro = 'Erro interno do servidor';
+        break;
+    }
+
+    toast.error(mensagemErro);
     return Promise.reject(error);
   }
 );

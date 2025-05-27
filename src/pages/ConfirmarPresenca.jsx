@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { io } from 'socket.io-client';
 import { toast } from 'react-toastify';
-import { BACKEND_URL } from '../config/config';
+import api from '../services/api';
 import { GiSoccerKick } from "react-icons/gi";
 
 export default function ConfirmarPresenca() {
@@ -12,32 +12,52 @@ export default function ConfirmarPresenca() {
   const [carregando, setCarregando] = useState(true);
   const [socket, setSocket] = useState(null);
 
+  // Configuração do Socket
   useEffect(() => {
-    const newSocket = io(BACKEND_URL);
-    setSocket(newSocket);
-    return () => newSocket.disconnect();
-  }, []);
+    const socketInstance = io(import.meta.env.VITE_SOCKET_URL, {
+      transports: ['websocket'],
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000
+    });
 
+    socketInstance.on('connect', () => {
+      console.log('Socket conectado!');
+      socketInstance.emit('entrarSala', linkId);
+    });
+
+    socketInstance.on('presencaAtualizada', (data) => {
+      setJogadores(prev => 
+        prev.map(j => j.id === data.jogadorId ? { ...j, presente: data.presente } : j)
+      );
+    });
+
+    setSocket(socketInstance);
+
+    return () => {
+      socketInstance.emit('sairSala', linkId);
+      socketInstance.disconnect();
+    };
+  }, [linkId]);
+
+  // Carregamento inicial dos dados
   useEffect(() => {
     const carregarDados = async () => {
       try {
-        const response = await fetch(`${BACKEND_URL}/api/presenca/${linkId}`);
-        if (!response.ok) throw new Error('Link inválido ou expirado');
-
-        const data = await response.json();
-        if (data.success && data.jogadores) {
-          // Força todos como ausentes ao carregar
-          const jogadoresComPresencaFalse = data.jogadores.map(j => ({
+        setCarregando(true);
+        const response = await api.get(`/presenca/${linkId}`);
+        
+        if (response.data.success) {
+          const jogadoresData = response.data.data.jogadores || [];
+          setJogadores(jogadoresData.map(j => ({
             ...j,
             presente: false
-          }));
-          setJogadores(jogadoresComPresencaFalse);
+          })));
         } else {
-          throw new Error(data.message || 'Erro ao carregar dados');
+          throw new Error('Erro ao carregar dados');
         }
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
-        toast.error(error.message);
+        toast.error('Link inválido ou expirado');
       } finally {
         setCarregando(false);
       }
@@ -46,56 +66,51 @@ export default function ConfirmarPresenca() {
     carregarDados();
   }, [linkId]);
 
-const alternarPresenca = async (jogadorId) => {
+  // Função para alternar presença
+  const alternarPresenca = async (jogadorId) => {
     try {
       const jogador = jogadores.find(j => j.id === jogadorId);
       if (!jogador) return;
 
       const novoEstado = !jogador.presente;
-      const response = await fetch(`${BACKEND_URL}/api/presenca/${linkId}/confirmar`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          jogadorId,
-          presente: novoEstado
-        })
+
+      const response = await api.post(`/presenca/${linkId}/confirmar`, {
+        jogadorId,
+        presente: novoEstado
       });
 
-      if (!response.ok) throw new Error('Erro ao atualizar presença');
-
-      const data = await response.json();
-      if (data.success) {
+      if (response.data.success) {
         setJogadores(prev =>
           prev.map(j => j.id === jogadorId ? { ...j, presente: novoEstado } : j)
         );
 
-        if (socket) {
+        if (socket?.connected) {
           socket.emit('atualizarPresenca', {
+            linkId,
             jogadorId,
-            presente: novoEstado
+            presente: novoEstado,
+            jogadorNome: jogador.nome
           });
         }
 
-        // Mensagens personalizadas com suas escolhas
-        if (novoEstado) {
-          toast.success('✅ 🏃‍♂️ CONFIRMADO! O peladeiro não falta!', {
-            icon: '🏃‍♂️' // Corredor animado
-          });
-        } else {
-          toast.info('🛑😔 SAIU DO JOGO! Esperamos você na próxima!', {
-            icon: '👋' // Mão acenando (tchau)
-          });
-        }
-      } else {
-        throw new Error(data.message || 'Erro ao atualizar presença');
+        toast.success(novoEstado ? 
+          '✅ Presença confirmada!' : 
+          '❌ Presença removida!'
+        );
       }
     } catch (error) {
       console.error('Erro:', error);
-      toast.error('❌ Falha na conexão: ' + error.message);
+      toast.error('Erro ao atualizar presença');
     }
   };
+
+  if (carregando) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 px-4 py-8">
