@@ -1,266 +1,562 @@
-import { useEffect, useRef, useState } from "react";
-import {
-  FaFilePdf,
-  FaPlus,
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  FaPlus, 
+  FaTrash, 
+  FaFilePdf, 
+  FaFileImage, 
+  FaArrowLeft, 
+  FaSave, 
   FaTable,
-  FaTrash
-} from "react-icons/fa";
+  FaTimesCircle,
+  FaFileDownload
+} from 'react-icons/fa';
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
-import { toast } from "react-toastify";
-import axios from "axios";
-
-export default function Planilhas({ voltarParaDashboard }) {
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { motion } from 'framer-motion';
+export default function InformacoesPartida() {
+  const navigate = useNavigate();
   const [planilhas, setPlanilhas] = useState([]);
   const [planilhaAtiva, setPlanilhaAtiva] = useState(null);
-  const [titulo, setTitulo] = useState("");
-  const [subtitulo, setSubtitulo] = useState("");
-  const [tabela, setTabela] = useState([["", "", ""]]);
+  const [titulo, setTitulo] = useState('Nova Planilha');
+  const [subtitulo, setSubtitulo] = useState('');
+  const [tabela, setTabela] = useState([['Cabeçalho', 'Valor'], ['', '']]);
   const [carregando, setCarregando] = useState(false);
+  const [erro, setErro] = useState(null);
+
   const refPlanilha = useRef(null);
 
-  const API_URL = import.meta.env.VITE_API_URL;
-
+  // Carrega planilhas ao iniciar
   useEffect(() => {
-    const carregar = async () => {
+    const carregarPlanilhas = async () => {
       try {
-        const { data } = await axios.get(`${API_URL}/planilhas`);
-        setPlanilhas(data);
-        if (data.length > 0) selecionarPlanilha(data[0]);
-      } catch (err) {
-        toast.error("Erro ao carregar planilhas.");
-        console.error(err);
+        setCarregando(true);
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/planilhas`);
+        
+        if (!response.ok) throw new Error('Erro ao carregar planilhas');
+        
+        const data = await response.json();
+        setPlanilhas(data.data || []);
+        
+        if (data.data?.length > 0) {
+          selecionarPlanilha(data.data[0]);
+        }
+      } catch (error) {
+        setErro(error.message);
+        toast.error(error.message);
+      } finally {
+        setCarregando(false);
       }
     };
-    carregar();
+
+    carregarPlanilhas();
   }, []);
 
-  const selecionarPlanilha = (planilha) => {
-    setPlanilhaAtiva(planilha);
-    setTitulo(planilha.titulo);
-    setSubtitulo(planilha.subtitulo);
-    setTabela(planilha.tabela);
-  };
+  // Função para salvar planilha
+const salvarPlanilha = async () => {
+  try {
+    setCarregando(true);
+    
+    // Validação básica
+    if (!titulo.trim()) {
+      toast.error('Título é obrigatório');
+      return setCarregando(false);
+    }
 
+    const planilhaData = {
+      titulo: titulo.trim(),
+      subtitulo: subtitulo.trim(),
+      tabela,
+      dataAtualizacao: new Date().toISOString()
+    };
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+    const url = planilhaAtiva?._id 
+      ? `${import.meta.env.VITE_API_URL}/api/planilhas/${planilhaAtiva._id}`
+      : `${import.meta.env.VITE_API_URL}/api/planilhas`;
+
+    const response = await fetch(url, {
+      method: planilhaAtiva?._id ? 'PUT' : 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(planilhaData),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Erro ao salvar');
+    }
+
+    const { data } = await response.json();
+
+    // Atualização otimizada do estado
+    setPlanilhas(prev => 
+      planilhaAtiva?._id 
+        ? prev.map(p => p._id === data._id ? data : p)
+        : [data, ...prev]
+    );
+    
+    setPlanilhaAtiva(data);
+    toast.success('Salvo com sucesso!');
+
+  } catch (error) {
+    console.error('Erro:', error);
+    toast.error(
+      error.name === 'AbortError' 
+        ? 'Tempo limite excedido' 
+        : error.message || 'Erro ao salvar'
+    );
+  } finally {
+    setCarregando(false);
+  }
+};
+
+  // Funções para manipulação da tabela
+  const adicionarLinha = () => setTabela([...tabela, tabela[0].map(() => '')]);
+  const adicionarColuna = () => setTabela(tabela.map(row => [...row, '']));
+  
   const atualizarCelula = (linha, coluna, valor) => {
     const novaTabela = [...tabela];
     novaTabela[linha][coluna] = valor;
     setTabela(novaTabela);
   };
 
-  const adicionarLinha = () => {
-    const novaLinha = new Array(tabela[0].length).fill("");
-    setTabela([...tabela, novaLinha]);
-  };
-
-  const adicionarColuna = () => {
-    const novaTabela = tabela.map(linha => [...linha, ""]);
-    setTabela(novaTabela);
-  };
-
   const removerLinha = (index) => {
-    if (tabela.length <= 1) return;
+    if (index === 0 || tabela.length <= 2) return;
     setTabela(tabela.filter((_, i) => i !== index));
   };
 
-  const removerColuna = (index) => {
+  const removerColuna = (colIndex) => {
     if (tabela[0].length <= 1) return;
-    const novaTabela = tabela.map(linha =>
-      linha.filter((_, i) => i !== index)
-    );
-    setTabela(novaTabela);
+    setTabela(tabela.map(row => row.filter((_, i) => i !== colIndex)));
   };
 
-  const salvarPlanilha = async () => {
-    if (!titulo.trim()) {
-      toast.warning("Dê um título à planilha!");
-      return;
-    }
+  // Função para deletar planilha (corrigida)
+const deletarPlanilha = async (id) => {
+  if (!window.confirm('Tem certeza que deseja excluir esta planilha permanentemente?')) {
+    return;
+  }
 
+  try {
     setCarregando(true);
-    try {
-      const novaPlanilha = {
-        titulo,
-        subtitulo,
-        tabela
-      };
+    console.log(`🔄 Tentando excluir planilha com ID: ${id}`);
+    
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/planilhas/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      credentials: 'include' // Se estiver usando autenticação
+    });
 
-      if (planilhaAtiva?._id) {
-        const { data } = await axios.put(
-          `${API_URL}/planilhas/${planilhaAtiva._id}`,
-          novaPlanilha
-        );
-        const atualizadas = planilhas.map(p =>
-          p._id === data._id ? data : p
-        );
-        setPlanilhas(atualizadas);
-        setPlanilhaAtiva(data);
-        toast.success("Planilha atualizada com sucesso!");
-      } else {
-        const { data } = await axios.post(`${API_URL}/planilhas`, novaPlanilha);
-        setPlanilhas([...planilhas, data]);
-        setPlanilhaAtiva(data);
-        toast.success("Planilha criada com sucesso!");
-      }
-    } catch (err) {
-      toast.error("Erro ao salvar planilha.");
-      console.error(err);
-    } finally {
-      setCarregando(false);
+    console.log('📊 Status da resposta:', response.status);
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('🔴 Detalhes do erro:', errorData);
+      throw new Error(errorData.message || `Erro ${response.status} ao excluir`);
     }
-  };
 
+    const data = await response.json();
+    console.log('🟢 Resposta do servidor:', data);
+
+    // Atualização otimizada do estado
+    setPlanilhas(prev => prev.filter(p => p._id !== id));
+    
+    if (planilhaAtiva?._id === id) {
+      setTitulo('Nova Planilha');
+      setSubtitulo('');
+      setTabela([['Cabeçalho', 'Valor'], ['', '']]);
+      setPlanilhaAtiva(null);
+    }
+
+    toast.success('Planilha excluída com sucesso!');
+  } catch (error) {
+    console.error('❌ Erro completo:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
+    toast.error(`Falha ao excluir: ${error.message}`);
+  } finally {
+    setCarregando(false);
+  }
+};
   const criarNovaPlanilha = () => {
-    setTitulo("");
-    setSubtitulo("");
-    setTabela([["", "", ""]]);
+    setTitulo(`Nova Planilha ${planilhas.length + 1}`);
+    setSubtitulo('');
+    setTabela([['Cabeçalho', 'Valor'], ['', '']]);
     setPlanilhaAtiva(null);
   };
 
-  const deletarPlanilha = async (id) => {
-    if (!window.confirm("Tem certeza que deseja excluir esta planilha?")) return;
+  const selecionarPlanilha = (planilha) => {
+    setTitulo(planilha.titulo);
+    setSubtitulo(planilha.subtitulo || '');
+    setTabela(planilha.tabela);
+    setPlanilhaAtiva(planilha);
+  };
 
+  const voltarParaDashboard = () => navigate('/dashboard');
+
+ const exportarPDF = async () => {
+  try {
     setCarregando(true);
-    try {
-      await axios.delete(`${API_URL}/planilhas/${id}`);
-      const novas = planilhas.filter(p => p._id !== id);
-      setPlanilhas(novas);
-      setPlanilhaAtiva(null);
-      criarNovaPlanilha();
-      toast.success("Planilha excluída.");
-    } catch (err) {
-      toast.error("Erro ao excluir planilha.");
-      console.error(err);
-    } finally {
-      setCarregando(false);
+    
+    // Crie um objeto com os dados para exportação
+    const dadosParaExportar = {
+      titulo,
+      subtitulo,
+      tabela,
+      data: new Date().toLocaleString()
+    };
+
+    // Opção 1: Exportar para PDF (usando jsPDF)
+    const exportarParaPDF = () => {
+      return new Promise((resolve) => {
+        // Adia a execução para garantir que o estado de carregamento seja atualizado
+        setTimeout(async () => {
+          const { jsPDF } = await import('jspdf');
+          const doc = new jsPDF();
+          
+          // Adiciona título
+          doc.setFontSize(20);
+          doc.text(titulo, 14, 15);
+          
+          // Adiciona subtítulo se existir
+          if (subtitulo) {
+            doc.setFontSize(12);
+            doc.text(subtitulo, 14, 22);
+          }
+          
+          // Adiciona data
+          doc.setFontSize(10);
+          doc.text(`Exportado em: ${new Date().toLocaleString()}`, 14, 29);
+          
+          // Adiciona tabela
+          let y = 40;
+          tabela.forEach((linha, i) => {
+            linha.forEach((celula, j) => {
+              doc.setFontSize(i === 0 ? 12 : 10); // Cabeçalho em negrito
+              doc.setTextColor(i === 0 ? '#000000' : '#333333');
+              doc.text(celula, 14 + (j * 40), y);
+            });
+            y += 10;
+          });
+          
+          // Salva o PDF
+          doc.save(`planilha_${titulo}_${new Date().getTime()}.pdf`);
+          resolve();
+        }, 100);
+      });
+    };
+
+    // Opção 2: Exportar para Imagem (usando html-to-image)
+    const exportarParaImagem = async () => {
+      const { toPng } = await import('html-to-image');
+      const elemento = refPlanilha.current;
+      
+      if (elemento) {
+        const dataUrl = await toPng(elemento);
+        const link = document.createElement('a');
+        link.download = `planilha_${titulo}_${new Date().getTime()}.png`;
+        link.href = dataUrl;
+        link.click();
+      }
+    };
+
+    // Mostra um diálogo para selecionar o tipo de exportação
+    const tipoExportacao = window.confirm('Clique em OK para exportar como PDF ou Cancelar para exportar como Imagem');
+    
+    if (tipoExportacao) {
+      await exportarParaPDF();
+      toast.success('PDF gerado com sucesso!');
+    } else {
+      await exportarParaImagem();
+      toast.success('Imagem gerada com sucesso!');
     }
-  };
 
-  const exportarPDF = async () => {
-    const element = refPlanilha.current;
-    const canvas = await html2canvas(element);
-    const imgData = canvas.toDataURL("image/png");
-
-    const pdf = new jsPDF("p", "mm", "a4");
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const imgProps = pdf.getImageProperties(imgData);
-    const ratio = imgProps.width / imgProps.height;
-    const width = pageWidth - 20;
-    const height = width / ratio;
-
-    pdf.addImage(imgData, "PNG", 10, 10, width, height);
-    pdf.save(`${titulo || "planilha"}.pdf`);
-  };
-
+  } catch (error) {
+    console.error('Erro ao exportar:', error);
+    toast.error(`Falha ao exportar: ${error.message}`);
+  } finally {
+    setCarregando(false);
+  }
+};
   return (
-    <div className="p-4">
-      <header className="mb-6 flex justify-between items-center">
-        <button onClick={voltarParaDashboard} className="btn-primary flex items-center gap-2" title="Voltar para Dashboard">
-          <RiArrowLeftDoubleLine size={20} />
-          Voltar
-        </button>
+    <div className="min-h-screen bg-gray-900 px-4 py-8 sm:px-6 lg:px-8">
+      {/* Efeito de partículas */}
+      <div className="fixed inset-0 overflow-hidden -z-10 opacity-20">
+        {[...Array(15)].map((_, i) => (
+          <motion.div
+            key={i}
+            initial={{ 
+              x: Math.random() * 100,
+              y: Math.random() * 100,
+              opacity: 0.3
+            }}
+            animate={{ 
+              y: [null, (Math.random() - 0.5) * 50],
+              x: [null, (Math.random() - 0.5) * 50],
+            }}
+            transition={{ 
+              duration: 15 + Math.random() * 20,
+              repeat: Infinity,
+              repeatType: "reverse",
+              ease: "easeInOut"
+            }}
+            className="absolute w-1 h-1 bg-white rounded-full"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+          />
+        ))}
+      </div>
 
-        <div className="flex gap-3">
-          <button onClick={criarNovaPlanilha} className="btn-secondary flex items-center gap-2" title="Nova Planilha">
-            <FaPlus />
-            Nova
-          </button>
-          <button onClick={salvarPlanilha} className="btn-primary flex items-center gap-2" disabled={carregando} title="Salvar Planilha">
-            Salvar
-          </button>
-          {planilhaAtiva && (
-            <button onClick={() => deletarPlanilha(planilhaAtiva._id)} className="btn-danger flex items-center gap-2" disabled={carregando} title="Excluir Planilha">
-              <FaTrash />
-              Excluir
-            </button>
-          )}
-          <button onClick={exportarPDF} className="btn-primary flex items-center gap-2" disabled={carregando} title="Exportar PDF">
-            <FaFilePdf />
-            Exportar
-          </button>
-        </div>
-      </header>
+      <div className="max-w-7xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8 relative pt-16 sm:pt-0 text-center"
+        >
+          {/* Botão Voltar */}
+          <motion.button 
+            onClick={voltarParaDashboard}
+            whileHover={{ 
+              scale: 1.05,
+              x: -5,
+              backgroundColor: "rgba(37, 99, 235, 0.1)"
+            }}
+            whileTap={{ scale: 0.95 }}
+            className="absolute left-4 top-0 sm:top-8 w-11 h-11 flex items-center justify-center bg-gray-800/40 hover:bg-gray-700/40 text-gray-200 rounded-full transition-all duration-300 backdrop-blur-sm border border-gray-700/50 shadow-lg hover:shadow-blue-500/20"
+            title="Voltar para o Dashboard"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <RiArrowLeftDoubleLine className="text-blue-400 text-2xl transform transition-transform group-hover:translate-x-1" />
+            <div className="absolute inset-0 rounded-full bg-blue-400/10 animate-pulse" style={{ animationDuration: '3s' }} />
+          </motion.button>
 
-      <main className="bg-gray-800 rounded-lg p-6 shadow-lg text-white" ref={refPlanilha}>
-        <div className="mb-4 flex flex-wrap gap-2">
-          {planilhas.map(p => (
-            <button
-              key={p._id}
-              onClick={() => selecionarPlanilha(p)}
-              className={`btn-tab ${planilhaAtiva?._id === p._id ? "btn-tab-active" : ""}`}
-              title={`Selecionar ${p.titulo}`}
+          {/* Cabeçalho com título e botões */}
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            {/* Título e Subtítulo Centralizados */}
+            <div className="flex flex-col items-center flex-grow">
+              <div className="flex items-center justify-center gap-3">
+                <FaTable className="text-blue-400 text-2xl sm:text-3xl" />
+                <motion.h1 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.1 }}
+                  className="text-2xl sm:text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300"
+                >
+                  Informações das Partidas
+                </motion.h1>
+              </div>
+
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.8 }}
+                transition={{ delay: 0.2 }}
+                className="text-gray-400 text-sm sm:text-base mt-1"
+              >
+                Gerencie as informações e detalhes das partidas
+              </motion.p>
+            </div>
+
+            {/* Botões de ação mantidos à direita */}
+            <motion.div 
+              className="flex gap-3 sm:flex-shrink-0"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
             >
-              <FaTable className="mr-1" />
-              {p.titulo}
-            </button>
-          ))}
-        </div>
+              <button
+                onClick={criarNovaPlanilha}
+                className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg text-sm"
+              >
+                <FaPlus /> Nova Planilha
+              </button>
+              
+              <button
+                onClick={salvarPlanilha}
+                disabled={carregando}
+                className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg text-sm"
+              >
+                <FaSave /> {carregando ? 'Salvando...' : 'Salvar'}
+              </button>
+            </motion.div>
+          </div>
+        </motion.div>
 
-        <input
-          type="text"
-          className="w-full mb-2 p-2 rounded bg-gray-700 text-white"
-          placeholder="Título"
-          value={titulo}
-          onChange={e => setTitulo(e.target.value)}
-        />
-        <input
-          type="text"
-          className="w-full mb-4 p-2 rounded bg-gray-700 text-white"
-          placeholder="Subtítulo"
-          value={subtitulo}
-          onChange={e => setSubtitulo(e.target.value)}
-        />
+        {/* Resto do conteúdo existente */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Seção de edição (ocupa 2 colunas em desktop) */}
+          <div className="lg:col-span-2">
+            <div className="bg-gray-800 p-6 rounded-lg shadow-lg mb-6 backdrop-blur-sm">
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-300 mb-1">Título</label>
+                <input
+                  value={titulo}
+                  onChange={(e) => setTitulo(e.target.value)}
+                  className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white"
+                  placeholder="Título da Planilha"
+                />
+              </div>
+              
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-300 mb-1">Subtítulo</label>
+                <input
+                  value={subtitulo}
+                  onChange={(e) => setSubtitulo(e.target.value)}
+                  className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white"
+                  placeholder="Subtítulo"
+                />
+              </div>
 
-        <table className="w-full border-collapse border border-gray-600">
-          <tbody>
-            {tabela.map((linha, linhaIndex) => (
-              <tr key={linhaIndex} className={linhaIndex === 0 ? "bg-gray-700 font-bold" : "bg-gray-800"}>
-                {linha.map((celula, colunaIndex) => (
-                  <td key={colunaIndex} className="border border-gray-600 p-1">
-                    <input
-                      type="text"
-                      className={`w-full bg-transparent text-white outline-none ${linhaIndex === 0 ? "font-semibold" : ""}`}
-                      value={celula}
-                      onChange={e => atualizarCelula(linhaIndex, colunaIndex, e.target.value)}
-                    />
-                    {linhaIndex === 0 && colunaIndex > 0 && (
-                      <button
-                        onClick={() => removerColuna(colunaIndex)}
-                        className="text-red-400 hover:text-red-600 ml-1"
-                        title="Remover coluna"
+              {/* Tabela editável com scroll */}
+              <div className="overflow-auto max-h-[60vh] rounded-lg border border-gray-700 shadow-xl">
+                <table className="min-w-full border-collapse table-fixed">
+                  <thead>
+                    <tr className="bg-gray-600">
+                      {tabela[0].map((cabecalho, colIndex) => (
+                        <th 
+                          key={colIndex} 
+                          className="p-2 border border-gray-500 sticky top-0 bg-gray-600 min-w-[150px] text-center"
+                        >
+                          <div className="flex flex-col items-center">
+                            <input
+                              value={cabecalho}
+                              onChange={(e) => atualizarCelula(0, colIndex, e.target.value)}
+                              className="w-full bg-transparent font-bold text-white text-center text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 px-2 py-1.5 placeholder-gray-400"
+                              style={{ minWidth: '100px' }}
+                            />
+                            <div className="mt-1">
+                              <button
+                                onClick={() => removerColuna(colIndex)}
+                                className="text-red-400 hover:text-red-300 text-xs opacity-60 hover:opacity-100 transition-opacity"
+                                title="Remover coluna"
+                              >
+                                <FaTimesCircle />
+                              </button>
+                            </div>
+                          </div>
+                        </th>
+                      ))}
+                      <th className="w-10 p-2 border border-gray-500 sticky top-0 bg-gray-600 text-center">
+                        <button
+                          onClick={adicionarColuna}
+                          className="mx-auto flex justify-center text-white hover:text-green-300 transition-colors"
+                          title="Adicionar coluna"
+                        >
+                          <FaPlus />
+                        </button>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tabela.slice(1).map((linha, rowIndex) => (
+                      <tr 
+                        key={rowIndex} 
+                        className={`${
+                          rowIndex % 2 === 0 ? 'bg-gray-700' : 'bg-gray-800'
+                        } hover:bg-gray-600/50 transition-colors`}
                       >
-                        &times;
-                      </button>
-                    )}
-                  </td>
-                ))}
-                {linhaIndex > 0 && (
-                  <td className="border border-gray-600 p-1 text-center">
-                    <button
-                      onClick={() => removerLinha(linhaIndex)}
-                      className="text-red-400 hover:text-red-600"
-                      title="Remover linha"
-                    >
-                      &times;
-                    </button>
-                  </td>
-                )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                        {linha.map((celula, colIndex) => (
+                          <td key={colIndex} className="border border-gray-600 p-0 text-center">
+                            <input
+                              value={celula}
+                              onChange={(e) => atualizarCelula(rowIndex + 1, colIndex, e.target.value)}
+                              className="w-full h-full bg-transparent text-white text-center text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 px-2 py-1.5"
+                              style={{ minWidth: '100px' }}
+                              placeholder="Digite aqui..."
+                            />
+                          </td>
+                        ))}
+                        <td className="border border-gray-600 w-10 text-center">
+                          <button
+                            onClick={() => removerLinha(rowIndex + 1)}
+                            className="w-full h-full flex justify-center items-center text-red-400 hover:text-red-300 opacity-60 hover:opacity-100 transition-opacity"
+                            title="Remover linha"
+                          >
+                            <FaTrash size={12} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
-        <div className="mt-3 flex gap-2">
-          <button onClick={adicionarLinha} className="btn-secondary" title="Adicionar linha">
-            + Linha
-          </button>
-          <button onClick={adicionarColuna} className="btn-secondary" title="Adicionar coluna">
-            + Coluna
-          </button>
+              <div className="mt-6 flex flex-wrap gap-3 border-t border-gray-700 pt-4">
+                <button
+                  onClick={adicionarLinha}
+                  className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg text-xs sm:text-sm"
+                >
+                  <FaPlus /> Adicionar Linha
+                </button>
+                
+                <button
+                  onClick={exportarPDF}
+                  className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg text-xs sm:text-sm"
+                >
+                  <FaFilePdf /> Exportar PDF
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Lista de planilhas (1 coluna em desktop) com scroll */}
+          <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
+            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+              <FaTable /> Planilhas Salvas
+            </h2>
+            
+            {planilhas.length === 0 ? (
+              <p className="text-gray-400">Nenhuma planilha cadastrada</p>
+            ) : (
+              <div className="overflow-y-auto max-h-[60vh] space-y-3">
+                {planilhas.map((planilha) => (
+                  <div 
+                    key={planilha._id}
+                    onClick={() => selecionarPlanilha(planilha)}
+                    className={`p-3 border rounded-lg cursor-pointer transition-colors relative ${
+                      planilhaAtiva?._id === planilha._id 
+                        ? 'bg-blue-900/30 border-blue-500' 
+                        : 'border-gray-600 hover:bg-gray-700'
+                    }`}
+                  >
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deletarPlanilha(planilha._id);
+                      }}
+                      className="absolute top-2 right-2 text-red-400 hover:text-red-300"
+                      title="Excluir planilha"
+                    >
+                      <FaTrash />
+                    </button>
+                    
+                    <h3 className="font-bold">{planilha.titulo}</h3>
+                    {planilha.subtitulo && <p className="text-sm text-gray-300 mt-1">{planilha.subtitulo}</p>}
+                    <p className="text-xs text-gray-400 mt-2">
+                      Criada em: {new Date(planilha.dataAtualizacao).toLocaleDateString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
