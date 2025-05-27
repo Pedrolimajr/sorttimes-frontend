@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import {
   FaMoneyBillWave,
   FaArrowUp,
@@ -27,8 +29,6 @@ import { useNavigate } from 'react-router-dom';
 import ListaJogadores from './ListaJogadores';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import api from '../services/api';
 
 Chart.register(...registerables);
@@ -81,25 +81,26 @@ export default function Financeiro() {
         api.get('/financeiro/transacoes')
       ]);
 
-      console.log('Dados jogadores:', jogadoresRes.data);
-      console.log('Dados transações:', transacoesRes.data);
+      console.log('Resposta jogadores:', jogadoresRes.data);
+      console.log('Resposta transações:', transacoesRes.data);
 
-      const jogadoresData = jogadoresRes.data;
-      const transacoesData = transacoesRes.data;
+      // Verifica se a resposta tem o formato esperado
+      const jogadoresData = jogadoresRes.data?.success ? jogadoresRes.data.data : [];
+      const transacoesData = transacoesRes.data?.success ? transacoesRes.data.data : [];
 
-      const jogadoresProcessados = (Array.isArray(jogadoresData) ? jogadoresData : [])
-        .map(jogador => ({
-          ...jogador,
-          pagamentos: Array.isArray(jogador.pagamentos) && jogador.pagamentos.length === 12
-            ? jogador.pagamentos
-            : Array(12).fill(false)
-        }));
+      // Processa os jogadores
+      const jogadoresProcessados = jogadoresData.map(jogador => ({
+        ...jogador,
+        pagamentos: Array.isArray(jogador.pagamentos) && jogador.pagamentos.length === 12
+          ? jogador.pagamentos
+          : Array(12).fill(false)
+      }));
 
       setJogadores(jogadoresProcessados);
-      setTransacoes(Array.isArray(transacoesData) ? transacoesData : []);
+      setTransacoes(transacoesData);
 
     } catch (error) {
-      console.error("Erro ao carregar dados:", error.response || error);
+      console.error("Erro ao carregar dados:", error);
       toast.error('Erro ao carregar dados: ' + (error.response?.data?.message || error.message));
     } finally {
       setCarregando(false);
@@ -1453,7 +1454,17 @@ export default function Financeiro() {
         )}
       </AnimatePresence>
 
-      <ToastContainer position="bottom-right" autoClose={5000} />
+      <ToastContainer 
+        position="bottom-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
     </div>
   );
 }
