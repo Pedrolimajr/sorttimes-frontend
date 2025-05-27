@@ -63,28 +63,61 @@ export default function SorteioTimes() {
   const [dataJogo, setDataJogo] = useState('');
 
   // Configuração do socket.io para atualizações em tempo real
-  useEffect(() => {
-    socket.connect();
+useEffect(() => {
+  const socketInstance = io(import.meta.env.VITE_API_URL, {
+    path: '/socket.io',
+    transports: ['websocket'],
+    reconnectionAttempts: 5,
+    reconnectionDelay: 3000,
+    timeout: 10000
+  });
 
-    // Listener para atualizações de times
-    socket.on('times-atualizados', (novosTimes) => {
-      setTimes(novosTimes);
-    });
+  socketInstance.on('connect', () => {
+    console.log('✅ Conectado ao servidor Socket.IO');
+    setErro(null);
+    socketInstance.emit('entrarSala', linkId);
+  });
 
-    // Listener para presença
-    socket.on('presencaAtualizada', ({ jogadorId, presente }) => {
-      setJogadoresSelecionados(prev => 
-        prev.map(j => j._id === jogadorId ? { ...j, presente } : j)
-      );
-    });
+  socketInstance.on('connect_error', (err) => {
+    console.error('❌ Erro de conexão Socket.IO:', err);
+    setErro('Falha na conexão em tempo real. Atualizando manualmente...');
+  });
 
-    // Cleanup quando o componente desmonta
-    return () => {
-      socket.off('times-atualizados');
-      socket.off('presencaAtualizada');
-      socket.disconnect();
-    };
-  }, []);
+  socketInstance.on('presencaAtualizada', (data) => {
+    setJogadores(prev => 
+      prev.map(j => j.id === data.jogadorId ? { ...j, presente: data.presente } : j)
+    );
+    toast.info(`${data.nome} está ${data.presente ? 'presente' : 'ausente'}`);
+  });
+
+  setSocket(socketInstance);
+
+  return () => {
+    if (socketInstance.connected) {
+      socketInstance.emit('sairSala', linkId);
+      socketInstance.disconnect();
+    }
+  };
+}, [linkId]);
+
+// Adicione tratamento de erro no carregamento
+if (erro) {
+  return (
+    <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <div className="text-center p-6 bg-gray-800 rounded-xl max-w-md">
+        <div className="text-red-500 text-4xl mb-4">⚠️</div>
+        <h2 className="text-xl font-bold text-white mb-2">Problema de Conexão</h2>
+        <p className="text-gray-300 mb-4">{erro}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+        >
+          Tentar Novamente
+        </button>
+      </div>
+    </div>
+  );
+}
 
   /**
    * Gera um link para confirmação de presença e compartilha via WhatsApp
