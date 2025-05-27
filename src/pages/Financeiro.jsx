@@ -67,44 +67,68 @@ export default function Financeiro() {
     totalJogadores: 0
   });
 
+  const STORAGE_KEY = 'dadosFinanceiros';
+
   // Carregar dados iniciais
   useEffect(() => {
-    carregarDados();
+    const loadData = async () => {
+      try {
+        setCarregando(true);
+
+        // Tenta carregar dados do cache primeiro
+        const cachedData = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (cachedData?.lastUpdate && 
+            (new Date().getTime() - new Date(cachedData.lastUpdate).getTime() < 300000)) { // 5 minutos
+          setJogadores(cachedData.jogadoresCache || []);
+          setTransacoes(cachedData.transacoesCache || []);
+          return;
+        }
+
+        // Se não há cache ou está expirado, carrega da API
+        const [jogadoresRes, transacoesRes] = await Promise.all([
+          api.get('/jogadores'),
+          api.get('/financeiro/transacoes')
+        ]);
+
+        const jogadoresData = jogadoresRes.data?.data || [];
+        const transacoesData = transacoesRes.data?.data || [];
+
+        // Processa os jogadores
+        const jogadoresProcessados = jogadoresData.map(jogador => ({
+          ...jogador,
+          pagamentos: Array.isArray(jogador.pagamentos) && jogador.pagamentos.length === 12
+            ? jogador.pagamentos
+            : Array(12).fill(false)
+        }));
+
+        // Atualiza o estado e o cache
+        setJogadores(jogadoresProcessados);
+        setTransacoes(transacoesData);
+
+        // Salva no localStorage
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          jogadoresCache: jogadoresProcessados,
+          transacoesCache: transacoesData,
+          lastUpdate: new Date().toISOString()
+        }));
+
+      } catch (error) {
+        console.error("Erro ao carregar dados:", error);
+        toast.error('Erro ao carregar dados');
+
+        // Em caso de erro, tenta usar dados do cache
+        const cachedData = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (cachedData) {
+          setJogadores(cachedData.jogadoresCache || []);
+          setTransacoes(cachedData.transacoesCache || []);
+        }
+      } finally {
+        setCarregando(false);
+      }
+    };
+
+    loadData();
   }, []); // Executar apenas uma vez
-
-  const carregarDados = async () => {
-    try {
-      setCarregando(true);
-      
-      const [jogadoresRes, transacoesRes] = await Promise.all([
-        api.get('/jogadores'),
-        api.get('/financeiro/transacoes')
-      ]);
-
-      console.log('Resposta jogadores:', jogadoresRes.data);
-      console.log('Resposta transações:', transacoesRes.data);
-
-      const jogadoresData = jogadoresRes.data?.data || [];
-      const transacoesData = transacoesRes.data?.data || [];
-
-      // Processa os jogadores
-      const jogadoresProcessados = jogadoresData.map(jogador => ({
-        ...jogador,
-        pagamentos: Array.isArray(jogador.pagamentos) && jogador.pagamentos.length === 12
-          ? jogador.pagamentos
-          : Array(12).fill(false)
-      }));
-
-      setJogadores(jogadoresProcessados);
-      setTransacoes(transacoesData);
-
-    } catch (error) {
-      console.error("Erro ao carregar dados:", error);
-      toast.error('Erro ao carregar dados');
-    } finally {
-      setCarregando(false);
-    }
-  };
 
   // Atualizar estatísticas
   useEffect(() => {
@@ -283,7 +307,6 @@ export default function Financeiro() {
           const pagamentosAtualizados = [...j.pagamentos];
           pagamentosAtualizados[mesIndex] = novoStatus;
 
-          // Verifica pagamentos até o mês atual para definir status
           const mesesDevendo = pagamentosAtualizados
             .slice(0, mesAtual + 1)
             .filter(pago => !pago).length;
@@ -297,36 +320,62 @@ export default function Financeiro() {
         return j;
       });
 
+      // Atualiza estado e localStorage antes da chamada API
       setJogadores(jogadoresAtualizados);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        jogadoresCache: jogadoresAtualizados,
+        transacoesCache: transacoes,
+        lastUpdate: new Date().toISOString()
+      }));
 
       // Chamada à API
-      const response = await api.patch(`/jogadores/${jogadorId}/pagamentos`, {
-        mes: mesIndex,
-        pago: novoStatus,
-        valor: 100,
-        dataPagamento: novoStatus ? new Date().toISOString() : null
-      });
-
-      if (novoStatus) {
-        // Registra transação
-        const transacaoResponse = await api.post('/financeiro/transacoes', {
-          descricao: `Mensalidade - ${jogador.nome} (${mesIndex + 1}/${new Date().getFullYear()})`,
+      try {
+        const response = await api.post(`/jogadores/${jogadorId}/pagamento`, {
+          mes: mesIndex,
+          pago: novoStatus,
           valor: 100,
-          tipo: 'receita',
-          categoria: 'mensalidade',
-          data: new Date().toISOString(),
-          jogadorId: jogadorId,
-          jogadorNome: jogador.nome
+          dataPagamento: novoStatus ? new Date().toISOString() : null
         });
 
-        setTransacoes(prev => [transacaoResponse.data, ...prev]);
-      }
+        if (novoStatus && response.data?.success) {
+          // Registra transação
+          const transacaoResponse = await api.post('/financeiro/transacoes', {
+            descricao: `Mensalidade - ${jogador.nome} (${mesIndex + 1}/${new Date().getFullYear()})`,
+            valor: 100,
+            tipo: 'receita',
+            categoria: 'mensalidade',
+            data: new Date().toISOString(),
+            jogadorId: jogadorId,
+            jogadorNome: jogador.nome
+          });
 
-      toast.success(`Pagamento ${novoStatus ? 'registrado' : 'removido'} com sucesso!`);
+          if (transacaoResponse.data?.success) {
+            const novasTransacoes = [transacaoResponse.data.data, ...transacoes];
+            setTransacoes(novasTransacoes);
+            
+            // Atualiza localStorage com nova transação
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+              jogadoresCache: jogadoresAtualizados,
+              transacoesCache: novasTransacoes,
+              lastUpdate: new Date().toISOString()
+            }));
+          }
+        }
+
+        toast.success(`Pagamento ${novoStatus ? 'registrado' : 'removido'} com sucesso!`);
+      } catch (apiError) {
+        console.error("Erro na API:", apiError);
+        // Mantém os dados do localStorage mesmo com erro na API
+        toast.warning('Alteração salva localmente. Sincronização pendente.');
+      }
 
     } catch (error) {
       console.error("Erro ao atualizar pagamento:", error);
-      setJogadores(prev => [...prev]);
+      // Reverte mudanças no estado e localStorage em caso de erro
+      const cachedData = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      if (cachedData?.jogadoresCache) {
+        setJogadores(cachedData.jogadoresCache);
+      }
       toast.error('Erro ao atualizar status de pagamento');
     }
   };
