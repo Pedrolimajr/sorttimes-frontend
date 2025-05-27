@@ -11,18 +11,24 @@ export default function ConfirmarPresenca() {
   const [jogadores, setJogadores] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [socket, setSocket] = useState(null);
+  const [eventoData, setEventoData] = useState('');
 
   // Configuração do Socket
   useEffect(() => {
-    const socketInstance = io(import.meta.env.VITE_SOCKET_URL, {
+    const socketInstance = io(import.meta.env.VITE_API_URL, {
       transports: ['websocket'],
       reconnectionAttempts: 5,
-      reconnectionDelay: 1000
+      reconnectionDelay: 1000,
+      path: '/socket.io' // Adicione se seu backend usar path específico
     });
 
     socketInstance.on('connect', () => {
-      console.log('Socket conectado!');
+      console.log('Conectado ao servidor Socket.IO');
       socketInstance.emit('entrarSala', linkId);
+    });
+
+    socketInstance.on('disconnect', () => {
+      console.log('Desconectado do servidor Socket.IO');
     });
 
     socketInstance.on('presencaAtualizada', (data) => {
@@ -34,8 +40,10 @@ export default function ConfirmarPresenca() {
     setSocket(socketInstance);
 
     return () => {
-      socketInstance.emit('sairSala', linkId);
-      socketInstance.disconnect();
+      if (socketInstance.connected) {
+        socketInstance.emit('sairSala', linkId);
+        socketInstance.disconnect();
+      }
     };
   }, [linkId]);
 
@@ -44,20 +52,29 @@ export default function ConfirmarPresenca() {
     const carregarDados = async () => {
       try {
         setCarregando(true);
-        const response = await api.get(`/presenca/${linkId}`);
+        const response = await api.get(`/api/presenca/${linkId}`);
         
         if (response.data.success) {
-          const jogadoresData = response.data.data.jogadores || [];
+          const { jogadores: jogadoresData, dataJogo } = response.data.data;
           setJogadores(jogadoresData.map(j => ({
             ...j,
-            presente: false
+            presente: j.presente || false
           })));
+          
+          if (dataJogo) {
+            const dataFormatada = new Date(dataJogo).toLocaleDateString('pt-BR', {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long'
+            });
+            setEventoData(dataFormatada);
+          }
         } else {
-          throw new Error('Erro ao carregar dados');
+          throw new Error(response.data.message || 'Erro ao carregar dados');
         }
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
-        toast.error('Link inválido ou expirado');
+        toast.error(error.message || 'Link inválido ou expirado');
       } finally {
         setCarregando(false);
       }
