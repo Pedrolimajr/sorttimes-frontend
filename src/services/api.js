@@ -2,12 +2,11 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: `${import.meta.env.VITE_API_URL}/api`,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
-  },
-  withCredentials: true
+  }
 });
 
 // Serviço de pagamentos
@@ -34,30 +33,32 @@ export const pagamentosAPI = {
   }
 };
 
-// Interceptador de requisição
 api.interceptors.request.use(
   config => {
-    // Remove duplicação do /api
-    config.url = config.url.replace('/api/api/', '/api/');
-    
     console.log('📡 Request:', {
       method: config.method?.toUpperCase(),
-      url: config.url,
-      baseURL: config.baseURL
+      url: `${config.baseURL}${config.url}`,
+      data: config.data
     });
     return config;
   },
-  error => Promise.reject(error)
+  error => {
+    console.error('❌ Request Error:', error);
+    return Promise.reject(error);
+  }
 );
 
-// Interceptador de resposta com tratamento detalhado de erros
 api.interceptors.response.use(
-  response => response,
+  response => {
+    console.log('✅ Response:', response.data);
+    return response;
+  },
   error => {
     console.error('❌ Response Error:', {
       status: error.response?.status,
       url: error.config?.url,
-      message: error.message
+      message: error.message,
+      data: error.response?.data
     });
     return Promise.reject(error);
   }

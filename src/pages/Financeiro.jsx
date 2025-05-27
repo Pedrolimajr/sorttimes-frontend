@@ -300,7 +300,7 @@ export default function Financeiro() {
       setJogadores(jogadoresAtualizados);
 
       // Chamada à API
-      const response = await api.patch(`/api/jogadores/${jogadorId}/pagamentos`, {
+      const response = await api.patch(`/jogadores/${jogadorId}/pagamentos`, {
         mes: mesIndex,
         pago: novoStatus,
         valor: 100,
@@ -309,7 +309,7 @@ export default function Financeiro() {
 
       if (novoStatus) {
         // Registra transação
-        const transacaoResponse = await api.post('/api/financeiro/transacoes', {
+        const transacaoResponse = await api.post('/financeiro/transacoes', {
           descricao: `Mensalidade - ${jogador.nome} (${mesIndex + 1}/${new Date().getFullYear()})`,
           valor: 100,
           tipo: 'receita',
@@ -327,7 +327,7 @@ export default function Financeiro() {
     } catch (error) {
       console.error("Erro ao atualizar pagamento:", error);
       setJogadores(prev => [...prev]);
-      toast.error('Erro ao atualizar status de pagamento: ' + error.message);
+      toast.error('Erro ao atualizar status de pagamento');
     }
   };
 
