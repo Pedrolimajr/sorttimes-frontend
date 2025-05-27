@@ -76,6 +76,7 @@ export default function Financeiro() {
     try {
       setCarregando(true);
       
+      // Remova o /api das URLs
       const [jogadoresRes, transacoesRes] = await Promise.all([
         api.get('/jogadores'),
         api.get('/financeiro/transacoes')
@@ -84,9 +85,8 @@ export default function Financeiro() {
       console.log('Resposta jogadores:', jogadoresRes.data);
       console.log('Resposta transações:', transacoesRes.data);
 
-      // Verifica se a resposta tem o formato esperado
-      const jogadoresData = jogadoresRes.data?.success ? jogadoresRes.data.data : [];
-      const transacoesData = transacoesRes.data?.success ? transacoesRes.data.data : [];
+      const jogadoresData = jogadoresRes.data?.data || [];
+      const transacoesData = transacoesRes.data?.data || [];
 
       // Processa os jogadores
       const jogadoresProcessados = jogadoresData.map(jogador => ({
@@ -100,8 +100,8 @@ export default function Financeiro() {
       setTransacoes(transacoesData);
 
     } catch (error) {
-      console.error("Erro ao carregar dados:", error);
-      toast.error('Erro ao carregar dados: ' + (error.response?.data?.message || error.message));
+      console.error("Erro ao carregar dados:", error.response?.data || error);
+      toast.error('Erro ao carregar dados');
     } finally {
       setCarregando(false);
     }
