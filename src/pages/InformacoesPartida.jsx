@@ -54,57 +54,59 @@ export default function InformacoesPartida() {
   }, []);
 
   // Função para salvar planilha
-  const salvarPlanilha = async () => {
-    try {
-      setCarregando(true);
-      
-      const planilhaData = {
-        titulo,
-        subtitulo,
-        tabela,
-        dataAtualizacao: new Date().toISOString()
-      };
+const salvarPlanilha = async () => {
+  try {
+    setCarregando(true);
+    
+    const planilhaData = {
+      titulo,
+      subtitulo,
+      tabela,
+      dataAtualizacao: new Date().toISOString()
+    };
 
-      if (!titulo.trim()) {
-        throw new Error('O título da planilha é obrigatório');
-      }
-
-const url = planilhaAtiva?._id 
-  ? `${import.meta.env.VITE_API_URL}/api/planilhas/${planilhaAtiva._id}`
-  : `${import.meta.env.VITE_API_URL}/api/planilhas`;
-
-      const method = planilhaAtiva?._id ? 'PUT' : 'POST';
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(planilhaData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Erro ao salvar planilha');
-      }
-
-      const data = await response.json();
-      
-      if (planilhaAtiva?._id) {
-        setPlanilhas(planilhas.map(p => p._id === planilhaAtiva._id ? data.data : p));
-      } else {
-        setPlanilhas([data.data, ...planilhas]);
-      }
-      
-      setPlanilhaAtiva(data.data);
-      toast.success('Planilha salva com sucesso!');
-      
-    } catch (error) {
-      toast.error(error.message);
-    } finally {
-      setCarregando(false);
+    if (!titulo.trim()) {
+      setCarregando(false); // Adicione esta linha
+      toast.error('O título da planilha é obrigatório');
+      return; // Adicione este return para sair da função
     }
-  };
+
+    const url = planilhaAtiva?._id 
+      ? `${import.meta.env.VITE_API_URL}/api/planilhas/${planilhaAtiva._id}`
+      : `${import.meta.env.VITE_API_URL}/api/planilhas`;
+
+    const method = planilhaAtiva?._id ? 'PUT' : 'POST';
+
+    const response = await fetch(url, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(planilhaData),
+    });
+
+    const data = await response.json(); // Mova esta linha para antes da verificação
+    
+    if (!response.ok) {
+      throw new Error(data.message || 'Erro ao salvar planilha');
+    }
+      
+    if (planilhaAtiva?._id) {
+      setPlanilhas(planilhas.map(p => p._id === planilhaAtiva._id ? data.data : p));
+    } else {
+      setPlanilhas([data.data, ...planilhas]);
+    }
+    
+    setPlanilhaAtiva(data.data);
+    toast.success('Planilha salva com sucesso!');
+    
+  } catch (error) {
+    console.error('Erro ao salvar:', error);
+    toast.error(error.message || 'Erro ao salvar planilha');
+  } finally {
+    setCarregando(false); // Garante que o estado é atualizado em todos os casos
+  }
+};
 
   // Funções para manipulação da tabela
   const adicionarLinha = () => setTabela([...tabela, tabela[0].map(() => '')]);
