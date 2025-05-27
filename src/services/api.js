@@ -2,7 +2,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 
 const api = axios.create({
-  baseURL: 'https://sorttimes-backend.onrender.com/api',
+  baseURL: import.meta.env.VITE_API_URL,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
@@ -36,68 +36,29 @@ export const pagamentosAPI = {
 
 // Interceptador de requisição
 api.interceptors.request.use(
-  (config) => {
-    // Remove 'api/' do início da URL
-    if (config.url.startsWith('api/')) {
-      config.url = config.url.substring(4);
-    }
-    
-    // Remove barras duplas na URL
-    config.url = config.url.replace(/\/\//g, '/');
+  config => {
+    // Remove duplicação do /api
+    config.url = config.url.replace('/api/api/', '/api/');
     
     console.log('📡 Request:', {
       method: config.method?.toUpperCase(),
       url: config.url,
-      data: config.data
+      baseURL: config.baseURL
     });
-    
     return config;
   },
-  (error) => {
-    console.error('❌ Request Error:', error);
-    return Promise.reject(error);
-  }
+  error => Promise.reject(error)
 );
 
 // Interceptador de resposta com tratamento detalhado de erros
 api.interceptors.response.use(
-  (response) => {
-    console.log('✅ Response:', {
-      status: response.status,
-      url: response.config.url,
-      data: response.data
-    });
-    return response;
-  },
-  (error) => {
+  response => response,
+  error => {
     console.error('❌ Response Error:', {
       status: error.response?.status,
       url: error.config?.url,
-      message: error.message,
-      data: error.response?.data
+      message: error.message
     });
-
-    let mensagemErro = 'Erro ao processar requisição';
-
-    switch (error.response?.status) {
-      case 405:
-        mensagemErro = 'Operação não permitida. Por favor, contate o suporte.';
-        break;
-      case 404:
-        mensagemErro = 'Recurso não encontrado';
-        break;
-      case 401:
-        mensagemErro = 'Não autorizado. Faça login novamente';
-        break;
-      case 403:
-        mensagemErro = 'Acesso negado';
-        break;
-      case 500:
-        mensagemErro = 'Erro interno do servidor';
-        break;
-    }
-
-    toast.error(mensagemErro);
     return Promise.reject(error);
   }
 );

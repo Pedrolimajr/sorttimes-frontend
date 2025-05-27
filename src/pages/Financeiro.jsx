@@ -77,8 +77,8 @@ export default function Financeiro() {
       setCarregando(true);
       
       const [jogadoresRes, transacoesRes] = await Promise.all([
-        api.get('/api/jogadores'),
-        api.get('/api/financeiro/transacoes')
+        api.get('/jogadores'),
+        api.get('/financeiro/transacoes')
       ]);
 
       console.log('Resposta jogadores:', jogadoresRes.data);
@@ -100,7 +100,7 @@ export default function Financeiro() {
 
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
-      toast.error('Erro ao carregar dados: ' + error.message);
+      toast.error('Erro ao carregar dados');
     } finally {
       setCarregando(false);
     }
