@@ -330,9 +330,9 @@ export default function Financeiro() {
 
       try {
         // Chamada à API corrigida
-        const response = await api.post(`/jogadores/${jogadorId}/pagamentos/atualizar`, {
+        const response = await api.post(`/jogadores/${jogadorId}/pagamento`, { // Mudança aqui
           mes: mesIndex,
-          status: novoStatus,
+          pago: novoStatus,
           valor: 100,
           dataPagamento: novoStatus ? new Date().toISOString() : null
         });
