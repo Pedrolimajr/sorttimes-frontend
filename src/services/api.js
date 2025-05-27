@@ -2,7 +2,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 
 const api = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL}/api`,
+  baseURL: import.meta.env.VITE_API_URL + '/api',
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
@@ -33,21 +33,18 @@ export const pagamentosAPI = {
   }
 };
 
-api.interceptors.request.use(
-  config => {
-    console.log('📡 Request:', {
-      method: config.method?.toUpperCase(),
-      url: `${config.baseURL}${config.url}`,
-      data: config.data
-    });
-    return config;
-  },
-  error => {
-    console.error('❌ Request Error:', error);
-    return Promise.reject(error);
-  }
-);
+// Log de requisições
+api.interceptors.request.use(config => {
+  console.log('📡 Request:', {
+    method: config.method?.toUpperCase(),
+    url: config.url,
+    data: config.data,
+    baseURL: config.baseURL
+  });
+  return config;
+});
 
+// Log de respostas
 api.interceptors.response.use(
   response => {
     console.log('✅ Response:', response.data);
