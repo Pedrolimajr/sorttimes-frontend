@@ -84,51 +84,44 @@ export default function ConfirmarPresenca() {
   }, [linkId]);
 
   // Função para alternar presença
-  const alternarPresenca = async (jogadorId) => {
-    try {
-      const jogador = jogadores.find(j => j.id === jogadorId);
-      if (!jogador) return;
+const alternarPresenca = async (jogadorId) => {
+  try {
+    const jogador = jogadores.find(j => j.id === jogadorId);
+    if (!jogador) return;
 
-      const novoEstado = !jogador.presente;
+    const novoEstado = !jogador.presente;
+    
+    console.log(`Enviando confirmação para jogador ${jogadorId}, estado: ${novoEstado}`);
 
-      const response = await api.post(`/presenca/${linkId}/confirmar`, {
-        jogadorId,
-        presente: novoEstado
-      });
-
-      if (response.data.success) {
-        setJogadores(prev =>
-          prev.map(j => j.id === jogadorId ? { ...j, presente: novoEstado } : j)
-        );
-
-        if (socket?.connected) {
-          socket.emit('atualizarPresenca', {
-            linkId,
-            jogadorId,
-            presente: novoEstado,
-            jogadorNome: jogador.nome
-          });
-        }
-
-        toast.success(novoEstado ? 
-          '✅ Presença confirmada!' : 
-          '❌ Presença removida!'
-        );
+    const response = await api.post(`/api/presenca/${linkId}/confirmar`, {
+      jogadorId,
+      presente: novoEstado
+    }, {
+      headers: {
+        'Content-Type': 'application/json'
       }
-    } catch (error) {
-      console.error('Erro:', error);
-      toast.error('Erro ao atualizar presença');
+    });
+
+    if (response.data.success) {
+      setJogadores(prev =>
+        prev.map(j => j.id === jogadorId ? { ...j, presente: novoEstado } : j)
+      );
+
+      toast.success(novoEstado ? '✅ Presença confirmada!' : '❌ Presença removida!');
     }
-  };
-
-  if (carregando) {
-    return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
-      </div>
-    );
+  } catch (error) {
+    console.error('Erro ao atualizar presença:', error);
+    toast.error(error.response?.data?.message || 'Erro ao atualizar presença');
+    
+    // Forçar recarregamento dos dados em caso de erro
+    try {
+      const refreshResponse = await api.get(`/api/presenca/${linkId}`);
+      setJogadores(refreshResponse.data.jogadores);
+    } catch (refreshError) {
+      console.error('Erro ao recarregar dados:', refreshError);
+    }
   }
-
+};
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 px-4 py-8">
       <div className="max-w-lg mx-auto">
