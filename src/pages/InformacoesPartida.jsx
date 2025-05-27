@@ -32,7 +32,7 @@ export default function InformacoesPartida() {
     const carregarPlanilhas = async () => {
       try {
         setCarregando(true);
-        const response = await fetch(`${API_BASE_URL}/api/planilhas`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/planilhas`);
         
         if (!response.ok) throw new Error('Erro ao carregar planilhas');
         
@@ -69,9 +69,9 @@ export default function InformacoesPartida() {
         throw new Error('O título da planilha é obrigatório');
       }
 
-      const url = planilhaAtiva?._id 
-  ? `${API_BASE_URL}/api/planilhas/${planilhaAtiva._id}`
-  : `${API_BASE_URL}/api/planilhas`;
+const url = planilhaAtiva?._id 
+  ? `${import.meta.env.VITE_API_URL}/api/planilhas/${planilhaAtiva._id}`
+  : `${import.meta.env.VITE_API_URL}/api/planilhas`;
 
       const method = planilhaAtiva?._id ? 'PUT' : 'POST';
 
@@ -136,7 +136,7 @@ const deletarPlanilha = async (id) => {
     setCarregando(true);
     console.log(`🔄 Tentando excluir planilha com ID: ${id}`);
     
-    const response = await fetch(`${API_BASE_URL}/api/planilhas/${id}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/planilhas/${id}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
