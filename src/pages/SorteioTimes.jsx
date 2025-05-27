@@ -249,37 +249,22 @@ const aplicarFiltroPosicao = () => {
 
     setCarregando(true);
     try {
-      const response = await fetch(`${BACKEND_URL}/api/sorteio`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          jogadores: jogadoresPresentes,
-          tipoBalanceamento: balanceamento,
-          posicaoUnica: filtroPosicao || null
-        })
+      const response = await api.post('/sorteio/sortear', {
+        jogadoresIds: jogadoresPresentes.map(j => j._id),
+        balanceamento,
+        posicaoUnica: filtroPosicao || null,
+        jogadoresPorTime: 7 // ou outro número desejado
       });
 
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Erro ao sortear times');
+      if (!response.data.success) {
+        throw new Error(response.data.message);
       }
 
-      const timesProcessados = data.times.map(time => ({
-        ...time,
-        nome: time.nome || `Time ${time.index + 1}`,
-        jogadores: time.jogadores.map(j => ({
-          ...j,
-          posicao: filtroPosicao || j.posicao || POSICOES.MEIA
-        }))
-      }));
-
-      setTimes(timesProcessados);
+      const { times } = response.data.data;
+      setTimes(times);
       
       const novoSorteio = {
-        times: timesProcessados,
+        times,
         data: new Date(),
         jogadoresPresentes: jogadoresPresentes.length,
         balanceamento,
