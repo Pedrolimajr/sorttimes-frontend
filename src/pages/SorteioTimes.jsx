@@ -203,9 +203,9 @@ const alternarPresenca = async (id) => {
     }
 
     // Atualiza o estado local somente se a requisição for bem-sucedida - CORREÇÃO AQUI
-    setJogadoresSelecionados(jogadoresSelecionados.map(jogador => 
-      jogador._id === id ? { ...jogador, presente: novoEstado } : jogador
-    ));
+  setJogadoresSelecionados(prev => 
+      prev.map(j => j._id === id ? { ...j, presente: novoEstado } : j)
+    );
     
     // Emite evento via socket.io para atualizar em tempo real
     socket.emit('atualizarPresenca', { jogadorId: id, presente: novoEstado });
