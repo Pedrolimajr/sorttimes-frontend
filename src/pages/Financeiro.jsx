@@ -32,7 +32,8 @@ import 'react-toastify/dist/ReactToastify.css';
 
 Chart.register(...registerables);
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://sorttimes-backend.onrender.com/api';
+// Atualiza a constante API_URL
+const API_URL = 'https://sorttimes-backend.onrender.com/api';
 
 export default function Financeiro() {
   const navigate = useNavigate();
@@ -78,8 +79,18 @@ export default function Financeiro() {
       setCarregando(true);
       
       const [jogadoresRes, transacoesRes] = await Promise.all([
-        fetch(`${API_URL}/jogadores`),
-        fetch(`${API_URL}/financeiro/transacoes`)
+        fetch(`${API_URL}/jogadores`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        }),
+        fetch(`${API_URL}/financeiro/transacoes`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        })
       ]);
 
       if (!jogadoresRes.ok) throw new Error('Erro ao carregar jogadores');
@@ -309,7 +320,7 @@ export default function Financeiro() {
 
       // Chamada à API corrigida
       const response = await fetch(`${API_URL}/jogadores/${jogadorId}/pagamentos`, {
-        method: 'POST', // Mudado para POST
+        method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
           'Accept': 'application/json'
@@ -371,7 +382,6 @@ export default function Financeiro() {
 
     } catch (error) {
       console.error("Erro ao atualizar pagamento:", error);
-      // Reverte o estado em caso de erro
       const cachedData = JSON.parse(localStorage.getItem('dadosFinanceiros'));
       if (cachedData?.jogadoresCache) {
         setJogadores(cachedData.jogadoresCache);
