@@ -32,8 +32,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 Chart.register(...registerables);
 
-// Atualiza a constante API_URL
-const API_URL = 'https://sorttimes-backend.onrender.com/api';
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default function Financeiro() {
   const navigate = useNavigate();
@@ -79,18 +78,8 @@ export default function Financeiro() {
       setCarregando(true);
       
       const [jogadoresRes, transacoesRes] = await Promise.all([
-        fetch(`${API_URL}/jogadores`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          }
-        }),
-        fetch(`${API_URL}/financeiro/transacoes`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          }
-        })
+        fetch(`${API_URL}/jogadores`),
+        fetch(`${API_URL}/financeiro/transacoes`)
       ]);
 
       if (!jogadoresRes.ok) throw new Error('Erro ao carregar jogadores');
@@ -302,7 +291,8 @@ export default function Financeiro() {
         if (j._id === jogadorId) {
           const pagamentosAtualizados = [...j.pagamentos];
           pagamentosAtualizados[mesIndex] = novoStatus;
-          
+
+          // Verifica pagamentos até o mês atual para definir status
           const mesesDevendo = pagamentosAtualizados
             .slice(0, mesAtual + 1)
             .filter(pago => !pago).length;
@@ -318,17 +308,13 @@ export default function Financeiro() {
 
       setJogadores(jogadoresAtualizados);
 
-      // Chamada à API corrigida
-      const response = await fetch(`${API_URL}/jogadores/${jogadorId}/pagamentos`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
+      // Chamada à API
+      const response = await fetch(`${API_URL}/jogadores/${jogadorId}/pagamentos/${mesIndex}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          mes: mesIndex,
-          valor: 100,
           pago: novoStatus,
+          valor: 100,
           dataPagamento: novoStatus ? new Date().toISOString() : null
         })
       });
@@ -341,10 +327,7 @@ export default function Financeiro() {
       if (novoStatus) {
         const transacaoResponse = await fetch(`${API_URL}/financeiro/transacoes`, {
           method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             descricao: `Mensalidade - ${jogador.nome} (${mesIndex + 1}/${new Date().getFullYear()})`,
             valor: 100,
@@ -361,23 +344,7 @@ export default function Financeiro() {
         }
 
         const novaTransacao = await transacaoResponse.json();
-        
-        // Atualiza transações e estatísticas
-        setTransacoes(prev => [novaTransacao.data, ...prev]);
-        
-        // Atualiza estatísticas
-        setEstatisticas(prev => ({
-          ...prev,
-          totalReceitas: prev.totalReceitas + 100,
-          saldo: prev.saldo + 100
-        }));
-
-        // Atualiza localStorage
-        localStorage.setItem('dadosFinanceiros', JSON.stringify({
-          jogadoresCache: jogadoresAtualizados,
-          transacoesCache: [novaTransacao.data, ...transacoes],
-          lastUpdate: new Date().toISOString()
-        }));
+        setTransacoes(prev => [novaTransacao, ...prev]);
       }
 
       toast.success(`Pagamento ${novoStatus ? 'registrado' : 'removido'} com sucesso!`);
@@ -385,10 +352,7 @@ export default function Financeiro() {
     } catch (error) {
       console.error("Erro ao atualizar pagamento:", error);
       // Reverte o estado em caso de erro
-      const cachedData = JSON.parse(localStorage.getItem('dadosFinanceiros'));
-      if (cachedData?.jogadoresCache) {
-        setJogadores(cachedData.jogadoresCache);
-      }
+      setJogadores(prev => [...prev]);
       toast.error('Erro ao atualizar status de pagamento');
     }
   };
