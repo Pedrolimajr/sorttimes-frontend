@@ -328,11 +328,11 @@ export default function Financeiro() {
         lastUpdate: new Date().toISOString()
       }));
 
-      // Chamada à API
       try {
-        const response = await api.post(`/jogadores/${jogadorId}/pagamento`, {
+        // Chamada à API corrigida
+        const response = await api.post(`/jogadores/${jogadorId}/pagamentos/atualizar`, {
           mes: mesIndex,
-          pago: novoStatus,
+          status: novoStatus,
           valor: 100,
           dataPagamento: novoStatus ? new Date().toISOString() : null
         });
@@ -353,25 +353,24 @@ export default function Financeiro() {
             const novasTransacoes = [transacaoResponse.data.data, ...transacoes];
             setTransacoes(novasTransacoes);
             
-            // Atualiza localStorage com nova transação
+            // Atualiza localStorage
             localStorage.setItem(STORAGE_KEY, JSON.stringify({
               jogadoresCache: jogadoresAtualizados,
               transacoesCache: novasTransacoes,
               lastUpdate: new Date().toISOString()
             }));
+
+            toast.success(`Pagamento ${novoStatus ? 'registrado' : 'removido'} com sucesso!`);
           }
         }
-
-        toast.success(`Pagamento ${novoStatus ? 'registrado' : 'removido'} com sucesso!`);
       } catch (apiError) {
         console.error("Erro na API:", apiError);
-        // Mantém os dados do localStorage mesmo com erro na API
         toast.warning('Alteração salva localmente. Sincronização pendente.');
       }
 
     } catch (error) {
       console.error("Erro ao atualizar pagamento:", error);
-      // Reverte mudanças no estado e localStorage em caso de erro
+      // Reverte mudanças
       const cachedData = JSON.parse(localStorage.getItem(STORAGE_KEY));
       if (cachedData?.jogadoresCache) {
         setJogadores(cachedData.jogadoresCache);
