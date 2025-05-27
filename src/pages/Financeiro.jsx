@@ -29,10 +29,9 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import api from '../services/api';
 
 Chart.register(...registerables);
-
-const API_URL = import.meta.env.VITE_API_URL;
 
 export default function Financeiro() {
   const navigate = useNavigate();
@@ -78,18 +77,17 @@ export default function Financeiro() {
       setCarregando(true);
       
       const [jogadoresRes, transacoesRes] = await Promise.all([
-        fetch(`${API_URL}/jogadores`),
-        fetch(`${API_URL}/financeiro/transacoes`)
+        api.get('/jogadores'),
+        api.get('/financeiro/transacoes')
       ]);
 
-      if (!jogadoresRes.ok) throw new Error('Erro ao carregar jogadores');
-      if (!transacoesRes.ok) throw new Error('Erro ao carregar transações');
+      console.log('Dados jogadores:', jogadoresRes.data);
+      console.log('Dados transações:', transacoesRes.data);
 
-      const jogadoresData = await jogadoresRes.json();
-      const transacoesData = await transacoesRes.json();
+      const jogadoresData = jogadoresRes.data;
+      const transacoesData = transacoesRes.data;
 
-      // Normaliza os dados dos jogadores com validação
-      const jogadoresProcessados = (Array.isArray(jogadoresData.data) ? jogadoresData.data : [])
+      const jogadoresProcessados = (Array.isArray(jogadoresData) ? jogadoresData : [])
         .map(jogador => ({
           ...jogador,
           pagamentos: Array.isArray(jogador.pagamentos) && jogador.pagamentos.length === 12
@@ -101,8 +99,8 @@ export default function Financeiro() {
       setTransacoes(Array.isArray(transacoesData) ? transacoesData : []);
 
     } catch (error) {
-      console.error("Erro ao carregar dados:", error);
-      toast.error('Erro ao carregar dados');
+      console.error("Erro ao carregar dados:", error.response || error);
+      toast.error('Erro ao carregar dados: ' + (error.response?.data?.message || error.message));
     } finally {
       setCarregando(false);
     }
@@ -213,14 +211,11 @@ export default function Financeiro() {
         });
 
         // Depois faz a chamada à API
-        const pagamentoResponse = await fetch(`${API_URL}/jogadores/${payload.jogadorId}/pagamentos/${mesTransacao}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            pago: true,
-            valor: payload.valor,
-            dataPagamento: payload.data
-          })
+        const pagamentoResponse = await api.patch(`/jogadores/${payload.jogadorId}/pagamentos`, {
+          mes: mesTransacao,
+          pago: true,
+          valor: payload.valor,
+          dataPagamento: payload.data
         });
 
         if (!pagamentoResponse.ok) {
@@ -229,11 +224,7 @@ export default function Financeiro() {
       }
 
       // Continua com o registro da transação...
-      const response = await fetch(`${API_URL}/financeiro/transacoes`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+      const response = await api.post('/financeiro/transacoes', payload);
 
       if (!response.ok) throw new Error('Erro ao adicionar transação');
 
@@ -309,49 +300,32 @@ export default function Financeiro() {
       setJogadores(jogadoresAtualizados);
 
       // Chamada à API
-      const response = await fetch(`${API_URL}/jogadores/${jogadorId}/pagamentos/${mesIndex}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          pago: novoStatus,
-          valor: 100,
-          dataPagamento: novoStatus ? new Date().toISOString() : null
-        })
+      const response = await api.patch(`/jogadores/${jogadorId}/pagamentos`, {
+        mes: mesIndex,
+        pago: novoStatus,
+        valor: 100,
+        dataPagamento: novoStatus ? new Date().toISOString() : null
       });
 
-      if (!response.ok) {
-        throw new Error('Erro ao atualizar pagamento');
-      }
-
-      // Se for um novo pagamento, registra a transação
       if (novoStatus) {
-        const transacaoResponse = await fetch(`${API_URL}/financeiro/transacoes`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            descricao: `Mensalidade - ${jogador.nome} (${mesIndex + 1}/${new Date().getFullYear()})`,
-            valor: 100,
-            tipo: 'receita',
-            categoria: 'mensalidade',
-            data: new Date().toISOString(),
-            jogadorId: jogadorId,
-            jogadorNome: jogador.nome
-          })
+        // Registra transação
+        const transacaoResponse = await api.post('/financeiro/transacoes', {
+          descricao: `Mensalidade - ${jogador.nome} (${mesIndex + 1}/${new Date().getFullYear()})`,
+          valor: 100,
+          tipo: 'receita',
+          categoria: 'mensalidade',
+          data: new Date().toISOString(),
+          jogadorId: jogadorId,
+          jogadorNome: jogador.nome
         });
 
-        if (!transacaoResponse.ok) {
-          throw new Error('Erro ao registrar transação');
-        }
-
-        const novaTransacao = await transacaoResponse.json();
-        setTransacoes(prev => [novaTransacao, ...prev]);
+        setTransacoes(prev => [transacaoResponse.data, ...prev]);
       }
 
       toast.success(`Pagamento ${novoStatus ? 'registrado' : 'removido'} com sucesso!`);
 
     } catch (error) {
       console.error("Erro ao atualizar pagamento:", error);
-      // Reverte o estado em caso de erro
       setJogadores(prev => [...prev]);
       toast.error('Erro ao atualizar status de pagamento');
     }
@@ -359,64 +333,7 @@ export default function Financeiro() {
 
   const deletarTransacao = async (id) => {
     try {
-      // Primeiro, encontre a transação que será excluída
-      const transacao = transacoes.find(t => t._id === id);
-      if (!transacao) throw new Error('Transação não encontrada');
-
-      // Se for uma transação de mensalidade (tipo receita com jogadorId)
-      if (transacao.tipo === 'receita' && transacao.jogadorId) {
-        const dataTransacao = new Date(transacao.data);
-        const mesTransacao = dataTransacao.getMonth();
-
-        // Atualiza o estado local dos jogadores IMEDIATAMENTE
-        setJogadores(prevJogadores => {
-          const jogadoresAtualizados = prevJogadores.map(j => {
-            if (j._id === transacao.jogadorId) {
-              const pagamentosAtualizados = [...j.pagamentos];
-              pagamentosAtualizados[mesTransacao] = false;
-
-              // Verifica se todos os meses até o mês atual estão pagos
-              const mesAtual = new Date().getMonth();
-              const mesesDevendo = pagamentosAtualizados
-                .slice(0, mesAtual + 1)
-                .filter(pago => !pago).length;
-
-              return {
-                ...j,
-                pagamentos: pagamentosAtualizados,
-                statusFinanceiro: mesesDevendo === 0 ? 'Adimplente' : 'Inadimplente'
-              };
-            }
-            return j;
-          });
-
-          // Atualiza localStorage
-          localStorage.setItem('dadosFinanceiros', JSON.stringify({
-            jogadoresCache: jogadoresAtualizados,
-            transacoesCache: transacoes.filter(t => t._id !== id)
-          }));
-
-          return jogadoresAtualizados;
-        });
-
-        // Depois faz a chamada à API para atualizar o pagamento
-        await fetch(`${API_URL}/jogadores/${transacao.jogadorId}/pagamentos/${mesTransacao}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            pago: false,
-            valor: 0,
-            dataPagamento: null
-          })
-        });
-      }
-
-      // Faz a chamada à API para deletar a transação
-      const response = await fetch(`${API_URL}/financeiro/transacoes/${id}`, {
-        method: 'DELETE'
-      });
-
-      if (!response.ok) throw new Error('Erro ao deletar transação');
+      await api.delete(`/financeiro/transacoes/${id}`);
 
       // Remove a transação do estado local
       setTransacoes(prev => prev.filter(t => t._id !== id));
@@ -436,44 +353,33 @@ export default function Financeiro() {
       toast.success('Transação removida com sucesso!');
     } catch (error) {
       console.error("Erro ao deletar transação:", error);
-      toast.error(error.message);
+      toast.error('Erro ao deletar transação');
     }
   };
 
   const editarJogador = async () => {
     try {
-      const response = await fetch(`${API_URL}/jogadores/${jogadorSelecionado._id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(jogadorSelecionado)
-      });
+      const { data } = await api.put(`/jogadores/${jogadorSelecionado._id}`, jogadorSelecionado);
 
-      if (!response.ok) throw new Error('Erro ao atualizar jogador');
-
-      const data = await response.json();
       setJogadores(jogadores.map(j => j._id === data._id ? data : j));
       setEditarModal(false);
       toast.success('Jogador atualizado com sucesso!');
     } catch (error) {
       console.error("Erro ao atualizar jogador:", error);
-      toast.error(error.message);
+      toast.error('Erro ao atualizar jogador');
     }
   };
 
   const deletarJogador = async (id) => {
     try {
-      const response = await fetch(`${API_URL}/jogadores/${id}`, {
-        method: 'DELETE'
-      });
-
-      if (!response.ok) throw new Error('Erro ao deletar jogador');
+      await api.delete(`/jogadores/${id}`);
 
       setJogadores(jogadores.filter(j => j._id !== id));
       setEditarModal(false);
       toast.success('Jogador removido com sucesso!');
     } catch (error) {
       console.error("Erro ao deletar jogador:", error);
-      toast.error(error.message);
+      toast.error('Erro ao deletar jogador');
     }
   };
 
