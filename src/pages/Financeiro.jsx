@@ -318,17 +318,17 @@ export default function Financeiro() {
 
       setJogadores(jogadoresAtualizados);
 
-      // Chamada à API corrigida - Mudança principal aqui
+      // Chamada à API corrigida
       const response = await fetch(`${API_URL}/jogadores/${jogadorId}/pagamentos`, {
-        method: 'PATCH', // Mudado para PATCH
+        method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
         body: JSON.stringify({ 
           mes: mesIndex,
-          status: novoStatus, // Renomeado de 'pago' para 'status'
           valor: 100,
+          pago: novoStatus,
           dataPagamento: novoStatus ? new Date().toISOString() : null
         })
       });
@@ -361,6 +361,8 @@ export default function Financeiro() {
         }
 
         const novaTransacao = await transacaoResponse.json();
+        
+        // Atualiza transações e estatísticas
         setTransacoes(prev => [novaTransacao.data, ...prev]);
         
         // Atualiza estatísticas
