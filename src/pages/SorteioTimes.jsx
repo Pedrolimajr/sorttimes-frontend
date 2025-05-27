@@ -143,39 +143,36 @@ export default function SorteioTimes() {
   };
 
   // Carrega jogadores do backend ao montar o componente
- useEffect(() => {
-  const carregarDados = async () => {
-    setCarregandoJogadores(true);
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/jogadores`);
-      if (!response.ok) throw new Error('Erro ao carregar jogadores');
-      
-      const { data: jogadores } = await response.json();
-      setJogadoresCadastrados(jogadores);
-      
-      // Carrega presenças salvas do localStorage - CORREÇÃO AQUI
-      const presencasSalvas = JSON.parse(localStorage.getItem('presencasJogadores') || '{}');
-      
-      setJogadoresSelecionados(jogadores.map(jogador => ({
-        ...jogador,
-        posicaoOriginal: jogador.posicao || POSICOES.MEIA,
-        presente: presencasSalvas[jogador._id] || false, // Carrega o estado salvo ou false por padrão
-        posicao: jogador.posicao || POSICOES.MEIA,
-        nivel: jogador.nivel === 'Associado' ? NIVEL_JOGADOR.ASSOCIADO : 
-               jogador.nivel === 'Convidado' ? NIVEL_JOGADOR.CONVIDADO : 
-               NIVEL_JOGADOR.INICIANTE
-      })));
+  useEffect(() => {
+    const carregarDados = async () => {
+      setCarregandoJogadores(true);
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/jogadores`);
+        if (!response.ok) throw new Error('Erro ao carregar jogadores');
+        
+        const { data: jogadores } = await response.json();
+        setJogadoresCadastrados(jogadores);
+        
+        setJogadoresSelecionados(jogadores.map(jogador => ({
+          ...jogador,
+          posicaoOriginal: jogador.posicao || POSICOES.MEIA,
+          presente: false,
+          posicao: jogador.posicao || POSICOES.MEIA,
+          nivel: jogador.nivel === 'Associado' ? NIVEL_JOGADOR.ASSOCIADO : 
+                 jogador.nivel === 'Convidado' ? NIVEL_JOGADOR.CONVIDADO : 
+                 NIVEL_JOGADOR.INICIANTE
+        })));
 
-    } catch (erro) {
-      console.error("Erro ao carregar jogadores:", erro);
-      toast.error("Erro ao carregar jogadores: " + erro.message);
-    } finally {
-      setCarregandoJogadores(false);
-    }
-  };
-  
-  carregarDados();
-}, []);
+      } catch (erro) {
+        console.error("Erro ao carregar jogadores:", erro);
+        toast.error("Erro ao carregar jogadores: " + erro.message);
+      } finally {
+        setCarregandoJogadores(false);
+      }
+    };
+    
+    carregarDados();
+  }, []);
 
   // Persiste o histórico no localStorage
   useEffect(() => {
@@ -186,35 +183,11 @@ export default function SorteioTimes() {
    * Alterna o estado de presença de um jogador
    * @param {string} id - ID do jogador
    */
-const alternarPresenca = async (id) => {
-  const novoEstado = !jogadoresSelecionados.find(j => j._id === id).presente;
-  
-  try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/jogadores/${id}/presenca`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ presente: novoEstado })
-    });
-
-    if (!response.ok) {
-      throw new Error('Erro ao atualizar presença');
-    }
-
-    // Atualiza o estado local somente se a requisição for bem-sucedida - CORREÇÃO AQUI
-  setJogadoresSelecionados(prev => 
-      prev.map(j => j._id === id ? { ...j, presente: novoEstado } : j)
-    );
-    
-    // Emite evento via socket.io para atualizar em tempo real
-    socket.emit('atualizarPresenca', { jogadorId: id, presente: novoEstado });
-
-  } catch (error) {
-    console.error("Erro ao atualizar presença:", error);
-    toast.error("Erro ao atualizar presença");
-  }
-};
+  const alternarPresenca = (id) => {
+    setJogadoresSelecionados(jogadoresSelecionados.map(jogador => 
+      jogador._id === id ? { ...jogador, presente: !jogador.presente } : jogador
+    ));
+  };
 
   /**
    * Atualiza a posição de um jogador
@@ -249,20 +222,7 @@ const aplicarFiltroPosicao = () => {
   /**
    * Realiza o sorteio dos times com base nos jogadores selecionados
    */
-
-  //Salvando Presença
-useEffect(() => {
-  const salvarPresencas = () => {
-    const presencas = jogadoresSelecionados.reduce((acc, jogador) => {
-      acc[jogador._id] = jogador.presente;
-      return acc;
-    }, {});
-    localStorage.setItem('presencasJogadores', JSON.stringify(presencas));
-  };
-
-  salvarPresencas();
-}, [jogadoresSelecionados]);
-
+  
   const sortearTimes = async () => {
     const jogadoresPresentes = jogadoresSelecionados.filter(j => j.presente);
     
