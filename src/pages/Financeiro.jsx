@@ -76,10 +76,9 @@ export default function Financeiro() {
     try {
       setCarregando(true);
       
-      // Remova o /api das URLs
       const [jogadoresRes, transacoesRes] = await Promise.all([
-        api.get('/jogadores'),
-        api.get('/financeiro/transacoes')
+        api.get('/api/jogadores'),
+        api.get('/api/financeiro/transacoes')
       ]);
 
       console.log('Resposta jogadores:', jogadoresRes.data);
@@ -100,8 +99,8 @@ export default function Financeiro() {
       setTransacoes(transacoesData);
 
     } catch (error) {
-      console.error("Erro ao carregar dados:", error.response?.data || error);
-      toast.error('Erro ao carregar dados');
+      console.error("Erro ao carregar dados:", error);
+      toast.error('Erro ao carregar dados: ' + error.message);
     } finally {
       setCarregando(false);
     }
@@ -301,7 +300,7 @@ export default function Financeiro() {
       setJogadores(jogadoresAtualizados);
 
       // Chamada à API
-      const response = await api.patch(`/jogadores/${jogadorId}/pagamentos`, {
+      const response = await api.patch(`/api/jogadores/${jogadorId}/pagamentos`, {
         mes: mesIndex,
         pago: novoStatus,
         valor: 100,
@@ -310,7 +309,7 @@ export default function Financeiro() {
 
       if (novoStatus) {
         // Registra transação
-        const transacaoResponse = await api.post('/financeiro/transacoes', {
+        const transacaoResponse = await api.post('/api/financeiro/transacoes', {
           descricao: `Mensalidade - ${jogador.nome} (${mesIndex + 1}/${new Date().getFullYear()})`,
           valor: 100,
           tipo: 'receita',
@@ -328,13 +327,14 @@ export default function Financeiro() {
     } catch (error) {
       console.error("Erro ao atualizar pagamento:", error);
       setJogadores(prev => [...prev]);
-      toast.error('Erro ao atualizar status de pagamento');
+      toast.error('Erro ao atualizar status de pagamento: ' + error.message);
     }
   };
 
   const deletarTransacao = async (id) => {
     try {
-      await api.delete(`/financeiro/transacoes/${id}`);
+      // Deletar transação
+      await api.delete(`/api/financeiro/transacoes/${id}`);
 
       // Remove a transação do estado local
       setTransacoes(prev => prev.filter(t => t._id !== id));
@@ -360,9 +360,10 @@ export default function Financeiro() {
 
   const editarJogador = async () => {
     try {
-      const { data } = await api.put(`/jogadores/${jogadorSelecionado._id}`, jogadorSelecionado);
+      // Editar jogador
+      await api.put(`/api/jogadores/${jogadorSelecionado._id}`, jogadorSelecionado);
 
-      setJogadores(jogadores.map(j => j._id === data._id ? data : j));
+      setJogadores(jogadores.map(j => j._id === jogadorSelecionado._id ? jogadorSelecionado : j));
       setEditarModal(false);
       toast.success('Jogador atualizado com sucesso!');
     } catch (error) {
@@ -373,7 +374,8 @@ export default function Financeiro() {
 
   const deletarJogador = async (id) => {
     try {
-      await api.delete(`/jogadores/${id}`);
+      // Deletar jogador
+      await api.delete(`/api/jogadores/${id}`);
 
       setJogadores(jogadores.filter(j => j._id !== id));
       setEditarModal(false);
