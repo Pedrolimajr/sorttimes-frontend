@@ -58,53 +58,63 @@ const salvarPlanilha = async () => {
   try {
     setCarregando(true);
     
+    // Validação básica
+    if (!titulo.trim()) {
+      toast.error('Título é obrigatório');
+      return setCarregando(false);
+    }
+
     const planilhaData = {
-      titulo,
-      subtitulo,
+      titulo: titulo.trim(),
+      subtitulo: subtitulo.trim(),
       tabela,
       dataAtualizacao: new Date().toISOString()
     };
 
-    if (!titulo.trim()) {
-      setCarregando(false); // Adicione esta linha
-      toast.error('O título da planilha é obrigatório');
-      return; // Adicione este return para sair da função
-    }
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
     const url = planilhaAtiva?._id 
       ? `${import.meta.env.VITE_API_URL}/api/planilhas/${planilhaAtiva._id}`
       : `${import.meta.env.VITE_API_URL}/api/planilhas`;
 
-    const method = planilhaAtiva?._id ? 'PUT' : 'POST';
-
     const response = await fetch(url, {
-      method,
+      method: planilhaAtiva?._id ? 'PUT' : 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(planilhaData),
+      signal: controller.signal
     });
 
-    const data = await response.json(); // Mova esta linha para antes da verificação
-    
+    clearTimeout(timeout);
+
     if (!response.ok) {
-      throw new Error(data.message || 'Erro ao salvar planilha');
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Erro ao salvar');
     }
-      
-    if (planilhaAtiva?._id) {
-      setPlanilhas(planilhas.map(p => p._id === planilhaAtiva._id ? data.data : p));
-    } else {
-      setPlanilhas([data.data, ...planilhas]);
-    }
+
+    const { data } = await response.json();
+
+    // Atualização otimizada do estado
+    setPlanilhas(prev => 
+      planilhaAtiva?._id 
+        ? prev.map(p => p._id === data._id ? data : p)
+        : [data, ...prev]
+    );
     
-    setPlanilhaAtiva(data.data);
-    toast.success('Planilha salva com sucesso!');
-    
+    setPlanilhaAtiva(data);
+    toast.success('Salvo com sucesso!');
+
   } catch (error) {
-    console.error('Erro ao salvar:', error);
-    toast.error(error.message || 'Erro ao salvar planilha');
+    console.error('Erro:', error);
+    toast.error(
+      error.name === 'AbortError' 
+        ? 'Tempo limite excedido' 
+        : error.message || 'Erro ao salvar'
+    );
   } finally {
-    setCarregando(false); // Garante que o estado é atualizado em todos os casos
+    setCarregando(false);
   }
 };
 
