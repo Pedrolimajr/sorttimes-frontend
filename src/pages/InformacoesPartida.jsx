@@ -32,7 +32,7 @@ export default function InformacoesPartida() {
     const carregarPlanilhas = async () => {
       try {
         setCarregando(true);
-        const response = await fetch('http://localhost:5000/api/planilhas');
+        const response = await fetch(`${API_BASE_URL}/api/planilhas`);
         
         if (!response.ok) throw new Error('Erro ao carregar planilhas');
         
@@ -70,8 +70,8 @@ export default function InformacoesPartida() {
       }
 
       const url = planilhaAtiva?._id 
-        ? `http://localhost:5000/api/planilhas/${planilhaAtiva._id}`
-        : 'http://localhost:5000/api/planilhas';
+  ? `${API_BASE_URL}/api/planilhas/${planilhaAtiva._id}`
+  : `${API_BASE_URL}/api/planilhas`;
 
       const method = planilhaAtiva?._id ? 'PUT' : 'POST';
 
@@ -136,7 +136,7 @@ const deletarPlanilha = async (id) => {
     setCarregando(true);
     console.log(`🔄 Tentando excluir planilha com ID: ${id}`);
     
-    const response = await fetch(`http://localhost:5000/api/planilhas/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/planilhas/${id}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
