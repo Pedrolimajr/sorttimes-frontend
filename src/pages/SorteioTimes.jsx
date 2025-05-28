@@ -428,35 +428,35 @@ const aplicarFiltroPosicao = () => {
    * Recarrega a lista de jogadores do servidor
    */
   const recarregarJogadores = async () => {
-    setCarregandoJogadores(true);
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/jogadores`);
-      if (!response.ok) throw new Error('Erro ao recarregar jogadores');
-      
-      const { data: jogadores } = await response.json();
-      setJogadoresCadastrados(jogadores);
-      
-      setJogadoresSelecionados(jogadores.map(jogador => {
-        const existente = jogadoresSelecionados.find(j => j._id === jogador._id);
-        return {
-          ...jogador,
-          posicaoOriginal: jogador.posicao || POSICOES.MEIA,
-          presente: existente ? existente.presente : true,
-          posicao: existente?.posicao || jogador.posicao || POSICOES.MEIA,
-          nivel: jogador.nivel === 'Associado' ? NIVEL_JOGADOR.ASSOCIADO : 
-                jogador.nivel === 'Convidado' ? NIVEL_JOGADOR.CONVIDADO : 
-                NIVEL_JOGADOR.INICIANTE
-        };
-      }));
-      
-      toast.success('Jogadores atualizados com sucesso');
-    } catch (error) {
-      console.error("Erro:", error);
-      toast.error(error.message || 'Erro ao atualizar jogadores');
-    } finally {
-      setCarregandoJogadores(false);
-    }
-  };
+  setCarregandoJogadores(true);
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/jogadores`);
+    if (!response.ok) throw new Error('Erro ao recarregar jogadores');
+    
+    const { data: jogadores } = await response.json();
+    setJogadoresCadastrados(jogadores);
+    
+    setJogadoresSelecionados(jogadores.map(jogador => {
+      const existente = jogadoresSelecionados.find(j => j._id === jogador._id);
+      return {
+        ...jogador,
+        posicaoOriginal: jogador.posicao || POSICOES.MEIA,
+        presente: existente ? existente.presente : false,
+        posicao: existente?.posicao || jogador.posicao || POSICOES.MEIA,
+        nivel: jogador.nivel === 'Associado' ? NIVEL_JOGADOR.ASSOCIADO : 
+              jogador.nivel === 'Convidado' ? NIVEL_JOGADOR.CONVIDADO : 
+              NIVEL_JOGADOR.INICIANTE
+      };
+    }));
+    
+    toast.success('Jogadores atualizados com sucesso');
+  } catch (error) {
+    console.error("Erro:", error);
+    toast.error(error.message || 'Erro ao atualizar jogadores');
+  } finally {
+    setCarregandoJogadores(false);
+  }
+};
 
   /**
    * Move um jogador entre times no modo de edição
@@ -852,14 +852,21 @@ const aplicarFiltroPosicao = () => {
     </motion.button>
 
     <motion.button
-      onClick={() => setJogadoresSelecionados(jogadoresSelecionados.map(j => ({ ...j, presente: true })))}
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      className="w-1/2 sm:flex-1 flex items-center justify-center gap-1 text-xs sm:text-sm bg-gray-700 hover:bg-gray-600 text-gray-200 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg transition-all"
-    >
-      <FaCheck className="w-3 h-3 sm:w-4 sm:h-4" />
-      <span>Todos</span>
-    </motion.button>
+  onClick={() => {
+    const todosPresentes = jogadoresSelecionados.every(j => j.presente);
+    setJogadoresSelecionados(jogadoresSelecionados.map(j => ({
+      ...j,
+      presente: !todosPresentes
+    })));
+    toast.info(todosPresentes ? 'Todos os jogadores desmarcados' : 'Todos os jogadores marcados');
+  }}
+  whileHover={{ scale: 1.02 }}
+  whileTap={{ scale: 0.98 }}
+  className="w-1/2 sm:flex-1 flex items-center justify-center gap-1 text-xs sm:text-sm bg-gray-700 hover:bg-gray-600 text-gray-200 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg transition-all"
+>
+  <FaCheck className="w-3 h-3 sm:w-4 sm:h-4" />
+  <span>{jogadoresSelecionados.every(j => j.presente) ? 'Desmarcar Todos' : 'Marcar Todos'}</span>
+</motion.button>
   </div>
 </div>
 
