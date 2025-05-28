@@ -2,11 +2,12 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: import.meta.env.VITE_API_URL + '/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'
-  }
+  },
+  withCredentials: true
 });
 
 // Serviço de pagamentos
@@ -15,7 +16,7 @@ export const pagamentosAPI = {
     try {
       const url = `jogadores/${jogadorId}/pagamentos`;
       console.log('🔄 Atualizando pagamento:', { url, dados });
-      
+
       const response = await api.post(url, {
         mes,
         ...dados
@@ -33,23 +34,15 @@ export const pagamentosAPI = {
   }
 };
 
-// Interceptador de requisição
+// Interceptadores
 api.interceptors.request.use(
   (config) => {
-    // Remove 'api/' do início da URL
-    if (config.url.startsWith('api/')) {
-      config.url = config.url.substring(4);
-    }
-    
-    // Remove barras duplas na URL
-    config.url = config.url.replace(/\/\//g, '/');
-    
+    config.url = config.url.replace(/\/\//g, '/'); // Apenas normaliza barra dupla
     console.log('📡 Request:', {
       method: config.method?.toUpperCase(),
-      url: config.url,
+      url: config.baseURL + config.url,
       data: config.data
     });
-    
     return config;
   },
   (error) => {
@@ -58,7 +51,6 @@ api.interceptors.request.use(
   }
 );
 
-// Interceptador de resposta com tratamento detalhado de erros
 api.interceptors.response.use(
   (response) => {
     console.log('✅ Response:', {

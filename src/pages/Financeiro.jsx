@@ -248,11 +248,8 @@ export default function Financeiro() {
       }
 
       // Continua com o registro da transação...
-      const response = await api.post('/financeiro/transacoes', payload);
-
-      if (!response.ok) throw new Error('Erro ao adicionar transação');
-
-      const data = await response.json();
+     const response = await api.post('/financeiro/transacoes', payload);
+const data = response.data; // axios já retorna o JSON
       
       // Atualiza o estado local das transações
       setTransacoes(prev => [data.data, ...prev]);
@@ -382,7 +379,7 @@ export default function Financeiro() {
   const deletarTransacao = async (id) => {
     try {
       // Deletar transação
-      await api.delete(`/api/financeiro/transacoes/${id}`);
+      await api.delete(`/financeiro/transacoes/${id}`);
 
       // Remove a transação do estado local
       setTransacoes(prev => prev.filter(t => t._id !== id));
