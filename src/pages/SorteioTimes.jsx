@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import socket from '../services/socket';
-
+import usePersistedState from '../hooks/usePersistedState';
 // Constantes para organizar os valores fixos
 const POSICOES = {
   GOLEIRO: "Goleiro",
@@ -44,8 +44,10 @@ const NIVEL_JOGADOR = {
 const LOCAL_STORAGE_KEYS = {
   JOGADORES_SELECIONADOS: "jogadoresSelecionados",
   HISTORICO_SORTEIOS: "historicoSorteios"
+  
 };
-
+// Defina a chave para o localStorage
+const STORAGE_KEY = 'jogadoresPresenca';
 /**
  * Componente principal para sorteio de times de futebol
  * Permite selecionar jogadores, definir posições e balancear times de diferentes formas
@@ -242,51 +244,51 @@ export default function SorteioTimes() {
 
   // Carrega jogadores do backend ao montar o componente
   useEffect(() => {
-  const carregarDados = async () => {
+  const carregarJogadores = async () => {
     setCarregandoJogadores(true);
     try {
-      // 1. Tenta carregar do backend
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/jogadores`);
-      const { data: jogadoresAPI } = await response.json();
+      const { data: jogadores } = await response.json();
 
-      // 2. Carrega do localStorage
-      const jogadoresSalvos = JSON.parse(
-        localStorage.getItem(LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS) || '[]'
-      );
-
-      // 3. Combina os dados (prioriza o localStorage)
-      const jogadoresCombinados = jogadoresAPI.map(jogador => {
-        const jogadorSalvo = jogadoresSalvos.find(j => j._id === jogador._id);
+      // Combina os jogadores da API com os dados salvos
+      setJogadoresSelecionados(prev => {
+        // Se não houver dados salvos, inicializa com todos presentes como false
+        if (prev.length === 0) {
+          return jogadores.map(jogador => ({
+            ...jogador,
+            presente: false,
+            posicao: jogador.posicao || POSICOES.MEIA,
+            posicaoOriginal: jogador.posicao || POSICOES.MEIA,
+            nivel: jogador.nivel === 'Associado' ? NIVEL_JOGADOR.ASSOCIADO : 
+                  jogador.nivel === 'Convidado' ? NIVEL_JOGADOR.CONVIDADO : 
+                  NIVEL_JOGADOR.INICIANTE
+          }));
+        }
         
-        return {
-          ...jogador,
-          presente: jogadorSalvo?.presente ?? false, // Mantém o estado salvo ou usa false
-          posicao: jogadorSalvo?.posicao || jogador.posicao || POSICOES.MEIA,
-          posicaoOriginal: jogador.posicao || POSICOES.MEIA,
-          nivel: jogador.nivel === 'Associado' ? NIVEL_JOGADOR.ASSOCIADO : 
-                jogador.nivel === 'Convidado' ? NIVEL_JOGADOR.CONVIDADO : 
-                NIVEL_JOGADOR.INICIANTE
-        };
+        // Se já houver dados salvos, mantém o estado de presença
+        return jogadores.map(jogador => {
+          const existente = prev.find(j => j._id === jogador._id);
+          return {
+            ...jogador,
+            presente: existente ? existente.presente : false,
+            posicao: existente?.posicao || jogador.posicao || POSICOES.MEIA,
+            posicaoOriginal: jogador.posicao || POSICOES.MEIA,
+            nivel: jogador.nivel === 'Associado' ? NIVEL_JOGADOR.ASSOCIADO : 
+                  jogador.nivel === 'Convidado' ? NIVEL_JOGADOR.CONVIDADO : 
+                  NIVEL_JOGADOR.INICIANTE
+          };
+        });
       });
-
-      setJogadoresSelecionados(jogadoresCombinados);
-      
-    } catch (erro) {
-      console.error("Erro ao carregar jogadores:", erro);
-      // Fallback: usa apenas os dados do localStorage se a API falhar
-      const jogadoresSalvos = JSON.parse(
-        localStorage.getItem(LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS) || '[]'
-      );
-      if (jogadoresSalvos.length > 0) {
-        setJogadoresSelecionados(jogadoresSalvos);
-      }
+    } catch (error) {
+      console.error("Erro ao carregar jogadores:", error);
+      toast.error("Erro ao carregar jogadores");
     } finally {
       setCarregandoJogadores(false);
     }
   };
 
-  carregarDados();
-}, []);
+  carregarJogadores();
+}, []); // Executa apenas uma vez ao montar
 
   // Persiste o histórico no localStorage
   useEffect(() => {
@@ -307,16 +309,10 @@ export default function SorteioTimes() {
     const novosJogadores = prev.map(jogador => 
       jogador._id === id ? { ...jogador, presente: !jogador.presente } : jogador
     );
-    
-    // Salva imediatamente no localStorage
-    localStorage.setItem(
-      LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS,
-      JSON.stringify(novosJogadores)
-    );
-    
     return novosJogadores;
   });
 };
+ 
 
 useEffect(() => {
   const salvarAutomaticamente = setTimeout(() => {
