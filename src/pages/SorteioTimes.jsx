@@ -72,36 +72,7 @@ export default function SorteioTimes() {
   const [modoEdicao, setModoEdicao] = useState(false);
   const [filtroPosicao, setFiltroPosicao] = useState('');
   const [dataJogo, setDataJogo] = useState('');
-const [linkAtivo, setLinkAtivo] = useState(null);
 
-
-// Função para sincronizar com o link
-const sincronizarPresencaLink = async (jogadoresAtualizados) => {
-  if (!linkAtivo) return;
-
-  try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/presenca/${linkAtivo}/sincronizar`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        jogadores: jogadoresAtualizados.map(j => ({
-          id: j._id,
-          nome: j.nome,
-          presente: j.presente
-        }))
-      })
-    });
-
-    if (!response.ok) throw new Error('Erro na sincronização');
-    
-    toast.success('Presença sincronizada com o link!');
-  } catch (error) {
-    console.error('Erro ao sincronizar:', error);
-    toast.error('Não foi possível sincronizar com o link');
-  }
-};
 
   // Carrega dados do localStorage ao montar o componente
   useEffect(() => {
@@ -219,59 +190,57 @@ const sincronizarPresencaLink = async (jogadoresAtualizados) => {
    * Gera um link para confirmação de presença e compartilha via WhatsApp
    */
   const gerarLinkPresenca = async () => {
-  if (!dataJogo) {
-    toast.warning('Por favor, selecione a data do jogo!');
-    return;
-  }
-
-  try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/gerar-link-presenca`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        jogadores: jogadoresSelecionados.map(j => ({
-          id: j._id,
-          nome: j.nome,
-          presente: j.presente
-        })),
-        dataJogo
-      })
-    });
-
-    const { linkId } = await response.json();
-    const linkCompleto = `${window.location.origin}/confirmar-presenca/${linkId}`; // Defina a variável aqui
-    
-    setLinkAtivo(linkId);
-
-    const dataFormatada = new Date(dataJogo).toLocaleDateString('pt-BR', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long'
-    });
-
-    const mensagem = `*⚽ Confirmação de Presença - Fut de ${dataFormatada}!*\n\n` +
-      `Fala galera! Chegou a hora de confirmar presença para o nosso fut!\n\n` +
-      `🗓️ Data: ${dataFormatada}\n\n` +
-      `📲 *Confirme sua presença acessando:*\n\n` +
-      `${linkCompleto}\n\n` +
-      `_Clique no link acima para confirmar sua participação._`;
-
-    if (navigator.share) {
-      await navigator.share({
-        title: 'Confirmação de Presença',
-        text: mensagem
-      });
-    } else {
-      await navigator.clipboard.writeText(mensagem);
-      toast.success('Link copiado para área de transferência!');
+    if (!dataJogo) {
+      toast.warning('Por favor, selecione a data do jogo!');
+      return;
     }
-  } catch (error) {
-    console.error('Erro ao gerar link:', error);
-    toast.error('Erro ao gerar link de presença');
-  }
-};
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/gerar-link-presenca`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          jogadores: jogadoresSelecionados.map(j => ({
+            id: j._id,
+            nome: j.nome,
+            presente: j.presente
+          })),
+          dataJogo
+        })
+      });
+
+      const { linkId } = await response.json();
+      const linkCompleto = `${window.location.origin}/confirmar-presenca/${linkId}`;
+      
+      const dataFormatada = new Date(dataJogo).toLocaleDateString('pt-BR', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long'
+      });
+      
+      const mensagem = `*⚽ Confirmação de Presença - Fut de ${dataFormatada}!*\n\n` +
+        `Fala galera! Chegou a hora de confirmar presença para o nosso fut!\n\n` +
+        `🗓️ Data: ${dataFormatada}\n\n` +
+        `📲 *Confirme sua presença acessando:*\n\n`+
+        `${linkCompleto}\n\n` +
+        `_Clique no link acima para confirmar sua participação._`;
+
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Confirmação de Presença',
+          text: mensagem
+        });
+      } else {
+        await navigator.clipboard.writeText(mensagem);
+        toast.success('Link copiado para área de transferência!');
+      }
+    } catch (error) {
+      console.error('Erro ao gerar link:', error);
+      toast.error('Erro ao gerar link de presença');
+    }
+  };
 
   // Carrega jogadores do backend ao montar o componente
   useEffect(() => {
@@ -330,7 +299,7 @@ const sincronizarPresencaLink = async (jogadoresAtualizados) => {
    * Alterna o estado de presença de um jogador
    * @param {string} id - ID do jogador
    */
-const alternarPresenca = (id) => {
+ const alternarPresenca = (id) => {
   if (times.length > 0) {
     toast.warning("Não é possível alterar presença após o sorteio!");
     return;
@@ -340,75 +309,10 @@ const alternarPresenca = (id) => {
     const novosJogadores = prev.map(jogador => 
       jogador._id === id ? { ...jogador, presente: !jogador.presente } : jogador
     );
-    
-    // Sincroniza imediatamente
-    sincronizarComLink(novosJogadores);
-    
     return novosJogadores;
   });
 };
-
-// Adicione este botão na interface
-<button
-  onClick={sincronizarComLink}
-  disabled={!linkAtivo}
-  className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-    linkAtivo 
-      ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-      : 'bg-gray-400 text-gray-200 cursor-not-allowed'
-  }`}
->
-  <FaSync /> Sincronizar com Link
-</button>
-
-// Adicione este useEffect para ouvir atualizações do Socket.IO
-useEffect(() => {
-  socket.on('presencaSincronizada', ({ linkId, jogadores }) => {
-    if (linkId === linkAtivo) {
-      setJogadoresSelecionados(prev => {
-        return prev.map(jogador => {
-          const jogadorAtualizado = jogadores.find(j => j.id === jogador._id);
-          return jogadorAtualizado ? { 
-            ...jogador, 
-            presente: jogadorAtualizado.presente 
-          } : jogador;
-        });
-      });
-    }
-  });
-
-  return () => {
-    socket.off('presencaSincronizada');
-  };
-}, [linkAtivo]);
-
-//Sincroniza com link
-const sincronizarComLink = async () => {
-  if (!linkAtivo) return;
-
-  try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/presenca/sincronizar-sistema`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        linkId: linkAtivo,
-        jogadores: jogadoresSelecionados.map(j => ({
-          id: j._id,
-          nome: j.nome,
-          presente: j.presente
-        }))
-      })
-    });
-
-    if (!response.ok) throw new Error('Erro na sincronização');
-    toast.success('Presenças sincronizadas com o link!');
-  } catch (error) {
-    console.error('Erro ao sincronizar:', error);
-    toast.error('Falha ao sincronizar com o link');
-  }
-};
+ 
 
 useEffect(() => {
   const salvarAutomaticamente = setTimeout(() => {
@@ -1068,8 +972,6 @@ const aplicarFiltroPosicao = () => {
                   >
                     {modoEdicao ? <FaSave size={14} /> : <FaEdit size={14} />}
                   </motion.button>
-                  
-
                   
                   <motion.button
                     onClick={compartilharTimes}

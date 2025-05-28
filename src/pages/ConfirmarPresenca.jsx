@@ -13,23 +13,6 @@ export default function ConfirmarPresenca() {
   const [socket, setSocket] = useState(null);
   const [eventoData, setEventoData] = useState('');
 
-
-// Adicione este efeito
-useEffect(() => {
-  const socket = io(import.meta.env.VITE_API_URL);
-
-  socket.on('sistemaParaLink', ({ linkId, jogadores }) => {
-    if (linkId === params.linkId) {
-      setJogadores(jogadores);
-      toast.info('Lista de presença atualizada');
-    }
-  });
-
-  return () => {
-    socket.disconnect();
-  };
-}, [params.linkId]);
-
   // Configuração do Socket
   useEffect(() => {
     const socketInstance = io(import.meta.env.VITE_API_URL, {
