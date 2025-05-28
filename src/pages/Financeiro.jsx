@@ -248,23 +248,23 @@ export default function Financeiro() {
       }
 
       // Continua com o registro da transação...
-     const response = await api.post('/financeiro/transacoes', payload);
-const data = response.data; // axios já retorna o JSON
+const response = await api.post('/financeiro/transacoes', payload);
+const data = response.data;
       
       // Atualiza o estado local das transações
-      setTransacoes(prev => [data.data, ...prev]);
-      
-      // Atualiza as estatísticas
-      setEstatisticas(prev => ({
-        ...prev,
-        totalReceitas: payload.tipo === 'receita' 
-          ? prev.totalReceitas + parseFloat(payload.valor) 
-          : prev.totalReceitas,
-        totalDespesas: payload.tipo === 'despesa' 
-          ? prev.totalDespesas + parseFloat(payload.valor) 
-          : prev.totalDespesas,
-        saldo: prev.totalReceitas - prev.totalDespesas
-      }));
+ setTransacoes(prev => [data.data, ...prev]);
+
+setEstatisticas(prev => ({
+  ...prev,
+  totalReceitas: payload.tipo === 'receita' 
+    ? prev.totalReceitas + parseFloat(payload.valor) 
+    : prev.totalReceitas,
+  totalDespesas: payload.tipo === 'despesa' 
+    ? prev.totalDespesas + parseFloat(payload.valor) 
+    : prev.totalDespesas,
+  saldo: (prev.totalReceitas + (payload.tipo === 'receita' ? parseFloat(payload.valor) : 0)) - 
+         (prev.totalDespesas + (payload.tipo === 'despesa' ? parseFloat(payload.valor) : 0))
+}));
 
       // Reset do formulário
       toast.success('Transação registrada com sucesso!');
