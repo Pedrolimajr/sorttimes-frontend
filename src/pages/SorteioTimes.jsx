@@ -55,7 +55,10 @@ export default function SorteioTimes() {
   
   // Estados do componente
   const [jogadoresCadastrados, setJogadoresCadastrados] = useState([]);
-  const [jogadoresSelecionados, setJogadoresSelecionados] = useState([]);
+ const [jogadoresSelecionados, setJogadoresSelecionados] = usePersistedState(
+  LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS,
+  []
+);
   const [times, setTimes] = useState([]);
   const [balanceamento, setBalanceamento] = useState(TIPOS_BALANCEAMENTO.POSICAO); //const [balanceamento, setBalanceamento] = useState(TIPOS_BALANCEAMENTO.ALEATORIO);
   const [carregando, setCarregando] = useState(false);
@@ -239,35 +242,51 @@ export default function SorteioTimes() {
 
   // Carrega jogadores do backend ao montar o componente
   useEffect(() => {
-    const carregarDados = async () => {
-      setCarregandoJogadores(true);
-      try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/jogadores`);
-        if (!response.ok) throw new Error('Erro ao carregar jogadores');
-        
-        const { data: jogadores } = await response.json();
-        setJogadoresCadastrados(jogadores);
-        
-        setJogadoresSelecionados(jogadores.map(jogador => ({
-          ...jogador,
-          posicaoOriginal: jogador.posicao || POSICOES.MEIA,
-          presente: false,
-          posicao: jogador.posicao || POSICOES.MEIA,
-          nivel: jogador.nivel === 'Associado' ? NIVEL_JOGADOR.ASSOCIADO : 
-                 jogador.nivel === 'Convidado' ? NIVEL_JOGADOR.CONVIDADO : 
-                 NIVEL_JOGADOR.INICIANTE
-        })));
+  const carregarDados = async () => {
+    setCarregandoJogadores(true);
+    try {
+      // 1. Tenta carregar do backend
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/jogadores`);
+      const { data: jogadoresAPI } = await response.json();
 
-      } catch (erro) {
-        console.error("Erro ao carregar jogadores:", erro);
-        toast.error("Erro ao carregar jogadores: " + erro.message);
-      } finally {
-        setCarregandoJogadores(false);
+      // 2. Carrega do localStorage
+      const jogadoresSalvos = JSON.parse(
+        localStorage.getItem(LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS) || '[]'
+      );
+
+      // 3. Combina os dados (prioriza o localStorage)
+      const jogadoresCombinados = jogadoresAPI.map(jogador => {
+        const jogadorSalvo = jogadoresSalvos.find(j => j._id === jogador._id);
+        
+        return {
+          ...jogador,
+          presente: jogadorSalvo?.presente ?? false, // Mantém o estado salvo ou usa false
+          posicao: jogadorSalvo?.posicao || jogador.posicao || POSICOES.MEIA,
+          posicaoOriginal: jogador.posicao || POSICOES.MEIA,
+          nivel: jogador.nivel === 'Associado' ? NIVEL_JOGADOR.ASSOCIADO : 
+                jogador.nivel === 'Convidado' ? NIVEL_JOGADOR.CONVIDADO : 
+                NIVEL_JOGADOR.INICIANTE
+        };
+      });
+
+      setJogadoresSelecionados(jogadoresCombinados);
+      
+    } catch (erro) {
+      console.error("Erro ao carregar jogadores:", erro);
+      // Fallback: usa apenas os dados do localStorage se a API falhar
+      const jogadoresSalvos = JSON.parse(
+        localStorage.getItem(LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS) || '[]'
+      );
+      if (jogadoresSalvos.length > 0) {
+        setJogadoresSelecionados(jogadoresSalvos);
       }
-    };
-    
-    carregarDados();
-  }, []);
+    } finally {
+      setCarregandoJogadores(false);
+    }
+  };
+
+  carregarDados();
+}, []);
 
   // Persiste o histórico no localStorage
   useEffect(() => {
@@ -279,17 +298,38 @@ export default function SorteioTimes() {
    * @param {string} id - ID do jogador
    */
  const alternarPresenca = (id) => {
-    // Bloqueia alteração se os times já foram sorteados
-    if (times.length > 0) {
-      toast.warning("Não é possível alterar presença após o sorteio!");
-      return;
-    }
-    
-    setJogadoresSelecionados(jogadoresSelecionados.map(jogador => 
-      jogador._id === id ? { ...jogador, presente: !jogador.presente } : jogador
-    ));
-  };
+  if (times.length > 0) {
+    toast.warning("Não é possível alterar presença após o sorteio!");
+    return;
+  }
 
+  setJogadoresSelecionados(prev => {
+    const novosJogadores = prev.map(jogador => 
+      jogador._id === id ? { ...jogador, presente: !jogador.presente } : jogador
+    );
+    
+    // Salva imediatamente no localStorage
+    localStorage.setItem(
+      LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS,
+      JSON.stringify(novosJogadores)
+    );
+    
+    return novosJogadores;
+  });
+};
+
+useEffect(() => {
+  const salvarAutomaticamente = setTimeout(() => {
+    if (jogadoresSelecionados.length > 0) {
+      localStorage.setItem(
+        LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS,
+        JSON.stringify(jogadoresSelecionados)
+      );
+    }
+  }, 1000); // Debounce de 1 segundo
+
+  return () => clearTimeout(salvarAutomaticamente);
+}, [jogadoresSelecionados]);
   /**
    * Atualiza a posição de um jogador
    * @param {string} id - ID do jogador
@@ -324,15 +364,15 @@ const aplicarFiltroPosicao = () => {
    * Realiza o sorteio dos times com base nos jogadores selecionados
    */
   
-    const sortearTimes = async () => {
-    const jogadoresPresentes = jogadoresSelecionados.filter(j => j.presente);
-    
-    if (jogadoresPresentes.length < 2) {
-      toast.error("Mínimo de 2 jogadores necessários");
-      return;
-    }
+   const sortearTimes = async () => {
+  const jogadoresPresentes = jogadoresSelecionados.filter(j => j.presente);
   
-    setCarregando(true);
+  if (jogadoresPresentes.length < 2) {
+    toast.error("Mínimo de 2 jogadores necessários");
+    return;
+  }
+
+  setCarregando(true);
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/sorteio-times/sortear`, {
         method: 'POST',
@@ -383,15 +423,15 @@ const aplicarFiltroPosicao = () => {
       toast.success(`Times sorteados com sucesso! ${data.times.length} times formados`);
 
       // Limpa os dados de presença do localStorage após o sorteio
-      localStorage.removeItem(LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS);
+      // localStorage.removeItem(LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS);
   
-    } catch (error) {
-      console.error("Erro detalhado:", error);
-      toast.error(error.message || 'Erro ao sortear times');
-    } finally {
-      setCarregando(false);
-    }
-  };
+ } catch (error) {
+    console.error("Erro ao sortear times:", error);
+    toast.error(error.message || 'Erro ao sortear times');
+  } finally {
+    setCarregando(false);
+  }
+};
   /**
    * Recarrega a lista de jogadores do servidor
    */
