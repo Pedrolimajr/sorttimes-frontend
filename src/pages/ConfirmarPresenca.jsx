@@ -16,15 +16,17 @@ export default function ConfirmarPresenca() {
 
 // Adicione este efeito
 useEffect(() => {
+  const socket = io(import.meta.env.VITE_API_URL);
+
   socket.on('sistemaParaLink', ({ linkId, jogadores }) => {
-    if (linkId === params.linkId) { // params.linkId é o ID da URL
-      setJogadores(jogadores); // Atualiza o estado local
-      toast.info('Presenças atualizadas pelo sistema');
+    if (linkId === params.linkId) {
+      setJogadores(jogadores);
+      toast.info('Lista de presença atualizada');
     }
   });
 
   return () => {
-    socket.off('sistemaParaLink');
+    socket.disconnect();
   };
 }, [params.linkId]);
 

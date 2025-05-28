@@ -219,58 +219,59 @@ const sincronizarPresencaLink = async (jogadoresAtualizados) => {
    * Gera um link para confirmação de presença e compartilha via WhatsApp
    */
   const gerarLinkPresenca = async () => {
-    if (!dataJogo) {
-      toast.warning('Por favor, selecione a data do jogo!');
-      return;
-    }
+  if (!dataJogo) {
+    toast.warning('Por favor, selecione a data do jogo!');
+    return;
+  }
 
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/gerar-link-presenca`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          jogadores: jogadoresSelecionados.map(j => ({
-            id: j._id,
-            nome: j.nome,
-            presente: j.presente
-          })),
-          dataJogo
-        })
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/gerar-link-presenca`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        jogadores: jogadoresSelecionados.map(j => ({
+          id: j._id,
+          nome: j.nome,
+          presente: j.presente
+        })),
+        dataJogo
+      })
+    });
+
+    const { linkId } = await response.json();
+    const linkCompleto = `${window.location.origin}/confirmar-presenca/${linkId}`; // Defina a variável aqui
+    
+    setLinkAtivo(linkId);
+
+    const dataFormatada = new Date(dataJogo).toLocaleDateString('pt-BR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long'
+    });
+
+    const mensagem = `*⚽ Confirmação de Presença - Fut de ${dataFormatada}!*\n\n` +
+      `Fala galera! Chegou a hora de confirmar presença para o nosso fut!\n\n` +
+      `🗓️ Data: ${dataFormatada}\n\n` +
+      `📲 *Confirme sua presença acessando:*\n\n` +
+      `${linkCompleto}\n\n` +
+      `_Clique no link acima para confirmar sua participação._`;
+
+    if (navigator.share) {
+      await navigator.share({
+        title: 'Confirmação de Presença',
+        text: mensagem
       });
-
-      const { linkId } = await response.json();
-      setLinkAtivo(linkId); // Guarda o link ativo
-      // const linkCompleto = `${window.location.origin}/confirmar-presenca/${linkId}`;
-      
-      const dataFormatada = new Date(dataJogo).toLocaleDateString('pt-BR', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long'
-      });
-      
-      const mensagem = `*⚽ Confirmação de Presença - Fut de ${dataFormatada}!*\n\n` +
-        `Fala galera! Chegou a hora de confirmar presença para o nosso fut!\n\n` +
-        `🗓️ Data: ${dataFormatada}\n\n` +
-        `📲 *Confirme sua presença acessando:*\n\n`+
-        `${linkCompleto}\n\n` +
-        `_Clique no link acima para confirmar sua participação._`;
-
-      if (navigator.share) {
-        await navigator.share({
-          title: 'Confirmação de Presença',
-          text: mensagem
-        });
-      } else {
-        await navigator.clipboard.writeText(mensagem);
-        toast.success('Link copiado para área de transferência!');
-      }
-    } catch (error) {
-      console.error('Erro ao gerar link:', error);
-      toast.error('Erro ao gerar link de presença');
+    } else {
+      await navigator.clipboard.writeText(mensagem);
+      toast.success('Link copiado para área de transferência!');
     }
-  };
+  } catch (error) {
+    console.error('Erro ao gerar link:', error);
+    toast.error('Erro ao gerar link de presença');
+  }
+};
 
   // Carrega jogadores do backend ao montar o componente
   useEffect(() => {
@@ -1068,6 +1069,24 @@ const aplicarFiltroPosicao = () => {
                     {modoEdicao ? <FaSave size={14} /> : <FaEdit size={14} />}
                   </motion.button>
                   
+{/* Botão de Sicronização - Inicio */}
+{linkAtivo && (
+  <div className="flex items-center gap-4 p-3 bg-blue-50 rounded-lg mb-4">
+    <div className="flex items-center gap-2">
+      <FaLink className="text-blue-500" />
+      <span className="text-sm text-blue-700">Link ativo: {linkAtivo}</span>
+    </div>
+    <button
+      onClick={sincronizarComConfirmacao}
+      className="flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm"
+    >
+      <FaSync /> Sincronizar
+    </button>
+  </div>
+)}
+
+{/* Botão de Sicronização - Fim */}
+
                   <motion.button
                     onClick={compartilharTimes}
                     whileHover={{ scale: 1.05 }}
