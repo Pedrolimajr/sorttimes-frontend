@@ -72,7 +72,36 @@ export default function SorteioTimes() {
   const [modoEdicao, setModoEdicao] = useState(false);
   const [filtroPosicao, setFiltroPosicao] = useState('');
   const [dataJogo, setDataJogo] = useState('');
+const [linkAtivo, setLinkAtivo] = useState(null);
 
+
+// Função para sincronizar com o link
+const sincronizarPresencaLink = async (jogadoresAtualizados) => {
+  if (!linkAtivo) return;
+
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/presenca/${linkAtivo}/sincronizar`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        jogadores: jogadoresAtualizados.map(j => ({
+          id: j._id,
+          nome: j.nome,
+          presente: j.presente
+        }))
+      })
+    });
+
+    if (!response.ok) throw new Error('Erro na sincronização');
+    
+    toast.success('Presença sincronizada com o link!');
+  } catch (error) {
+    console.error('Erro ao sincronizar:', error);
+    toast.error('Não foi possível sincronizar com o link');
+  }
+};
 
   // Carrega dados do localStorage ao montar o componente
   useEffect(() => {
@@ -212,7 +241,8 @@ export default function SorteioTimes() {
       });
 
       const { linkId } = await response.json();
-      const linkCompleto = `${window.location.origin}/confirmar-presenca/${linkId}`;
+      setLinkAtivo(linkId); // Guarda o link ativo
+      // const linkCompleto = `${window.location.origin}/confirmar-presenca/${linkId}`;
       
       const dataFormatada = new Date(dataJogo).toLocaleDateString('pt-BR', {
         weekday: 'long',
@@ -299,7 +329,7 @@ export default function SorteioTimes() {
    * Alterna o estado de presença de um jogador
    * @param {string} id - ID do jogador
    */
- const alternarPresenca = (id) => {
+const alternarPresenca = (id) => {
   if (times.length > 0) {
     toast.warning("Não é possível alterar presença após o sorteio!");
     return;
@@ -309,10 +339,35 @@ export default function SorteioTimes() {
     const novosJogadores = prev.map(jogador => 
       jogador._id === id ? { ...jogador, presente: !jogador.presente } : jogador
     );
+    
+    // Sincroniza com o link imediatamente
+    sincronizarPresencaLink(novosJogadores);
+    
     return novosJogadores;
   });
 };
  
+
+// Adicione este useEffect para ouvir atualizações do Socket.IO
+useEffect(() => {
+  socket.on('presencaSincronizada', ({ linkId, jogadores }) => {
+    if (linkId === linkAtivo) {
+      setJogadoresSelecionados(prev => {
+        return prev.map(jogador => {
+          const jogadorAtualizado = jogadores.find(j => j.id === jogador._id);
+          return jogadorAtualizado ? { 
+            ...jogador, 
+            presente: jogadorAtualizado.presente 
+          } : jogador;
+        });
+      });
+    }
+  });
+
+  return () => {
+    socket.off('presencaSincronizada');
+  };
+}, [linkAtivo]);
 
 useEffect(() => {
   const salvarAutomaticamente = setTimeout(() => {
@@ -1007,6 +1062,39 @@ const aplicarFiltroPosicao = () => {
                   <FaHistory className="text-blue-400" /> Últimos Sorteios
                 </h3>
               </div>
+              {/* Controle de Sincronização */}
+
+<div className="flex items-center gap-2 mb-4">
+  {linkAtivo && (
+    <div className="flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
+      <FaLink className="text-sm" />
+      <span className="text-sm">Link ativo: {linkAtivo}</span>
+      <button 
+        onClick={() => {
+          setLinkAtivo(null);
+          toast.info('Link desvinculado');
+        }}
+        className="text-red-500 hover:text-red-700"
+      >
+        <FaTimes />
+      </button>
+    </div>
+  )}
+  
+  <button
+    onClick={() => linkAtivo && sincronizarPresencaLink(jogadoresSelecionados)}
+    disabled={!linkAtivo}
+    className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm ${
+      linkAtivo 
+        ? 'bg-green-100 text-green-800 hover:bg-green-200' 
+        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+    }`}
+  >
+    <FaSync className={carregando ? 'animate-spin' : ''} />
+    Sincronizar Agora
+  </button>
+</div>
+               {/* Controle de Sincronização */}
               
               <div className="space-y-3 sm:space-y-4 max-h-96 overflow-y-auto pr-2">
                 {historico.map((sorteio, idx) => (
