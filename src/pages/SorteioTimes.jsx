@@ -74,6 +74,7 @@ export default function SorteioTimes() {
   const [dataJogo, setDataJogo] = useState('');
 const [linkAtivo, setLinkAtivo] = useState(null);
 
+
 // Função para sincronizar com o link
 const sincronizarPresencaLink = async (jogadoresAtualizados) => {
   if (!linkAtivo) return;
@@ -1068,24 +1069,8 @@ const aplicarFiltroPosicao = () => {
                     {modoEdicao ? <FaSave size={14} /> : <FaEdit size={14} />}
                   </motion.button>
                   
-{/* Botão de Sicronização - Inicio */}
-{linkAtivo && (
-  <div className="flex items-center gap-4 p-3 bg-blue-50 rounded-lg mb-4">
-    <div className="flex items-center gap-2">
-      <FaLink className="text-blue-500" />
-      <span className="text-sm text-blue-700">Link ativo: {linkAtivo}</span>
-    </div>
-    <button
-      onClick={sincronizarComConfirmacao}
-      className="flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm"
-    >
-      <FaSync /> Sincronizar
-    </button>
-  </div>
-)}
 
-{/* Botão de Sicronização - Fim */}
-
+                  
                   <motion.button
                     onClick={compartilharTimes}
                     whileHover={{ scale: 1.05 }}

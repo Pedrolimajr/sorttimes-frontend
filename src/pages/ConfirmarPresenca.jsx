@@ -5,7 +5,7 @@ import { io } from 'socket.io-client';
 import { toast } from 'react-toastify';
 import api from '../services/api';
 import { GiSoccerKick } from "react-icons/gi";
-import { useParams } from 'react-router-dom';
+
 export default function ConfirmarPresenca() {
   const { linkId } = useParams();
   const [jogadores, setJogadores] = useState([]);
