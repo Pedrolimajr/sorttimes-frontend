@@ -62,6 +62,23 @@ export default function SorteioTimes() {
   const [filtroPosicao, setFiltroPosicao] = useState('');
   const [dataJogo, setDataJogo] = useState('');
 
+
+  //Restaurar o estado salvo
+
+  useEffect(() => {
+  const salvos = localStorage.getItem("jogadoresSelecionados");
+  if (salvos) {
+    const recuperados = JSON.parse(salvos);
+    setJogadoresSelecionados(recuperados);
+  }
+}, []);
+
+//Salvando no localStore sempre que alterar
+useEffect(() => {
+  localStorage.setItem("jogadoresSelecionados", JSON.stringify(jogadoresSelecionados));
+}, [jogadoresSelecionados]);
+
+
   // Configuração do socket.io para atualizações em tempo real
   useEffect(() => {
     socket.connect();
@@ -184,10 +201,12 @@ export default function SorteioTimes() {
    * @param {string} id - ID do jogador
    */
   const alternarPresenca = (id) => {
+    if (times.length > 0) return; // Só permite alterações antes do sorteio
     setJogadoresSelecionados(jogadoresSelecionados.map(jogador => 
       jogador._id === id ? { ...jogador, presente: !jogador.presente } : jogador
     ));
   };
+  
 
   /**
    * Atualiza a posição de um jogador
