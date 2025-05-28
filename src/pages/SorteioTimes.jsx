@@ -63,21 +63,40 @@ export default function SorteioTimes() {
   const [dataJogo, setDataJogo] = useState('');
 
 
-  //Restaurar o estado salvo
-
+  // Carrega dados do localStorage ao montar o componente
   useEffect(() => {
-  const salvos = localStorage.getItem("jogadoresSelecionados");
-  if (salvos) {
-    const recuperados = JSON.parse(salvos);
-    setJogadoresSelecionados(recuperados);
-  }
-}, []);
+    // Carregar histórico
+    const historicoSalvo = localStorage.getItem(LOCAL_STORAGE_KEYS.HISTORICO_SORTEIOS);
+    if (historicoSalvo) {
+      setHistorico(JSON.parse(historicoSalvo));
+    }
 
-//Salvando no localStore sempre que alterar
-useEffect(() => {
-  localStorage.setItem("jogadoresSelecionados", JSON.stringify(jogadoresSelecionados));
-}, [jogadoresSelecionados]);
+    // Carregar jogadores selecionados com estado de presença
+    const jogadoresSalvos = localStorage.getItem(LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS);
+    if (jogadoresSalvos) {
+      setJogadoresSelecionados(JSON.parse(jogadoresSalvos));
+    }
+  }, []);
 
+  // Salva automaticamente no localStorage quando a lista de jogadores muda
+  useEffect(() => {
+    if (jogadoresSelecionados.length > 0) {
+      localStorage.setItem(
+        LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS, 
+        JSON.stringify(jogadoresSelecionados)
+      );
+    }
+  }, [jogadoresSelecionados]);
+
+  // Salva histórico no localStorage quando muda
+  useEffect(() => {
+    if (historico.length > 0) {
+      localStorage.setItem(
+        LOCAL_STORAGE_KEYS.HISTORICO_SORTEIOS, 
+        JSON.stringify(historico)
+      );
+    }
+  }, [historico]);
 
   // Configuração do socket.io para atualizações em tempo real
   useEffect(() => {
@@ -200,13 +219,17 @@ useEffect(() => {
    * Alterna o estado de presença de um jogador
    * @param {string} id - ID do jogador
    */
-  const alternarPresenca = (id) => {
-    if (times.length > 0) return; // Só permite alterações antes do sorteio
+ const alternarPresenca = (id) => {
+    // Bloqueia alteração se os times já foram sorteados
+    if (times.length > 0) {
+      toast.warning("Não é possível alterar presença após o sorteio!");
+      return;
+    }
+    
     setJogadoresSelecionados(jogadoresSelecionados.map(jogador => 
       jogador._id === id ? { ...jogador, presente: !jogador.presente } : jogador
     ));
   };
-  
 
   /**
    * Atualiza a posição de um jogador
@@ -242,7 +265,7 @@ const aplicarFiltroPosicao = () => {
    * Realiza o sorteio dos times com base nos jogadores selecionados
    */
   
-  const sortearTimes = async () => {
+    const sortearTimes = async () => {
     const jogadoresPresentes = jogadoresSelecionados.filter(j => j.presente);
     
     if (jogadoresPresentes.length < 2) {
@@ -299,6 +322,9 @@ const aplicarFiltroPosicao = () => {
       
       setHistorico([novoSorteio, ...historico.slice(0, 4)]);
       toast.success(`Times sorteados com sucesso! ${data.times.length} times formados`);
+
+      // Limpa os dados de presença do localStorage após o sorteio
+      localStorage.removeItem(LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS);
   
     } catch (error) {
       console.error("Erro detalhado:", error);
@@ -307,7 +333,6 @@ const aplicarFiltroPosicao = () => {
       setCarregando(false);
     }
   };
-
   /**
    * Recarrega a lista de jogadores do servidor
    */
