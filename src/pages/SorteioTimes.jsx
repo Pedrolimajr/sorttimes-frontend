@@ -40,6 +40,12 @@ const NIVEL_JOGADOR = {
   ASSOCIADO: 3
 };
 
+// Chaves para localStorage
+const LOCAL_STORAGE_KEYS = {
+  JOGADORES_SELECIONADOS: "jogadoresSelecionados",
+  HISTORICO_SORTEIOS: "historicoSorteios"
+};
+
 /**
  * Componente principal para sorteio de times de futebol
  * Permite selecionar jogadores, definir posições e balancear times de diferentes formas
