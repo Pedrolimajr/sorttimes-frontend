@@ -1,28 +1,35 @@
+// Atualize o arquivo de serviço do Socket.IO (services/socket.js)
 import { io } from 'socket.io-client';
 
-// Usando a URL do backend no Render
-const SOCKET_URL = import.meta.env.VITE_BACKEND_URL;
-
-const socket = io(SOCKET_URL, {
-  autoConnect: false,
+const socket = io(import.meta.env.VITE_API_URL || 'https://sorttimes-backend.onrender.com', {
   withCredentials: true,
-  reconnection: true,
+  transports: ['websocket', 'polling'], // Fallback para polling
   reconnectionAttempts: 5,
   reconnectionDelay: 1000,
-  transports: ['websocket']
+  autoConnect: false // Conectaremos manualmente
 });
 
-// Listeners de conexão com logs melhorados
-socket.on('connect', () => {
-  console.log('[Socket.IO] Conectado ao servidor:', SOCKET_URL);
-});
+// Função para conectar com tratamento de erros
+export const connectSocket = () => {
+  return new Promise((resolve, reject) => {
+    socket.connect();
+    
+    socket.on('connect', () => {
+      console.log('Socket.IO conectado');
+      resolve(socket);
+    });
 
-socket.on('disconnect', (reason) => {
-  console.log('[Socket.IO] Desconectado:', reason);
-});
+    socket.on('connect_error', (err) => {
+      console.error('Erro de conexão Socket.IO:', err);
+      reject(err);
+    });
 
-socket.on('connect_error', (error) => {
-  console.error('[Socket.IO] Erro de conexão:', error.message);
-});
+    setTimeout(() => {
+      if (!socket.connected) {
+        reject(new Error('Timeout de conexão Socket.IO'));
+      }
+    }, 5000);
+  });
+};
 
 export default socket;
