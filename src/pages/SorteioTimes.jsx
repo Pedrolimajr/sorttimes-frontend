@@ -340,13 +340,25 @@ const alternarPresenca = (id) => {
       jogador._id === id ? { ...jogador, presente: !jogador.presente } : jogador
     );
     
-    // Sincroniza com o link imediatamente
-    sincronizarPresencaLink(novosJogadores);
+    // Sincroniza imediatamente
+    sincronizarComLink(novosJogadores);
     
     return novosJogadores;
   });
 };
- 
+
+// Adicione este botão na interface
+<button
+  onClick={sincronizarComLink}
+  disabled={!linkAtivo}
+  className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
+    linkAtivo 
+      ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+      : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+  }`}
+>
+  <FaSync /> Sincronizar com Link
+</button>
 
 // Adicione este useEffect para ouvir atualizações do Socket.IO
 useEffect(() => {
@@ -368,6 +380,34 @@ useEffect(() => {
     socket.off('presencaSincronizada');
   };
 }, [linkAtivo]);
+
+//Sincroniza com link
+const sincronizarComLink = async () => {
+  if (!linkAtivo) return;
+
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/presenca/sincronizar-sistema`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        linkId: linkAtivo,
+        jogadores: jogadoresSelecionados.map(j => ({
+          id: j._id,
+          nome: j.nome,
+          presente: j.presente
+        }))
+      })
+    });
+
+    if (!response.ok) throw new Error('Erro na sincronização');
+    toast.success('Presenças sincronizadas com o link!');
+  } catch (error) {
+    console.error('Erro ao sincronizar:', error);
+    toast.error('Falha ao sincronizar com o link');
+  }
+};
 
 useEffect(() => {
   const salvarAutomaticamente = setTimeout(() => {
@@ -1062,39 +1102,6 @@ const aplicarFiltroPosicao = () => {
                   <FaHistory className="text-blue-400" /> Últimos Sorteios
                 </h3>
               </div>
-              {/* Controle de Sincronização */}
-
-<div className="flex items-center gap-2 mb-4">
-  {linkAtivo && (
-    <div className="flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
-      <FaLink className="text-sm" />
-      <span className="text-sm">Link ativo: {linkAtivo}</span>
-      <button 
-        onClick={() => {
-          setLinkAtivo(null);
-          toast.info('Link desvinculado');
-        }}
-        className="text-red-500 hover:text-red-700"
-      >
-        <FaTimes />
-      </button>
-    </div>
-  )}
-  
-  <button
-    onClick={() => linkAtivo && sincronizarPresencaLink(jogadoresSelecionados)}
-    disabled={!linkAtivo}
-    className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm ${
-      linkAtivo 
-        ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-    }`}
-  >
-    <FaSync className={carregando ? 'animate-spin' : ''} />
-    Sincronizar Agora
-  </button>
-</div>
-               {/* Controle de Sincronização */}
               
               <div className="space-y-3 sm:space-y-4 max-h-96 overflow-y-auto pr-2">
                 {historico.map((sorteio, idx) => (
