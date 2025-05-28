@@ -98,7 +98,7 @@ export default function SorteioTimes() {
     }
   }, [historico]);
 
-  // Configuração do socket.io para atualizações em tempo real
+  // Configuração do socket.io para atualizações em tempo real.
   useEffect(() => {
     socket.connect();
 
