@@ -250,6 +250,8 @@ export default function Financeiro() {
       // Continua com o registro da transação...
 const response = await api.post('/financeiro/transacoes', payload);
 const data = response.data;
+console.log('📥 Transação adicionada com sucesso:', data.data);
+
       
       // Atualiza o estado local das transações
  setTransacoes(prev => [data.data, ...prev]);
