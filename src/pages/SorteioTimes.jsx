@@ -299,12 +299,8 @@ export default function SorteioTimes() {
    * Alterna o estado de presença de um jogador
    * @param {string} id - ID do jogador
    */
- const alternarPresenca = (id) => {
-  if (times.length > 0) {
-    toast.warning("Não é possível alterar presença após o sorteio!");
-    return;
-  }
-
+const alternarPresenca = (id) => {
+  // Remova completamente a verificação de times.length > 0
   setJogadoresSelecionados(prev => {
     const novosJogadores = prev.map(jogador => 
       jogador._id === id ? { ...jogador, presente: !jogador.presente } : jogador
