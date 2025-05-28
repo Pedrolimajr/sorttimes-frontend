@@ -74,7 +74,6 @@ export default function SorteioTimes() {
   const [dataJogo, setDataJogo] = useState('');
 const [linkAtivo, setLinkAtivo] = useState(null);
 
-
 // Função para sincronizar com o link
 const sincronizarPresencaLink = async (jogadoresAtualizados) => {
   if (!linkAtivo) return;
