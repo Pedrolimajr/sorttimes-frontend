@@ -5,54 +5,28 @@ export const authService = {
     try {
       console.log('Tentando login com:', { email });
       
-      // Verifique a URL completa antes de fazer a requisição
-      const apiUrl = import.meta.env.VITE_API_URL;
-      console.log('URL da API:', apiUrl);
-      
-      const response = await api.post('/auth/login',  // Removi '/api' pois já está na baseURL
+      const response = await api.post('/auth/login', 
         { email, senha },
         {
           headers: {
             'Content-Type': 'application/json'
-          },
-          withCredentials: true  // Mantenha se estiver usando cookies
+          }
         }
       );
 
-      console.log('Resposta do login:', response.data);
-
-      if (!response.data.token) {
-        throw new Error('Token não recebido na resposta');
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        return response.data;
       }
 
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-      
-      // Configura o token para requisições futuras
-      api.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
-      
-      return response.data;
+      throw new Error('Token não recebido');
     } catch (error) {
-      console.error('Detalhes do erro no login:', {
-        request: error.config,
-        response: error.response?.data,
-        status: error.response?.status,
-        message: error.message
-      });
-      
-      // Tratamento específico para erros 404
-      if (error.response?.status === 404) {
-        throw new Error('Endpoint de login não encontrado. Verifique a URL.');
-      }
-      
-      // Tratamento para outros erros
-      const errorMessage = error.response?.data?.message || 
-                         error.message || 
-                         'Erro desconhecido ao fazer login';
-      throw new Error(errorMessage);
+      console.error('Erro no login:', error.response?.data || error.message);
+      throw error;
     }
   },
-}
+
   async cadastrar(dados) {
     try {
       console.log('Tentando cadastrar usuário:', dados);
