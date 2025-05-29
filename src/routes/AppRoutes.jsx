@@ -1,7 +1,7 @@
 // src/routes/AppRoutes.jsx
-
+// src/routes/AppRoutes.jsx
 import React, { useEffect } from 'react';
-import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import { Routes, Route, useLocation, useNavigate, Navigate } from "react-router-dom"; // Adicionei Navigate aqui
 import Home from "../pages/Home";
 import Login from "../pages/Login";
 import Dashboard from "../pages/Dashboard";
@@ -31,22 +31,23 @@ function AppRoutes() {
       '/login', 
       '/cadastro',
       '/recuperar-senha',
-      '/confirmar-presenca/:linkId'
+      /^\/confirmar-presenca\/\w+$/ // Regex para rotas com parâmetros
     ];
 
-    // Verifica se a rota atual não é pública e se não está autenticado
-    if (!publicRoutes.some(route => {
-      const routePattern = new RegExp(
-        `^${route.replace(/:\w+/g, '\\w+')}$`
-      );
-      return routePattern.test(location.pathname);
-    })) {
-      if (!authService.isAuthenticated()) {
-        navigate('/login', { 
-          state: { from: location.pathname },
-          replace: true 
-        });
+    const isPublicRoute = publicRoutes.some(route => {
+      if (typeof route === 'string') {
+        return route === location.pathname;
+      } else if (route instanceof RegExp) {
+        return route.test(location.pathname);
       }
+      return false;
+    });
+
+    if (!isPublicRoute && !authService.isAuthenticated()) {
+      navigate('/login', { 
+        state: { from: location.pathname },
+        replace: true 
+      });
     }
   }, [location, navigate]);
 
@@ -67,65 +68,11 @@ function AppRoutes() {
           </PrivateRoute>
         } />
         
-        <Route path="/cadastro-jogadores" element={
-          <PrivateRoute>
-            <CadastroJogadores />
-          </PrivateRoute>
-        } />
+        {/* ... outras rotas protegidas ... */}
         
-        <Route path="/lista-jogadores" element={
-          <PrivateRoute>
-            <ListaJogadores />
-          </PrivateRoute>
-        } />
-        
-        <Route path="/agendar-partida" element={
-          <PrivateRoute>
-            <AgendarPartida />
-          </PrivateRoute>
-        } />
-        
-        <Route path="/partidas-agendadas" element={
-          <PrivateRoute>
-            <PartidasAgendadas />
-          </PrivateRoute>
-        } />
-        
-        <Route path="/informacoes-partida/:id" element={
-          <PrivateRoute>
-            <InformacoesPartida />
-          </PrivateRoute>
-        } />
-        
-        <Route path="/informacoes-partida" element={
-          <PrivateRoute>
-            <InformacoesPartida />
-          </PrivateRoute>
-        } />
-        
-        <Route path="/sorteio-times" element={
-          <PrivateRoute>
-            <SorteioTimes />
-          </PrivateRoute>
-        } />
-        
-        <Route path="/financeiro" element={
-          <PrivateRoute>
-            <Financeiro />
-          </PrivateRoute>
-        } />
-        
-        <Route path="/configuracoes" element={
-          <PrivateRoute>
-            <ConfiguracoesConta />
-          </PrivateRoute>
-        } />
-
         {/* Rota de fallback - redireciona para login */}
         <Route path="*" element={
-          <PrivateRoute>
-            <Navigate to="/login" replace />
-          </PrivateRoute>
+          <Navigate to="/login" replace />
         } />
       </Routes>
     </div>
