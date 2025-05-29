@@ -15,6 +15,7 @@ import Cadastro from "../pages/Cadastro";
 import InformacoesPartida from "../pages/InformacoesPartida"; // Nome correto do componente
 import ConfiguracoesConta from "../pages/ConfiguracoesConta";
 import ConfirmarPresenca from '../pages/ConfirmarPresenca';
+import PrivateRoute from './PrivateRoute'; // Importando o componente
 function AppRoutes() {
   const location = useLocation();
   const isFixedHeight = ['/', '/login'].includes(location.pathname);
@@ -38,6 +39,39 @@ function AppRoutes() {
         <Route path="/financeiro" element={<Financeiro />} />
         <Route path="/configuracoes" element={<ConfiguracoesConta />} />
         <Route path="/confirmar-presenca/:linkId" element={<ConfirmarPresenca />} />
+
+        
+        {/* Rotas protegidas */}
+        <Route path="/dashboard" element={
+          <PrivateRoute><Dashboard /></PrivateRoute>
+        } />
+        <Route path="/cadastro-jogadores" element={
+          <PrivateRoute><CadastroJogadores /></PrivateRoute>
+        } />
+        <Route path="/lista-jogadores" element={
+          <PrivateRoute><ListaJogadores /></PrivateRoute>
+        } />
+        <Route path="/agendar-partida" element={
+          <PrivateRoute><AgendarPartida /></PrivateRoute>
+        } />
+        <Route path="/partidas-agendadas" element={
+          <PrivateRoute><PartidasAgendadas /></PrivateRoute>
+        } />
+        <Route path="/informacoes-partida/:id" element={
+          <PrivateRoute><InformacoesPartida /></PrivateRoute>
+        } />
+        <Route path="/informacoes-partida" element={
+          <PrivateRoute><InformacoesPartida /></PrivateRoute>
+        } />
+        <Route path="/sorteio-times" element={
+          <PrivateRoute><SorteioTimes /></PrivateRoute>
+        } />
+        <Route path="/financeiro" element={
+          <PrivateRoute><Financeiro /></PrivateRoute>
+        } />
+        <Route path="/configuracoes" element={
+          <PrivateRoute><ConfiguracoesConta /></PrivateRoute>
+        } />
       </Routes>
     </div>
   );
