@@ -242,9 +242,12 @@ export default function Financeiro() {
   dataPagamento: payload.data
 });
 
-        if (!pagamentoResponse.ok) {
-          throw new Error('Erro ao atualizar status de pagamento');
-        }
+console.log("📦 Resposta do pagamento:", pagamentoResponse.data);
+
+       if (!pagamentoResponse.data.success) {
+  throw new Error('Erro ao atualizar status de pagamento');
+}
+
       }
 
       // Continua com o registro da transação...
