@@ -235,12 +235,12 @@ export default function Financeiro() {
         });
 
         // Depois faz a chamada à API
-        const pagamentoResponse = await api.patch(`/jogadores/${payload.jogadorId}/pagamentos`, {
-          mes: mesTransacao,
-          pago: true,
-          valor: payload.valor,
-          dataPagamento: payload.data
-        });
+        const pagamentoResponse = await api.post(`/jogadores/${payload.jogadorId}/pagamentos`, {
+  mes: mesTransacao,
+  pago: true,
+  valor: payload.valor,
+  dataPagamento: payload.data
+});
 
         if (!pagamentoResponse.ok) {
           throw new Error('Erro ao atualizar status de pagamento');
@@ -254,7 +254,8 @@ console.log('📥 Transação adicionada com sucesso:', data.data);
 
       
       // Atualiza o estado local das transações
- setTransacoes(prev => [data.data, ...prev]);
+ const transacoesRes = await api.get('/financeiro/transacoes');
+setTransacoes(transacoesRes.data);
 
 setEstatisticas(prev => ({
   ...prev,
