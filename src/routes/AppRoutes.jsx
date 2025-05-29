@@ -1,67 +1,109 @@
 // src/routes/AppRoutes.jsx
+// src/routes/AppRoutes.jsx
 import React from 'react';
-import { Routes, Route, useLocation } from "react-router-dom";
-import Home from "../pages/Home";
-import Login from "../pages/Login";
-import Dashboard from "../pages/Dashboard";
-import CadastroJogadores from "../pages/CadastroJogadores";
-import AgendarPartida from "../pages/AgendarPartida";
-import PartidasAgendadas from "../pages/PartidasAgendadas";
-import SorteioTimes from "../pages/SorteioTimes";
-import Financeiro from "../pages/Financeiro";
-import ListaJogadores from "../pages/ListaJogadores";
-import RecuperarSenha from "../pages/RecuperarSenha";
-import Cadastro from "../pages/Cadastro";
-import InformacoesPartida from "../pages/InformacoesPartida";
-import ConfiguracoesConta from "../pages/ConfiguracoesConta";
+import { 
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+  useNavigate
+} from 'react-router-dom';
+import Home from '../pages/Home';
+import Login from '../pages/Login';
+import Dashboard from '../pages/Dashboard';
+import CadastroJogadores from '../pages/CadastroJogadores';
+import AgendarPartida from '../pages/AgendarPartida';
+import PartidasAgendadas from '../pages/PartidasAgendadas';
+import SorteioTimes from '../pages/SorteioTimes';
+import Financeiro from '../pages/Financeiro';
+import ListaJogadores from '../pages/ListaJogadores';
+import RecuperarSenha from '../pages/RecuperarSenha';
+import Cadastro from '../pages/Cadastro';
+import InformacoesPartida from '../pages/InformacoesPartida';
+import ConfiguracoesConta from '../pages/ConfiguracoesConta';
 import ConfirmarPresenca from '../pages/ConfirmarPresenca';
-import PrivateRoute from './PrivateRoute';
+
+const ProtectedRoute = ({ children }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    // Redirect to /login with current location stored in state
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return children;
+};
 
 function AppRoutes() {
   const location = useLocation();
-  const isFixedHeight = ['/', '/login'].includes(location.pathname);
+  const isFixedHeight = ['/', '/login', '/cadastro', '/recuperar-senha'].includes(location.pathname);
 
   return (
     <div className={isFixedHeight ? 'h-[calc(100vh-64px)]' : 'min-h-full'}>
       <Routes>
-        {/* Rotas públicas */}
+        {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/recuperar-senha" element={<RecuperarSenha />} />
         <Route path="/cadastro" element={<Cadastro />} />
+        <Route path="/recuperar-senha" element={<RecuperarSenha />} />
         <Route path="/confirmar-presenca/:linkId" element={<ConfirmarPresenca />} />
 
-        {/* Rotas protegidas */}
+        {/* Protected Routes */}
         <Route path="/dashboard" element={
-          <PrivateRoute><Dashboard /></PrivateRoute>
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
         } />
         <Route path="/cadastro-jogadores" element={
-          <PrivateRoute><CadastroJogadores /></PrivateRoute>
+          <ProtectedRoute>
+            <CadastroJogadores />
+          </ProtectedRoute>
         } />
         <Route path="/lista-jogadores" element={
-          <PrivateRoute><ListaJogadores /></PrivateRoute>
+          <ProtectedRoute>
+            <ListaJogadores />
+          </ProtectedRoute>
         } />
         <Route path="/agendar-partida" element={
-          <PrivateRoute><AgendarPartida /></PrivateRoute>
+          <ProtectedRoute>
+            <AgendarPartida />
+          </ProtectedRoute>
         } />
         <Route path="/partidas-agendadas" element={
-          <PrivateRoute><PartidasAgendadas /></PrivateRoute>
+          <ProtectedRoute>
+            <PartidasAgendadas />
+          </ProtectedRoute>
         } />
         <Route path="/informacoes-partida/:id" element={
-          <PrivateRoute><InformacoesPartida /></PrivateRoute>
+          <ProtectedRoute>
+            <InformacoesPartida />
+          </ProtectedRoute>
         } />
         <Route path="/informacoes-partida" element={
-          <PrivateRoute><InformacoesPartida /></PrivateRoute>
+          <ProtectedRoute>
+            <InformacoesPartida />
+          </ProtectedRoute>
         } />
         <Route path="/sorteio-times" element={
-          <PrivateRoute><SorteioTimes /></PrivateRoute>
+          <ProtectedRoute>
+            <SorteioTimes />
+          </ProtectedRoute>
         } />
         <Route path="/financeiro" element={
-          <PrivateRoute><Financeiro /></PrivateRoute>
+          <ProtectedRoute>
+            <Financeiro />
+          </ProtectedRoute>
         } />
         <Route path="/configuracoes" element={
-          <PrivateRoute><ConfiguracoesConta /></PrivateRoute>
+          <ProtectedRoute>
+            <ConfiguracoesConta />
+          </ProtectedRoute>
         } />
+
+        {/* Fallback Route */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
   );

@@ -35,29 +35,60 @@ export const pagamentosAPI = {
 };
 
 // Interceptadores
-api.interceptors.request.use(config => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+api.interceptors.request.use(
+  (config) => {
+    config.url = config.url.replace(/\/\//g, '/'); // Apenas normaliza barra dupla
+    console.log('📡 Request:', {
+      method: config.method?.toUpperCase(),
+      url: config.baseURL + config.url,
+      data: config.data
+    });
+    return config;
+  },
+  (error) => {
+    console.error('❌ Request Error:', error);
+    return Promise.reject(error);
   }
-  return config;
-}, error => {
-  return Promise.reject(error);
-});
+);
 
-// Atualize o interceptor de resposta para tratar token expirado
 api.interceptors.response.use(
-  response => response,
-  error => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      
-      // Só redireciona se não estiver já na página de login
-      if (!window.location.pathname.includes('/login')) {
-        window.location.href = '/login?sessionExpired=true';
-      }
+  (response) => {
+    console.log('✅ Response:', {
+      status: response.status,
+      url: response.config.url,
+      data: response.data
+    });
+    return response;
+  },
+  (error) => {
+    console.error('❌ Response Error:', {
+      status: error.response?.status,
+      url: error.config?.url,
+      message: error.message,
+      data: error.response?.data
+    });
+
+    let mensagemErro = 'Erro ao processar requisição';
+
+    switch (error.response?.status) {
+      case 405:
+        mensagemErro = 'Operação não permitida. Por favor, contate o suporte.';
+        break;
+      case 404:
+        mensagemErro = 'Recurso não encontrado';
+        break;
+      case 401:
+        mensagemErro = 'Não autorizado. Faça login novamente';
+        break;
+      case 403:
+        mensagemErro = 'Acesso negado';
+        break;
+      case 500:
+        mensagemErro = 'Erro interno do servidor';
+        break;
     }
+
+    toast.error(mensagemErro);
     return Promise.reject(error);
   }
 );
