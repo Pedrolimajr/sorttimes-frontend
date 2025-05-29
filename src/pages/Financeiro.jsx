@@ -67,40 +67,43 @@ export default function Financeiro() {
     totalJogadores: 0
   });
 
- useEffect(() => {
+//  useEffect(() => {
   const STORAGE_KEY = 'dadosFinanceiros';
 
+  useEffect(() => {
   const carregarDados = async () => {
     try {
       setCarregando(true);
 
-      // 1️⃣ Carrega do localStorage instantaneamente
+      // Tenta carregar do cache primeiro
       const cachedData = JSON.parse(localStorage.getItem(STORAGE_KEY));
       if (cachedData) {
         setJogadores(cachedData.jogadoresCache || []);
         setTransacoes(cachedData.transacoesCache || []);
       }
 
-      // 2️⃣ Atualiza em segundo plano com dados da API
+      // Busca dados atualizados da API
       const [jogadoresRes, transacoesRes] = await Promise.all([
-        api.get('/jogadores'),
-        api.get('/financeiro/transacoes')
+        api.get('/jogadores').catch(() => ({ data: [] })),
+        api.get('/financeiro/transacoes').catch(() => ({ data: [] }))
       ]);
 
       const jogadoresData = jogadoresRes.data?.data || jogadoresRes.data || [];
       const transacoesData = transacoesRes.data?.data || transacoesRes.data || [];
 
+      // Processa os jogadores garantindo que pagamentos seja um array de 12 meses
       const jogadoresProcessados = jogadoresData.map(jogador => ({
         ...jogador,
         pagamentos: Array.isArray(jogador.pagamentos) && jogador.pagamentos.length === 12
           ? jogador.pagamentos
-          : Array(12).fill(false)
+          : Array(12).fill(false),
+        statusFinanceiro: jogador.statusFinanceiro || 'Inadimplente'
       }));
 
       setJogadores(jogadoresProcessados);
       setTransacoes(transacoesData);
 
-      // 3️⃣ Atualiza o localStorage
+      // Atualiza cache
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         jogadoresCache: jogadoresProcessados,
         transacoesCache: transacoesData,
@@ -108,8 +111,8 @@ export default function Financeiro() {
       }));
 
     } catch (error) {
-      console.error("❌ Erro ao carregar dados:", error);
-      toast.error('Erro ao carregar dados financeiros');
+      console.error("Erro ao carregar dados:", error);
+      toast.error('Erro ao carregar dados. Usando cache local.');
     } finally {
       setCarregando(false);
     }
