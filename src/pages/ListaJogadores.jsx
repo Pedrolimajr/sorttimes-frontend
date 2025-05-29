@@ -84,9 +84,18 @@ export default function ListaJogadores({
   }, [location.state, navigate, location.pathname]);
 
 useEffect(() => {
-  const atualizarLista = () => {
-    // Força a recarga chamando o mesmo carregamento da lista com estado limpo
-    navigate(location.pathname, { replace: true, state: { recarregar: true } });
+  const atualizarLista = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/jogadores`);
+      if (!response.ok) throw new Error('Erro ao carregar jogadores');
+
+      const result = await response.json();
+      const jogadoresArray = Array.isArray(result.data) ? result.data : [];
+      setJogadores(jogadoresArray);
+    } catch (error) {
+      console.error("Erro ao atualizar lista via evento:", error);
+      toast.error("Erro ao atualizar lista de jogadores");
+    }
   };
 
   window.addEventListener("jogadoresAtualizados", atualizarLista);
@@ -95,6 +104,7 @@ useEffect(() => {
     window.removeEventListener("jogadoresAtualizados", atualizarLista);
   };
 }, []);
+
 
 
 
