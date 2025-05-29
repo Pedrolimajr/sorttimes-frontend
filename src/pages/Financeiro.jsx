@@ -221,32 +221,26 @@ export default function Financeiro() {
       const dataTransacao = new Date(payload.data);
       const mesTransacao = dataTransacao.getMonth();
 
-     setJogadores(prevJogadores => {
-  const atualizados = prevJogadores.map(j => {
-    if (j._id === payload.jogadorId) {
-      const pagamentosAtualizados = [...j.pagamentos];
-      pagamentosAtualizados[mesTransacao] = true;
+      setJogadores(prevJogadores => {
+        return prevJogadores.map(j => {
+          if (j._id === payload.jogadorId) {
+            const pagamentosAtualizados = [...j.pagamentos];
+            pagamentosAtualizados[mesTransacao] = true;
 
-      const mesAtual = new Date().getMonth();
-      const todosMesesPagos = pagamentosAtualizados
-        .slice(0, mesAtual + 1)
-        .every(pago => pago);
+            const mesAtual = new Date().getMonth();
+            const todosMesesPagos = pagamentosAtualizados
+              .slice(0, mesAtual + 1)
+              .every(pago => pago);
 
-      return {
-        ...j,
-        pagamentos: pagamentosAtualizados,
-        statusFinanceiro: todosMesesPagos ? 'Adimplente' : 'Inadimplente'
-      };
-    }
-    return j;
-  });
-
-  // ✅ Dispara o evento aqui
-  window.dispatchEvent(new Event("jogadoresAtualizados"));
-console.log("🔄 Evento jogadoresAtualizados disparado");
-
-  return atualizados;
-});
+            return {
+              ...j,
+              pagamentos: pagamentosAtualizados,
+              statusFinanceiro: todosMesesPagos ? 'Adimplente' : 'Inadimplente'
+            };
+          }
+          return j;
+        });
+      });
     }
 
     // Faz a chamada à API
@@ -319,9 +313,6 @@ console.log("🔄 Evento jogadoresAtualizados disparado");
     });
 
     setJogadores(jogadoresAtualizados);
-// ✅ Dispara o evento para atualizar ListaJogadores
-window.dispatchEvent(new Event("jogadoresAtualizados"));
-console.log("🔄 Evento jogadoresAtualizados disparado");
 
     // Atualiza localStorage imediatamente
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
@@ -393,31 +384,25 @@ console.log("🔄 Evento jogadoresAtualizados disparado");
       const dataTransacao = new Date(transacaoParaDeletar.data);
       const mesTransacao = dataTransacao.getMonth();
       
-     setJogadores(prevJogadores => {
-  const atualizados = prevJogadores.map(jogador => {
-    if (jogador._id === transacaoParaDeletar.jogadorId) {
-      const pagamentosAtualizados = [...jogador.pagamentos];
-      pagamentosAtualizados[mesTransacao] = false;
-
-      const mesAtual = new Date().getMonth();
-      const todosMesesPagos = pagamentosAtualizados
-        .slice(0, mesAtual + 1)
-        .every(pago => pago);
-
-      return {
-        ...jogador,
-        pagamentos: pagamentosAtualizados,
-        statusFinanceiro: todosMesesPagos ? 'Adimplente' : 'Inadimplente'
-      };
-    }
-    return jogador;
-  });
-
-  // ✅ Dispara o evento
-  window.dispatchEvent(new Event("jogadoresAtualizados"));
-console.log("🔄 Evento jogadoresAtualizados disparado");
-
-  return atualizados;
+      setJogadores(prevJogadores => {
+        return prevJogadores.map(jogador => {
+          if (jogador._id === transacaoParaDeletar.jogadorId) {
+            const pagamentosAtualizados = [...jogador.pagamentos];
+            pagamentosAtualizados[mesTransacao] = false;
+            
+            const mesAtual = new Date().getMonth();
+            const todosMesesPagos = pagamentosAtualizados
+              .slice(0, mesAtual + 1)
+              .every(pago => pago);
+            
+            return {
+              ...jogador,
+              pagamentos: pagamentosAtualizados,
+              statusFinanceiro: todosMesesPagos ? 'Adimplente' : 'Inadimplente'
+            };
+          }
+          return jogador;
+        });
       });
     }
 
