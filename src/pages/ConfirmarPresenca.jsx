@@ -93,7 +93,7 @@ const alternarPresenca = async (jogadorId) => {
     
     console.log(`Enviando confirmação para jogador ${jogadorId}, estado: ${novoEstado}`);
 
-    const response = await api.post(`/api/presenca/${linkId}/confirmar`, {
+    const response = await api.post(`/presenca/${linkId}/confirmar`, {
       jogadorId,
       presente: novoEstado
     }, {
@@ -115,7 +115,7 @@ const alternarPresenca = async (jogadorId) => {
     
     // Forçar recarregamento dos dados em caso de erro
     try {
-      const refreshResponse = await api.get(`/api/presenca/${linkId}`);
+      const refreshResponse = await api.get(`/presenca/${linkId}`);
       setJogadores(refreshResponse.data.jogadores);
     } catch (refreshError) {
       console.error('Erro ao recarregar dados:', refreshError);
