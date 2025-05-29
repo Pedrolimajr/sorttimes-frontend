@@ -82,7 +82,7 @@ export const authService = {
       console.log('Dados enviados:', { novoEmail, senha });
 
       const response = await api.put(
-        '/api/auth/atualizar-email',
+        '/auth/atualizar-email',
         { novoEmail, senha },
         {
           headers: {
@@ -104,7 +104,7 @@ export const authService = {
       const token = localStorage.getItem('token');
       console.log('Token a ser enviado:', token?.substring(0, 20) + '...');
 
-      const response = await api.put('/api/auth/atualizar-senha',
+      const response = await api.put('/auth/atualizar-senha',
         { senhaAtual, novaSenha },
         {
           headers: {
