@@ -1,6 +1,11 @@
 // src/routes/AppRoutes.jsx
 import React from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { 
+  Routes, 
+  Route, 
+  Navigate,
+  useLocation  // Importação adicionada aqui
+} from 'react-router-dom';
 import Home from '../pages/Home';
 import Login from '../pages/Login';
 import Dashboard from '../pages/Dashboard';
@@ -17,9 +22,9 @@ import ConfiguracoesConta from '../pages/ConfiguracoesConta';
 import ConfirmarPresenca from '../pages/ConfirmarPresenca';
 import { authService } from '../services/authService';
 
-// Componente PrivateRoute simplificado e eficaz
+// Componente PrivateRoute movido para dentro do arquivo
 const PrivateRoute = ({ children }) => {
-  const location = useLocation();
+  const location = useLocation(); // Agora está corretamente importado
   return authService.isAuthenticated() ? children : <Navigate to="/login" state={{ from: location }} replace />;
 };
 
