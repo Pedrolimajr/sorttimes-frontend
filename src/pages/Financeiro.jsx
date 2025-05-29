@@ -321,12 +321,13 @@ setEstatisticas(prev => ({
       });
 
       // Atualiza estado e localStorage antes da chamada API
-      setJogadores(jogadoresAtualizados);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        jogadoresCache: jogadoresAtualizados,
-        transacoesCache: transacoes,
-        lastUpdate: new Date().toISOString()
-      }));
+     setJogadores(jogadoresAtualizados);
+setTransacoes(transacoesAtualizadas);
+localStorage.setItem('dadosFinanceiros', JSON.stringify({
+jogadoresCache: jogadoresAtualizados,
+transacoesCache: transacoesAtualizadas,
+lastUpdate: new Date().toISOString()
+}));
 
       try {
         // Chamada à API corrigida
