@@ -71,16 +71,19 @@ export const authService = {
   },
 
 isAuthenticated: () => {
-  const token = localStorage.getItem('token');
-  const user = localStorage.getItem('user');
-
   try {
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    if (!token || !user) return false;
+
     const parsedUser = JSON.parse(user);
-    return !!token && parsedUser && Object.keys(parsedUser).length > 0;
-  } catch {
+    return typeof parsedUser === 'object' && Object.keys(parsedUser).length > 0;
+  } catch (error) {
+    console.error("Erro em isAuthenticated:", error);
     return false;
   }
 },
+
 
   async atualizarEmail(novoEmail, senha) {
     try {
