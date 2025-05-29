@@ -280,124 +280,132 @@ setEstatisticas(prev => ({
   };
 
   const togglePagamento = async (jogadorId, mesIndex) => {
-    try {
-      const jogador = jogadores.find(j => j._id === jogadorId);
-      if (!jogador) throw new Error('Jogador não encontrado');
+  try {
+    const jogador = jogadores.find(j => j._id === jogadorId);
+    if (!jogador) throw new Error('Jogador não encontrado');
 
-      const novoStatus = !jogador.pagamentos[mesIndex];
-      const mesAtual = new Date().getMonth();
+    const novoStatus = !jogador.pagamentos[mesIndex];
+    const mesAtual = new Date().getMonth();
 
-      // Previne mudança de meses futuros
-      if (mesIndex > mesAtual) {
-        toast.warning('Não é possível marcar pagamentos de meses futuros');
-        return;
+    // Previne mudança de meses futuros
+    if (mesIndex > mesAtual) {
+      toast.warning('Não é possível marcar pagamentos de meses futuros');
+      return;
+    }
+
+    // Atualização otimista do estado
+    const jogadoresAtualizados = jogadores.map(j => {
+      if (j._id === jogadorId) {
+        const pagamentosAtualizados = [...j.pagamentos];
+        pagamentosAtualizados[mesIndex] = novoStatus;
+
+        const mesesDevendo = pagamentosAtualizados
+          .slice(0, mesAtual + 1)
+          .filter(pago => !pago).length;
+
+        return {
+          ...j,
+          pagamentos: pagamentosAtualizados,
+          statusFinanceiro: mesesDevendo === 0 ? 'Adimplente' : 'Inadimplente'
+        };
       }
+      return j;
+    });
 
-      // Atualização otimista do estado
-      const jogadoresAtualizados = jogadores.map(j => {
-        if (j._id === jogadorId) {
-          const pagamentosAtualizados = [...j.pagamentos];
-          pagamentosAtualizados[mesIndex] = novoStatus;
+    // Atualiza estado e localStorage antes da chamada API
+    setJogadores(jogadoresAtualizados);
+    
+    // Atualiza localStorage com a chave correta
+    localStorage.setItem('dadosFinanceiros', JSON.stringify({
+      jogadoresCache: jogadoresAtualizados,
+      transacoesCache: transacoes,
+      lastUpdate: new Date().toISOString()
+    }));
 
-          const mesesDevendo = pagamentosAtualizados
-            .slice(0, mesAtual + 1)
-            .filter(pago => !pago).length;
+    // Chamada à API para atualizar o pagamento
+    const response = await api.post(`/jogadores/${jogadorId}/pagamentos`, {
+      mes: mesIndex,
+      pago: novoStatus,
+      valor: 100, // Valor padrão da mensalidade
+      dataPagamento: novoStatus ? new Date().toISOString() : null
+    });
 
-          return {
-            ...j,
-            pagamentos: pagamentosAtualizados,
-            statusFinanceiro: mesesDevendo === 0 ? 'Adimplente' : 'Inadimplente'
-          };
-        }
-        return j;
+    if (!response.data.success) {
+      throw new Error('Erro ao atualizar status de pagamento na API');
+    }
+
+    // Se foi marcado como pago, registra a transação
+    if (novoStatus) {
+      const transacaoResponse = await api.post('/financeiro/transacoes', {
+        descricao: `Mensalidade - ${jogador.nome} (${mesIndex + 1}/${new Date().getFullYear()})`,
+        valor: 100,
+        tipo: 'receita',
+        categoria: 'mensalidade',
+        data: new Date().toISOString(),
+        jogadorId: jogadorId,
+        jogadorNome: jogador.nome
       });
 
-      // Atualiza estado e localStorage antes da chamada API
-      setJogadores(jogadoresAtualizados);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        jogadoresCache: jogadoresAtualizados,
-        transacoesCache: transacoes,
-        lastUpdate: new Date().toISOString()
-      }));
-
-      try {
-        // Chamada à API corrigida
-        const response = await api.post(`/jogadores/${jogadorId}/pagamento`, { // Mudança aqui
-          mes: mesIndex,
-          pago: novoStatus,
-          valor: 100,
-          dataPagamento: novoStatus ? new Date().toISOString() : null
-        });
-
-        if (novoStatus && response.data?.success) {
-          // Registra transação
-          const transacaoResponse = await api.post('/financeiro/transacoes', {
-            descricao: `Mensalidade - ${jogador.nome} (${mesIndex + 1}/${new Date().getFullYear()})`,
-            valor: 100,
-            tipo: 'receita',
-            categoria: 'mensalidade',
-            data: new Date().toISOString(),
-            jogadorId: jogadorId,
-            jogadorNome: jogador.nome
-          });
-
-          if (transacaoResponse.data?.success) {
-            const novasTransacoes = [transacaoResponse.data.data, ...transacoes];
-            setTransacoes(novasTransacoes);
-            
-            // Atualiza localStorage
-            localStorage.setItem(STORAGE_KEY, JSON.stringify({
-              jogadoresCache: jogadoresAtualizados,
-              transacoesCache: novasTransacoes,
-              lastUpdate: new Date().toISOString()
-            }));
-
-            toast.success(`Pagamento ${novoStatus ? 'registrado' : 'removido'} com sucesso!`);
-          }
-        }
-      } catch (apiError) {
-        console.error("Erro na API:", apiError);
-        toast.warning('Alteração salva localmente. Sincronização pendente.');
+      if (transacaoResponse.data?.success) {
+        const novasTransacoes = [transacaoResponse.data.data, ...transacoes];
+        setTransacoes(novasTransacoes);
+        
+        // Atualiza localStorage com as novas transações
+        localStorage.setItem('dadosFinanceiros', JSON.stringify({
+          jogadoresCache: jogadoresAtualizados,
+          transacoesCache: novasTransacoes,
+          lastUpdate: new Date().toISOString()
+        }));
       }
-
-    } catch (error) {
-      console.error("Erro ao atualizar pagamento:", error);
-      // Reverte mudanças
-      const cachedData = JSON.parse(localStorage.getItem(STORAGE_KEY));
-      if (cachedData?.jogadoresCache) {
-        setJogadores(cachedData.jogadoresCache);
-      }
-      toast.error('Erro ao atualizar status de pagamento');
     }
-  };
 
+    toast.success(`Pagamento ${novoStatus ? 'registrado' : 'removido'} com sucesso!`);
+  } catch (error) {
+    console.error("Erro ao atualizar pagamento:", error);
+    
+    // Reverte mudanças em caso de erro
+    const cachedData = JSON.parse(localStorage.getItem('dadosFinanceiros'));
+    if (cachedData?.jogadoresCache) {
+      setJogadores(cachedData.jogadoresCache);
+    }
+    
+    toast.error(error.message || 'Erro ao atualizar status de pagamento');
+  }
+};
   const deletarTransacao = async (id) => {
-    try {
-      // Deletar transação
-      await api.delete(`/financeiro/transacoes/${id}`);
-
-      // Remove a transação do estado local
-      setTransacoes(prev => prev.filter(t => t._id !== id));
-      
-      // Atualiza as estatísticas
-      setEstatisticas(prev => ({
-        ...prev,
-        totalReceitas: transacao.tipo === 'receita' 
-          ? prev.totalReceitas - transacao.valor 
-          : prev.totalReceitas,
-        totalDespesas: transacao.tipo === 'despesa' 
-          ? prev.totalDespesas - transacao.valor 
-          : prev.totalDespesas,
-        saldo: prev.totalReceitas - prev.totalDespesas
-      }));
-
-      toast.success('Transação removida com sucesso!');
-    } catch (error) {
-      console.error("Erro ao deletar transação:", error);
-      toast.error('Erro ao deletar transação');
+  try {
+    // Primeiro, encontramos a transação que será deletada
+    const transacaoParaDeletar = transacoes.find(t => t._id === id);
+    
+    if (!transacaoParaDeletar) {
+      throw new Error('Transação não encontrada');
     }
-  };
 
+    // Deletar transação
+    await api.delete(`/financeiro/transacoes/${id}`);
+
+    // Remove a transação do estado local
+    setTransacoes(prev => prev.filter(t => t._id !== id));
+    
+    // Atualiza as estatísticas
+    setEstatisticas(prev => ({
+      ...prev,
+      totalReceitas: transacaoParaDeletar.tipo === 'receita' 
+        ? prev.totalReceitas - transacaoParaDeletar.valor 
+        : prev.totalReceitas,
+      totalDespesas: transacaoParaDeletar.tipo === 'despesa' 
+        ? prev.totalDespesas - transacaoParaDeletar.valor 
+        : prev.totalDespesas,
+      saldo: (prev.totalReceitas - (transacaoParaDeletar.tipo === 'receita' ? transacaoParaDeletar.valor : 0)) - 
+             (prev.totalDespesas - (transacaoParaDeletar.tipo === 'despesa' ? transacaoParaDeletar.valor : 0))
+    }));
+
+    toast.success('Transação removida com sucesso!');
+  } catch (error) {
+    console.error("Erro ao deletar transação:", error);
+    toast.error(error.message || 'Erro ao deletar transação');
+  }
+};
   const editarJogador = async () => {
     try {
       // Editar jogador
