@@ -73,13 +73,19 @@ export const authService = {
 isAuthenticated: () => {
   try {
     const token = localStorage.getItem('token');
-    const user = localStorage.getItem('user');
-    if (!token || !user) return false;
-
-    const parsedUser = JSON.parse(user);
-    return typeof parsedUser === 'object' && Object.keys(parsedUser).length > 0;
+    if (!token) return false;
+    
+    // Verifica se o token está expirado (decodifica JWT)
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    if (payload.exp && payload.exp < Date.now() / 1000) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      return false;
+    }
+    
+    return true;
   } catch (error) {
-    console.error("Erro em isAuthenticated:", error);
+    console.error("Erro na verificação de autenticação:", error);
     return false;
   }
 },
