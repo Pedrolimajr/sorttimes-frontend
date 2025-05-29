@@ -243,6 +243,7 @@ export default function Financeiro() {
 
   // ✅ Dispara o evento aqui
   window.dispatchEvent(new Event("jogadoresAtualizados"));
+console.log("🔄 Evento jogadoresAtualizados disparado");
 
   return atualizados;
 });
@@ -320,6 +321,8 @@ export default function Financeiro() {
     setJogadores(jogadoresAtualizados);
 // ✅ Dispara o evento para atualizar ListaJogadores
 window.dispatchEvent(new Event("jogadoresAtualizados"));
+console.log("🔄 Evento jogadoresAtualizados disparado");
+
     // Atualiza localStorage imediatamente
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       jogadoresCache: jogadoresAtualizados,
@@ -412,6 +415,7 @@ window.dispatchEvent(new Event("jogadoresAtualizados"));
 
   // ✅ Dispara o evento
   window.dispatchEvent(new Event("jogadoresAtualizados"));
+console.log("🔄 Evento jogadoresAtualizados disparado");
 
   return atualizados;
       });
