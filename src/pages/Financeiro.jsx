@@ -67,10 +67,9 @@ export default function Financeiro() {
     totalJogadores: 0
   });
 
-//  useEffect(() => {
+ useEffect(() => {
   const STORAGE_KEY = 'dadosFinanceiros';
 
-  useEffect(() => {
   const carregarDados = async () => {
     try {
       setCarregando(true);
