@@ -12,10 +12,11 @@ import Financeiro from "../pages/Financeiro";
 import ListaJogadores from "../pages/ListaJogadores";
 import RecuperarSenha from "../pages/RecuperarSenha";
 import Cadastro from "../pages/Cadastro";
-import InformacoesPartida from "../pages/InformacoesPartida"; // Nome correto do componente
+import InformacoesPartida from "../pages/InformacoesPartida";
 import ConfiguracoesConta from "../pages/ConfiguracoesConta";
 import ConfirmarPresenca from '../pages/ConfirmarPresenca';
-import PrivateRoute from './PrivateRoute'; // Importando o componente
+import PrivateRoute from './PrivateRoute';
+
 function AppRoutes() {
   const location = useLocation();
   const isFixedHeight = ['/', '/login'].includes(location.pathname);
@@ -23,24 +24,13 @@ function AppRoutes() {
   return (
     <div className={isFixedHeight ? 'h-[calc(100vh-64px)]' : 'min-h-full'}>
       <Routes>
+        {/* Rotas públicas */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/recuperar-senha" element={<RecuperarSenha />} />
         <Route path="/cadastro" element={<Cadastro />} />
-        <Route path="/cadastro-jogadores" element={<CadastroJogadores />} />
-        <Route path="/lista-jogadores" element={<ListaJogadores />} />
-        <Route path="/agendar-partida" element={<AgendarPartida />} />
-        <Route path="/partidas-agendadas" element={<PartidasAgendadas />} />
-        {/* Corrigido o nome do componente abaixo */}
-        <Route path="/informacoes-partida/:id" element={<InformacoesPartida />} />
-        <Route path="/informacoes-partida" element={<InformacoesPartida />} />
-        <Route path="/sorteio-times" element={<SorteioTimes />} />
-        <Route path="/financeiro" element={<Financeiro />} />
-        <Route path="/configuracoes" element={<ConfiguracoesConta />} />
         <Route path="/confirmar-presenca/:linkId" element={<ConfirmarPresenca />} />
 
-        
         {/* Rotas protegidas */}
         <Route path="/dashboard" element={
           <PrivateRoute><Dashboard /></PrivateRoute>
