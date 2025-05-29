@@ -73,9 +73,14 @@ export const authService = {
 isAuthenticated: () => {
   const token = localStorage.getItem('token');
   const user = localStorage.getItem('user');
-  return !!token && !!user;
-},
 
+  try {
+    const parsedUser = JSON.parse(user);
+    return !!token && parsedUser && Object.keys(parsedUser).length > 0;
+  } catch {
+    return false;
+  }
+},
 
   async atualizarEmail(novoEmail, senha) {
     try {
