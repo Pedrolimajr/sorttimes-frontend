@@ -53,7 +53,6 @@ export const authService = {
     }
   },
 }
-
   async cadastrar(dados) {
     try {
       console.log('Tentando cadastrar usuário:', dados);
