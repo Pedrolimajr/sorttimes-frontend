@@ -52,7 +52,7 @@ export default function ConfirmarPresenca() {
     const carregarDados = async () => {
       try {
         setCarregando(true);
-        const response = await api.get(`/api/presenca/${linkId}`);
+        const response = await api.get(`/presenca/${linkId}`);
         
         if (response.data.success) {
           const { jogadores: jogadoresData, dataJogo } = response.data.data;
