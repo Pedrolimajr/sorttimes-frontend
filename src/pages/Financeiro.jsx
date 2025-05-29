@@ -90,12 +90,20 @@ export default function Financeiro() {
       const jogadoresData = jogadoresRes.data?.data || jogadoresRes.data || [];
       const transacoesData = transacoesRes.data?.data || transacoesRes.data || [];
 
-      const jogadoresProcessados = jogadoresData.map(jogador => ({
-        ...jogador,
-        pagamentos: Array.isArray(jogador.pagamentos) && jogador.pagamentos.length === 12
-          ? jogador.pagamentos
-          : Array(12).fill(false)
-      }));
+      const jogadoresProcessados = jogadoresData.map(jogador => {
+const pagamentos =
+Array.isArray(jogador.pagamentos) && jogador.pagamentos.length === 12
+? jogador.pagamentos
+: Array(12).fill(false);
+
+const isAdimplente = pagamentos.every(p => p === true);
+
+return {
+...jogador,
+pagamentos,
+status: isAdimplente ? 'Adimplente' : 'Inadimplente',
+};
+});
 
       setJogadores(jogadoresProcessados);
       setTransacoes(transacoesData);
