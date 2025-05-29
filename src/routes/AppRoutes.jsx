@@ -1,10 +1,12 @@
 // src/routes/AppRoutes.jsx
+
 import React from 'react';
 import { 
-  Routes, 
-  Route, 
+  Routes,
+  Route,
   Navigate,
-  useLocation  // Importação adicionada aqui
+  useLocation,
+  useNavigate
 } from 'react-router-dom';
 import Home from '../pages/Home';
 import Login from '../pages/Login';
@@ -20,12 +22,18 @@ import Cadastro from '../pages/Cadastro';
 import InformacoesPartida from '../pages/InformacoesPartida';
 import ConfiguracoesConta from '../pages/ConfiguracoesConta';
 import ConfirmarPresenca from '../pages/ConfirmarPresenca';
-import { authService } from '../services/authService';
 
-// Componente PrivateRoute movido para dentro do arquivo
-const PrivateRoute = ({ children }) => {
-  const location = useLocation(); // Agora está corretamente importado
-  return authService.isAuthenticated() ? children : <Navigate to="/login" state={{ from: location }} replace />;
+const ProtectedRoute = ({ children }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    // Redirect to /login with current location stored in state
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return children;
 };
 
 function AppRoutes() {
@@ -35,26 +43,66 @@ function AppRoutes() {
   return (
     <div className={isFixedHeight ? 'h-[calc(100vh-64px)]' : 'min-h-full'}>
       <Routes>
-        {/* Rotas públicas */}
+        {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/recuperar-senha" element={<RecuperarSenha />} />
         <Route path="/confirmar-presenca/:linkId" element={<ConfirmarPresenca />} />
 
-        {/* Rotas protegidas */}
-        <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-        <Route path="/cadastro-jogadores" element={<PrivateRoute><CadastroJogadores /></PrivateRoute>} />
-        <Route path="/lista-jogadores" element={<PrivateRoute><ListaJogadores /></PrivateRoute>} />
-        <Route path="/agendar-partida" element={<PrivateRoute><AgendarPartida /></PrivateRoute>} />
-        <Route path="/partidas-agendadas" element={<PrivateRoute><PartidasAgendadas /></PrivateRoute>} />
-        <Route path="/informacoes-partida/:id" element={<PrivateRoute><InformacoesPartida /></PrivateRoute>} />
-        <Route path="/informacoes-partida" element={<PrivateRoute><InformacoesPartida /></PrivateRoute>} />
-        <Route path="/sorteio-times" element={<PrivateRoute><SorteioTimes /></PrivateRoute>} />
-        <Route path="/financeiro" element={<PrivateRoute><Financeiro /></PrivateRoute>} />
-        <Route path="/configuracoes" element={<PrivateRoute><ConfiguracoesConta /></PrivateRoute>} />
+        {/* Protected Routes */}
+        <Route path="/dashboard" element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/cadastro-jogadores" element={
+          <ProtectedRoute>
+            <CadastroJogadores />
+          </ProtectedRoute>
+        } />
+        <Route path="/lista-jogadores" element={
+          <ProtectedRoute>
+            <ListaJogadores />
+          </ProtectedRoute>
+        } />
+        <Route path="/agendar-partida" element={
+          <ProtectedRoute>
+            <AgendarPartida />
+          </ProtectedRoute>
+        } />
+        <Route path="/partidas-agendadas" element={
+          <ProtectedRoute>
+            <PartidasAgendadas />
+          </ProtectedRoute>
+        } />
+        <Route path="/informacoes-partida/:id" element={
+          <ProtectedRoute>
+            <InformacoesPartida />
+          </ProtectedRoute>
+        } />
+        <Route path="/informacoes-partida" element={
+          <ProtectedRoute>
+            <InformacoesPartida />
+          </ProtectedRoute>
+        } />
+        <Route path="/sorteio-times" element={
+          <ProtectedRoute>
+            <SorteioTimes />
+          </ProtectedRoute>
+        } />
+        <Route path="/financeiro" element={
+          <ProtectedRoute>
+            <Financeiro />
+          </ProtectedRoute>
+        } />
+        <Route path="/configuracoes" element={
+          <ProtectedRoute>
+            <ConfiguracoesConta />
+          </ProtectedRoute>
+        } />
 
-        {/* Rota de fallback */}
+        {/* Fallback Route */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
