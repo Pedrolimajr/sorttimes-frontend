@@ -33,7 +33,7 @@ export default function ListaJogadores({
   const [editando, setEditando] = useState(null);
   const [carregando, setCarregando] = useState(true);
   const [mensagemSucesso, setMensagemSucesso] = useState(null);
-  
+
   const [formData, setFormData] = useState({
     nome: '',
     dataNascimento: '',
@@ -49,78 +49,52 @@ export default function ListaJogadores({
   });
 
   useEffect(() => {
-  const carregarJogadores = async () => {
-    try {
-      setCarregando(true);
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/jogadores`);
+    const carregarJogadores = async () => {
+      try {
+        setCarregando(true);
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/jogadores`);
 
-      if (!response.ok) {
-        throw new Error('Erro ao carregar jogadores');
-      }
-
-      const result = await response.json();
-      const jogadoresArray = Array.isArray(result.data) ? result.data : [];
-
-      setJogadores(jogadoresArray);
-
-      // Se veio com estado indicando novo jogador, exibe mensagem
-      if (location.state?.novoJogador) {
-        const jogadorExiste = jogadoresArray.some(j => j._id === location.state.novoJogador._id);
-        if (!jogadorExiste) {
-          setJogadores(prev => [location.state.novoJogador, ...prev]);
+        if (!response.ok) {
+          throw new Error('Erro ao carregar jogadores');
         }
-        setMensagemSucesso(location.state.mensagem);
-        navigate(location.pathname, { replace: true, state: {} });
+
+        const result = await response.json();
+        const jogadoresArray = Array.isArray(result.data) ? result.data : [];
+
+        setJogadores(jogadoresArray);
+
+        if (location.state?.novoJogador) {
+          const jogadorExiste = jogadoresArray.some(j => j._id === location.state.novoJogador._id);
+          if (!jogadorExiste) {
+            setJogadores(prev => [location.state.novoJogador, ...prev]);
+          }
+          setMensagemSucesso(location.state.mensagem);
+          navigate(location.pathname, { replace: true, state: {} });
+        }
+      } catch (error) {
+        console.error("Erro ao carregar jogadores:", error);
+        toast.error(error.message || 'Erro ao carregar jogadores');
+        setJogadores([]);
+      } finally {
+        setCarregando(false);
       }
-    } catch (error) {
-      console.error("Erro ao carregar jogadores:", error);
-      toast.error(error.message || 'Erro ao carregar jogadores');
-      setJogadores([]);
-    } finally {
-      setCarregando(false);
-    }
-  };
+    };
 
-  carregarJogadores();
+    // Carrega os jogadores ao entrar
+    carregarJogadores();
 
-  // ✅ Escuta evento de atualização
-  const handleAtualizacao = () => {
-    console.log("📣 Evento jogadoresAtualizados recebido");
-    carregarJogadores(); // recarrega os dados da API
-  };
+    // Escuta o evento disparado por Financeiro.jsx
+    const handleAtualizacao = () => {
+      console.log("📥 Evento jogadoresAtualizados recebido no ListaJogadores.jsx");
+      carregarJogadores();
+    };
 
-  window.addEventListener("jogadoresAtualizados", handleAtualizacao);
+    window.addEventListener("jogadoresAtualizados", handleAtualizacao);
 
-  return () => {
-    window.removeEventListener("jogadoresAtualizados", handleAtualizacao);
-  };
-}, [location.state, navigate, location.pathname]);
-
-
-useEffect(() => {
-  const atualizarLista = async () => {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/jogadores`);
-      if (!response.ok) throw new Error('Erro ao carregar jogadores');
-
-      const result = await response.json();
-      const jogadoresArray = Array.isArray(result.data) ? result.data : [];
-      setJogadores(jogadoresArray);
-    } catch (error) {
-      console.error("Erro ao atualizar lista via evento:", error);
-      toast.error("Erro ao atualizar lista de jogadores");
-    }
-  };
-
-  window.addEventListener("jogadoresAtualizados", atualizarLista);
-
-  return () => {
-    window.removeEventListener("jogadoresAtualizados", atualizarLista);
-  };
-}, []);
-
-
-
+    return () => {
+      window.removeEventListener("jogadoresAtualizados", handleAtualizacao);
+    };
+  }, [location.state, navigate, location.pathname]);
 
   useEffect(() => {
     if (mensagemSucesso) {
@@ -151,8 +125,7 @@ useEffect(() => {
     e.preventDefault();
     try {
       const formDataToSend = new FormData();
-      
-      // Ajustando as datas para garantir o dia correto
+
       if (formData.dataNascimento) {
         const nascimento = new Date(formData.dataNascimento + 'T12:00:00');
         formDataToSend.append('dataNascimento', nascimento.toISOString());
@@ -163,7 +136,6 @@ useEffect(() => {
         formDataToSend.append('dataIngresso', ingresso.toISOString());
       }
 
-      // Adiciona os outros campos
       Object.keys(formData).forEach(key => {
         if (key !== 'dataNascimento' && key !== 'dataIngresso' && 
             formData[key] !== null && formData[key] !== undefined) {
@@ -191,7 +163,7 @@ useEffect(() => {
 
       const data = await response.json();
       toast.success(`Jogador ${data.data.nome} ${editando ? 'atualizado' : 'cadastrado'} com sucesso!`);
-      
+
       setJogadores(prev => {
         if (editando) {
           return prev.map(j => j._id === editando ? data.data : j);
@@ -199,7 +171,7 @@ useEffect(() => {
           return [data.data, ...prev];
         }
       });
-      
+
       setEditando(null);
       setFormData({
         nome: '',
@@ -246,12 +218,12 @@ useEffect(() => {
             'Content-Type': 'application/json',
           }
         });
-        
+
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.message || 'Erro ao excluir jogador');
         }
-        
+
         const data = await response.json();
         toast.success(data.message || 'Jogador excluído com sucesso');
         setJogadores(prev => prev.filter(j => j._id !== id));
@@ -271,15 +243,15 @@ useEffect(() => {
         },
         body: JSON.stringify({ status })
       });
-        
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Erro ao atualizar status');
       }
-      
+
       const data = await response.json();
       toast.success(`Status atualizado para ${status}`);
-      
+
       setJogadores(prev => 
         prev.map(j => 
           j._id === id ? { ...j, statusFinanceiro: status } : j
@@ -290,6 +262,7 @@ useEffect(() => {
       toast.error(error.message || 'Erro ao atualizar status');
     }
   };
+
 
   return (
     <div className={`${!modoSelecao ? 'min-h-screen' : ''} bg-gray-900 p-4 sm:p-6`}>
