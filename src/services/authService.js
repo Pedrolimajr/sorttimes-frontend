@@ -70,11 +70,12 @@ export const authService = {
     }
   },
 
-  isAuthenticated() {
-    const token = localStorage.getItem('token');
-    const user = this.getCurrentUser();
-    return !!token && !!user;
-  },
+isAuthenticated: () => {
+  const token = localStorage.getItem('token');
+  const user = localStorage.getItem('user');
+  return !!token && !!user;
+},
+
 
   async atualizarEmail(novoEmail, senha) {
     try {
