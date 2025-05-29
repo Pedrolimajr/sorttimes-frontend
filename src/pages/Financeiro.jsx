@@ -69,69 +69,87 @@ export default function Financeiro() {
     totalJogadores: 0
   });
 
-  useEffect(() => {
+ useEffect(() => {
     const carregarDados = async () => {
       try {
         setCarregando(true);
 
-        // 1️⃣ Carrega do localStorage instantaneamente
-        const cachedData = JSON.parse(localStorage.getItem(STORAGE_KEY));
-        if (cachedData?.jogadoresCache) {
-          // Recalcula os status financeiros
-          const jogadoresComStatus = cachedData.jogadoresCache.map(jogador => {
-            const pagamentos = Array.isArray(jogador.pagamentos) ? [...jogador.pagamentos] : Array(12).fill(false);
-            const todosMesesPagados = pagamentos.every(pago => pago);
-            return {
-              ...jogador,
-              pagamentos,
-              statusFinanceiro: todosMesesPagados ? 'Adimplente' : 'Inadimplente'
-            };
-          });
-          
-          setJogadores(jogadoresComStatus);
-          setTransacoes(cachedData.transacoesCache || []);
+        // 1. Tentar carregar do cache primeiro
+        try {
+          const cachedData = JSON.parse(localStorage.getItem(STORAGE_KEY));
+          if (cachedData?.jogadoresCache) {
+            const jogadoresComStatus = cachedData.jogadoresCache.map(jogador => {
+              const pagamentos = Array.isArray(jogador.pagamentos) 
+                ? [...jogador.pagamentos].slice(0, 12) 
+                : Array(12).fill(false);
+              
+              // Preenche com false se tiver menos de 12 meses
+              while (pagamentos.length < 12) pagamentos.push(false);
+              
+              return {
+                ...jogador,
+                pagamentos,
+                statusFinanceiro: pagamentos.every(p => p) ? 'Adimplente' : 'Inadimplente'
+              };
+            });
+            
+            setJogadores(jogadoresComStatus);
+            setTransacoes(cachedData.transacoesCache || []);
+          }
+        } catch (cacheError) {
+          console.warn("Erro ao carregar cache:", cacheError);
         }
 
-        // 2️⃣ Atualiza em segundo plano com dados da API
-        const [jogadoresRes, transacoesRes] = await Promise.all([
-          api.get('/jogadores'),
-          api.get('/financeiro/transacoes')
-        ]);
+        // 2. Carregar da API
+        try {
+          const [jogadoresRes, transacoesRes] = await Promise.all([
+            api.get('/jogadores').catch(e => {
+              console.error("Erro ao carregar jogadores:", e);
+              return { data: { data: [] } }; // Retorna array vazio em caso de erro
+            }),
+            api.get('/financeiro/transacoes').catch(e => {
+              console.error("Erro ao carregar transações:", e);
+              return { data: { data: [] } }; // Retorna array vazio em caso de erro
+            })
+          ]);
 
-        const jogadoresData = jogadoresRes.data?.data || jogadoresRes.data || [];
-        const transacoesData = transacoesRes.data?.data || transacoesRes.data || [];
-
-        const jogadoresProcessados = jogadoresData.map(jogador => {
-          let pagamentos = Array.isArray(jogador.pagamentos) ? [...jogador.pagamentos] : Array(12).fill(false);
-          
-          // Garante que sempre tenha 12 meses
-          if (pagamentos.length < 12) {
-            pagamentos = [...pagamentos, ...Array(12 - pagamentos.length).fill(false)];
-          } else if (pagamentos.length > 12) {
-            pagamentos = pagamentos.slice(0, 12);
-          }
-
-          const todosMesesPagados = pagamentos.every(p => p);
-
-          return {
-            ...jogador,
-            pagamentos,
-            statusFinanceiro: todosMesesPagados ? 'Adimplente' : 'Inadimplente'
+          const processarJogadores = (jogadoresData) => {
+            return (jogadoresData?.data || jogadoresData || []).map(jogador => {
+              let pagamentos = Array.isArray(jogador.pagamentos) 
+                ? [...jogador.pagamentos].slice(0, 12) 
+                : Array(12).fill(false);
+              
+              while (pagamentos.length < 12) pagamentos.push(false);
+              
+              return {
+                ...jogador,
+                pagamentos,
+                statusFinanceiro: pagamentos.every(p => p) ? 'Adimplente' : 'Inadimplente'
+              };
+            });
           };
-        });
 
-        setJogadores(jogadoresProcessados);
-        setTransacoes(transacoesData);
+          const novosJogadores = processarJogadores(jogadoresRes.data);
+          const novasTransacoes = transacoesRes.data?.data || transacoesRes.data || [];
 
-        // 3️⃣ Atualiza o localStorage
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-          jogadoresCache: jogadoresProcessados,
-          transacoesCache: transacoesData,
-          lastUpdate: new Date().toISOString()
-        }));
+          setJogadores(novosJogadores);
+          setTransacoes(novasTransacoes);
+
+          // Atualizar cache apenas se a API retornou dados válidos
+          if (novosJogadores.length > 0 || novasTransacoes.length > 0) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+              jogadoresCache: novosJogadores,
+              transacoesCache: novasTransacoes,
+              lastUpdate: new Date().toISOString()
+            }));
+          }
+        } catch (apiError) {
+          console.error("Erro na API:", apiError);
+          toast.error('Erro ao carregar dados da API. Usando cache local.');
+        }
 
       } catch (error) {
-        console.error("❌ Erro ao carregar dados:", error);
+        console.error("Erro geral ao carregar dados:", error);
         toast.error('Erro ao carregar dados financeiros');
       } finally {
         setCarregando(false);
