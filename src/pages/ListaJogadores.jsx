@@ -83,6 +83,21 @@ export default function ListaJogadores({
     carregarJogadores();
   }, [location.state, navigate, location.pathname]);
 
+useEffect(() => {
+  const atualizarLista = () => {
+    // Força a recarga chamando o mesmo carregamento da lista com estado limpo
+    navigate(location.pathname, { replace: true, state: { recarregar: true } });
+  };
+
+  window.addEventListener("jogadoresAtualizados", atualizarLista);
+
+  return () => {
+    window.removeEventListener("jogadoresAtualizados", atualizarLista);
+  };
+}, []);
+
+
+
   useEffect(() => {
     if (mensagemSucesso) {
       const timer = setTimeout(() => {
