@@ -49,39 +49,53 @@ export default function ListaJogadores({
   });
 
   useEffect(() => {
-    const carregarJogadores = async () => {
-      try {
-        setCarregando(true);
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/jogadores`);
-  
-        if (!response.ok) {
-          throw new Error('Erro ao carregar jogadores');
-        }
-  
-        const result = await response.json();
-        const jogadoresArray = Array.isArray(result.data) ? result.data : [];
-  
-        if (location.state?.novoJogador) {
-          const jogadorExiste = jogadoresArray.some(j => j._id === location.state.novoJogador._id);
-          if (!jogadorExiste) {
-            jogadoresArray.unshift(location.state.novoJogador);
-          }
-          setMensagemSucesso(location.state.mensagem);
-          navigate(location.pathname, { replace: true, state: {} });
-        }
-  
-        setJogadores(jogadoresArray);
-      } catch (error) {
-        console.error("Erro ao carregar jogadores:", error);
-        toast.error(error.message || 'Erro ao carregar jogadores');
-        setJogadores([]);
-      } finally {
-        setCarregando(false);
+  const carregarJogadores = async () => {
+    try {
+      setCarregando(true);
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/jogadores`);
+
+      if (!response.ok) {
+        throw new Error('Erro ao carregar jogadores');
       }
-    };
-  
-    carregarJogadores();
-  }, [location.state, navigate, location.pathname]);
+
+      const result = await response.json();
+      const jogadoresArray = Array.isArray(result.data) ? result.data : [];
+
+      setJogadores(jogadoresArray);
+
+      // Se veio com estado indicando novo jogador, exibe mensagem
+      if (location.state?.novoJogador) {
+        const jogadorExiste = jogadoresArray.some(j => j._id === location.state.novoJogador._id);
+        if (!jogadorExiste) {
+          setJogadores(prev => [location.state.novoJogador, ...prev]);
+        }
+        setMensagemSucesso(location.state.mensagem);
+        navigate(location.pathname, { replace: true, state: {} });
+      }
+    } catch (error) {
+      console.error("Erro ao carregar jogadores:", error);
+      toast.error(error.message || 'Erro ao carregar jogadores');
+      setJogadores([]);
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  carregarJogadores();
+
+  // ✅ Escuta evento de atualização
+  const handleAtualizacao = () => {
+    console.log("📣 Evento jogadoresAtualizados recebido");
+    carregarJogadores(); // recarrega os dados da API
+  };
+
+  window.addEventListener("jogadoresAtualizados", handleAtualizacao);
+
+  return () => {
+    window.removeEventListener("jogadoresAtualizados", handleAtualizacao);
+  };
+}, [location.state, navigate, location.pathname]);
+
 
 useEffect(() => {
   const atualizarLista = async () => {
