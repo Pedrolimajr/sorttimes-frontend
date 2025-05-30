@@ -37,12 +37,7 @@ export const pagamentosAPI = {
 // Interceptadores
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    config.url = config.url.replace(/\/\//g, '/'); // Normaliza barra dupla
+    config.url = config.url.replace(/\/\//g, '/'); // Apenas normaliza barra dupla
     console.log('📡 Request:', {
       method: config.method?.toUpperCase(),
       url: config.baseURL + config.url,
@@ -66,19 +61,16 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    const status = error.response?.status;
-    const mensagemPadrao = 'Erro ao processar requisição';
-
     console.error('❌ Response Error:', {
-      status,
+      status: error.response?.status,
       url: error.config?.url,
       message: error.message,
       data: error.response?.data
     });
 
-    let mensagemErro = mensagemPadrao;
+    let mensagemErro = 'Erro ao processar requisição';
 
-    switch (status) {
+    switch (error.response?.status) {
       case 405:
         mensagemErro = 'Operação não permitida. Por favor, contate o suporte.';
         break;
@@ -87,11 +79,6 @@ api.interceptors.response.use(
         break;
       case 401:
         mensagemErro = 'Não autorizado. Faça login novamente';
-
-        // 🔐 Logout forçado em caso de token inválido/expirado
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
         break;
       case 403:
         mensagemErro = 'Acesso negado';

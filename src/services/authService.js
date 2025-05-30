@@ -4,8 +4,8 @@ export const authService = {
   async login(email, senha) {
     try {
       console.log('Tentando login com:', { email });
-
-      const response = await api.post('/auth/login',
+      
+      const response = await api.post('/auth/login', 
         { email, senha },
         {
           headers: {
@@ -30,7 +30,7 @@ export const authService = {
   async cadastrar(dados) {
     try {
       console.log('Tentando cadastrar usuário:', dados);
-
+      
       const response = await api.post('/api/auth/cadastro', dados, {
         headers: {
           'Content-Type': 'application/json'
@@ -70,45 +70,20 @@ export const authService = {
     }
   },
 
-  isAuthenticated: () => {
-    try {
-      const token = localStorage.getItem('token');
-      const user = localStorage.getItem('user');
+isAuthenticated: () => {
+  try {
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    if (!token || !user) return false;
 
-      if (!token || !user) {
-        console.warn("🚫 Sem token ou usuário no localStorage.");
-        return false;
-      }
+    const parsedUser = JSON.parse(user);
+    return typeof parsedUser === 'object' && Object.keys(parsedUser).length > 0;
+  } catch (error) {
+    console.error("Erro em isAuthenticated:", error);
+    return false;
+  }
+},
 
-      // Decodifica o token JWT para verificar a expiração
-      const payloadBase64 = token.split('.')[1];
-      const payload = JSON.parse(atob(payloadBase64));
-      const exp = payload.exp;
-
-      const now = Math.floor(Date.now() / 1000);
-      console.log("🕒 Token expira em:", exp, "| Agora:", now);
-
-      if (exp < now) {
-        console.warn("⚠️ Token expirado!");
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        return false;
-      }
-
-      const parsedUser = JSON.parse(user);
-      const userValido = typeof parsedUser === 'object' && Object.keys(parsedUser).length > 0;
-
-      if (!userValido) {
-        console.warn("🚫 Usuário inválido.");
-        return false;
-      }
-
-      return true;
-    } catch (error) {
-      console.error("❌ Erro em isAuthenticated:", error);
-      return false;
-    }
-  },
 
   async atualizarEmail(novoEmail, senha) {
     try {
@@ -125,7 +100,7 @@ export const authService = {
           }
         }
       );
-
+      
       return response.data;
     } catch (error) {
       console.error('Erro detalhado:', error.response?.data);
