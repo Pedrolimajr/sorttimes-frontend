@@ -4,8 +4,8 @@ export const authService = {
   async login(email, senha) {
     try {
       console.log('Tentando login com:', { email });
-      
-      const response = await api.post('/auth/login', 
+
+      const response = await api.post('/auth/login',
         { email, senha },
         {
           headers: {
@@ -30,7 +30,7 @@ export const authService = {
   async cadastrar(dados) {
     try {
       console.log('Tentando cadastrar usuário:', dados);
-      
+
       const response = await api.post('/api/auth/cadastro', dados, {
         headers: {
           'Content-Type': 'application/json'
@@ -69,39 +69,46 @@ export const authService = {
       return null;
     }
   },
-isAuthenticated: () => {
-  try {
-    const token = localStorage.getItem('token');
-    const user = localStorage.getItem('user');
 
-    if (!token || !user) return false;
+  isAuthenticated: () => {
+    try {
+      const token = localStorage.getItem('token');
+      const user = localStorage.getItem('user');
 
-    // Decodifica o payload do JWT
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const payload = JSON.parse(atob(base64));
+      if (!token || !user) {
+        console.warn("🚫 Sem token ou usuário no localStorage.");
+        return false;
+      }
 
-    const exp = payload.exp;
-    const now = Math.floor(Date.now() / 1000);
+      // Decodifica o token JWT para verificar a expiração
+      const payloadBase64 = token.split('.')[1];
+      const payload = JSON.parse(atob(payloadBase64));
+      const exp = payload.exp;
 
-    console.log("🕒 Token expira em:", exp, "⏱️ Agora:", now);
+      const now = Math.floor(Date.now() / 1000);
+      console.log("🕒 Token expira em:", exp, "| Agora:", now);
 
-    if (exp < now) {
-      console.warn("⚠️ Token expirado!");
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      if (exp < now) {
+        console.warn("⚠️ Token expirado!");
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        return false;
+      }
+
+      const parsedUser = JSON.parse(user);
+      const userValido = typeof parsedUser === 'object' && Object.keys(parsedUser).length > 0;
+
+      if (!userValido) {
+        console.warn("🚫 Usuário inválido.");
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error("❌ Erro em isAuthenticated:", error);
       return false;
     }
-
-    return true;
-  } catch (error) {
-    console.error("Erro em isAuthenticated:", error);
-    return false;
-  }
-},
-
-
-
+  },
 
   async atualizarEmail(novoEmail, senha) {
     try {
@@ -118,10 +125,9 @@ isAuthenticated: () => {
           }
         }
       );
-      
+
       return response.data;
-    
-} catch (error) {
+    } catch (error) {
       console.error('Erro detalhado:', error.response?.data);
       throw error;
     }
