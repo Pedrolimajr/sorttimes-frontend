@@ -76,28 +76,30 @@ isAuthenticated: () => {
 
     if (!token || !user) return false;
 
-    // Decodificar o token para verificar a expiração
-    const payloadBase64 = token.split('.')[1];
-    const payload = JSON.parse(atob(payloadBase64));
-    const exp = payload.exp;
+    // Decodifica o payload do JWT
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(atob(base64));
 
-    // Verifica se está expirado
+    const exp = payload.exp;
     const now = Math.floor(Date.now() / 1000);
+
+    console.log("🕒 Token expira em:", exp, "⏱️ Agora:", now);
+
     if (exp < now) {
-      console.warn("⚠️ Token expirado");
+      console.warn("⚠️ Token expirado!");
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       return false;
     }
 
-    // Verifica se o user é válido
-    const parsedUser = JSON.parse(user);
-    return typeof parsedUser === 'object' && Object.keys(parsedUser).length > 0;
+    return true;
   } catch (error) {
     console.error("Erro em isAuthenticated:", error);
     return false;
   }
 },
+
 
 
 

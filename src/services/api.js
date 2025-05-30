@@ -56,7 +56,6 @@ api.interceptors.request.use(
   }
 );
 
-
 api.interceptors.response.use(
   (response) => {
     console.log('✅ Response:', {
@@ -67,16 +66,19 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
+    const status = error.response?.status;
+    const mensagemPadrao = 'Erro ao processar requisição';
+
     console.error('❌ Response Error:', {
-      status: error.response?.status,
+      status,
       url: error.config?.url,
       message: error.message,
       data: error.response?.data
     });
 
-    let mensagemErro = 'Erro ao processar requisição';
+    let mensagemErro = mensagemPadrao;
 
-    switch (error.response?.status) {
+    switch (status) {
       case 405:
         mensagemErro = 'Operação não permitida. Por favor, contate o suporte.';
         break;
@@ -85,6 +87,11 @@ api.interceptors.response.use(
         break;
       case 401:
         mensagemErro = 'Não autorizado. Faça login novamente';
+
+        // 🔐 Logout forçado em caso de token inválido/expirado
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
         break;
       case 403:
         mensagemErro = 'Acesso negado';
