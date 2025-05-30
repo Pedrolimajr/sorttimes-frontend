@@ -1,5 +1,5 @@
 // src/routes/AppRoutes.jsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, useLocation } from "react-router-dom";
 import Home from "../pages/Home";
 import Login from "../pages/Login";
@@ -14,12 +14,32 @@ import RecuperarSenha from "../pages/RecuperarSenha";
 import Cadastro from "../pages/Cadastro";
 import InformacoesPartida from "../pages/InformacoesPartida";
 import ConfiguracoesConta from "../pages/ConfiguracoesConta";
-import ConfirmarPresenca from '../pages/ConfirmarPresenca';
+import ConfirmarPresenca from "../pages/ConfirmarPresenca";
 import PrivateRoute from './PrivateRoute';
+import NotFound from "../pages/NotFound";
 
 function AppRoutes() {
   const location = useLocation();
   const isFixedHeight = ['/', '/login'].includes(location.pathname);
+
+  // Para futura lógica de validação de sessão/token com backend
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // Exemplo de delay artificial (remova se não for necessário)
+    // Aqui pode ir lógica de checagem de token válido no backend
+    setLoading(true);
+    const timeout = setTimeout(() => setLoading(false), 300);
+    return () => clearTimeout(timeout);
+  }, [location]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+      </div>
+    );
+  }
 
   return (
     <div className={isFixedHeight ? 'h-[calc(100vh-64px)]' : 'min-h-full'}>
@@ -62,9 +82,13 @@ function AppRoutes() {
         <Route path="/configuracoes" element={
           <PrivateRoute><ConfiguracoesConta /></PrivateRoute>
         } />
+
+        {/* Rota 404 */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </div>
   );
 }
 
 export default AppRoutes;
+

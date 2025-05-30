@@ -37,7 +37,12 @@ export const pagamentosAPI = {
 // Interceptadores
 api.interceptors.request.use(
   (config) => {
-    config.url = config.url.replace(/\/\//g, '/'); // Apenas normaliza barra dupla
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    config.url = config.url.replace(/\/\//g, '/'); // Normaliza barra dupla
     console.log('📡 Request:', {
       method: config.method?.toUpperCase(),
       url: config.baseURL + config.url,
@@ -50,6 +55,7 @@ api.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+
 
 api.interceptors.response.use(
   (response) => {
