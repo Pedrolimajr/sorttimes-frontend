@@ -14,31 +14,23 @@ export default function Login() {
   const [erro, setErro] = useState("");
   const navigate = useNavigate();
 
-  // Adicione no início do componente
-const location = useLocation();
+  const fazerLogin = async (e) => {
+    e.preventDefault();
+    setCarregando(true);
 
-// Modifique a função fazerLogin
-const fazerLogin = async (e) => {
-  e.preventDefault();
-  setCarregando(true);
-  setErro("");
-
-  try {
-    localStorage.clear();
-    await authService.login(email, senha);
-    
-    // Redireciona para a rota que tentou acessar ou dashboard padrão
-    const from = location.state?.from?.pathname || '/dashboard';
-    navigate(from, { replace: true });
-    
-  } catch (error) {
-    console.error('Erro ao fazer login:', error);
-    setErro(error.response?.data?.message || 'Credenciais inválidas');
-    toast.error(error.response?.data?.message || 'Erro ao fazer login');
-  } finally {
-    setCarregando(false);
-  }
-};
+    try {
+      // Limpa dados anteriores
+      localStorage.clear();
+      
+      const response = await authService.login(email, senha);
+      navigate("/dashboard");
+    } catch (error) {
+      console.error('Erro ao fazer login:', error);
+      toast.error(error.response?.data?.message || 'Erro ao fazer login');
+    } finally {
+      setCarregando(false);
+    }
+  };
 
   const voltarParaHome = () => {
     navigate("/");
