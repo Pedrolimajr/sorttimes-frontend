@@ -69,13 +69,28 @@ export const authService = {
       return null;
     }
   },
-
 isAuthenticated: () => {
   try {
     const token = localStorage.getItem('token');
     const user = localStorage.getItem('user');
+
     if (!token || !user) return false;
 
+    // Decodificar o token para verificar a expiração
+    const payloadBase64 = token.split('.')[1];
+    const payload = JSON.parse(atob(payloadBase64));
+    const exp = payload.exp;
+
+    // Verifica se está expirado
+    const now = Math.floor(Date.now() / 1000);
+    if (exp < now) {
+      console.warn("⚠️ Token expirado");
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      return false;
+    }
+
+    // Verifica se o user é válido
     const parsedUser = JSON.parse(user);
     return typeof parsedUser === 'object' && Object.keys(parsedUser).length > 0;
   } catch (error) {
@@ -83,6 +98,7 @@ isAuthenticated: () => {
     return false;
   }
 },
+
 
 
   async atualizarEmail(novoEmail, senha) {
@@ -102,7 +118,8 @@ isAuthenticated: () => {
       );
       
       return response.data;
-    } catch (error) {
+    
+} catch (error) {
       console.error('Erro detalhado:', error.response?.data);
       throw error;
     }
