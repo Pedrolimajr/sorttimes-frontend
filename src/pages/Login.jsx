@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { FaEye, FaEyeSlash, FaSignInAlt, FaKey } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { authService } from "../services/authService";
 import { toast } from "react-toastify";
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
-import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -13,48 +13,20 @@ export default function Login() {
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
   const navigate = useNavigate();
-  const location = useLocation();
-  const { login, isAuthenticated } = useAuth();
-
-  // Redireciona se já estiver autenticado
-  useEffect(() => {
-    if (isAuthenticated) {
-      const from = location.state?.from?.pathname || "/dashboard";
-      navigate(from, { replace: true });
-    }
-  }, [isAuthenticated, navigate, location]);
 
   const fazerLogin = async (e) => {
     e.preventDefault();
-    
-    // Validação básica
-    if (!email || !senha) {
-      setErro("Email e senha são obrigatórios");
-      return;
-    }
-
     setCarregando(true);
-    setErro("");
 
     try {
-      const result = await login({ email, senha });
+      // Limpa dados anteriores
+      localStorage.clear();
       
-      if (!result.success) {
-        setErro(result.error || "Erro ao fazer login");
-        toast.error(result.error || "Erro ao fazer login");
-        return;
-      }
-
-      // Redireciona para a página que tentava acessar ou para o dashboard
-      const from = location.state?.from?.pathname || "/dashboard";
-      navigate(from, { replace: true });
-      
-      toast.success("Login realizado com sucesso!");
+      const response = await authService.login(email, senha);
+      navigate("/dashboard");
     } catch (error) {
       console.error('Erro ao fazer login:', error);
-      const errorMessage = error.response?.data?.message || 'Erro ao fazer login';
-      setErro(errorMessage);
-      toast.error(errorMessage);
+      toast.error(error.response?.data?.message || 'Erro ao fazer login');
     } finally {
       setCarregando(false);
     }
@@ -159,7 +131,6 @@ export default function Login() {
                 className="w-full px-3 xs:px-4 py-2 xs:py-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs xs:text-sm"
                 placeholder="Digite seu email"
                 required
-                disabled={carregando}
               />
             </div>
 
@@ -185,7 +156,6 @@ export default function Login() {
                   className="w-full px-3 xs:px-4 py-2 xs:py-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10 xs:pr-12 text-xs xs:text-sm"
                   placeholder="Digite sua senha"
                   required
-                  disabled={carregando}
                 />
                 <motion.button
                   type="button"
@@ -193,7 +163,6 @@ export default function Login() {
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   className="absolute right-2 xs:right-3 top-2 xs:top-3 text-gray-400 hover:text-gray-300 transition-colors"
-                  disabled={carregando}
                 >
                   {mostrarSenha ? 
                     <FaEyeSlash className="w-3 h-3 xs:w-4 xs:h-4" /> : 
@@ -204,31 +173,22 @@ export default function Login() {
             </div>
 
             {/* Exibição de erros */}
-            <AnimatePresence>
-              {erro && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="overflow-hidden"
-                >
-                  <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-4">
-                    <div className="flex items-center justify-between">
-                      <p className="text-red-400 text-sm font-medium">
-                        {erro}
-                      </p>
-                      <button 
-                        type="button"
-                        onClick={() => setErro("")}
-                        className="ml-3 text-red-400 hover:text-red-300 transition-colors"
-                      >
-                        <span className="text-xl">×</span>
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {erro ? (
+              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-red-400 text-sm font-medium">
+                    {erro}
+                  </p>
+                  <button 
+                    type="button"
+                    onClick={() => setErro("")}
+                    className="ml-3 text-red-400 hover:text-red-300 transition-colors"
+                  >
+                    <span className="text-xl">×</span>
+                  </button>
+                </div>
+              </div>
+            ) : null}
 
             {/* Botão de Login */}
             <motion.button
