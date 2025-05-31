@@ -1,11 +1,20 @@
 // src/routes/AppRoutes.jsx
-
 import React from 'react';
 import { Routes, Route, useLocation } from "react-router-dom";
 import Home from "../pages/Home";
 import Login from "../pages/Login";
 import Dashboard from "../pages/Dashboard";
-// ... outros imports
+import CadastroJogadores from "../pages/CadastroJogadores";
+import AgendarPartida from "../pages/AgendarPartida";
+import PartidasAgendadas from "../pages/PartidasAgendadas";
+import SorteioTimes from "../pages/SorteioTimes";
+import Financeiro from "../pages/Financeiro";
+import ListaJogadores from "../pages/ListaJogadores";
+import RecuperarSenha from "../pages/RecuperarSenha";
+import Cadastro from "../pages/Cadastro";
+import InformacoesPartida from "../pages/InformacoesPartida";
+import ConfiguracoesConta from "../pages/ConfiguracoesConta";
+import ConfirmarPresenca from '../pages/ConfirmarPresenca';
 import PrivateRoute from './PrivateRoute';
 
 function AppRoutes() {
