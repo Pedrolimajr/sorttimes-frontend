@@ -1,14 +1,25 @@
-import React from 'react';
+// src/routes/PrivateRoute.jsx
 import { Navigate } from 'react-router-dom';
-import { authService } from '../services/authService';
+import { useAuth } from '../contexts/AuthContext';
+import LoadingSpinner from '../components/LoadingSpinner';
 
-const PrivateRoute = ({ children }) => {
-  const isAuth = authService.isAuthenticated();
-  console.log("🔒 Verificando autenticação:", isAuth);
-  console.log("🔑 Token no localStorage:", localStorage.getItem('token'));
-  console.log("👤 User no localStorage:", localStorage.getItem('user'));
+const PrivateRoute = ({ children, requiredRoles = [] }) => {
+  const { isAuthenticated, user, loading } = useAuth();
 
-  return isAuth ? children : <Navigate to="/login" replace />;
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  }
+
+  // Verificação de roles (se necessário)
+  if (requiredRoles.length > 0 && !requiredRoles.some(role => user.roles?.includes(role))) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
 };
 
 export default PrivateRoute;
