@@ -769,6 +769,66 @@ export default function Financeiro() {
     jogador.nome.toLowerCase().includes(filtroJogador.toLowerCase())
   );
 
+const gerarRelatorioCompleto = () => {
+  const relatorio = document.getElementById("relatorio-completo");
+
+  if (!relatorio) {
+    toast.error("Elemento do relatório não encontrado.");
+    return;
+  }
+
+  html2canvas(relatorio, {
+    scrollY: -window.scrollY,
+    useCORS: true,
+    scale: 2,
+    windowWidth: relatorio.scrollWidth, // captura total largura
+    windowHeight: relatorio.scrollHeight // captura total altura
+  }).then((canvas) => {
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "mm", "a4");
+
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+
+    const imgWidth = pageWidth;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    let position = 0;
+
+    if (imgHeight < pageHeight) {
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+    } else {
+      while (position < imgHeight) {
+        pdf.addImage(imgData, "PNG", 0, -position, imgWidth, imgHeight);
+        position += pageHeight;
+        if (position < imgHeight) pdf.addPage();
+      }
+    }
+
+    pdf.save("relatorio_financeiro.pdf");
+  });
+};
+
+<button
+  onClick={gerarRelatorioCompleto}
+  className="btn-share"
+  style={{
+    backgroundColor: "#750000",
+    color: "#fff",
+    padding: "10px 15px",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
+    margin: "10px"
+  }}
+>
+  <FaShare style={{ marginRight: 8 }} />
+  Compartilhar Relatório
+</button>
+
+
+
+  
   return (
     <div className="min-h-screen bg-gray-900 p-4 sm:p-6">
       <div className="fixed inset-0 overflow-hidden -z-10 opacity-20">
