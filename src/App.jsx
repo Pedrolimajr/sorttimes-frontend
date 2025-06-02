@@ -7,8 +7,9 @@ import AppRoutes from "./routes/AppRoutes";
 import Footer from "./components/Footer";
 import { usePageLayout } from "./hooks/usePageLayout";
 import { AuthProvider } from './context/AuthContext';
+import { Chart, registerables } from 'chart.js';
 
-function AppContent() {
+Chart.register(...registerables);function AppContent() {
   const { containerClass, mainClass } = usePageLayout();
 
   return (
