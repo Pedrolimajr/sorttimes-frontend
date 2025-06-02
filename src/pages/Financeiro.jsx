@@ -531,92 +531,136 @@ export default function Financeiro() {
     }]
   };
 
-  const exportarPDF = async () => {
+ const exportarPDF = async () => {
   try {
     setRelatorioModal(false);
-    await new Promise(resolve => setTimeout(resolve, 300));
+    toast.info('Gerando PDF...', { autoClose: 2000 });
+    
+    // Criar PDF em segundo plano para não travar a UI
+    setTimeout(async () => {
+      try {
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const margin = 20;
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        let y = margin;
 
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const margin = 20;
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    let y = margin;
+        // Configurações iniciais
+        pdf.setFont('helvetica');
+        pdf.setTextColor(40);
 
-    // Cabeçalho com logo e título
-    const logoUrl = '../logo_time.png'; // substitua pelo caminho correto ou remova se não usar logo
-    const img = new Image();
-    img.src = logoUrl;
+        // Cabeçalho
+        pdf.setFontSize(18);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Relatório Financeiro', pageWidth / 2, y, { align: 'center' });
+        y += 10;
 
-    // Aguarda o carregamento da imagem (caso queira usar)
-    await new Promise(resolve => {
-      img.onload = resolve;
-      img.onerror = resolve;
-    });
+        pdf.setFontSize(12);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(`Período: ${new Date(filtroMes).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`, pageWidth / 2, y, { align: 'center' });
+        y += 15;
 
-    if (img.src && img.complete) {
-      const logoWidth = 30;
-      const logoHeight = 30;
-      pdf.addImage(img, 'PNG', margin, y, logoWidth, logoHeight);
-    }
+        // Seção de Resumo
+        pdf.setFontSize(14);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Resumo Financeiro', margin, y);
+        y += 10;
 
-    pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(18);
-    pdf.text('Relatório Financeiro', pageWidth / 2, y + 10, { align: 'center' });
-    y += 30;
+        pdf.setFontSize(12);
+        pdf.setFont('helvetica', 'normal');
+        
+        // Adicionar tabela de resumo
+        const resumoData = [
+          ['Receitas', `R$ ${estatisticas.totalReceitas.toFixed(2)}`, '#28a745'],
+          ['Despesas', `R$ ${estatisticas.totalDespesas.toFixed(2)}`, '#dc3545'],
+          ['Saldo', `R$ ${estatisticas.saldo.toFixed(2)}`, estatisticas.saldo >= 0 ? '#28a745' : '#dc3545']
+        ];
 
-    pdf.setFontSize(12);
-    pdf.setFont('helvetica', 'normal');
-    pdf.setTextColor(100);
-    pdf.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, margin, y);
-    y += 10;
+        resumoData.forEach(([label, value, color]) => {
+          pdf.setTextColor(40);
+          pdf.text(`${label}:`, margin, y);
+          pdf.setTextColor(color);
+          pdf.text(value, pageWidth - margin - pdf.getTextWidth(value), y, { align: 'right' });
+          y += 8;
+        });
 
-    // Seção de Resumo
-    pdf.setDrawColor(200);
-    pdf.setLineWidth(0.5);
-    pdf.line(margin, y, pageWidth - margin, y);
-    y += 8;
+        y += 10;
 
-    pdf.setFontSize(14);
-    pdf.setTextColor(40);
-    pdf.text('Resumo Financeiro', margin, y);
-    y += 10;
+        // Seção de Detalhes
+        pdf.setFontSize(14);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Detalhes', margin, y);
+        y += 10;
 
-    pdf.setFontSize(12);
-    pdf.setTextColor(50);
+        pdf.setFontSize(12);
+        pdf.setFont('helvetica', 'normal');
+        
+        // Adicionar gráfico de barras
+        const canvas = document.createElement('canvas');
+        canvas.width = 400;
+        canvas.height = 200;
+        const ctx = canvas.getContext('2d');
+        
+        // Renderizar o gráfico no canvas
+        new Chart(ctx, {
+          type: 'bar',
+          data: dadosGraficoBarras,
+          options: {
+            responsive: false,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom'
+              }
+            }
+          }
+        });
 
-    pdf.text(`Receitas: R$ ${estatisticas.totalReceitas.toFixed(2)}`, margin, y);
-    y += 8;
-    pdf.text(`Despesas: R$ ${estatisticas.totalDespesas.toFixed(2)}`, margin, y);
-    y += 8;
+        // Adicionar o gráfico ao PDF
+        const chartImg = canvas.toDataURL('image/png');
+        pdf.addImage(chartImg, 'PNG', margin, y, pageWidth - 2 * margin, 80);
+        y += 90;
 
-    pdf.setTextColor(estatisticas.saldo >= 0 ? '#28a745' : '#dc3545');
-    pdf.text(`Saldo: R$ ${estatisticas.saldo.toFixed(2)}`, margin, y);
-    y += 12;
+        // Adicionar lista de jogadores com status
+        pdf.setFontSize(12);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Status dos Jogadores', margin, y);
+        y += 8;
 
-    pdf.setTextColor(50);
-    pdf.setFontSize(14);
-    pdf.text('Outros Dados', margin, y);
-    y += 10;
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'normal');
+        
+        jogadores.forEach(jogador => {
+          if (y > 250) { // Verificar se precisa de nova página
+            pdf.addPage();
+            y = margin;
+          }
+          
+          pdf.setTextColor(40);
+          pdf.text(jogador.nome, margin, y);
+          pdf.setTextColor(jogador.statusFinanceiro === 'Adimplente' ? '#28a745' : '#dc3545');
+          pdf.text(jogador.statusFinanceiro || 'Inadimplente', pageWidth - margin - 30, y);
+          y += 7;
+        });
 
-    pdf.setFontSize(12);
-    pdf.text(`Pagamentos Pendentes: ${estatisticas.pagamentosPendentes}`, margin, y);
-    y += 8;
-    pdf.text(`Total de Jogadores: ${estatisticas.totalJogadores}`, margin, y);
-    y += 8;
+        // Rodapé
+        pdf.setFontSize(9);
+        pdf.setTextColor(150);
+        pdf.text(`Gerado em ${new Date().toLocaleString('pt-BR')}`, pageWidth / 2, 285, { align: 'center' });
+        pdf.text('Sistema de Gestão Financeira', pageWidth / 2, 290, { align: 'center' });
 
-    // Rodapé
-    y = 285;
-    pdf.setFontSize(9);
-    pdf.setTextColor(150);
-    pdf.text('Relatório gerado automaticamente pelo sistema', pageWidth / 2, y, { align: 'center' });
-
-    pdf.save(`relatorio-financeiro-${filtroMes}.pdf`);
-    toast.success('PDF gerado com sucesso!');
+        // Salvar o PDF
+        pdf.save(`relatorio-financeiro-${filtroMes}.pdf`);
+        toast.success('PDF gerado com sucesso!');
+      } catch (error) {
+        console.error('Erro ao gerar PDF:', error);
+        toast.error('Falha ao gerar PDF. Tente novamente.');
+      }
+    }, 500);
   } catch (error) {
-    console.error('Erro ao gerar PDF:', error);
-    toast.error('Erro ao gerar PDF. Tente novamente.');
+    console.error('Erro ao iniciar geração de PDF:', error);
+    toast.error('Erro ao iniciar geração de PDF.');
   }
 };
-
 
   const exportarImagem = async () => {
     try {
@@ -718,35 +762,228 @@ export default function Financeiro() {
     }
   };
 
-  const compartilharControle = async (elementId) => {
-    try {
-      if (navigator.share) {
-        const element = document.getElementById(elementId);
-        const canvas = await html2canvas(element, {
-          scale: 2,
-          logging: false,
-          useCORS: true,
-          backgroundColor: '#1f2937'
-        });
+  const compartilharControle = async () => {
+  try {
+    setCompartilhando(true);
+    toast.info('Preparando dados para compartilhamento...');
+
+    // Criar elemento temporário para captura
+    const tempElement = document.createElement('div');
+    tempElement.style.position = 'absolute';
+    tempElement.style.left = '-9999px';
+    tempElement.style.width = '800px';
+    tempElement.style.padding = '20px';
+    tempElement.style.backgroundColor = '#1f2937';
+    tempElement.style.color = 'white';
+    tempElement.style.fontFamily = 'Arial, sans-serif';
+
+    // Adicionar título
+    const title = document.createElement('h2');
+    title.textContent = `Controle de Mensalidades - ${new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`;
+    title.style.marginBottom = '20px';
+    title.style.textAlign = 'center';
+    title.style.color = '#4f46e5';
+    tempElement.appendChild(title);
+
+    // Adicionar resumo
+    const summary = document.createElement('div');
+    summary.style.marginBottom = '20px';
+    summary.style.display = 'flex';
+    summary.style.justifyContent = 'space-between';
+    
+    const summaryItems = [
+      { label: 'Total Jogadores', value: estatisticas.totalJogadores },
+      { label: 'Adimplentes', value: jogadores.filter(j => j.statusFinanceiro === 'Adimplente').length },
+      { label: 'Inadimplentes', value: jogadores.filter(j => j.statusFinanceiro !== 'Adimplente').length }
+    ];
+    
+    summaryItems.forEach(item => {
+      const div = document.createElement('div');
+      div.style.textAlign = 'center';
+      
+      const label = document.createElement('div');
+      label.textContent = item.label;
+      label.style.fontSize = '12px';
+      label.style.color = '#9ca3af';
+      div.appendChild(label);
+      
+      const value = document.createElement('div');
+      value.textContent = item.value;
+      value.style.fontSize = '18px';
+      value.style.fontWeight = 'bold';
+      value.style.color = 'white';
+      div.appendChild(value);
+      
+      summary.appendChild(div);
+    });
+    
+    tempElement.appendChild(summary);
+
+    // Criar tabela responsiva
+    const tableContainer = document.createElement('div');
+    tableContainer.style.overflowX = 'auto';
+    
+    const table = document.createElement('table');
+    table.style.width = '100%';
+    table.style.borderCollapse = 'collapse';
+    table.style.marginBottom = '20px';
+    
+    // Cabeçalho da tabela
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    headerRow.style.backgroundColor = '#374151';
+    
+    ['Jogador', 'Status', ...dadosGraficoBarras.labels].forEach(text => {
+      const th = document.createElement('th');
+      th.textContent = text;
+      th.style.padding = '10px';
+      th.style.textAlign = 'left';
+      th.style.border = '1px solid #4b5563';
+      headerRow.appendChild(th);
+    });
+    
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+    
+    // Corpo da tabela
+    const tbody = document.createElement('tbody');
+    
+    jogadores.forEach((jogador, index) => {
+      const row = document.createElement('tr');
+      row.style.backgroundColor = index % 2 === 0 ? '#1f2937' : '#111827';
+      
+      // Célula do nome
+      const nameCell = document.createElement('td');
+      nameCell.textContent = jogador.nome;
+      nameCell.style.padding = '10px';
+      nameCell.style.border = '1px solid #4b5563';
+      row.appendChild(nameCell);
+      
+      // Célula do status
+      const statusCell = document.createElement('td');
+      statusCell.textContent = jogador.statusFinanceiro || 'Inadimplente';
+      statusCell.style.padding = '10px';
+      statusCell.style.border = '1px solid #4b5563';
+      statusCell.style.color = jogador.statusFinanceiro === 'Adimplente' ? '#10b981' : '#ef4444';
+      row.appendChild(statusCell);
+      
+      // Células dos meses
+      jogador.pagamentos.forEach((pago, i) => {
+        const monthCell = document.createElement('td');
+        monthCell.style.padding = '10px';
+        monthCell.style.textAlign = 'center';
+        monthCell.style.border = '1px solid #4b5563';
         
-        const blob = await (await fetch(canvas.toDataURL('image/png'))).blob();
-        const file = new File([blob], 'controle-mensalidades.png', { type: blob.type });
+        const icon = document.createElement('span');
+        icon.textContent = pago ? '✓' : '✗';
+        icon.style.color = pago ? '#10b981' : '#ef4444';
+        monthCell.appendChild(icon);
         
-        await navigator.share({
-          title: `Controle de Mensalidades - ${new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`,
-          text: `Controle de mensalidades dos jogadores`,
-          files: [file]
-        });
-      } else {
-        toast.info('Compartilhamento não suportado neste navegador');
-      }
-    } catch (error) {
-      console.error('Erro ao compartilhar:', error);
-      if (error.name !== 'AbortError') {
-        toast.error('Erro ao compartilhar controle');
-      }
+        row.appendChild(monthCell);
+      });
+      
+      tbody.appendChild(row);
+    });
+    
+    table.appendChild(tbody);
+    tableContainer.appendChild(table);
+    tempElement.appendChild(tableContainer);
+    
+    // Adicionar ao documento
+    document.body.appendChild(tempElement);
+    
+    // Capturar como imagem
+    const canvas = await html2canvas(tempElement, {
+      scale: 2,
+      logging: false,
+      useCORS: true,
+      backgroundColor: '#1f2937',
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: tempElement.scrollWidth,
+      windowHeight: tempElement.scrollHeight
+    });
+    
+    // Remover elemento temporário
+    document.body.removeChild(tempElement);
+    
+    // Compartilhar ou baixar
+    if (navigator.share) {
+      const blob = await (await fetch(canvas.toDataURL('image/png'))).blob();
+      const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
+      
+      await navigator.share({
+        title: 'Controle de Mensalidades',
+        text: `Status atualizado em ${new Date().toLocaleDateString('pt-BR')}`,
+        files: [file]
+      });
+    } else {
+      // Alternativa para navegadores sem suporte a compartilhamento
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = `controle-mensalidades-${new Date().toISOString().slice(0, 10)}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.success('Imagem baixada com sucesso!');
     }
-  };
+  } catch (error) {
+    console.error('Erro ao compartilhar:', error);
+    toast.error('Erro ao compartilhar. Tente novamente.');
+  } finally {
+    setCompartilhando(false);
+  }
+};
+
+
+const exportarComoCSV = () => {
+  try {
+    // Cabeçalhos
+    const headers = ['Nome', 'Status', ...dadosGraficoBarras.labels.map(mes => `Mensalidade ${mes}`)];
+    
+    // Dados dos jogadores
+    const rows = jogadores.map(jogador => {
+      const status = jogador.statusFinanceiro || 'Inadimplente';
+      const pagamentos = jogador.pagamentos.map(pago => pago ? 'Pago' : 'Pendente');
+      return [jogador.nome, status, ...pagamentos];
+    });
+    
+    // Adicionar linha de totais
+    const totalAdimplentes = jogadores.filter(j => j.statusFinanceiro === 'Adimplente').length;
+    const totalInadimplentes = jogadores.length - totalAdimplentes;
+    rows.push(['TOTAL', '', `Adimplentes: ${totalAdimplentes}`, `Inadimplentes: ${totalInadimplentes}`]);
+    
+    // Criar conteúdo CSV
+    let csvContent = "data:text/csv;charset=utf-8,";
+    
+    // Adicionar cabeçalhos
+    csvContent += headers.join(";") + "\r\n";
+    
+    // Adicionar linhas de dados
+    rows.forEach(row => {
+      csvContent += row.join(";") + "\r\n";
+    });
+    
+    // Criar link de download
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute(
+      "download", 
+      `mensalidades-${filtroMes}-${new Date().toISOString().slice(0, 10)}.csv`
+    );
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast.success('Arquivo CSV gerado com sucesso!');
+  } catch (error) {
+    console.error('Erro ao gerar CSV:', error);
+    toast.error('Erro ao gerar CSV. Tente novamente.');
+  }
+};
 
   const compartilharHistorico = async (elementId) => {
     try {
