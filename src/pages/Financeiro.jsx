@@ -532,78 +532,91 @@ export default function Financeiro() {
   };
 
   const exportarPDF = async () => {
-    try {
-      // Fecha o modal de relatório antes de gerar o PDF
-      setRelatorioModal(false);
-      
-      // Aguarda um pequeno delay para garantir que o modal foi fechado
-      await new Promise(resolve => setTimeout(resolve, 300));
+  try {
+    setRelatorioModal(false);
+    await new Promise(resolve => setTimeout(resolve, 300));
 
-      const element = document.getElementById('relatorio-content');
-      if (!element) {
-        // Cria um elemento temporário para o relatório
-        const tempElement = document.createElement('div');
-        tempElement.id = 'relatorio-content';
-        tempElement.innerHTML = `
-          <div style="padding: 20px; background-color: #1f2937; color: white;">
-            <h2 style="margin-bottom: 20px;">Relatório Financeiro - ${new Date(filtroMes).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</h2>
-            
-            <div style="margin-bottom: 20px;">
-              <h3>Resumo Financeiro</h3>
-              <p>Receitas: R$ ${estatisticas.totalReceitas.toFixed(2)}</p>
-              <p>Despesas: R$ ${estatisticas.totalDespesas.toFixed(2)}</p>
-              <p>Saldo: R$ ${estatisticas.saldo.toFixed(2)}</p>
-            </div>
-            
-            <div>
-              <h3>Informações Adicionais</h3>
-              <p>Total de Jogadores: ${estatisticas.totalJogadores}</p>
-              <p>Pagamentos Pendentes: ${estatisticas.pagamentosPendentes}</p>
-            </div>
-          </div>
-        `;
-        document.body.appendChild(tempElement);
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        const canvas = await html2canvas(tempElement, {
-          scale: 2,
-          logging: false,
-          useCORS: true,
-          backgroundColor: '#1f2937'
-        });
-        
-        document.body.removeChild(tempElement);
-        
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save(`relatorio-financeiro-${filtroMes}.pdf`);
-      } else {
-        const canvas = await html2canvas(element, {
-          scale: 2,
-          logging: false,
-          useCORS: true,
-          backgroundColor: '#1f2937'
-        });
-        
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save(`relatorio-financeiro-${filtroMes}.pdf`);
-      }
-      
-      toast.success('Relatório PDF gerado com sucesso!');
-    } catch (error) {
-      console.error('Erro ao gerar PDF:', error);
-      toast.error('Erro ao gerar PDF. Tente novamente.');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const margin = 20;
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    let y = margin;
+
+    // Cabeçalho com logo e título
+    const logoUrl = '../logo_time.png'; // substitua pelo caminho correto ou remova se não usar logo
+    const img = new Image();
+    img.src = logoUrl;
+
+    // Aguarda o carregamento da imagem (caso queira usar)
+    await new Promise(resolve => {
+      img.onload = resolve;
+      img.onerror = resolve;
+    });
+
+    if (img.src && img.complete) {
+      const logoWidth = 30;
+      const logoHeight = 30;
+      pdf.addImage(img, 'PNG', margin, y, logoWidth, logoHeight);
     }
-  };
+
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(18);
+    pdf.text('Relatório Financeiro', pageWidth / 2, y + 10, { align: 'center' });
+    y += 30;
+
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(100);
+    pdf.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, margin, y);
+    y += 10;
+
+    // Seção de Resumo
+    pdf.setDrawColor(200);
+    pdf.setLineWidth(0.5);
+    pdf.line(margin, y, pageWidth - margin, y);
+    y += 8;
+
+    pdf.setFontSize(14);
+    pdf.setTextColor(40);
+    pdf.text('Resumo Financeiro', margin, y);
+    y += 10;
+
+    pdf.setFontSize(12);
+    pdf.setTextColor(50);
+
+    pdf.text(`Receitas: R$ ${estatisticas.totalReceitas.toFixed(2)}`, margin, y);
+    y += 8;
+    pdf.text(`Despesas: R$ ${estatisticas.totalDespesas.toFixed(2)}`, margin, y);
+    y += 8;
+
+    pdf.setTextColor(estatisticas.saldo >= 0 ? '#28a745' : '#dc3545');
+    pdf.text(`Saldo: R$ ${estatisticas.saldo.toFixed(2)}`, margin, y);
+    y += 12;
+
+    pdf.setTextColor(50);
+    pdf.setFontSize(14);
+    pdf.text('Outros Dados', margin, y);
+    y += 10;
+
+    pdf.setFontSize(12);
+    pdf.text(`Pagamentos Pendentes: ${estatisticas.pagamentosPendentes}`, margin, y);
+    y += 8;
+    pdf.text(`Total de Jogadores: ${estatisticas.totalJogadores}`, margin, y);
+    y += 8;
+
+    // Rodapé
+    y = 285;
+    pdf.setFontSize(9);
+    pdf.setTextColor(150);
+    pdf.text('Relatório gerado automaticamente pelo sistema', pageWidth / 2, y, { align: 'center' });
+
+    pdf.save(`relatorio-financeiro-${filtroMes}.pdf`);
+    toast.success('PDF gerado com sucesso!');
+  } catch (error) {
+    console.error('Erro ao gerar PDF:', error);
+    toast.error('Erro ao gerar PDF. Tente novamente.');
+  }
+};
+
 
   const exportarImagem = async () => {
     try {
@@ -769,66 +782,6 @@ export default function Financeiro() {
     jogador.nome.toLowerCase().includes(filtroJogador.toLowerCase())
   );
 
-const gerarRelatorioCompleto = () => {
-  const relatorio = document.getElementById("relatorio-completo");
-
-  if (!relatorio) {
-    toast.error("Elemento do relatório não encontrado.");
-    return;
-  }
-
-  html2canvas(relatorio, {
-    scrollY: -window.scrollY,
-    useCORS: true,
-    scale: 2,
-    windowWidth: relatorio.scrollWidth, // captura total largura
-    windowHeight: relatorio.scrollHeight // captura total altura
-  }).then((canvas) => {
-    const imgData = canvas.toDataURL("image/png");
-    const pdf = new jsPDF("p", "mm", "a4");
-
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-
-    const imgWidth = pageWidth;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-    let position = 0;
-
-    if (imgHeight < pageHeight) {
-      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-    } else {
-      while (position < imgHeight) {
-        pdf.addImage(imgData, "PNG", 0, -position, imgWidth, imgHeight);
-        position += pageHeight;
-        if (position < imgHeight) pdf.addPage();
-      }
-    }
-
-    pdf.save("relatorio_financeiro.pdf");
-  });
-};
-
-<button
-  onClick={gerarRelatorioCompleto}
-  className="btn-share"
-  style={{
-    backgroundColor: "#750000",
-    color: "#fff",
-    padding: "10px 15px",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer",
-    margin: "10px"
-  }}
->
-  <FaShare style={{ marginRight: 8 }} />
-  Compartilhar Relatório
-</button>
-
-
-
-  
   return (
     <div className="min-h-screen bg-gray-900 p-4 sm:p-6">
       <div className="fixed inset-0 overflow-hidden -z-10 opacity-20">
