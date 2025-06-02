@@ -705,143 +705,35 @@ export default function Financeiro() {
     }
   };
 
-  const compartilharControle = async () => {
-  try {
-    if (navigator.share) {
-      // Cria um elemento temporário fora da viewport
-      const tempElement = document.createElement('div');
-      tempElement.id = 'temp-mensalidades-print';
-      tempElement.style.position = 'absolute';
-      tempElement.style.left = '-9999px';
-      tempElement.style.top = '0';
-      tempElement.style.width = '100%';
-      tempElement.style.backgroundColor = '#1f2937';
-      tempElement.style.padding = '20px';
-      tempElement.style.color = 'white';
-      
-      // Adiciona título
-      const title = document.createElement('h2');
-      title.textContent = `Controle de Mensalidades - ${new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`;
-      title.style.marginBottom = '20px';
-      title.style.fontSize = '18px';
-      title.style.fontWeight = 'bold';
-      tempElement.appendChild(title);
-      
-      // Cria uma tabela com todos os jogadores
-      const table = document.createElement('table');
-      table.style.width = '100%';
-      table.style.borderCollapse = 'collapse';
-      
-      // Cabeçalho
-      const thead = document.createElement('thead');
-      const headerRow = document.createElement('tr');
-      headerRow.style.backgroundColor = '#374151';
-      
-      const headers = ['Jogador', 'Status', ...dadosGraficoBarras.labels];
-      headers.forEach(headerText => {
-        const th = document.createElement('th');
-        th.textContent = headerText;
-        th.style.padding = '8px 12px';
-        th.style.textAlign = 'left';
-        th.style.border = '1px solid #4b5563';
-        headerRow.appendChild(th);
-      });
-      
-      thead.appendChild(headerRow);
-      table.appendChild(thead);
-      
-      // Corpo da tabela
-      const tbody = document.createElement('tbody');
-      
-      jogadores.forEach(jogador => {
-        const row = document.createElement('tr');
-        row.style.borderBottom = '1px solid #4b5563';
-        
-        // Célula do nome
-        const nameCell = document.createElement('td');
-        nameCell.textContent = jogador.nome;
-        nameCell.style.padding = '8px 12px';
-        nameCell.style.border = '1px solid #4b5563';
-        row.appendChild(nameCell);
-        
-        // Célula do status
-        const statusCell = document.createElement('td');
-        statusCell.textContent = jogador.statusFinanceiro || 'Inadimplente';
-        statusCell.style.padding = '8px 12px';
-        statusCell.style.border = '1px solid #4b5563';
-        statusCell.style.color = jogador.statusFinanceiro === 'Adimplente' ? '#4ade80' : '#f87171';
-        row.appendChild(statusCell);
-        
-        // Células dos meses
-        jogador.pagamentos.forEach((pago, i) => {
-          const monthCell = document.createElement('td');
-          monthCell.style.padding = '8px 12px';
-          monthCell.style.textAlign = 'center';
-          monthCell.style.border = '1px solid #4b5563';
-          
-          const icon = document.createElement('span');
-          icon.textContent = pago ? '✓' : '✗';
-          icon.style.color = pago ? '#4ade80' : '#f87171';
-          monthCell.appendChild(icon);
-          
-          row.appendChild(monthCell);
+  const compartilharControle = async (elementId) => {
+    try {
+      if (navigator.share) {
+        const element = document.getElementById(elementId);
+        const canvas = await html2canvas(element, {
+          scale: 2,
+          logging: false,
+          useCORS: true,
+          backgroundColor: '#1f2937'
         });
         
-        tbody.appendChild(row);
-      });
-      
-      table.appendChild(tbody);
-      tempElement.appendChild(table);
-      
-      // Adiciona ao body
-      document.body.appendChild(tempElement);
-      
-      // Aguarda um frame para garantir que o elemento foi renderizado
-      await new Promise(resolve => requestAnimationFrame(resolve));
-      
-      // Captura o elemento
-      const canvas = await html2canvas(tempElement, {
-        scale: 2,
-        logging: false,
-        useCORS: true,
-        backgroundColor: '#1f2937'
-      });
-      
-      // Remove o elemento temporário
-      document.body.removeChild(tempElement);
-      
-      // Converte para blob e compartilha
-      const blob = await (await fetch(canvas.toDataURL('image/png'))).blob();
-      const file = new File([blob], 'controle-mensalidades.png', { type: blob.type });
-      
-      await navigator.share({
-        title: `Controle de Mensalidades - ${new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`,
-        text: `Status de pagamentos dos jogadores`,
-        files: [file]
-      });
-    } else {
-      toast.info('Compartilhamento não suportado neste navegador');
-      
-      // Alternativa para navegadores sem suporte a compartilhamento
-      const link = document.createElement('a');
-      link.href = canvas.toDataURL('image/png');
-      link.download = 'controle-mensalidades.png';
-      link.click();
+        const blob = await (await fetch(canvas.toDataURL('image/png'))).blob();
+        const file = new File([blob], 'controle-mensalidades.png', { type: blob.type });
+        
+        await navigator.share({
+          title: `Controle de Mensalidades - ${new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`,
+          text: `Controle de mensalidades dos jogadores`,
+          files: [file]
+        });
+      } else {
+        toast.info('Compartilhamento não suportado neste navegador');
+      }
+    } catch (error) {
+      console.error('Erro ao compartilhar:', error);
+      if (error.name !== 'AbortError') {
+        toast.error('Erro ao compartilhar controle');
+      }
     }
-  } catch (error) {
-    console.error('Erro ao compartilhar:', error);
-    
-    // Remove o elemento temporário se ainda existir
-    const tempElement = document.getElementById('temp-mensalidades-print');
-    if (tempElement) {
-      document.body.removeChild(tempElement);
-    }
-    
-    if (error.name !== 'AbortError') {
-      toast.error('Erro ao compartilhar controle');
-    }
-  }
-};
+  };
 
   const compartilharHistorico = async (elementId) => {
     try {
