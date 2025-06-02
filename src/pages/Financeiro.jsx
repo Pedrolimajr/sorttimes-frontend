@@ -1227,8 +1227,7 @@ export default function Financeiro() {
                   Nenhum jogador cadastrado
                 </div>
               ) : (
-                <div className="overflow-auto max-h-[80vh]">
-
+                <div className="overflow-x-auto max-h-[80vh]">
                   <div id="tabela-mensalidades">
                     <table className="min-w-full divide-y divide-gray-700">
                       <thead className="bg-gray-700">
