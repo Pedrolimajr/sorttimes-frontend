@@ -840,16 +840,7 @@ const downloadCanvas = (canvas, filename) => {
                   className="bg-transparent text-white focus:outline-none text-xs sm:text-sm"
                 />
               </div>
-              <motion.button
-                onClick={() => setRelatorioModal(true)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg text-xs sm:text-sm"
-              >
-                <FaPrint className="text-xs sm:text-sm" />
-                <span>Relatório</span>
-              </motion.button>
-{/* Modal de Relatório */}
+              {/* Modal de Relatório */}
 <motion.div
   initial={{ opacity: 0 }}
   animate={{ opacity: 1 }}
