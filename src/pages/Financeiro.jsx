@@ -632,38 +632,50 @@ const exportarImagem = async () => {
 };
  const compartilharRelatorio = async () => {
   try {
-    const element = document.getElementById('relatorio-content');
-    if (!element) throw new Error("Elemento não encontrado");
-
-    // Melhorias na captura:
-    const canvas = await html2canvas(element, {
-      scale: 2,
-      logging: false,
-      useCORS: true,
-      backgroundColor: '#1f2937',
-      scrollX: 0,
-      scrollY: 0,
-      windowWidth: element.scrollWidth,
-      windowHeight: element.scrollHeight
-    });
-
     if (navigator.share) {
-      const blob = await (await fetch(canvas.toDataURL('image/png'))).blob();
+      // Criar elemento temporário
+      const tempElement = document.createElement('div');
+      tempElement.id = 'share-relatorio-temp';
+      tempElement.style.position = 'absolute';
+      tempElement.style.left = '-9999px';
+      tempElement.style.width = '800px';
+      tempElement.style.padding = '20px';
+      tempElement.style.backgroundColor = '#1f2937';
+      tempElement.style.color = 'white';
+      
+      const relatorioContent = document.getElementById('relatorio-content');
+      tempElement.innerHTML = relatorioContent.innerHTML;
+      document.body.appendChild(tempElement);
+
+      const canvas = await html2canvas(tempElement, {
+        scale: 2,
+        logging: false,
+        useCORS: true,
+        backgroundColor: '#1f2937',
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: tempElement.scrollWidth,
+        windowHeight: tempElement.scrollHeight
+      });
+
+      document.body.removeChild(tempElement);
+
+      const blob = await (await fetch(canvas.toDataURL('image/png', 1.0))).blob();
+      const file = new File([blob], 'relatorio-financeiro.png', { type: 'image/png' });
+      
       await navigator.share({
         title: `Relatório Financeiro - ${filtroMes}`,
-        text: `Saldo: R$ ${estatisticas.saldo.toFixed(2)}`,
-        files: [new File([blob], 'relatorio.png', { type: 'image/png' })]
+        text: `Status financeiro do time: ${estatisticas.saldo >= 0 ? 'Positivo' : 'Negativo'}`,
+        files: [file]
       });
     } else {
-      // Fallback para navegadores sem API de compartilhamento
-      const link = document.createElement('a');
-      link.download = `relatorio-${filtroMes}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+      toast.info('Compartilhamento não suportado neste navegador');
     }
   } catch (error) {
-    console.error("Erro ao compartilhar:", error);
-    toast.error(error.message || 'Erro ao compartilhar');
+    console.error('Erro ao compartilhar:', error);
+    if (error.name !== 'AbortError') {
+      toast.error('Erro ao compartilhar relatório');
+    }
   }
 };
 
@@ -808,47 +820,23 @@ const exportarImagem = async () => {
                   className="bg-transparent text-white focus:outline-none text-xs sm:text-sm"
                 />
               </div>
-            {/* Dentro do seu modal de relatório (já existente) */}
-<motion.div
-  initial={{ y: 20, opacity: 0 }}
-  animate={{ y: 0, opacity: 1 }}
-  exit={{ y: 20, opacity: 0 }}
-  className="bg-gray-800 rounded-xl shadow-2xl p-6 w-full max-w-md border border-gray-700"
-  onClick={(e) => e.stopPropagation()}
+              <motion.button
+                onClick={() => setRelatorioModal(true)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg text-xs sm:text-sm"
+              >
+                <FaPrint className="text-xs sm:text-sm" />
+                <span>Relatório</span>
+              </motion.button>
+              <motion.button
+  onClick={compartilharRelatorio}
+  whileHover={{ scale: 1.1 }}
+  className="text-blue-400 hover:text-blue-300 ml-2"
+  title="Compartilhar relatório"
 >
-  <div className="flex justify-between items-center mb-4">
-    <h3 className="text-xl font-bold text-white">Relatório Financeiro</h3>
-    <button onClick={() => setRelatorioModal(false)} className="text-gray-400 hover:text-white">
-      <FaTimes />
-    </button>
-  </div>
-
-  <div id="relatorio-content" className="mb-6">
-    {/* Seu conteúdo atual do relatório */}
-  </div>
-
-  <div className="flex justify-end gap-3">
-    {/* Botão de Compartilhar */}
-    <motion.button
-      onClick={compartilharRelatorio}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-    >
-      <FaShare /> Compartilhar
-    </motion.button>
-
-    {/* Botão de Fechar */}
-    <motion.button
-      onClick={() => setRelatorioModal(false)}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg"
-    >
-      Fechar
-    </motion.button>
-  </div>
-</motion.div>
+  <FaShare size={14} />
+</motion.button>
             </div>
           </div>
         </motion.div>
