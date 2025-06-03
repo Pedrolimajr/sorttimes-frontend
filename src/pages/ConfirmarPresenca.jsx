@@ -130,7 +130,7 @@ const alternarPresenca = async (jogadorId) => {
           animate={{ opacity: 1, y: 0 }}
           className="bg-gray-800 rounded-xl p-6 shadow-xl border border-gray-700"
         >
-          <h1 className="text-3xl font-bold text-white mb-2 text-center">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2 text-center">
             Confirmação de Presença
           </h1>
 
@@ -138,54 +138,59 @@ const alternarPresenca = async (jogadorId) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="text-center mb-8"
+            className="text-center mb-6 sm:mb-8"
           >
-            <p className="text-blue-400 text-lg font-medium">
+            <p className="text-blue-400 text-base sm:text-lg font-medium">
               Confirme sua presença para o fut deste Domingo
             </p>
-            <div className="mt-2 text-gray-400 text-sm">
+            <div className="mt-1 sm:mt-2 text-gray-400 text-xs sm:text-sm">
               Clique no botão para confirmar ou desmarcar sua presença
             </div>
           </motion.div>
 
-          <div className="space-y-4">
-            {jogadores.map((jogador) => (
-              <motion.div
-                key={jogador.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                whileHover={{ scale: 1.02 }}
-                className="flex items-center justify-between p-4 bg-gray-700/50 rounded-lg border border-gray-600 hover:border-gray-500 transition-all"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="w-2 h-2 rounded-full bg-gradient-to-r from-blue-400 to-blue-600" />
-                  <span className="text-white font-medium">{jogador.nome}</span>
-                </div>
-                <button
-                  onClick={() => alternarPresenca(jogador.id)}
-                  className={`
-                    px-2.5 py-2 rounded-lg font-medium transition-all duration-200
-                    ${jogador.presente
-                      ? 'bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-600/20'
-                      : 'bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/20'}
-                  `}
+          {/* Container com scroll vertical responsivo */}
+          <div className="max-h-[50vh] sm:max-h-[55vh] md:max-h-[60vh] overflow-y-auto pr-2">
+            <div className="space-y-3 sm:space-y-4">
+              {jogadores.map((jogador) => (
+                <motion.div
+                  key={jogador.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  whileHover={{ scale: 1.02 }}
+                  className="flex items-center justify-between p-3 sm:p-4 bg-gray-700/50 rounded-lg border border-gray-600 hover:border-gray-500 transition-all"
                 >
-                  <GiSoccerKick
+                  <div className="flex items-center space-x-2 sm:space-x-3">
+                    <div className="w-2 h-2 rounded-full bg-gradient-to-r from-blue-400 to-blue-600" />
+                    <span className="text-white text-sm sm:text-base font-medium">
+                      {jogador.nome}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => alternarPresenca(jogador.id)}
                     className={`
-                      text-sm sm:text-base transform transition-all duration-300
-                      ${jogador.presente ? 'rotate-0' : 'rotate-45 opacity-50'}
+                      p-2 sm:px-2.5 sm:py-2 rounded-lg transition-all duration-200
+                      ${jogador.presente
+                        ? 'bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-600/20'
+                        : 'bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/20'}
                     `}
-                  />
-                </button>
-              </motion.div>
-            ))}
+                  >
+                    <GiSoccerKick
+                      className={`
+                        text-xs sm:text-sm transform transition-all duration-300
+                        ${jogador.presente ? 'rotate-0' : 'rotate-45 opacity-50'}
+                      `}
+                    />
+                  </button>
+                </motion.div>
+              ))}
+            </div>
           </div>
 
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
-            className="mt-6 text-center text-gray-400 text-sm"
+            className="mt-4 sm:mt-6 text-center text-gray-400 text-xs sm:text-sm"
           >
             <p>Sua confirmação é importante para organização do Baba!</p>
           </motion.div>
