@@ -252,7 +252,7 @@ export default function ListaJogadores({
     }
   };
 
-  return (
+ return (
     <div className={`${!modoSelecao ? 'min-h-screen' : ''} bg-gray-900 p-4 sm:p-6`}>
       {!modoSelecao && (
         <AnimatePresence>
@@ -698,131 +698,133 @@ export default function ListaJogadores({
               <div className="overflow-x-auto">
                 <div className="min-w-full inline-block align-middle">
                   <div className="overflow-hidden">
-                    <table className="min-w-full divide-y divide-gray-700">
-                      <thead className="bg-gray-700">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">Jogador</th>
-                          <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">Informações</th>
-                          <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">Contato</th>
-                          <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">Status</th>
-                          <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">Ações</th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-gray-800/50 divide-y divide-gray-700">
-                        {jogadoresFiltrados.map((jogador) => (
-                          <motion.tr 
-                            key={jogador._id}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            whileHover={{ backgroundColor: 'rgba(55, 65, 81, 0.3)' }}
-                            className="transition-colors"
-                          >
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex items-center space-x-4">
-                                {jogador.foto ? (
-                                  <div className="flex-shrink-0 h-12 w-12">
-                                    <img 
-                                      className="h-12 w-12 rounded-full object-cover" 
-                                      src={jogador.foto} 
-                                      alt={jogador.nome} 
-                                    />
+                    <div className="max-h-[60vh] overflow-y-auto">
+                      <table className="min-w-full divide-y divide-gray-700">
+                        <thead className="bg-gray-700 sticky top-0">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">Jogador</th>
+                            <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">Informações</th>
+                            <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">Contato</th>
+                            <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">Status</th>
+                            <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-gray-800/50 divide-y divide-gray-700">
+                          {jogadoresFiltrados.map((jogador) => (
+                            <motion.tr 
+                              key={jogador._id}
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              whileHover={{ backgroundColor: 'rgba(55, 65, 81, 0.3)' }}
+                              className="transition-colors"
+                            >
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="flex items-center space-x-4">
+                                  {jogador.foto ? (
+                                    <div className="flex-shrink-0 h-12 w-12">
+                                      <img 
+                                        className="h-12 w-12 rounded-full object-cover" 
+                                        src={jogador.foto} 
+                                        alt={jogador.nome} 
+                                      />
+                                    </div>
+                                  ) : (
+                                    <div className="flex-shrink-0 h-12 w-12 rounded-full bg-gray-700 flex items-center justify-center">
+                                      <FaUserCircle className="text-gray-400 text-xl" />
+                                    </div>
+                                  )}
+                                  <div>
+                                    <div className="text-sm font-medium text-white">
+                                      {jogador.nome}
+                                    </div>
+                                    <div className="text-xs text-gray-400 mt-1">
+                                      {jogador.dataNascimento ? 
+                                        `${new Date().getFullYear() - new Date(jogador.dataNascimento).getFullYear()} anos` : 
+                                        'Idade não informada'}
+                                    </div>
                                   </div>
-                                ) : (
-                                  <div className="flex-shrink-0 h-12 w-12 rounded-full bg-gray-700 flex items-center justify-center">
-                                    <FaUserCircle className="text-gray-400 text-xl" />
+                                </div>
+                              </td>
+                              
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="space-y-1">
+                                  <div className="text-sm text-white flex items-center gap-2">
+                                    <FaTshirt className="text-gray-400" />
+                                    {jogador.posicao} {jogador.numeroCamisa && `#${jogador.numeroCamisa}`}
                                   </div>
-                                )}
-                                <div>
-                                  <div className="text-sm font-medium text-white">
-                                    {jogador.nome}
+                                  <div className="text-xs text-gray-400 flex items-center gap-2">
+                                    <FaStar className="text-yellow-400" />
+                                    {jogador.nivel || 'Associado'}
                                   </div>
-                                  <div className="text-xs text-gray-400 mt-1">
-                                    {jogador.dataNascimento ? 
-                                      `${new Date().getFullYear() - new Date(jogador.dataNascimento).getFullYear()} anos` : 
-                                      'Idade não informada'}
+                                  <div className="text-xs text-gray-400 flex items-center gap-2">
+                                    <FaCalendarAlt />
+                                    {jogador.dataIngresso ? 
+                                      `Ingresso: ${new Date(jogador.dataIngresso).toLocaleDateString()}` : 
+                                      'Sem data'}
                                   </div>
                                 </div>
-                              </div>
-                            </td>
-                            
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="space-y-1">
-                                <div className="text-sm text-white flex items-center gap-2">
-                                  <FaTshirt className="text-gray-400" />
-                                  {jogador.posicao} {jogador.numeroCamisa && `#${jogador.numeroCamisa}`}
+                              </td>
+                              
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="space-y-1">
+                                  <div className="text-sm text-white flex items-center gap-2">
+                                    <FaPhone />
+                                    {jogador.telefone || 'Não informado'}
+                                  </div>
+                                  <div className="text-sm text-white flex items-center gap-2">
+                                    <FaEnvelope />
+                                    {jogador.email || 'Não informado'}
+                                  </div>
+                                  <div className="text-xs text-gray-400 flex items-center gap-2">
+                                    <FaMapMarkerAlt />
+                                    {jogador.endereco || 'Endereço não informado'}
+                                  </div>
                                 </div>
-                                <div className="text-xs text-gray-400 flex items-center gap-2">
-                                  <FaStar className="text-yellow-400" />
-                                  {jogador.nivel || 'Associado'}
-                                </div>
-                                <div className="text-xs text-gray-400 flex items-center gap-2">
-                                  <FaCalendarAlt />
-                                  {jogador.dataIngresso ? 
-                                    `Ingresso: ${new Date(jogador.dataIngresso).toLocaleDateString()}` : 
-                                    'Sem data'}
-                                </div>
-                              </div>
-                            </td>
-                            
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="space-y-1">
-                                <div className="text-sm text-white flex items-center gap-2">
-                                  <FaPhone />
-                                  {jogador.telefone || 'Não informado'}
-                                </div>
-                                <div className="text-sm text-white flex items-center gap-2">
-                                  <FaEnvelope />
-                                  {jogador.email || 'Não informado'}
-                                </div>
-                                <div className="text-xs text-gray-400 flex items-center gap-2">
-                                  <FaMapMarkerAlt />
-                                  {jogador.endereco || 'Endereço não informado'}
-                                </div>
-                              </div>
-                            </td>
-                            
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <select
-                                value={jogador.statusFinanceiro || 'Adimplente'}
-                                onChange={(e) => atualizarStatus(jogador._id, e.target.value)}
-                                className={`px-3 py-2 text-sm rounded ${
-                                  jogador.statusFinanceiro === 'Adimplente' ? 
-                                  'bg-green-900/70 text-green-100' : 
-                                  'bg-red-900/70 text-red-100'
-                                }`}
-                              >
-                                <option value="Adimplente">Adimplente</option>
-                                <option value="Inadimplente">Inadimplente</option>
-                              </select>
-                            </td>
-                            
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                              <div className="flex gap-3">
-                                <motion.button
-                                  onClick={() => handleEditar(jogador)}
-                                  whileHover={{ scale: 1.1 }}
-                                  whileTap={{ scale: 0.9 }}
-                                  className="text-blue-400 hover:text-blue-300"
-                                  title="Editar"
+                              </td>
+                              
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <select
+                                  value={jogador.statusFinanceiro || 'Adimplente'}
+                                  onChange={(e) => atualizarStatus(jogador._id, e.target.value)}
+                                  className={`px-3 py-2 text-sm rounded ${
+                                    jogador.statusFinanceiro === 'Adimplente' ? 
+                                    'bg-green-900/70 text-green-100' : 
+                                    'bg-red-900/70 text-red-100'
+                                  }`}
                                 >
-                                  <FaEdit size={16} />
-                                </motion.button>
-                                
-                                <motion.button
-                                  onClick={() => handleExcluir(jogador._id)}
-                                  whileHover={{ scale: 1.1 }}
-                                  whileTap={{ scale: 0.9 }}
-                                  className="text-red-400 hover:text-red-300"
-                                  title="Excluir"
-                                >
-                                  <FaTrash size={16} />
-                                </motion.button>
-                              </div>
-                            </td>
-                          </motion.tr>
-                        ))}
-                      </tbody>
-                    </table>
+                                  <option value="Adimplente">Adimplente</option>
+                                  <option value="Inadimplente">Inadimplente</option>
+                                </select>
+                              </td>
+                              
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <div className="flex gap-3">
+                                  <motion.button
+                                    onClick={() => handleEditar(jogador)}
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    className="text-blue-400 hover:text-blue-300"
+                                    title="Editar"
+                                  >
+                                    <FaEdit size={16} />
+                                  </motion.button>
+                                  
+                                  <motion.button
+                                    onClick={() => handleExcluir(jogador._id)}
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    className="text-red-400 hover:text-red-300"
+                                    title="Excluir"
+                                  >
+                                    <FaTrash size={16} />
+                                  </motion.button>
+                                </div>
+                              </td>
+                            </motion.tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -833,3 +835,4 @@ export default function ListaJogadores({
     </div>
   );
 }
+
