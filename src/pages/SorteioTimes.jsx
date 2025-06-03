@@ -72,6 +72,7 @@ export default function SorteioTimes() {
   const [modoEdicao, setModoEdicao] = useState(false);
   const [filtroPosicao, setFiltroPosicao] = useState('');
   const [dataJogo, setDataJogo] = useState('');
+const [linkId, setLinkId] = useState(() => localStorage.getItem('linkIdPresenca') || '');
 
 
   // Carrega dados do localStorage ao montar o componente
@@ -212,7 +213,7 @@ export default function SorteioTimes() {
       });
 
       const { linkId } = await response.json();
-      const linkCompleto = `${window.location.origin}/confirmar-presenca/${linkId}`;
+      localStorage.setItem('linkIdPresenca', linkId); // 👈 salve o linkId
       
       const dataFormatada = new Date(dataJogo).toLocaleDateString('pt-BR', {
         weekday: 'long',
@@ -299,16 +300,35 @@ export default function SorteioTimes() {
    * Alterna o estado de presença de um jogador
    * @param {string} id - ID do jogador
    */
-const alternarPresenca = (id) => {
-  // Remova completamente a verificação de times.length > 0
-  setJogadoresSelecionados(prev => {
-    const novosJogadores = prev.map(jogador => 
-      jogador._id === id ? { ...jogador, presente: !jogador.presente } : jogador
-    );
-    return novosJogadores;
-  });
+const alternarPresenca = async (id) => {
+  const jogador = jogadoresSelecionados.find(j => j._id === id);
+  if (!jogador) return;
+
+  const novoPresente = !jogador.presente;
+
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/presenca/${linkId}/confirmar`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        jogadorId: jogador._id,
+        presente: novoPresente
+      })
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      setJogadoresSelecionados(prev =>
+        prev.map(j => j._id === id ? { ...j, presente: novoPresente } : j)
+      );
+    }
+  } catch (error) {
+    console.error('Erro ao confirmar presença:', error);
+  }
 };
- 
+
 
 useEffect(() => {
   const salvarAutomaticamente = setTimeout(() => {

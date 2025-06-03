@@ -86,6 +86,7 @@ useEffect(() => {
 }, [linkId]);
 
 
+
   // Função para alternar presença
 const alternarPresenca = async (jogadorId) => {
   try {
