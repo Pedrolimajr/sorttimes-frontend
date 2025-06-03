@@ -632,10 +632,19 @@ const exportarImagem = async () => {
 };
  const compartilharRelatorio = async () => {
   try {
+    // 1. Garante que o modal está aberto
+    setRelatorioModal(true);
+    
+    // 2. Aguarda o modal renderizar completamente
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    // 3. Captura o conteúdo de forma segura
     const element = document.getElementById('relatorio-content');
-    if (!element) throw new Error("Elemento não encontrado");
+    if (!element) {
+      throw new Error("Conteúdo do relatório não encontrado");
+    }
 
-    // Melhorias na captura:
+    // 4. Configurações otimizadas para html2canvas
     const canvas = await html2canvas(element, {
       scale: 2,
       logging: false,
@@ -644,27 +653,50 @@ const exportarImagem = async () => {
       scrollX: 0,
       scrollY: 0,
       windowWidth: element.scrollWidth,
-      windowHeight: element.scrollHeight
+      windowHeight: element.scrollHeight,
+      ignoreElements: (el) => {
+        // Ignora botões de ação no print
+        return el.classList.contains('no-print');
+      }
     });
 
+    // 5. Compartilhamento ou download
     if (navigator.share) {
-      const blob = await (await fetch(canvas.toDataURL('image/png'))).blob();
+      const blob = await canvasToBlob(canvas);
       await navigator.share({
         title: `Relatório Financeiro - ${filtroMes}`,
         text: `Saldo: R$ ${estatisticas.saldo.toFixed(2)}`,
         files: [new File([blob], 'relatorio.png', { type: 'image/png' })]
       });
     } else {
-      // Fallback para navegadores sem API de compartilhamento
-      const link = document.createElement('a');
-      link.download = `relatorio-${filtroMes}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+      downloadCanvas(canvas, `relatorio-${filtroMes}.png`);
+      toast.info('Imagem baixada (compartilhamento não suportado)');
     }
   } catch (error) {
     console.error("Erro ao compartilhar:", error);
-    toast.error(error.message || 'Erro ao compartilhar');
+    toast.error(error.message || 'Erro ao gerar relatório');
+  } finally {
+    // Não feche o modal automaticamente - deixe o usuário decidir
   }
+};
+
+// Funções auxiliares
+const canvasToBlob = (canvas) => {
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => {
+      if (!blob) throw new Error("Falha ao converter canvas para blob");
+      resolve(blob);
+    }, 'image/png', 1);
+  });
+};
+
+const downloadCanvas = (canvas, filename) => {
+  const link = document.createElement('a');
+  link.download = filename;
+  link.href = canvas.toDataURL('image/png');
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 };
 
   const compartilharControle = async (elementId) => {
@@ -817,14 +849,37 @@ const exportarImagem = async () => {
                 <FaPrint className="text-xs sm:text-sm" />
                 <span>Relatório</span>
               </motion.button>
-              <motion.button
-  onClick={compartilharRelatorio}
-  whileHover={{ scale: 1.1 }}
-  className="text-blue-400 hover:text-blue-300 ml-2"
-  title="Compartilhar relatório"
+{/* Modal de Relatório */}
+<motion.div
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  exit={{ opacity: 0 }}
+  className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 backdrop-blur-sm"
+  onClick={() => setRelatorioModal(false)}
 >
-  <FaShare size={14} />
-</motion.button>
+  <motion.div
+    initial={{ y: 20, opacity: 0 }}
+    animate={{ y: 0, opacity: 1 }}
+    exit={{ y: 20, opacity: 0 }}
+    className="bg-gray-800 rounded-xl shadow-2xl p-6 w-full max-w-md border border-gray-700"
+    onClick={(e) => e.stopPropagation()}
+  >
+    {/* Adicione esta div wrapper com o ID */}
+    <div id="relatorio-content" className="print-content">
+      {/* Seu conteúdo atual do relatório */}
+    </div>
+
+    <div className="flex justify-end gap-3 mt-4">
+      <motion.button
+        onClick={compartilharRelatorio}
+        whileHover={{ scale: 1.05 }}
+        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 no-print"
+      >
+        <FaShare /> Compartilhar
+      </motion.button>
+    </div>
+  </motion.div>
+</motion.div>
             </div>
           </div>
         </motion.div>
