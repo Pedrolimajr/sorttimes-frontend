@@ -698,15 +698,15 @@ export default function ListaJogadores({
               <div className="overflow-x-auto">
                 <div className="min-w-full inline-block align-middle">
                   <div className="overflow-hidden">
-                    <div className="max-h-[60vh] overflow-y-auto">
+                    <div className="max-h-[60vh] sm:max-h-[65vh] md:max-h-[70vh] lg:max-h-[75vh] overflow-y-auto">
                       <table className="min-w-full divide-y divide-gray-700">
                         <thead className="bg-gray-700 sticky top-0">
                           <tr>
-                            <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">Jogador</th>
-                            <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">Informações</th>
-                            <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">Contato</th>
-                            <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">Status</th>
-                            <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">Ações</th>
+                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider sm:px-6">Jogador</th>
+                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider sm:px-6">Informações</th>
+                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider sm:px-6">Contato</th>
+                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider sm:px-6">Status</th>
+                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider sm:px-6">Ações</th>
                           </tr>
                         </thead>
                         <tbody className="bg-gray-800/50 divide-y divide-gray-700">
@@ -718,19 +718,19 @@ export default function ListaJogadores({
                               whileHover={{ backgroundColor: 'rgba(55, 65, 81, 0.3)' }}
                               className="transition-colors"
                             >
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="flex items-center space-x-4">
+                              <td className="px-4 py-4 whitespace-nowrap sm:px-6">
+                                <div className="flex items-center space-x-3">
                                   {jogador.foto ? (
-                                    <div className="flex-shrink-0 h-12 w-12">
+                                    <div className="flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12">
                                       <img 
-                                        className="h-12 w-12 rounded-full object-cover" 
+                                        className="h-10 w-10 sm:h-12 sm:w-12 rounded-full object-cover" 
                                         src={jogador.foto} 
                                         alt={jogador.nome} 
                                       />
                                     </div>
                                   ) : (
-                                    <div className="flex-shrink-0 h-12 w-12 rounded-full bg-gray-700 flex items-center justify-center">
-                                      <FaUserCircle className="text-gray-400 text-xl" />
+                                    <div className="flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-gray-700 flex items-center justify-center">
+                                      <FaUserCircle className="text-gray-400 text-lg sm:text-xl" />
                                     </div>
                                   )}
                                   <div>
@@ -746,18 +746,18 @@ export default function ListaJogadores({
                                 </div>
                               </td>
                               
-                              <td className="px-6 py-4 whitespace-nowrap">
+                              <td className="px-4 py-4 whitespace-nowrap sm:px-6">
                                 <div className="space-y-1">
                                   <div className="text-sm text-white flex items-center gap-2">
-                                    <FaTshirt className="text-gray-400" />
+                                    <FaTshirt className="text-gray-400 hidden sm:inline" />
                                     {jogador.posicao} {jogador.numeroCamisa && `#${jogador.numeroCamisa}`}
                                   </div>
                                   <div className="text-xs text-gray-400 flex items-center gap-2">
-                                    <FaStar className="text-yellow-400" />
+                                    <FaStar className="text-yellow-400 hidden sm:inline" />
                                     {jogador.nivel || 'Associado'}
                                   </div>
                                   <div className="text-xs text-gray-400 flex items-center gap-2">
-                                    <FaCalendarAlt />
+                                    <FaCalendarAlt className="hidden sm:inline" />
                                     {jogador.dataIngresso ? 
                                       `Ingresso: ${new Date(jogador.dataIngresso).toLocaleDateString()}` : 
                                       'Sem data'}
@@ -765,28 +765,28 @@ export default function ListaJogadores({
                                 </div>
                               </td>
                               
-                              <td className="px-6 py-4 whitespace-nowrap">
+                              <td className="px-4 py-4 whitespace-nowrap sm:px-6">
                                 <div className="space-y-1">
                                   <div className="text-sm text-white flex items-center gap-2">
-                                    <FaPhone />
+                                    <FaPhone className="hidden sm:inline" />
                                     {jogador.telefone || 'Não informado'}
                                   </div>
                                   <div className="text-sm text-white flex items-center gap-2">
-                                    <FaEnvelope />
+                                    <FaEnvelope className="hidden sm:inline" />
                                     {jogador.email || 'Não informado'}
                                   </div>
                                   <div className="text-xs text-gray-400 flex items-center gap-2">
-                                    <FaMapMarkerAlt />
+                                    <FaMapMarkerAlt className="hidden sm:inline" />
                                     {jogador.endereco || 'Endereço não informado'}
                                   </div>
                                 </div>
                               </td>
                               
-                              <td className="px-6 py-4 whitespace-nowrap">
+                              <td className="px-4 py-4 whitespace-nowrap sm:px-6">
                                 <select
                                   value={jogador.statusFinanceiro || 'Adimplente'}
                                   onChange={(e) => atualizarStatus(jogador._id, e.target.value)}
-                                  className={`px-3 py-2 text-sm rounded ${
+                                  className={`px-2 py-1 sm:px-3 sm:py-2 text-xs sm:text-sm rounded ${
                                     jogador.statusFinanceiro === 'Adimplente' ? 
                                     'bg-green-900/70 text-green-100' : 
                                     'bg-red-900/70 text-red-100'
@@ -797,8 +797,8 @@ export default function ListaJogadores({
                                 </select>
                               </td>
                               
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <div className="flex gap-3">
+                              <td className="px-4 py-4 whitespace-nowrap text-sm font-medium sm:px-6">
+                                <div className="flex gap-2 sm:gap-3">
                                   <motion.button
                                     onClick={() => handleEditar(jogador)}
                                     whileHover={{ scale: 1.1 }}
@@ -806,7 +806,7 @@ export default function ListaJogadores({
                                     className="text-blue-400 hover:text-blue-300"
                                     title="Editar"
                                   >
-                                    <FaEdit size={16} />
+                                    <FaEdit className="text-sm sm:text-base" />
                                   </motion.button>
                                   
                                   <motion.button
@@ -816,7 +816,7 @@ export default function ListaJogadores({
                                     className="text-red-400 hover:text-red-300"
                                     title="Excluir"
                                   >
-                                    <FaTrash size={16} />
+                                    <FaTrash className="text-sm sm:text-base" />
                                   </motion.button>
                                 </div>
                               </td>
