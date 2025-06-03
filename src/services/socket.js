@@ -1,33 +1,35 @@
-import { 
-  connectSocket, 
-  onSocketEvent, 
-  solicitarPartidaAtiva 
-} from '../services/socket';
+// Atualize o arquivo de serviço do Socket.IO (services/socket.js)
+import { io } from 'socket.io-client';
 
-// No seu componente
-useEffect(() => {
-  const handlePresencaAtualizada = (data) => {
-    console.log('Presença atualizada:', data);
-    // Atualize seu estado aqui
-  };
+const socket = io(import.meta.env.VITE_API_URL || 'https://sorttimes-backend.onrender.com', {
+  withCredentials: true,
+  transports: ['websocket', 'polling'], // Fallback para polling
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000,
+  autoConnect: false // Conectaremos manualmente
+});
 
-  const handlePartidaAtiva = (partida) => {
-    console.log('Partida ativa recebida:', partida);
-    // Atualize o estado da partida
-  };
+// Função para conectar com tratamento de erros
+export const connectSocket = () => {
+  return new Promise((resolve, reject) => {
+    socket.connect();
+    
+    socket.on('connect', () => {
+      console.log('Socket.IO conectado');
+      resolve(socket);
+    });
 
-  // Conecta e configura listeners
-  connectSocket()
-    .then(() => {
-      onSocketEvent('presencaAtualizada', handlePresencaAtualizada);
-      onSocketEvent('partidaAtiva', handlePartidaAtiva);
-      solicitarPartidaAtiva();
-    })
-    .catch(console.error);
+    socket.on('connect_error', (err) => {
+      console.error('Erro de conexão Socket.IO:', err);
+      reject(err);
+    });
 
-  return () => {
-    // Limpeza opcional
-    onSocketEvent('presencaAtualizada', null);
-    onSocketEvent('partidaAtiva', null);
-  };
-}, []);
+    setTimeout(() => {
+      if (!socket.connected) {
+        reject(new Error('Timeout de conexão Socket.IO'));
+      }
+    }, 5000);
+  });
+};
+
+export default socket;
