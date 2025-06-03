@@ -48,42 +48,43 @@ export default function ConfirmarPresenca() {
   }, [linkId]);
 
   // Carregamento inicial dos dados
-  useEffect(() => {
-    const carregarDados = async () => {
-      try {
-        setCarregando(true);
-        const response = await api.get(`/presenca/${linkId}`);
-        
-        if (response.data.success) {
-          const { jogadores: jogadoresData, dataJogo } = response.data.data;
-setJogadores(jogadoresData.map(j => ({
-  ...j,
-  presente: j.presente === true
-})));
+useEffect(() => {
+  const carregarDados = async () => {
+    try {
+      setCarregando(true);
+      const response = await api.get(`/presenca/${linkId}`);
+      
+      if (response.data.success) {
+        const { jogadores: jogadoresData, dataJogo } = response.data.data;
 
+        // Corrigido: mantém o valor real de `presente`, e define false só se for undefined
+        setJogadores(jogadoresData.map(j => ({
+          ...j,
+          presente: typeof j.presente === 'boolean' ? j.presente : false
+        })));
 
-          
-          if (dataJogo) {
-            const dataFormatada = new Date(dataJogo).toLocaleDateString('pt-BR', {
-              weekday: 'long',
-              day: 'numeric',
-              month: 'long'
-            });
-            setEventoData(dataFormatada);
-          }
-        } else {
-          throw new Error(response.data.message || 'Erro ao carregar dados');
+        if (dataJogo) {
+          const dataFormatada = new Date(dataJogo).toLocaleDateString('pt-BR', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long'
+          });
+          setEventoData(dataFormatada);
         }
-      } catch (error) {
-        console.error('Erro ao carregar dados:', error);
-        toast.error(error.message || 'Link inválido ou expirado');
-      } finally {
-        setCarregando(false);
+      } else {
+        throw new Error(response.data.message || 'Erro ao carregar dados');
       }
-    };
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+      toast.error(error.message || 'Link inválido ou expirado');
+    } finally {
+      setCarregando(false);
+    }
+  };
 
-    carregarDados();
-  }, [linkId]);
+  carregarDados();
+}, [linkId]);
+
 
   // Função para alternar presença
 const alternarPresenca = async (jogadorId) => {
