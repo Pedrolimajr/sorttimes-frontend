@@ -632,50 +632,38 @@ const exportarImagem = async () => {
 };
  const compartilharRelatorio = async () => {
   try {
+    const element = document.getElementById('relatorio-content');
+    if (!element) throw new Error("Elemento não encontrado");
+
+    // Melhorias na captura:
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      logging: false,
+      useCORS: true,
+      backgroundColor: '#1f2937',
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: element.scrollWidth,
+      windowHeight: element.scrollHeight
+    });
+
     if (navigator.share) {
-      // Criar elemento temporário
-      const tempElement = document.createElement('div');
-      tempElement.id = 'share-relatorio-temp';
-      tempElement.style.position = 'absolute';
-      tempElement.style.left = '-9999px';
-      tempElement.style.width = '800px';
-      tempElement.style.padding = '20px';
-      tempElement.style.backgroundColor = '#1f2937';
-      tempElement.style.color = 'white';
-      
-      const relatorioContent = document.getElementById('relatorio-content');
-      tempElement.innerHTML = relatorioContent.innerHTML;
-      document.body.appendChild(tempElement);
-
-      const canvas = await html2canvas(tempElement, {
-        scale: 2,
-        logging: false,
-        useCORS: true,
-        backgroundColor: '#1f2937',
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: tempElement.scrollWidth,
-        windowHeight: tempElement.scrollHeight
-      });
-
-      document.body.removeChild(tempElement);
-
-      const blob = await (await fetch(canvas.toDataURL('image/png', 1.0))).blob();
-      const file = new File([blob], 'relatorio-financeiro.png', { type: 'image/png' });
-      
+      const blob = await (await fetch(canvas.toDataURL('image/png'))).blob();
       await navigator.share({
         title: `Relatório Financeiro - ${filtroMes}`,
-        text: `Status financeiro do time: ${estatisticas.saldo >= 0 ? 'Positivo' : 'Negativo'}`,
-        files: [file]
+        text: `Saldo: R$ ${estatisticas.saldo.toFixed(2)}`,
+        files: [new File([blob], 'relatorio.png', { type: 'image/png' })]
       });
     } else {
-      toast.info('Compartilhamento não suportado neste navegador');
+      // Fallback para navegadores sem API de compartilhamento
+      const link = document.createElement('a');
+      link.download = `relatorio-${filtroMes}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
     }
   } catch (error) {
-    console.error('Erro ao compartilhar:', error);
-    if (error.name !== 'AbortError') {
-      toast.error('Erro ao compartilhar relatório');
-    }
+    console.error("Erro ao compartilhar:", error);
+    toast.error(error.message || 'Erro ao compartilhar');
   }
 };
 
