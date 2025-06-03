@@ -531,179 +531,141 @@ export default function Financeiro() {
     }]
   };
 
-  const exportarPDF = async () => {
-    try {
-      // Fecha o modal de relatório antes de gerar o PDF
-      setRelatorioModal(false);
-      
-      // Aguarda um pequeno delay para garantir que o modal foi fechado
-      await new Promise(resolve => setTimeout(resolve, 300));
+ const exportarPDF = async () => {
+  try {
+    setRelatorioModal(false);
+    await new Promise(resolve => setTimeout(resolve, 300));
 
-      const element = document.getElementById('relatorio-content');
-      if (!element) {
-        // Cria um elemento temporário para o relatório
-        const tempElement = document.createElement('div');
-        tempElement.id = 'relatorio-content';
-        tempElement.innerHTML = `
-          <div style="padding: 20px; background-color: #1f2937; color: white;">
-            <h2 style="margin-bottom: 20px;">Relatório Financeiro - ${new Date(filtroMes).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</h2>
-            
-            <div style="margin-bottom: 20px;">
-              <h3>Resumo Financeiro</h3>
-              <p>Receitas: R$ ${estatisticas.totalReceitas.toFixed(2)}</p>
-              <p>Despesas: R$ ${estatisticas.totalDespesas.toFixed(2)}</p>
-              <p>Saldo: R$ ${estatisticas.saldo.toFixed(2)}</p>
-            </div>
-            
-            <div>
-              <h3>Informações Adicionais</h3>
-              <p>Total de Jogadores: ${estatisticas.totalJogadores}</p>
-              <p>Pagamentos Pendentes: ${estatisticas.pagamentosPendentes}</p>
-            </div>
-          </div>
-        `;
-        document.body.appendChild(tempElement);
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        const canvas = await html2canvas(tempElement, {
-          scale: 2,
-          logging: false,
-          useCORS: true,
-          backgroundColor: '#1f2937'
-        });
-        
-        document.body.removeChild(tempElement);
-        
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save(`relatorio-financeiro-${filtroMes}.pdf`);
-      } else {
-        const canvas = await html2canvas(element, {
-          scale: 2,
-          logging: false,
-          useCORS: true,
-          backgroundColor: '#1f2937'
-        });
-        
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save(`relatorio-financeiro-${filtroMes}.pdf`);
-      }
-      
-      toast.success('Relatório PDF gerado com sucesso!');
-    } catch (error) {
-      console.error('Erro ao gerar PDF:', error);
-      toast.error('Erro ao gerar PDF. Tente novamente.');
+    // Criar elemento temporário com maior resolução
+    const tempElement = document.createElement('div');
+    tempElement.id = 'relatorio-pdf-temp';
+    tempElement.style.position = 'absolute';
+    tempElement.style.left = '-9999px';
+    tempElement.style.width = '800px';
+    tempElement.style.padding = '20px';
+    tempElement.style.backgroundColor = '#1f2937';
+    tempElement.style.color = 'white';
+    
+    // Clonar o conteúdo do relatório
+    const relatorioContent = document.getElementById('relatorio-content');
+    tempElement.innerHTML = relatorioContent.innerHTML;
+    document.body.appendChild(tempElement);
+
+    // Configurações do html2canvas para alta qualidade
+    const canvas = await html2canvas(tempElement, {
+      scale: 3, // Aumenta a escala para melhor qualidade
+      logging: false,
+      useCORS: true,
+      backgroundColor: '#1f2937',
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: tempElement.scrollWidth,
+      windowHeight: tempElement.scrollHeight
+    });
+
+    document.body.removeChild(tempElement);
+
+    // Configurações do PDF
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const imgData = canvas.toDataURL('image/png', 1.0);
+    const pdfWidth = pdf.internal.pageSize.getWidth() - 20; // Margens
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+    // Adicionar imagem ao PDF com margens
+    pdf.addImage(imgData, 'PNG', 10, 10, pdfWidth, pdfHeight);
+    pdf.save(`relatorio-financeiro-${filtroMes}.pdf`);
+
+    toast.success('Relatório PDF gerado com sucesso!');
+  } catch (error) {
+    console.error('Erro ao gerar PDF:', error);
+    toast.error('Erro ao gerar PDF. Tente novamente.');
+  }
+};
+
+const exportarImagem = async () => {
+  try {
+    setRelatorioModal(false);
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    // Criar elemento temporário com maior resolução
+    const tempElement = document.createElement('div');
+    tempElement.id = 'relatorio-img-temp';
+    tempElement.style.position = 'absolute';
+    tempElement.style.left = '-9999px';
+    tempElement.style.width = '800px';
+    tempElement.style.padding = '20px';
+    tempElement.style.backgroundColor = '#1f2937';
+    tempElement.style.color = 'white';
+    
+    // Clonar o conteúdo do relatório
+    const relatorioContent = document.getElementById('relatorio-content');
+    tempElement.innerHTML = relatorioContent.innerHTML;
+    document.body.appendChild(tempElement);
+
+    // Configurações do html2canvas para alta qualidade
+    const canvas = await html2canvas(tempElement, {
+      scale: 2, // Escala menor que o PDF pois a imagem será exibida em telas
+      logging: false,
+      useCORS: true,
+      backgroundColor: '#1f2937',
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: tempElement.scrollWidth,
+      windowHeight: tempElement.scrollHeight
+    });
+
+    document.body.removeChild(tempElement);
+
+    // Criar link para download
+    const link = document.createElement('a');
+    link.download = `relatorio-financeiro-${filtroMes}.png`;
+    link.href = canvas.toDataURL('image/png', 1.0);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast.success('Imagem gerada com sucesso!');
+  } catch (error) {
+    console.error('Erro ao gerar imagem:', error);
+    toast.error('Erro ao gerar imagem. Tente novamente.');
+  }
+};
+ const compartilharRelatorio = async () => {
+  try {
+    const element = document.getElementById('relatorio-content');
+    if (!element) throw new Error("Elemento não encontrado");
+
+    // Melhorias na captura:
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      logging: false,
+      useCORS: true,
+      backgroundColor: '#1f2937',
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: element.scrollWidth,
+      windowHeight: element.scrollHeight
+    });
+
+    if (navigator.share) {
+      const blob = await (await fetch(canvas.toDataURL('image/png'))).blob();
+      await navigator.share({
+        title: `Relatório Financeiro - ${filtroMes}`,
+        text: `Saldo: R$ ${estatisticas.saldo.toFixed(2)}`,
+        files: [new File([blob], 'relatorio.png', { type: 'image/png' })]
+      });
+    } else {
+      // Fallback para navegadores sem API de compartilhamento
+      const link = document.createElement('a');
+      link.download = `relatorio-${filtroMes}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
     }
-  };
-
-  const exportarImagem = async () => {
-    try {
-      // Fecha o modal de relatório antes de gerar a imagem
-      setRelatorioModal(false);
-      
-      // Aguarda um pequeno delay para garantir que o modal foi fechado
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      const element = document.getElementById('relatorio-content');
-      if (!element) {
-        // Cria um elemento temporário para o relatório
-        const tempElement = document.createElement('div');
-        tempElement.id = 'relatorio-content';
-        tempElement.innerHTML = `
-          <div style="padding: 20px; background-color: #1f2937; color: white;">
-            <h2 style="margin-bottom: 20px;">Relatório Financeiro - ${new Date(filtroMes).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</h2>
-            
-            <div style="margin-bottom: 20px;">
-              <h3>Resumo Financeiro</h3>
-              <p>Receitas: R$ ${estatisticas.totalReceitas.toFixed(2)}</p>
-              <p>Despesas: R$ ${estatisticas.totalDespesas.toFixed(2)}</p>
-              <p>Saldo: R$ ${estatisticas.saldo.toFixed(2)}</p>
-            </div>
-            
-            <div>
-              <h3>Informações Adicionais</h3>
-              <p>Total de Jogadores: ${estatisticas.totalJogadores}</p>
-              <p>Pagamentos Pendentes: ${estatisticas.pagamentosPendentes}</p>
-            </div>
-          </div>
-        `;
-        document.body.appendChild(tempElement);
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        const canvas = await html2canvas(tempElement, {
-          scale: 2,
-          logging: false,
-          useCORS: true,
-          backgroundColor: '#1f2937'
-        });
-        
-        document.body.removeChild(tempElement);
-        
-        // Cria um link temporário para download da imagem
-        const link = document.createElement('a');
-        link.download = `relatorio-financeiro-${filtroMes}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-      } else {
-        const canvas = await html2canvas(element, {
-          scale: 2,
-          logging: false,
-          useCORS: true,
-          backgroundColor: '#1f2937'
-        });
-        
-        // Cria um link temporário para download da imagem
-        const link = document.createElement('a');
-        link.download = `relatorio-financeiro-${filtroMes}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-      }
-      
-      toast.success('Imagem gerada com sucesso!');
-    } catch (error) {
-      console.error('Erro ao gerar imagem:', error);
-      toast.error('Erro ao gerar imagem. Tente novamente.');
-    }
-  };
-
-  const compartilharRelatorio = async () => {
-    try {
-      if (navigator.share) {
-        const element = document.getElementById('relatorio-content');
-        const canvas = await html2canvas(element, {
-          scale: 2,
-          logging: false,
-          useCORS: true,
-          backgroundColor: '#1f2937'
-        });
-        
-        const blob = await (await fetch(canvas.toDataURL('image/png'))).blob();
-        const file = new File([blob], 'relatorio-financeiro.png', { type: blob.type });
-        
-        await navigator.share({
-          title: `Relatório Financeiro - ${filtroMes}`,
-          text: `Status financeiro do time: ${estatisticas.saldo >= 0 ? 'Positivo' : 'Negativo'}`,
-          files: [file]
-        });
-      } else {
-        toast.info('Compartilhamento não suportado neste navegador');
-      }
-    } catch (error) {
-      console.error('Erro ao compartilhar:', error);
-      if (error.name !== 'AbortError') {
-        toast.error('Erro ao compartilhar relatório');
-      }
-    }
-  };
+  } catch (error) {
+    console.error("Erro ao compartilhar:", error);
+    toast.error(error.message || 'Erro ao compartilhar');
+  }
+};
 
   const compartilharControle = async (elementId) => {
     try {
@@ -846,15 +808,47 @@ export default function Financeiro() {
                   className="bg-transparent text-white focus:outline-none text-xs sm:text-sm"
                 />
               </div>
-              <motion.button
-                onClick={() => setRelatorioModal(true)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg text-xs sm:text-sm"
-              >
-                <FaPrint className="text-xs sm:text-sm" />
-                <span>Relatório</span>
-              </motion.button>
+            {/* Dentro do seu modal de relatório (já existente) */}
+<motion.div
+  initial={{ y: 20, opacity: 0 }}
+  animate={{ y: 0, opacity: 1 }}
+  exit={{ y: 20, opacity: 0 }}
+  className="bg-gray-800 rounded-xl shadow-2xl p-6 w-full max-w-md border border-gray-700"
+  onClick={(e) => e.stopPropagation()}
+>
+  <div className="flex justify-between items-center mb-4">
+    <h3 className="text-xl font-bold text-white">Relatório Financeiro</h3>
+    <button onClick={() => setRelatorioModal(false)} className="text-gray-400 hover:text-white">
+      <FaTimes />
+    </button>
+  </div>
+
+  <div id="relatorio-content" className="mb-6">
+    {/* Seu conteúdo atual do relatório */}
+  </div>
+
+  <div className="flex justify-end gap-3">
+    {/* Botão de Compartilhar */}
+    <motion.button
+      onClick={compartilharRelatorio}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+    >
+      <FaShare /> Compartilhar
+    </motion.button>
+
+    {/* Botão de Fechar */}
+    <motion.button
+      onClick={() => setRelatorioModal(false)}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg"
+    >
+      Fechar
+    </motion.button>
+  </div>
+</motion.div>
             </div>
           </div>
         </motion.div>
