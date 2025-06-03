@@ -56,10 +56,8 @@ export default function ConfirmarPresenca() {
         
         if (response.data.success) {
           const { jogadores: jogadoresData, dataJogo } = response.data.data;
-       setJogadores(jogadoresData.map(j => ({
-  ...j,
-  presente: typeof j.presente === 'boolean' ? j.presente : false
-})));
+       setJogadores(jogadoresData);
+
 
           
           if (dataJogo) {
