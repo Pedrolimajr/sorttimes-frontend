@@ -302,7 +302,7 @@ const [linkId, setLinkId] = useState(() => localStorage.getItem('linkIdPresenca'
    */
 const alternarPresenca = async (id) => {
   const jogador = jogadoresSelecionados.find(j => j._id === id);
-  if (!jogador) return;
+  if (!jogador || !linkId) return;
 
   const novoPresente = !jogador.presente;
 
@@ -328,6 +328,7 @@ const alternarPresenca = async (id) => {
     console.error('Erro ao confirmar presença:', error);
   }
 };
+
 
 
 useEffect(() => {
