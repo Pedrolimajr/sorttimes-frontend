@@ -833,13 +833,7 @@ const totalGeral = jogadores.length;
                       </table>
                     </div>
                                                         {/* Rodapé com contagem de jogadores */}
-                      <div className="text-center mt-6 text-gray-300 text-sm sm:text-base">
-  Associados: <strong>{totalAssociados}</strong> &nbsp;&nbsp;
-  Convidados: <strong>{totalConvidados}</strong> &nbsp;&nbsp;
-  Visitantes: <strong>{totalVisitantes}</strong> &nbsp;&nbsp;
-  Total: <strong>{totalGeral}</strong>
-</div>
-{/* Contador fixo e responsivo fora da rolagem */}
+                      {/* Contador fixo e responsivo fora da rolagem */}
 <div className="sticky bottom-0 left-0 w-full bg-gray-900 border-t border-gray-700 py-3 px-4 text-center text-gray-300 text-sm sm:text-base z-20 shadow-inner">
   <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
     <span>Associados: <strong>{totalAssociados}</strong></span>
@@ -848,6 +842,7 @@ const totalGeral = jogadores.length;
     <span>Total: <strong>{totalGeral}</strong></span>
   </div>
 </div>
+
 
                   </div>
                 </div>
