@@ -606,6 +606,12 @@ const aplicarFiltroPosicao = () => {
           </motion.li>
         ))}
       </ul>
+      {/* Contagem de Jogadores */}
+<div className="mt-3 text-center text-gray-400 text-xs sm:text-sm">
+  Total de jogadores: <strong>{time.jogadores.length}</strong>
+</div>
+
+
     </div>
   );
 
