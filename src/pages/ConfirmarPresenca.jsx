@@ -126,6 +126,12 @@ const alternarPresenca = async (jogadorId) => {
     }
   }
 };
+
+// Contagem de jogadores presentes e ausentes
+const totalConfirmados = jogadores.filter(j => j.presente).length;
+const totalNaoConfirmados = jogadores.filter(j => !j.presente).length;
+
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 px-4 py-8">
       <div className="max-w-lg mx-auto">
@@ -189,6 +195,10 @@ const alternarPresenca = async (jogadorId) => {
               ))}
             </div>
           </div>
+<div className="mt-4 flex flex-wrap justify-center gap-x-6 gap-y-2 text-center text-gray-300 text-sm sm:text-base">
+  <span>✅ Confirmados: <strong>{totalConfirmados}</strong></span>
+  <span>❌ Não Confirmados: <strong>{totalNaoConfirmados}</strong></span>
+</div>
 
           <motion.div
             initial={{ opacity: 0 }}
