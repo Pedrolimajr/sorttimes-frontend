@@ -251,6 +251,12 @@ export default function ListaJogadores({
       toast.error(error.message || 'Erro ao atualizar status');
     }
   };
+// Contagem de jogadores por nível
+  const totalAssociados = jogadores.filter(j => j.nivel === 'Associado').length;
+const totalConvidados = jogadores.filter(j => j.nivel === 'Convidado').length;
+const totalVisitantes = jogadores.filter(j => j.nivel === 'Visitante').length;
+const totalGeral = jogadores.length;
+
 
  return (
     <div className={`${!modoSelecao ? 'min-h-screen' : ''} bg-gray-900 p-4 sm:p-6`}>
@@ -824,6 +830,14 @@ export default function ListaJogadores({
                           ))}
                         </tbody>
                       </table>
+            {/* Rodapé com contagem de jogadores */}
+                      <div className="text-center mt-6 text-gray-300 text-sm sm:text-base">
+  Associados: <strong>{totalAssociados}</strong> &nbsp;&nbsp;
+  Convidados: <strong>{totalConvidados}</strong> &nbsp;&nbsp;
+  Visitantes: <strong>{totalVisitantes}</strong> &nbsp;&nbsp;
+  Total: <strong>{totalGeral}</strong>
+</div>
+
                     </div>
                   </div>
                 </div>
