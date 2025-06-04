@@ -706,13 +706,7 @@ const totalGeral = jogadores.length;
                   <div className="overflow-hidden">
                     <div className="max-h-[60vh] sm:max-h-[65vh] md:max-h-[70vh] lg:max-h-[75vh] overflow-y-auto">
                       <table className="min-w-full divide-y divide-gray-700">
-                                    {/* Rodapé com contagem de jogadores */}
-                      <div className="text-center mt-6 text-gray-300 text-sm sm:text-base">
-  Associados: <strong>{totalAssociados}</strong> &nbsp;&nbsp;
-  Convidados: <strong>{totalConvidados}</strong> &nbsp;&nbsp;
-  Visitantes: <strong>{totalVisitantes}</strong> &nbsp;&nbsp;
-  Total: <strong>{totalGeral}</strong>
-</div>
+
                         <thead className="bg-gray-700 sticky top-0">
                           <tr>
                             <th className="px-4 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider sm:px-6">Jogador</th>
@@ -838,6 +832,13 @@ const totalGeral = jogadores.length;
                         </tbody>
                       </table>
                     </div>
+                                                        {/* Rodapé com contagem de jogadores */}
+                      <div className="text-center mt-6 text-gray-300 text-sm sm:text-base">
+  Associados: <strong>{totalAssociados}</strong> &nbsp;&nbsp;
+  Convidados: <strong>{totalConvidados}</strong> &nbsp;&nbsp;
+  Visitantes: <strong>{totalVisitantes}</strong> &nbsp;&nbsp;
+  Total: <strong>{totalGeral}</strong>
+</div>
                   </div>
                 </div>
               </div>
