@@ -195,9 +195,16 @@ const totalNaoConfirmados = jogadores.filter(j => !j.presente).length;
               ))}
             </div>
           </div>
+          {/* Contagem de Jogadores confimados e não confirmados */}
 <div className="mt-4 flex flex-wrap justify-center gap-x-6 gap-y-2 text-center text-gray-300 text-sm sm:text-base">
-  <span>✅ Confirmados: <strong>{totalConfirmados}</strong></span>
-  <span>❌ Não Confirmados: <strong>{totalNaoConfirmados}</strong></span>
+  <span className="flex items-center gap-1">
+    <GiSoccerKick className="text-green-400" />
+    Confirmados: <strong>{totalConfirmados}</strong>
+  </span>
+  <span className="flex items-center gap-1">
+    <GiSoccerKick className="text-red-400 rotate-45 opacity-50" />
+    Não Confirmados: <strong>{totalNaoConfirmados}</strong>
+  </span>
 </div>
 
           <motion.div
