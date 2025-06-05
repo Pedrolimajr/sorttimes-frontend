@@ -569,16 +569,21 @@ const aplicarFiltroPosicao = () => {
 
   // Componente para exibir um time sorteado
   const TimeSorteado = ({ time, index }) => (
-    <div key={index} className={`border ${modoEdicao ? 'border-dashed border-yellow-400' : 'border-gray-700'} p-4 rounded-lg bg-gray-800/30`}>
-      <h3 className="text-base sm:text-lg font-bold text-center mb-3 sm:mb-4 flex items-center justify-center gap-2 text-white">
-        <div className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 ${
-          index === 0 ? 'bg-gray-300 border-gray-400' : 'bg-blue-500 border-blue-400'
-        }`}></div>
-        {time.nome}
-        <span className="text-xs sm:text-sm font-normal text-gray-400">
-          (Nível: <span className="text-yellow-400">{time.nivelMedio}</span>)
-        </span>
-      </h3>
+  <div
+    key={index}
+    className={`border p-4 rounded-lg ${
+      index === 1 ? 'bg-yellow-300 text-black' : 'bg-gray-800/30 text-white'
+    } ${modoEdicao ? 'border-dashed border-yellow-400' : 'border-gray-700'}`}
+  >
+    <h3 className="text-base sm:text-lg font-bold text-center mb-3 sm:mb-4 flex items-center justify-center gap-2">
+      <div className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 ${
+        index === 0 ? 'bg-gray-300 border-gray-400' : 'bg-blue-500 border-blue-400'
+      }`}></div>
+      {index === 0 ? "Time (Preto)" : index === 1 ? "Time (Amarelo)" : time.nome}
+      <span className="text-xs sm:text-sm font-normal text-gray-400">
+        (Nível: <span className="text-yellow-600">{time.nivelMedio}</span>)
+      </span>
+    </h3>
       <ul className="space-y-2 sm:space-y-3">
         {time.jogadores.map((jogador, idx) => (
           <motion.li
