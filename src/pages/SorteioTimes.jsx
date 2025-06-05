@@ -600,8 +600,7 @@ const TimeSorteado = ({ time, index }) => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.1 }}
-            className={`p-2 sm:p-3 rounded-md border bg-[#111827] ${
-
+            className={`p-2 sm:p-3 rounded-md border bg-[#111827] hover:bg-[#1f2937] ${
               modoEdicao
                 ? 'cursor-move border-dashed border-gray-500'
                 : 'border-gray-600'
@@ -617,7 +616,7 @@ const TimeSorteado = ({ time, index }) => {
           >
             <div className="flex justify-between items-center">
               <span className="text-white text-sm sm:text-base">{jogador.nome}</span>
-              <span className="text-yellow-400 text-xs sm:text-sm">{jogador.nivel} ⭐</span>
+              <span className="text-yellow-600 text-xs sm:text-sm">{jogador.nivel} ⭐</span>
             </div>
             <div className="text-xs text-gray-300 mt-0.5 sm:mt-1">
               Posição: {jogador.posicao}
