@@ -586,25 +586,25 @@ const TimeSorteado = ({ time, index }) => {
           }`}
         ></div>
         {nomeTime}
-        <span className="text-xs sm:text-sm font-normal ${
+        <span className={`text-xs sm:text-sm font-normal ${
           isTimeAmarelo ? 'text-gray-800' : 'text-gray-400'
-        }">
+        }`}>
           (Nível: <span className="text-yellow-600">{time.nivelMedio}</span>)
         </span>
       </h3>
 
-      <ul className="space-y-2 sm:space-y-3 background-gray-800/20 p-2 sm:p-3 rounded-md">
+      <ul className="space-y-2 sm:space-y-3">
         {time.jogadores.map((jogador, idx) => (
           <motion.li
             key={jogador.id}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.1 }}
-            className={`p-2 sm:p-3 rounded-md border ${
+            className={`p-2 sm:p-3 rounded-md border bg-gray-700/70 ${
               modoEdicao
-                ? 'cursor-move border-dashed border-gray-500 hover:bg-gray-700/70'
-                : 'border-gray-600 hover:bg-gray-700'
-            } transition-colors bg-gray-800/30`}
+                ? 'cursor-move border-dashed border-gray-500'
+                : 'border-gray-600'
+            } transition-colors`}
             draggable={modoEdicao}
             onDragStart={(e) => e.dataTransfer.setData('jogadorId', jogador.id)}
             onDragOver={(e) => e.preventDefault()}
@@ -618,7 +618,7 @@ const TimeSorteado = ({ time, index }) => {
               <span className="text-white text-sm sm:text-base">{jogador.nome}</span>
               <span className="text-yellow-400 text-xs sm:text-sm">{jogador.nivel} ⭐</span>
             </div>
-            <div className="text-xs text-gray-400 mt-0.5 sm:mt-1">
+            <div className="text-xs text-gray-300 mt-0.5 sm:mt-1">
               Posição: {jogador.posicao}
             </div>
           </motion.li>
