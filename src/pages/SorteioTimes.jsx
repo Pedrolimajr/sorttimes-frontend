@@ -600,7 +600,8 @@ const TimeSorteado = ({ time, index }) => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.1 }}
-            className={`p-2 sm:p-3 rounded-md border bg-gray-700/70 ${
+            className={`p-2 sm:p-3 rounded-md border bg-[#111827] ${
+
               modoEdicao
                 ? 'cursor-move border-dashed border-gray-500'
                 : 'border-gray-600'
