@@ -568,31 +568,17 @@ const aplicarFiltroPosicao = () => {
   );
 
   // Componente para exibir um time sorteado
-const TimeSorteado = ({ time, index }) => {
-  const isTimeAmarelo = index === 1;
-  const nomeTime = index === 0 ? "Time (Preto)" : isTimeAmarelo ? "Time (Amarelo)" : time.nome;
-
-  return (
-    <div
-      key={index}
-      className={`border p-4 rounded-lg ${
-        modoEdicao ? 'border-dashed border-yellow-400' : 'border-gray-700'
-      } ${isTimeAmarelo ? 'bg-[#f6e27f] text-black' : 'bg-gray-800/30 text-white'}`}
-    >
-      <h3 className="text-base sm:text-lg font-bold text-center mb-3 sm:mb-4 flex items-center justify-center gap-2">
-        <div
-          className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 ${
-            index === 0 ? 'bg-gray-300 border-gray-400' : 'bg-yellow-500 border-yellow-400'
-          }`}
-        ></div>
-        {nomeTime}
-        <span className={`text-xs sm:text-sm font-normal ${
-          isTimeAmarelo ? 'text-gray-800' : 'text-gray-400'
-        }`}>
-          (Nível: <span className="text-yellow-600">{time.nivelMedio}</span>)
+  const TimeSorteado = ({ time, index }) => (
+    <div key={index} className={`border ${modoEdicao ? 'border-dashed border-yellow-400' : 'border-gray-700'} p-4 rounded-lg bg-gray-800/30`}>
+      <h3 className="text-base sm:text-lg font-bold text-center mb-3 sm:mb-4 flex items-center justify-center gap-2 text-white">
+        <div className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 ${
+          index === 0 ? 'bg-gray-300 border-gray-400' : 'bg-blue-500 border-blue-400'
+        }`}></div>
+        {time.nome}
+        <span className="text-xs sm:text-sm font-normal text-gray-400">
+          (Nível: <span className="text-yellow-400">{time.nivelMedio}</span>)
         </span>
       </h3>
-
       <ul className="space-y-2 sm:space-y-3">
         {time.jogadores.map((jogador, idx) => (
           <motion.li
@@ -600,11 +586,7 @@ const TimeSorteado = ({ time, index }) => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.1 }}
-            className={`p-2 sm:p-3 rounded-md border bg-[#111827] hover:bg-[#1f2937] ${
-              modoEdicao
-                ? 'cursor-move border-dashed border-gray-500'
-                : 'border-gray-600'
-            } transition-colors`}
+            className={`p-2 sm:p-3 rounded-md border ${modoEdicao ? 'cursor-move border-dashed border-gray-500 hover:bg-gray-700/70' : 'border-gray-600 hover:bg-gray-700'} transition-colors`}
             draggable={modoEdicao}
             onDragStart={(e) => e.dataTransfer.setData('jogadorId', jogador.id)}
             onDragOver={(e) => e.preventDefault()}
@@ -618,22 +600,20 @@ const TimeSorteado = ({ time, index }) => {
               <span className="text-white text-sm sm:text-base">{jogador.nome}</span>
               <span className="text-yellow-400 text-xs sm:text-sm">{jogador.nivel} ⭐</span>
             </div>
-            <div className="text-xs text-gray-300 mt-0.5 sm:mt-1">
+            <div className="text-xs text-gray-400 mt-0.5 sm:mt-1">
               Posição: {jogador.posicao}
             </div>
           </motion.li>
         ))}
       </ul>
+      {/* Contagem de Jogadores */}
+<div className="mt-3 text-center text-gray-400 text-xs sm:text-sm">
+  Total de jogadores: <strong>{time.jogadores.length}</strong>
+</div>
 
-      <div className={`mt-3 text-center text-xs sm:text-sm ${
-        isTimeAmarelo ? 'text-gray-800' : 'text-gray-400'
-      }`}>
-        Total de jogadores: <strong>{time.jogadores.length}</strong>
-      </div>
+
     </div>
   );
-};
-
 
   // Componente para exibir um item do histórico
   const HistoricoItem = ({ sorteio, index }) => (
