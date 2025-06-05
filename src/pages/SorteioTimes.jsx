@@ -593,7 +593,7 @@ const TimeSorteado = ({ time, index }) => {
         </span>
       </h3>
 
-      <ul className="space-y-2 sm:space-y-3">
+      <ul className="space-y-2 sm:space-y-3 background-gray-800/20 p-2 sm:p-3 rounded-md">
         {time.jogadores.map((jogador, idx) => (
           <motion.li
             key={jogador.id}
