@@ -576,8 +576,8 @@ const TimeSorteado = ({ time, index }) => {
     <div
       key={index}
       className={`border p-4 rounded-lg ${
-        modoEdicao ? 'border-dashed border-yellow-200' : 'border-gray-700'
-      } ${isTimeAmarelo ? 'bg-[#f6e27f] text-black' : 'bg-gray-800/30 text-white'}`}
+        modoEdicao ? 'border-dashed border-yellow-400' : 'border-gray-700'
+      } ${isTimeAmarelo ? 'bg-[#efdf8e] text-black' : 'bg-gray-800/30 text-white'}`}
     >
       <h3 className="text-base sm:text-lg font-bold text-center mb-3 sm:mb-4 flex items-center justify-center gap-2">
         <div
