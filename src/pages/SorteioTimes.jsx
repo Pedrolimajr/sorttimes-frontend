@@ -303,17 +303,23 @@ export default function SorteioTimes() {
    */
 const alternarPresenca = async (jogadorId) => {
   const linkId = localStorage.getItem('linkPresencaId');
+
+  const jogador = jogadoresSelecionados.find(j => j._id === jogadorId);
+  if (!jogador) return;
+
+  const novoEstado = !jogador.presente;
+
+  // Atualiza imediatamente localmente para feedback visual
+  setJogadoresSelecionados(prev =>
+    prev.map(j => j._id === jogadorId ? { ...j, presente: novoEstado } : j)
+  );
+
   if (!linkId) {
-    toast.error("Link de presença não encontrado. Gere e compartilhe o link primeiro.");
+    console.warn("Sem linkId encontrado, presença alterada apenas localmente.");
     return;
   }
 
   try {
-    const jogador = jogadoresSelecionados.find(j => j._id === jogadorId);
-    if (!jogador) return;
-
-    const novoEstado = !jogador.presente;
-
     const response = await fetch(`${import.meta.env.VITE_API_URL}/api/presenca/${linkId}/confirmar`, {
       method: 'POST',
       headers: {
@@ -327,22 +333,17 @@ const alternarPresenca = async (jogadorId) => {
 
     const result = await response.json();
 
-    if (result.success) {
-      setJogadoresSelecionados(prev =>
-        prev.map(j =>
-          j._id === jogadorId ? { ...j, presente: novoEstado } : j
-        )
-      );
-
-      toast.success(novoEstado ? '✅ Presença confirmada!' : '❌ Presença desmarcada!');
-    } else {
-      toast.error("Erro ao atualizar presença.");
+    if (!result.success) {
+      throw new Error(result.message || "Erro ao confirmar presença");
     }
+
+    toast.success(novoEstado ? '✅ Presença confirmada!' : '❌ Presença desmarcada!');
   } catch (error) {
     console.error("Erro ao atualizar presença:", error);
-    toast.error("Erro na comunicação com o servidor.");
+    toast.error("Erro ao comunicar com o servidor.");
   }
 };
+
 
  
 
