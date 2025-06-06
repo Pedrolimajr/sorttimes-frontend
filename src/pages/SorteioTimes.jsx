@@ -212,6 +212,8 @@ export default function SorteioTimes() {
       });
 
       const { linkId } = await response.json();
+      localStorage.setItem('linkPresencaId', linkId);
+
       const linkCompleto = `${window.location.origin}/confirmar-presenca/${linkId}`;
       
       const dataFormatada = new Date(dataJogo).toLocaleDateString('pt-BR', {
@@ -299,15 +301,49 @@ export default function SorteioTimes() {
    * Alterna o estado de presença de um jogador
    * @param {string} id - ID do jogador
    */
-const alternarPresenca = (id) => {
-  // Remova completamente a verificação de times.length > 0
-  setJogadoresSelecionados(prev => {
-    const novosJogadores = prev.map(jogador => 
-      jogador._id === id ? { ...jogador, presente: !jogador.presente } : jogador
-    );
-    return novosJogadores;
-  });
+const alternarPresenca = async (jogadorId) => {
+  const linkId = localStorage.getItem('linkPresencaId');
+  if (!linkId) {
+    toast.error("Link de presença não encontrado. Gere e compartilhe o link primeiro.");
+    return;
+  }
+
+  try {
+    const jogador = jogadoresSelecionados.find(j => j._id === jogadorId);
+    if (!jogador) return;
+
+    const novoEstado = !jogador.presente;
+
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/presenca/${linkId}/confirmar`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        jogadorId,
+        presente: novoEstado
+      })
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      setJogadoresSelecionados(prev =>
+        prev.map(j =>
+          j._id === jogadorId ? { ...j, presente: novoEstado } : j
+        )
+      );
+
+      toast.success(novoEstado ? '✅ Presença confirmada!' : '❌ Presença desmarcada!');
+    } else {
+      toast.error("Erro ao atualizar presença.");
+    }
+  } catch (error) {
+    console.error("Erro ao atualizar presença:", error);
+    toast.error("Erro na comunicação com o servidor.");
+  }
 };
+
  
 
 useEffect(() => {
