@@ -254,40 +254,18 @@ export default function SorteioTimes() {
 };
 // Compartilhamento de Jogadores Selecionados
 const compartilharJogadoresSelecionados = () => {
-  // Tenta usar dataJogo do estado ou, se vazio, do localStorage
-  const dataBruta = dataJogo || localStorage.getItem('dataJogo');
+  const jogadoresPresentes = jogadoresSelecionados.filter(j => j.presente);
 
-  if (!dataBruta || isNaN(new Date(dataBruta))) {
-    toast.warning("Nenhuma data de jogo selecionada ou data inválida.");
+  if (jogadoresPresentes.length === 0) {
+    toast.info("Nenhum jogador marcado como presente.");
     return;
   }
 
-  // Filtra os jogadores confirmados (presente === true)
-  const jogadoresConfirmados = jogadoresSelecionados.filter(j => j.presente);
-
-  if (jogadoresConfirmados.length === 0) {
-    toast.info("Nenhum jogador confirmou presença para esta data.");
-    return;
-  }
-
-  // Formata a data do jogo com primeira letra maiúscula nos nomes dos dias e meses
-  const data = new Date(dataBruta);
-  const diaSemana = data.toLocaleDateString('pt-BR', { weekday: 'long' });
-  const dia = data.getDate();
-  const mes = data.toLocaleDateString('pt-BR', { month: 'long' });
-  const hora = data.getHours().toString().padStart(2, '0');
-  const minutos = data.getMinutes().toString().padStart(2, '0');
-
-  const capitalizar = str => str.charAt(0).toUpperCase() + str.slice(1);
-  const dataFormatada = `${capitalizar(diaSemana)}, ${dia} de ${capitalizar(mes)} às ${hora}:${minutos}`;
-
-  // Gera lista numerada com os nomes dos jogadores confirmados
-  const lista = jogadoresConfirmados
+  const listaNomes = jogadoresPresentes
     .map((j, i) => `${i + 1}. ${j.nome}`)
     .join('\n');
 
-  // Mensagem formatada para compartilhamento ou cópia
-  const texto = `✅ *Lista dos Jogadores Confirmados - ${dataFormatada}:*\n\n${lista}\n\n⚽ _Vamos com tudo pra mais um jogão!_`;
+  const texto = `✅ *Lista dos Jogadores Confirmados:*\n\n${listaNomes}\n\nVamos com tudo pra mais um jogão! ⚽`;
 
   if (navigator.share) {
     navigator.share({
