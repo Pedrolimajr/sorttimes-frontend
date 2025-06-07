@@ -279,43 +279,40 @@ export default function ListaJogadores({
   return (
     <div className={`${!modoSelecao ? 'min-h-screen' : ''} bg-gray-900 p-4 sm:p-6`}>
       {/* Modal para foto ampliada */}
-      <AnimatePresence>
-        {fotoAmpliada.aberto && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 p-4"
-            onClick={fecharFotoAmpliada}
-          >
-            <motion.div
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.9 }}
-              className="relative max-w-4xl w-full max-h-[90vh]"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                onClick={fecharFotoAmpliada}
-                className="absolute -top-10 right-0 text-white hover:text-gray-300 z-10"
-              >
-                <FaTimes size={24} />
-              </button>
-              
-              <div className="bg-gray-800 rounded-lg overflow-hidden">
-                <img 
-                  src={fotoAmpliada.url} 
-                  alt={fotoAmpliada.nome}
-                  className="w-full h-auto max-h-[80vh] object-contain"
-                />
-                <div className="p-4 text-center text-white">
-                  {fotoAmpliada.nome}
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+ <AnimatePresence>
+  {fotoAmpliada.aberto && (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 p-4"
+      onClick={fecharFotoAmpliada}
+    >
+      <motion.div
+        initial={{ scale: 0.9 }}
+        animate={{ scale: 1 }}
+        exit={{ scale: 0.9 }}
+        className="relative w-full h-full flex items-center justify-center"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={fecharFotoAmpliada}
+          className="absolute top-4 right-4 text-white hover:text-gray-300 z-10 bg-gray-800 rounded-full p-2"
+        >
+          <FaTimes size={24} />
+        </button>
+        
+        <div className="max-w-full max-h-full flex items-center justify-center">
+          <img 
+            src={fotoAmpliada.url} 
+            alt="Foto do jogador"
+            className="max-w-full max-h-full object-contain"
+          />
+        </div>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
 
       {!modoSelecao && (
         <AnimatePresence>
