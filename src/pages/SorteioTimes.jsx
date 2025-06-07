@@ -190,95 +190,62 @@ export default function SorteioTimes() {
    * Gera um link para confirmação de presença e compartilha via WhatsApp
    */
   const gerarLinkPresenca = async () => {
-  if (!dataJogo) {
-    toast.warning('Por favor, selecione a data do jogo!');
-    return;
-  }
-
-  try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/gerar-link-presenca`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        jogadores: jogadoresSelecionados.map(j => ({
-          id: j._id,
-          nome: j.nome,
-          presente: j.presente
-        })),
-        dataJogo
-      })
-    });
-
-    const { linkId } = await response.json();
-    localStorage.setItem('linkPresencaId', linkId);
-
-    const linkCompleto = `${window.location.origin}/confirmar-presenca/${linkId}`;
-
-    // Formatações separadas
-    const somenteData = new Date(dataJogo).toLocaleDateString('pt-BR', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long'
-    });
-
-    const dataComHorario = new Date(dataJogo).toLocaleString('pt-BR', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-
-    const mensagem = `*⚽ Confirmação de Presença - Fut de ${somenteData}!* \n\n` +
-      `Fala galera! Chegou a hora de confirmar presença para o nosso fut!\n\n` +
-      `🗓️ Data: ${dataComHorario}\n\n` +
-      `📲 *Confirme sua presença acessando:*\n\n` +
-      `${linkCompleto}\n\n` +
-      `_Clique no link acima para confirmar sua participação._`;
-
-    if (navigator.share) {
-      await navigator.share({
-        title: 'Confirmação de Presença',
-        text: mensagem
-      });
-    } else {
-      await navigator.clipboard.writeText(mensagem);
-      toast.success('Link copiado para área de transferência!');
+    if (!dataJogo) {
+      toast.warning('Por favor, selecione a data do jogo!');
+      return;
     }
-  } catch (error) {
-    console.error('Erro ao gerar link:', error);
-    toast.error('Erro ao gerar link de presença');
-  }
-};
-// Compartilhamento de Jogadores Selecionados
-const compartilharJogadoresSelecionados = () => {
-  const jogadoresPresentes = jogadoresSelecionados.filter(j => j.presente);
 
-  if (jogadoresPresentes.length === 0) {
-    toast.info("Nenhum jogador marcado como presente.");
-    return;
-  }
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/gerar-link-presenca`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          jogadores: jogadoresSelecionados.map(j => ({
+            id: j._id,
+            nome: j.nome,
+            presente: j.presente
+          })),
+          dataJogo
+        })
+      });
 
-  const listaNomes = jogadoresPresentes
-    .map((j, i) => `${i + 1}. ${j.nome}`)
-    .join('\n');
+      const { linkId } = await response.json();
+      localStorage.setItem('linkPresencaId', linkId);
 
-  const texto = `✅ *Lista dos Jogadores Confirmados:*\n\n${listaNomes}\n\nVamos com tudo pra mais um jogão! ⚽`;
+      const linkCompleto = `${window.location.origin}/confirmar-presenca/${linkId}`;
+      
+      const dataFormatada = new Date(dataJogo).toLocaleString('pt-BR', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  hour: '2-digit',
+  minute: '2-digit'
+});
 
-  if (navigator.share) {
-    navigator.share({
-      title: 'Jogadores Confirmados',
-      text: texto
-    }).catch(err => console.error('Erro ao compartilhar:', err));
-  } else {
-    navigator.clipboard.writeText(texto);
-    toast.success("Lista copiada para área de transferência!");
-  }
-};
+      
+      const mensagem = `*⚽ Confirmação de Presença - Fut de ${dataFormatada}!*\n\n` +
+        `Fala galera! Chegou a hora de confirmar presença para o nosso fut!\n\n` +
+        `🗓️ Data: ${dataFormatada}\n\n` +
+        `📲 *Confirme sua presença acessando:*\n\n`+
+        `${linkCompleto}\n\n` +
+        `_Clique no link acima para confirmar sua participação._`;
 
-
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Confirmação de Presença',
+          text: mensagem
+        });
+      } else {
+        await navigator.clipboard.writeText(mensagem);
+        toast.success('Link copiado para área de transferência!');
+      }
+    } catch (error) {
+      console.error('Erro ao gerar link:', error);
+      toast.error('Erro ao gerar link de presença');
+    }
+  };
 
   // Carrega jogadores do backend ao montar o componente
   useEffect(() => {
@@ -986,27 +953,12 @@ const TimeSorteado = ({ time, index }) => {
               </select>
             </div>
 
-
             {/* Lista de jogadores selecionados */}
             <div className="mb-4 sm:mb-6">
-             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-  <h3 className="text-xs sm:text-sm font-medium text-gray-400 flex items-center gap-2">
-    <FaTshirt className="text-blue-400 text-sm sm:text-base" />
-    Jogadores Selecionados ({jogadoresSelecionados.filter(j => j.presente).length}/{jogadoresSelecionados.length})
-  </h3>
-
-  <motion.button
-    onClick={compartilharJogadoresSelecionados}
-    whileHover={{ scale: 1.05 }}
-    whileTap={{ scale: 0.95 }}
-    className="w-full sm:w-auto flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg text-xs sm:text-sm text-white bg-blue-600 hover:bg-blue-700 transition-all"
-    title="Compartilhar jogadores presentes"
-  >
-    <FaShare className="text-white text-sm" />
-    Compartilhar
-  </motion.button>
-
-
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-xs sm:text-sm font-medium text-gray-400 flex items-center gap-2">
+                  <FaTshirt className="text-blue-400 text-sm sm:text-base" /> Jogadores Selecionados ({jogadoresSelecionados.filter(j => j.presente).length}/{jogadoresSelecionados.length})
+                </h3>
                 <div className="text-xs text-gray-400">
                   Serão formados 2 times
                 </div>
