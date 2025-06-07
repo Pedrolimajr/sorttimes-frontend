@@ -275,44 +275,57 @@ export default function SorteioTimes() {
 
   // Carrega jogadores do backend ao montar o componente
   useEffect(() => {
-  const carregarJogadores = async () => {
-    setCarregandoJogadores(true);
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/jogadores`);
-      const { data: jogadores } = await response.json();
+const carregarJogadores = async () => {
+  setCarregandoJogadores(true);
 
-      // Recupera jogadores salvos do localStorage
-      const jogadoresSalvosLocal = JSON.parse(
-        localStorage.getItem(LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS) || '[]'
-      );
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/jogadores`);
+    const { data: jogadores } = await response.json();
 
-      // Mescla os dados da API com os dados salvos
-      const jogadoresCombinados = jogadores.map(jogador => {
-        const salvo = jogadoresSalvosLocal.find(j => j._id === jogador._id);
-        return {
-          ...jogador,
-          presente: salvo?.presente || false,
-          posicao: salvo?.posicao || jogador.posicao || POSICOES.MEIA,
-          posicaoOriginal: jogador.posicao || POSICOES.MEIA,
-          nivel: jogador.nivel === 'Associado' ? NIVEL_JOGADOR.ASSOCIADO : 
-                jogador.nivel === 'Convidado' ? NIVEL_JOGADOR.CONVIDADO : 
-                NIVEL_JOGADOR.INICIANTE
-        };
-      });
+    const jogadoresSalvosLocal = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS) || '[]');
+    
+    // 🔁 Buscar presenças salvas no backend (se houver linkId)
+    const linkId = localStorage.getItem('linkPresencaId');
+    let presencaBackend = [];
 
-      setJogadoresSelecionados(jogadoresCombinados);
-
-    } catch (error) {
-      console.error("Erro ao carregar jogadores:", error);
-      toast.error("Erro ao carregar jogadores");
-    } finally {
-      setCarregandoJogadores(false);
+    if (linkId) {
+      try {
+        const presencaResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/presenca/${linkId}`);
+        const { data } = await presencaResponse.json();
+        presencaBackend = data.jogadores;
+      } catch (err) {
+        console.error("Erro ao buscar presenças do backend:", err);
+      }
     }
-  };
+
+    const jogadoresCombinados = jogadores.map(jogador => {
+      const salvo = jogadoresSalvosLocal.find(j => j._id === jogador._id);
+      const remoto = presencaBackend.find(p => p.id === jogador._id);
+
+      return {
+        ...jogador,
+        presente: remoto?.presente ?? salvo?.presente ?? false,
+        posicao: salvo?.posicao || jogador.posicao || POSICOES.MEIA,
+        posicaoOriginal: jogador.posicao || POSICOES.MEIA,
+        nivel: jogador.nivel === 'Associado' ? NIVEL_JOGADOR.ASSOCIADO : 
+              jogador.nivel === 'Convidado' ? NIVEL_JOGADOR.CONVIDADO : 
+              NIVEL_JOGADOR.INICIANTE
+      };
+    });
+
+    setJogadoresSelecionados(jogadoresCombinados);
+
+  } catch (error) {
+    console.error("Erro ao carregar jogadores:", error);
+    toast.error("Erro ao carregar jogadores");
+  } finally {
+    setCarregandoJogadores(false);
+  }
+};
+
 
   carregarJogadores();
-}, []);
- // Executa apenas uma vez ao montar
+}, []); // Executa apenas uma vez ao montar
 
   // Persiste o histórico no localStorage
   useEffect(() => {
