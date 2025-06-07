@@ -254,12 +254,15 @@ export default function SorteioTimes() {
 };
 // Compartilhamento de Jogadores Selecionados
 const compartilharJogadoresSelecionados = () => {
-  if (!dataJogo) {
-    toast.warning("Nenhuma data de jogo selecionada.");
+  // Tenta usar dataJogo do estado ou, se vazio, do localStorage
+  const dataBruta = dataJogo || localStorage.getItem('dataJogo');
+
+  if (!dataBruta || isNaN(new Date(dataBruta))) {
+    toast.warning("Nenhuma data de jogo selecionada ou data inválida.");
     return;
   }
 
-  // Filtra os jogadores confirmados para a data selecionada
+  // Filtra os jogadores confirmados (presente === true)
   const jogadoresConfirmados = jogadoresSelecionados.filter(j => j.presente);
 
   if (jogadoresConfirmados.length === 0) {
@@ -267,8 +270,8 @@ const compartilharJogadoresSelecionados = () => {
     return;
   }
 
-  // Formata a data do jogo com primeira letra maiúscula
-  const data = new Date(dataJogo);
+  // Formata a data do jogo com primeira letra maiúscula nos nomes dos dias e meses
+  const data = new Date(dataBruta);
   const diaSemana = data.toLocaleDateString('pt-BR', { weekday: 'long' });
   const dia = data.getDate();
   const mes = data.toLocaleDateString('pt-BR', { month: 'long' });
@@ -278,11 +281,12 @@ const compartilharJogadoresSelecionados = () => {
   const capitalizar = str => str.charAt(0).toUpperCase() + str.slice(1);
   const dataFormatada = `${capitalizar(diaSemana)}, ${dia} de ${capitalizar(mes)} às ${hora}:${minutos}`;
 
-  // Gera a lista dos nomes confirmados
+  // Gera lista numerada com os nomes dos jogadores confirmados
   const lista = jogadoresConfirmados
     .map((j, i) => `${i + 1}. ${j.nome}`)
     .join('\n');
 
+  // Mensagem formatada para compartilhamento ou cópia
   const texto = `✅ *Lista dos Jogadores Confirmados - ${dataFormatada}:*\n\n${lista}\n\n⚽ _Vamos com tudo pra mais um jogão!_`;
 
   if (navigator.share) {
