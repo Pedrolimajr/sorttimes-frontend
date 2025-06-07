@@ -190,62 +190,69 @@ export default function SorteioTimes() {
    * Gera um link para confirmação de presença e compartilha via WhatsApp
    */
   const gerarLinkPresenca = async () => {
-    if (!dataJogo) {
-      toast.warning('Por favor, selecione a data do jogo!');
-      return;
-    }
+  if (!dataJogo) {
+    toast.warning('Por favor, selecione a data do jogo!');
+    return;
+  }
 
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/gerar-link-presenca`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          jogadores: jogadoresSelecionados.map(j => ({
-            id: j._id,
-            nome: j.nome,
-            presente: j.presente
-          })),
-          dataJogo
-        })
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/gerar-link-presenca`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        jogadores: jogadoresSelecionados.map(j => ({
+          id: j._id,
+          nome: j.nome,
+          presente: j.presente
+        })),
+        dataJogo
+      })
+    });
+
+    const { linkId } = await response.json();
+    localStorage.setItem('linkPresencaId', linkId);
+
+    const linkCompleto = `${window.location.origin}/confirmar-presenca/${linkId}`;
+
+    // Formatações separadas
+    const somenteData = new Date(dataJogo).toLocaleDateString('pt-BR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long'
+    });
+
+    const dataComHorario = new Date(dataJogo).toLocaleString('pt-BR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    const mensagem = `*⚽ Confirmação de Presença - Fut de ${somenteData}!* \n\n` +
+      `Fala galera! Chegou a hora de confirmar presença para o nosso fut!\n\n` +
+      `🗓️ Data: ${dataComHorario}\n\n` +
+      `📲 *Confirme sua presença acessando:*\n\n` +
+      `${linkCompleto}\n\n` +
+      `_Clique no link acima para confirmar sua participação._`;
+
+    if (navigator.share) {
+      await navigator.share({
+        title: 'Confirmação de Presença',
+        text: mensagem
       });
-
-      const { linkId } = await response.json();
-      localStorage.setItem('linkPresencaId', linkId);
-
-      const linkCompleto = `${window.location.origin}/confirmar-presenca/${linkId}`;
-      
-      const dataFormatada = new Date(dataJogo).toLocaleString('pt-BR', {
-  weekday: 'long',
-  day: 'numeric',
-  month: 'long',
-  hour: '2-digit',
-  minute: '2-digit'
-});
-
-      
-      const mensagem = `*⚽ Confirmação de Presença - Fut de ${dataFormatada}!*\n\n` +
-        `Fala galera! Chegou a hora de confirmar presença para o nosso fut!\n\n` +
-        `🗓️ Data: ${dataFormatada}\n\n` +
-        `📲 *Confirme sua presença acessando:*\n\n`+
-        `${linkCompleto}\n\n` +
-        `_Clique no link acima para confirmar sua participação._`;
-
-      if (navigator.share) {
-        await navigator.share({
-          title: 'Confirmação de Presença',
-          text: mensagem
-        });
-      } else {
-        await navigator.clipboard.writeText(mensagem);
-        toast.success('Link copiado para área de transferência!');
-      }
-    } catch (error) {
-      console.error('Erro ao gerar link:', error);
-      toast.error('Erro ao gerar link de presença');
+    } else {
+      await navigator.clipboard.writeText(mensagem);
+      toast.success('Link copiado para área de transferência!');
     }
-  };
+  } catch (error) {
+    console.error('Erro ao gerar link:', error);
+    toast.error('Erro ao gerar link de presença');
+  }
+};
+
 
   // Carrega jogadores do backend ao montar o componente
   useEffect(() => {
