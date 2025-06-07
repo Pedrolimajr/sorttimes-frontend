@@ -13,6 +13,7 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import socket from '../services/socket';
 import usePersistedState from '../hooks/usePersistedState';
+
 // Constantes para organizar os valores fixos
 const POSICOES = {
   GOLEIRO: "Goleiro",
@@ -43,36 +44,30 @@ const NIVEL_JOGADOR = {
 // Chaves para localStorage
 const LOCAL_STORAGE_KEYS = {
   JOGADORES_SELECIONADOS: "jogadoresSelecionados",
-  HISTORICO_SORTEIOS: "historicoSorteios"
-  
+  HISTORICO_SORTEIOS: "historicoSorteios",
+  PRESENCA_JOGADORES: "presencaJogadores" // Nova chave para armazenar presenças
 };
-// Defina a chave para o localStorage
-const STORAGE_KEY = 'jogadoresPresenca';
-/**
- * Componente principal para sorteio de times de futebol
- * Permite selecionar jogadores, definir posições e balancear times de diferentes formas
- */
+
 export default function SorteioTimes() {
   const navigate = useNavigate();
   
   // Estados do componente
   const [jogadoresCadastrados, setJogadoresCadastrados] = useState([]);
- const [jogadoresSelecionados, setJogadoresSelecionados] = usePersistedState(
-  LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS,
-  []
-);
+  const [jogadoresSelecionados, setJogadoresSelecionados] = usePersistedState(
+    LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS,
+    []
+  );
   const [times, setTimes] = useState([]);
-  const [balanceamento, setBalanceamento] = useState(TIPOS_BALANCEAMENTO.POSICAO); //const [balanceamento, setBalanceamento] = useState(TIPOS_BALANCEAMENTO.ALEATORIO);
+  const [balanceamento, setBalanceamento] = useState(TIPOS_BALANCEAMENTO.POSICAO);
   const [carregando, setCarregando] = useState(false);
   const [historico, setHistorico] = useState(() => {
-    const saved = localStorage.getItem('historicoSorteios');
+    const saved = localStorage.getItem(LOCAL_STORAGE_KEYS.HISTORICO_SORTEIOS);
     return saved ? JSON.parse(saved) : [];
   });
   const [carregandoJogadores, setCarregandoJogadores] = useState(false);
   const [modoEdicao, setModoEdicao] = useState(false);
   const [filtroPosicao, setFiltroPosicao] = useState('');
   const [dataJogo, setDataJogo] = useState('');
-
 
   // Carrega dados do localStorage ao montar o componente
   useEffect(() => {
@@ -84,17 +79,40 @@ export default function SorteioTimes() {
 
     // Carregar jogadores selecionados com estado de presença
     const jogadoresSalvos = localStorage.getItem(LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS);
+    const presencasSalvas = localStorage.getItem(LOCAL_STORAGE_KEYS.PRESENCA_JOGADORES);
+    
     if (jogadoresSalvos) {
-      setJogadoresSelecionados(JSON.parse(jogadoresSalvos));
+      const jogadores = JSON.parse(jogadoresSalvos);
+      const presencas = presencasSalvas ? JSON.parse(presencasSalvas) : {};
+      
+      // Combina os jogadores com as presenças salvas
+      const jogadoresComPresenca = jogadores.map(jogador => ({
+        ...jogador,
+        presente: presencas[jogador._id] || false
+      }));
+      
+      setJogadoresSelecionados(jogadoresComPresenca);
     }
   }, []);
 
   // Salva automaticamente no localStorage quando a lista de jogadores muda
   useEffect(() => {
     if (jogadoresSelecionados.length > 0) {
+      // Salva a lista completa de jogadores
       localStorage.setItem(
         LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS, 
         JSON.stringify(jogadoresSelecionados)
+      );
+      
+      // Salva apenas o estado de presença em um objeto separado
+      const presencas = {};
+      jogadoresSelecionados.forEach(jogador => {
+        presencas[jogador._id] = jogador.presente;
+      });
+      
+      localStorage.setItem(
+        LOCAL_STORAGE_KEYS.PRESENCA_JOGADORES,
+        JSON.stringify(presencas)
       );
     }
   }, [jogadoresSelecionados]);
@@ -109,82 +127,75 @@ export default function SorteioTimes() {
     }
   }, [historico]);
 
-  // Configuração do socket.io para atualizações em tempo real.
+  // Configuração do socket.io para atualizações em tempo real
   useEffect(() => {
-  let isMounted = true; // Flag para evitar atualizações após desmontagem
+    let isMounted = true;
 
-  const connectToSocket = async () => {
-    try {
-      // Conecta ao Socket.IO
-      socket.connect();
+    const connectToSocket = async () => {
+      try {
+        socket.connect();
 
-      // Configura listeners
-      const setupListeners = () => {
-        socket.on('connect', () => {
-          console.log('Conectado ao Socket.IO');
-          toast.success('Conexão em tempo real ativa');
-        });
+        const setupListeners = () => {
+          socket.on('connect', () => {
+            console.log('Conectado ao Socket.IO');
+            toast.success('Conexão em tempo real ativa');
+          });
 
-        socket.on('times-atualizados', (novosTimes) => {
-          if (isMounted) {
-            setTimes(novosTimes);
-          }
-        });
+          socket.on('times-atualizados', (novosTimes) => {
+            if (isMounted) {
+              setTimes(novosTimes);
+            }
+          });
 
-        socket.on('presencaAtualizada', ({ jogadorId, presente }) => {
-          if (isMounted) {
-            setJogadoresSelecionados(prev => 
-              prev.map(j => j._id === jogadorId ? { ...j, presente } : j)
-            );
-          }
-        });
+          socket.on('presencaAtualizada', ({ jogadorId, presente }) => {
+            if (isMounted) {
+              setJogadoresSelecionados(prev => 
+                prev.map(j => j._id === jogadorId ? { ...j, presente } : j)
+              );
+            }
+          });
 
-        socket.on('connect_error', (err) => {
-          console.error('Erro de conexão Socket.IO:', err);
-          toast.warning('Conexão em tempo real interrompida');
-          
-          // Tentar reconectar após 5 segundos
-          setTimeout(() => {
-            if (isMounted) socket.connect();
-          }, 5000);
-        });
+          socket.on('connect_error', (err) => {
+            console.error('Erro de conexão Socket.IO:', err);
+            toast.warning('Conexão em tempo real interrompida');
+            
+            setTimeout(() => {
+              if (isMounted) socket.connect();
+            }, 5000);
+          });
 
-        socket.on('disconnect', (reason) => {
-          console.log('Desconectado do Socket.IO:', reason);
-          if (reason === 'io server disconnect') {
-            // Reconexão manual necessária
-            socket.connect();
-          }
-        });
-      };
+          socket.on('disconnect', (reason) => {
+            console.log('Desconectado do Socket.IO:', reason);
+            if (reason === 'io server disconnect') {
+              socket.connect();
+            }
+          });
+        };
 
-      setupListeners();
+        setupListeners();
 
-    } catch (err) {
-      console.error('Erro ao configurar Socket.IO:', err);
-      toast.error('Recursos em tempo real não disponíveis');
-    }
-  };
+      } catch (err) {
+        console.error('Erro ao configurar Socket.IO:', err);
+        toast.error('Recursos em tempo real não disponíveis');
+      }
+    };
 
-  connectToSocket();
+    connectToSocket();
 
-  // Cleanup quando o componente desmonta
-  return () => {
-    isMounted = false;
-    
-    // Remove todos os listeners específicos
-    socket.off('connect');
-    socket.off('times-atualizados');
-    socket.off('presencaAtualizada');
-    socket.off('connect_error');
-    socket.off('disconnect');
-    
-    // Desconecta apenas se o socket ainda está conectado
-    if (socket.connected) {
-      socket.disconnect();
-    }
-  };
-}, []); // Dependências vazias para executar apenas no mount/unmount
+    return () => {
+      isMounted = false;
+      
+      socket.off('connect');
+      socket.off('times-atualizados');
+      socket.off('presencaAtualizada');
+      socket.off('connect_error');
+      socket.off('disconnect');
+      
+      if (socket.connected) {
+        socket.disconnect();
+      }
+    };
+  }, []); // Dependências vazias para executar apenas no mount/unmount
 
   /**
    * Gera um link para confirmação de presença e compartilha via WhatsApp
@@ -274,104 +285,99 @@ export default function SorteioTimes() {
 
 
   // Carrega jogadores do backend ao montar o componente
-  useEffect(() => {
-  const carregarJogadores = async () => {
-    setCarregandoJogadores(true);
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/jogadores`);
-      const { data: jogadores } = await response.json();
+   useEffect(() => {
+    const carregarJogadores = async () => {
+      setCarregandoJogadores(true);
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/jogadores`);
+        const { data: jogadores } = await response.json();
 
-      // Combina os jogadores da API com os dados salvos
-      setJogadoresSelecionados(prev => {
-        // Se não houver dados salvos, inicializa com todos presentes como false
-        if (prev.length === 0) {
-          return jogadores.map(jogador => ({
-            ...jogador,
-            presente: false,
-            posicao: jogador.posicao || POSICOES.MEIA,
-            posicaoOriginal: jogador.posicao || POSICOES.MEIA,
-            nivel: jogador.nivel === 'Associado' ? NIVEL_JOGADOR.ASSOCIADO : 
-                  jogador.nivel === 'Convidado' ? NIVEL_JOGADOR.CONVIDADO : 
-                  NIVEL_JOGADOR.INICIANTE
-          }));
-        }
-        
-        // Se já houver dados salvos, mantém o estado de presença
-        return jogadores.map(jogador => {
-          const existente = prev.find(j => j._id === jogador._id);
-          return {
-            ...jogador,
-            presente: existente ? existente.presente : false,
-            posicao: existente?.posicao || jogador.posicao || POSICOES.MEIA,
-            posicaoOriginal: jogador.posicao || POSICOES.MEIA,
-            nivel: jogador.nivel === 'Associado' ? NIVEL_JOGADOR.ASSOCIADO : 
-                  jogador.nivel === 'Convidado' ? NIVEL_JOGADOR.CONVIDADO : 
-                  NIVEL_JOGADOR.INICIANTE
-          };
+        // Carrega as presenças salvas
+        const presencasSalvas = localStorage.getItem(LOCAL_STORAGE_KEYS.PRESENCA_JOGADORES);
+        const presencas = presencasSalvas ? JSON.parse(presencasSalvas) : {};
+
+        setJogadoresSelecionados(prev => {
+          // Se não houver dados salvos, inicializa com todos presentes como false
+          if (prev.length === 0) {
+            return jogadores.map(jogador => ({
+              ...jogador,
+              presente: presencas[jogador._id] || false,
+              posicao: jogador.posicao || POSICOES.MEIA,
+              posicaoOriginal: jogador.posicao || POSICOES.MEIA,
+              nivel: jogador.nivel === 'Associado' ? NIVEL_JOGADOR.ASSOCIADO : 
+                    jogador.nivel === 'Convidado' ? NIVEL_JOGADOR.CONVIDADO : 
+                    NIVEL_JOGADOR.INICIANTE
+            }));
+          }
+          
+          // Se já houver dados salvos, mantém o estado de presença
+          return jogadores.map(jogador => {
+            const existente = prev.find(j => j._id === jogador._id);
+            return {
+              ...jogador,
+              presente: existente ? existente.presente : (presencas[jogador._id] || false),
+              posicao: existente?.posicao || jogador.posicao || POSICOES.MEIA,
+              posicaoOriginal: jogador.posicao || POSICOES.MEIA,
+              nivel: jogador.nivel === 'Associado' ? NIVEL_JOGADOR.ASSOCIADO : 
+                    jogador.nivel === 'Convidado' ? NIVEL_JOGADOR.CONVIDADO : 
+                    NIVEL_JOGADOR.INICIANTE
+            };
+          });
         });
+      } catch (error) {
+        console.error("Erro ao carregar jogadores:", error);
+        toast.error("Erro ao carregar jogadores");
+      } finally {
+        setCarregandoJogadores(false);
+      }
+    };
+
+    carregarJogadores();
+  }, []);
+
+  // Alternar presença - mantém a mesma função, mas agora salva no novo local também
+  const alternarPresenca = async (jogadorId) => {
+    const linkId = localStorage.getItem('linkPresencaId');
+
+    const jogador = jogadoresSelecionados.find(j => j._id === jogadorId);
+    if (!jogador) return;
+
+    const novoEstado = !jogador.presente;
+
+    // Atualiza imediatamente localmente para feedback visual
+    setJogadoresSelecionados(prev =>
+      prev.map(j => j._id === jogadorId ? { ...j, presente: novoEstado } : j)
+    );
+
+    if (!linkId) {
+      console.warn("Sem linkId encontrado, presença alterada apenas localmente.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/presenca/${linkId}/confirmar`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          jogadorId,
+          presente: novoEstado
+        })
       });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.message || "Erro ao confirmar presença");
+      }
+
+      toast.success(novoEstado ? '✅ Presença confirmada!' : '❌ Presença desmarcada!');
     } catch (error) {
-      console.error("Erro ao carregar jogadores:", error);
-      toast.error("Erro ao carregar jogadores");
-    } finally {
-      setCarregandoJogadores(false);
+      console.error("Erro ao atualizar presença:", error);
+      toast.error("Erro ao comunicar com o servidor.");
     }
   };
-
-  carregarJogadores();
-}, []); // Executa apenas uma vez ao montar
-
-  // Persiste o histórico no localStorage
-  useEffect(() => {
-    localStorage.setItem('historicoSorteios', JSON.stringify(historico));
-  }, [historico]);
-
-  /**
-   * Alterna o estado de presença de um jogador
-   * @param {string} id - ID do jogador
-   */
-const alternarPresenca = async (jogadorId) => {
-  const linkId = localStorage.getItem('linkPresencaId');
-
-  const jogador = jogadoresSelecionados.find(j => j._id === jogadorId);
-  if (!jogador) return;
-
-  const novoEstado = !jogador.presente;
-
-  // Atualiza imediatamente localmente para feedback visual
-  setJogadoresSelecionados(prev =>
-    prev.map(j => j._id === jogadorId ? { ...j, presente: novoEstado } : j)
-  );
-
-  if (!linkId) {
-    console.warn("Sem linkId encontrado, presença alterada apenas localmente.");
-    return;
-  }
-
-  try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/presenca/${linkId}/confirmar`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        jogadorId,
-        presente: novoEstado
-      })
-    });
-
-    const result = await response.json();
-
-    if (!result.success) {
-      throw new Error(result.message || "Erro ao confirmar presença");
-    }
-
-    toast.success(novoEstado ? '✅ Presença confirmada!' : '❌ Presença desmarcada!');
-  } catch (error) {
-    console.error("Erro ao atualizar presença:", error);
-    toast.error("Erro ao comunicar com o servidor.");
-  }
-};
 
 
  
