@@ -216,14 +216,11 @@ export default function SorteioTimes() {
 
       const linkCompleto = `${window.location.origin}/confirmar-presenca/${linkId}`;
       
-      const dataFormatada = new Date(dataJogo).toLocaleString('pt-BR', {
-  weekday: 'long',
-  day: 'numeric',
-  month: 'long',
-  hour: '2-digit',
-  minute: '2-digit'
-});
-
+      const dataFormatada = new Date(dataJogo).toLocaleDateString('pt-BR', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long'
+      });
       
       const mensagem = `*⚽ Confirmação de Presença - Fut de ${dataFormatada}!*\n\n` +
         `Fala galera! Chegou a hora de confirmar presença para o nosso fut!\n\n` +
@@ -247,32 +244,6 @@ export default function SorteioTimes() {
     }
   };
 
-  const compartilharJogadoresSelecionados = () => {
-  const jogadoresPresentes = jogadoresSelecionados.filter(j => j.presente);
-
-  if (jogadoresPresentes.length === 0) {
-    toast.info("Nenhum jogador marcado como presente.");
-    return;
-  }
-
-  const listaNomes = jogadoresPresentes
-    .map((j, i) => `${i + 1}. ${j.nome}`)
-    .join('\n');
-
-  const texto = `✅ *Lista dos Jogadores Confirmados:*\n\n${listaNomes}\n\nVamos com tudo pra mais um jogão! ⚽`;
-
-  if (navigator.share) {
-    navigator.share({
-      title: 'Jogadores Confirmados',
-      text: texto
-    }).catch(err => console.error('Erro ao compartilhar:', err));
-  } else {
-    navigator.clipboard.writeText(texto);
-    toast.success("Lista copiada para área de transferência!");
-  }
-};
-
-
   // Carrega jogadores do backend ao montar o componente
   useEffect(() => {
   const carregarJogadores = async () => {
@@ -281,30 +252,32 @@ export default function SorteioTimes() {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/jogadores`);
       const { data: jogadores } = await response.json();
 
+      // Combina os jogadores da API com os dados salvos
       setJogadoresSelecionados(prev => {
-        // Se não houver dados salvos, inicializa com todos como false
-        if (!prev || prev.length === 0) {
+        // Se não houver dados salvos, inicializa com todos presentes como false
+        if (prev.length === 0) {
           return jogadores.map(jogador => ({
             ...jogador,
             presente: false,
             posicao: jogador.posicao || POSICOES.MEIA,
             posicaoOriginal: jogador.posicao || POSICOES.MEIA,
-            nivel: parseNivel(jogador.nivel)
+            nivel: jogador.nivel === 'Associado' ? NIVEL_JOGADOR.ASSOCIADO : 
+                  jogador.nivel === 'Convidado' ? NIVEL_JOGADOR.CONVIDADO : 
+                  NIVEL_JOGADOR.INICIANTE
           }));
         }
         
-        // Mantém os estados existentes e adiciona novos jogadores
+        // Se já houver dados salvos, mantém o estado de presença
         return jogadores.map(jogador => {
           const existente = prev.find(j => j._id === jogador._id);
-          if (existente) {
-            return existente; // Mantém o jogador exatamente como estava
-          }
           return {
             ...jogador,
-            presente: false, // Novos jogadores começam como não presentes
-            posicao: jogador.posicao || POSICOES.MEIA,
+            presente: existente ? existente.presente : false,
+            posicao: existente?.posicao || jogador.posicao || POSICOES.MEIA,
             posicaoOriginal: jogador.posicao || POSICOES.MEIA,
-            nivel: parseNivel(jogador.nivel)
+            nivel: jogador.nivel === 'Associado' ? NIVEL_JOGADOR.ASSOCIADO : 
+                  jogador.nivel === 'Convidado' ? NIVEL_JOGADOR.CONVIDADO : 
+                  NIVEL_JOGADOR.INICIANTE
           };
         });
       });
@@ -318,35 +291,6 @@ export default function SorteioTimes() {
 
   carregarJogadores();
 }, []); // Executa apenas uma vez ao montar
-
-//Carregar estado salvo
-// Carrega estado salvo ao iniciar
-useEffect(() => {
-  const carregarEstadoSalvo = async () => {
-    try {
-      const jogadoresSalvos = localStorage.getItem(LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS);
-      if (jogadoresSalvos) {
-        const parsed = JSON.parse(jogadoresSalvos);
-        if (parsed && parsed.length > 0) {
-          setJogadoresSelecionados(parsed);
-        }
-      }
-    } catch (error) {
-      console.error("Erro ao carregar estado salvo:", error);
-    }
-  };
-
-  carregarEstadoSalvo();
-}, []);
-
-
-//Evitar repetição de código
-const parseNivel = (nivelStr) => {
-  return nivelStr === 'Associado' ? NIVEL_JOGADOR.ASSOCIADO : 
-         nivelStr === 'Convidado' ? NIVEL_JOGADOR.CONVIDADO : 
-         NIVEL_JOGADOR.INICIANTE;
-};
-
 
   // Persiste o histórico no localStorage
   useEffect(() => {
@@ -1008,24 +952,10 @@ const TimeSorteado = ({ time, index }) => {
 
             {/* Lista de jogadores selecionados */}
             <div className="mb-4 sm:mb-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-  <h3 className="text-xs sm:text-sm font-medium text-gray-400 flex items-center gap-2">
-    <FaTshirt className="text-blue-400 text-sm sm:text-base" />
-    Jogadores Selecionados ({jogadoresSelecionados.filter(j => j.presente).length}/{jogadoresSelecionados.length})
-  </h3>
-
-  <motion.button
-    onClick={compartilharJogadoresSelecionados}
-    whileHover={{ scale: 1.05 }}
-    whileTap={{ scale: 0.95 }}
-    className="w-full sm:w-auto flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg text-xs sm:text-sm text-white bg-blue-600 hover:bg-blue-700 transition-all"
-    title="Compartilhar jogadores presentes"
-  >
-    <FaShare className="text-white text-sm" />
-    Compartilhar
-  </motion.button>
-
-
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-xs sm:text-sm font-medium text-gray-400 flex items-center gap-2">
+                  <FaTshirt className="text-blue-400 text-sm sm:text-base" /> Jogadores Selecionados ({jogadoresSelecionados.filter(j => j.presente).length}/{jogadoresSelecionados.length})
+                </h3>
                 <div className="text-xs text-gray-400">
                   Serão formados 2 times
                 </div>
