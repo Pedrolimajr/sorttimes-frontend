@@ -261,8 +261,11 @@ const compartilharJogadoresSelecionados = () => {
     return;
   }
 
-  const texto = `✅ Jogadores Confirmados para o Fut:\n\n` + 
-    jogadoresPresentes.map(j => `- ${j.nome} (${j.posicao})`).join('\n');
+  const listaNomes = jogadoresPresentes
+    .map((j, i) => `${i + 1}. ${j.nome}`)
+    .join('\n');
+
+  const texto = `✅ *Lista dos Jogadores Confirmados:*\n\n${listaNomes}\n\nVamos com tudo pra mais um jogão! ⚽`;
 
   if (navigator.share) {
     navigator.share({
@@ -274,6 +277,7 @@ const compartilharJogadoresSelecionados = () => {
     toast.success("Lista copiada para área de transferência!");
   }
 };
+
 
   // Carrega jogadores do backend ao montar o componente
   useEffect(() => {
