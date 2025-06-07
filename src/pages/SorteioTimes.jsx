@@ -261,8 +261,11 @@ const compartilharJogadoresSelecionados = () => {
     return;
   }
 
-  const texto = `✅ Jogadores Confirmados para o Fut:\n\n` + 
-    jogadoresPresentes.map(j => `- ${j.nome} (${j.posicao})`).join('\n');
+  const listaNomes = jogadoresPresentes
+    .map((j, i) => `${i + 1}. ${j.nome}`)
+    .join('\n');
+
+  const texto = `✅ *Lista dos Jogadores Confirmados:*\n\n${listaNomes}\n\nVamos com tudo pra mais um jogão! ⚽`;
 
   if (navigator.share) {
     navigator.share({
@@ -274,6 +277,7 @@ const compartilharJogadoresSelecionados = () => {
     toast.success("Lista copiada para área de transferência!");
   }
 };
+
 
 
   // Carrega jogadores do backend ao montar o componente
@@ -985,19 +989,24 @@ const TimeSorteado = ({ time, index }) => {
 
             {/* Lista de jogadores selecionados */}
             <div className="mb-4 sm:mb-6">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="text-xs sm:text-sm font-medium text-gray-400 flex items-center gap-2">
-                  <FaTshirt className="text-blue-400 text-sm sm:text-base" /> Jogadores Selecionados ({jogadoresSelecionados.filter(j => j.presente).length}/{jogadoresSelecionados.length})
-                </h3>
-                <motion.button
+             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+  <h3 className="text-xs sm:text-sm font-medium text-gray-400 flex items-center gap-2">
+    <FaTshirt className="text-blue-400 text-sm sm:text-base" />
+    Jogadores Selecionados ({jogadoresSelecionados.filter(j => j.presente).length}/{jogadoresSelecionados.length})
+  </h3>
+
+  <motion.button
     onClick={compartilharJogadoresSelecionados}
     whileHover={{ scale: 1.05 }}
     whileTap={{ scale: 0.95 }}
-    className="text-blue-400 hover:text-blue-300 text-xs sm:text-sm flex items-center gap-1"
+    className="w-full sm:w-auto flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg text-xs sm:text-sm text-white bg-blue-600 hover:bg-blue-700 transition-all"
     title="Compartilhar jogadores presentes"
   >
-    <FaShare /> Compartilhar
+    <FaShare className="text-white text-sm" />
+    Compartilhar
   </motion.button>
+
+
                 <div className="text-xs text-gray-400">
                   Serão formados 2 times
                 </div>
