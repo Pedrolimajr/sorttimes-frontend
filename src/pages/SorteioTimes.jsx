@@ -252,6 +252,28 @@ export default function SorteioTimes() {
     toast.error('Erro ao gerar link de presença');
   }
 };
+// Compartilhamento de Jogadores Selecionados
+const compartilharJogadoresSelecionados = () => {
+  const jogadoresPresentes = jogadoresSelecionados.filter(j => j.presente);
+
+  if (jogadoresPresentes.length === 0) {
+    toast.info("Nenhum jogador marcado como presente.");
+    return;
+  }
+
+  const texto = `✅ Jogadores Confirmados para o Fut:\n\n` + 
+    jogadoresPresentes.map(j => `- ${j.nome} (${j.posicao})`).join('\n');
+
+  if (navigator.share) {
+    navigator.share({
+      title: 'Jogadores Confirmados',
+      text: texto
+    }).catch(err => console.error('Erro ao compartilhar:', err));
+  } else {
+    navigator.clipboard.writeText(texto);
+    toast.success("Lista copiada para área de transferência!");
+  }
+};
 
 
   // Carrega jogadores do backend ao montar o componente
@@ -960,12 +982,22 @@ const TimeSorteado = ({ time, index }) => {
               </select>
             </div>
 
+
             {/* Lista de jogadores selecionados */}
             <div className="mb-4 sm:mb-6">
               <div className="flex justify-between items-center mb-2">
                 <h3 className="text-xs sm:text-sm font-medium text-gray-400 flex items-center gap-2">
                   <FaTshirt className="text-blue-400 text-sm sm:text-base" /> Jogadores Selecionados ({jogadoresSelecionados.filter(j => j.presente).length}/{jogadoresSelecionados.length})
                 </h3>
+                <motion.button
+    onClick={compartilharJogadoresSelecionados}
+    whileHover={{ scale: 1.05 }}
+    whileTap={{ scale: 0.95 }}
+    className="text-blue-400 hover:text-blue-300 text-xs sm:text-sm flex items-center gap-1"
+    title="Compartilhar jogadores presentes"
+  >
+    <FaShare /> Compartilhar
+  </motion.button>
                 <div className="text-xs text-gray-400">
                   Serão formados 2 times
                 </div>
