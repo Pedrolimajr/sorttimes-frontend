@@ -275,57 +275,78 @@ export default function SorteioTimes() {
 
   // Carrega jogadores do backend ao montar o componente
   useEffect(() => {
-const carregarJogadores = async () => {
-  setCarregandoJogadores(true);
+  const carregarJogadores = async () => {
+    setCarregandoJogadores(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/jogadores`);
+      const { data: jogadores } = await response.json();
 
-  try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/jogadores`);
-    const { data: jogadores } = await response.json();
-
-    const jogadoresSalvosLocal = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS) || '[]');
-    
-    // 🔁 Buscar presenças salvas no backend (se houver linkId)
-    const linkId = localStorage.getItem('linkPresencaId');
-    let presencaBackend = [];
-
-    if (linkId) {
-      try {
-        const presencaResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/presenca/${linkId}`);
-        const { data } = await presencaResponse.json();
-        presencaBackend = data.jogadores;
-      } catch (err) {
-        console.error("Erro ao buscar presenças do backend:", err);
-      }
+      setJogadoresSelecionados(prev => {
+        // Se não houver dados salvos, inicializa com todos como false
+        if (!prev || prev.length === 0) {
+          return jogadores.map(jogador => ({
+            ...jogador,
+            presente: false,
+            posicao: jogador.posicao || POSICOES.MEIA,
+            posicaoOriginal: jogador.posicao || POSICOES.MEIA,
+            nivel: parseNivel(jogador.nivel)
+          }));
+        }
+        
+        // Mantém os estados existentes e adiciona novos jogadores
+        return jogadores.map(jogador => {
+          const existente = prev.find(j => j._id === jogador._id);
+          if (existente) {
+            return existente; // Mantém o jogador exatamente como estava
+          }
+          return {
+            ...jogador,
+            presente: false, // Novos jogadores começam como não presentes
+            posicao: jogador.posicao || POSICOES.MEIA,
+            posicaoOriginal: jogador.posicao || POSICOES.MEIA,
+            nivel: parseNivel(jogador.nivel)
+          };
+        });
+      });
+    } catch (error) {
+      console.error("Erro ao carregar jogadores:", error);
+      toast.error("Erro ao carregar jogadores");
+    } finally {
+      setCarregandoJogadores(false);
     }
-
-    const jogadoresCombinados = jogadores.map(jogador => {
-      const salvo = jogadoresSalvosLocal.find(j => j._id === jogador._id);
-      const remoto = presencaBackend.find(p => p.id === jogador._id);
-
-      return {
-        ...jogador,
-        presente: remoto?.presente ?? salvo?.presente ?? false,
-        posicao: salvo?.posicao || jogador.posicao || POSICOES.MEIA,
-        posicaoOriginal: jogador.posicao || POSICOES.MEIA,
-        nivel: jogador.nivel === 'Associado' ? NIVEL_JOGADOR.ASSOCIADO : 
-              jogador.nivel === 'Convidado' ? NIVEL_JOGADOR.CONVIDADO : 
-              NIVEL_JOGADOR.INICIANTE
-      };
-    });
-
-    setJogadoresSelecionados(jogadoresCombinados);
-
-  } catch (error) {
-    console.error("Erro ao carregar jogadores:", error);
-    toast.error("Erro ao carregar jogadores");
-  } finally {
-    setCarregandoJogadores(false);
-  }
-};
-
+  };
 
   carregarJogadores();
 }, []); // Executa apenas uma vez ao montar
+
+//Carregar estado salvo
+// Carrega estado salvo ao iniciar
+useEffect(() => {
+  const carregarEstadoSalvo = async () => {
+    try {
+      const jogadoresSalvos = localStorage.getItem(LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS);
+      if (jogadoresSalvos) {
+        const parsed = JSON.parse(jogadoresSalvos);
+        if (parsed && parsed.length > 0) {
+          setJogadoresSelecionados(parsed);
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao carregar estado salvo:", error);
+    }
+  };
+
+  carregarEstadoSalvo();
+}, []);
+
+
+//Evitar repetição de código
+const parseNivel = (nivelStr) => {
+  return nivelStr === 'Associado' ? NIVEL_JOGADOR.ASSOCIADO : 
+         nivelStr === 'Convidado' ? NIVEL_JOGADOR.CONVIDADO : 
+         NIVEL_JOGADOR.INICIANTE;
+};
+
 
   // Persiste o histórico no localStorage
   useEffect(() => {
