@@ -253,48 +253,7 @@ export default function SorteioTimes() {
   }
 };
 // Compartilhamento de Jogadores Selecionados
-const compartilharJogadoresSelecionados = () => {
-  if (!dataJogo) {
-    toast.warning("Nenhuma data de jogo selecionada.");
-    return;
-  }
-
-  // Filtra os jogadores confirmados para a data selecionada
-  const jogadoresConfirmados = jogadoresSelecionados.filter(j => j.presente);
-
-  if (jogadoresConfirmados.length === 0) {
-    toast.info("Nenhum jogador confirmou presença para esta data.");
-    return;
-  }
-
-  // Formata a data do jogo com primeira letra maiúscula
-  const data = new Date(dataJogo);
-  const diaSemana = data.toLocaleDateString('pt-BR', { weekday: 'long' });
-  const dia = data.getDate();
-  const mes = data.toLocaleDateString('pt-BR', { month: 'long' });
-  const hora = data.getHours().toString().padStart(2, '0');
-  const minutos = data.getMinutes().toString().padStart(2, '0');
-
-  const capitalizar = str => str.charAt(0).toUpperCase() + str.slice(1);
-  const dataFormatada = `${capitalizar(diaSemana)}, ${dia} de ${capitalizar(mes)} às ${hora}:${minutos}`;
-
-  // Gera a lista dos nomes confirmados
-  const lista = jogadoresConfirmados
-    .map((j, i) => `${i + 1}. ${j.nome}`)
-    .join('\n');
-
-  const texto = `✅ *Lista dos Jogadores Confirmados - ${dataFormatada}:*\n\n${lista}\n\n⚽ _Vamos com tudo pra mais um jogão!_`;
-
-  if (navigator.share) {
-    navigator.share({
-      title: 'Jogadores Confirmados',
-      text: texto
-    }).catch(err => console.error('Erro ao compartilhar:', err));
-  } else {
-    navigator.clipboard.writeText(texto);
-    toast.success("Lista copiada para área de transferência!");
-  }
-};
+localStorage.setItem('dataJogo', dataJogo);
 
 
 
