@@ -33,6 +33,11 @@ export default function ListaJogadores({
   const [editando, setEditando] = useState(null);
   const [carregando, setCarregando] = useState(true);
   const [mensagemSucesso, setMensagemSucesso] = useState(null);
+  const [fotoAmpliada, setFotoAmpliada] = useState({
+    aberto: false,
+    url: null,
+    nome: ''
+  });
   
   const [formData, setFormData] = useState({
     nome: '',
@@ -47,6 +52,22 @@ export default function ListaJogadores({
     numeroCamisa: '',
     nivel: 'Associado'
   });
+
+  const abrirFotoAmpliada = (url, nome) => {
+    setFotoAmpliada({
+      aberto: true,
+      url,
+      nome
+    });
+  };
+
+  const fecharFotoAmpliada = () => {
+    setFotoAmpliada({
+      aberto: false,
+      url: null,
+      nome: ''
+    });
+  };
 
   useEffect(() => {
     const carregarJogadores = async () => {
@@ -113,7 +134,6 @@ export default function ListaJogadores({
     try {
       const formDataToSend = new FormData();
       
-      // Ajustando as datas para garantir o dia correto
       if (formData.dataNascimento) {
         const nascimento = new Date(formData.dataNascimento + 'T12:00:00');
         formDataToSend.append('dataNascimento', nascimento.toISOString());
@@ -124,7 +144,6 @@ export default function ListaJogadores({
         formDataToSend.append('dataIngresso', ingresso.toISOString());
       }
 
-      // Adiciona os outros campos
       Object.keys(formData).forEach(key => {
         if (key !== 'dataNascimento' && key !== 'dataIngresso' && 
             formData[key] !== null && formData[key] !== undefined) {
@@ -251,15 +270,53 @@ export default function ListaJogadores({
       toast.error(error.message || 'Erro ao atualizar status');
     }
   };
-// Contagem de jogadores por nível
+
   const totalAssociados = jogadores.filter(j => j.nivel === 'Associado').length;
-const totalConvidados = jogadores.filter(j => j.nivel === 'Convidado').length;
-const totalVisitantes = jogadores.filter(j => j.nivel === 'Visitante').length;
-const totalGeral = jogadores.length;
+  const totalConvidados = jogadores.filter(j => j.nivel === 'Convidado').length;
+  const totalVisitantes = jogadores.filter(j => j.nivel === 'Visitante').length;
+  const totalGeral = jogadores.length;
 
-
- return (
+  return (
     <div className={`${!modoSelecao ? 'min-h-screen' : ''} bg-gray-900 p-4 sm:p-6`}>
+      {/* Modal para foto ampliada */}
+      <AnimatePresence>
+        {fotoAmpliada.aberto && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 p-4"
+            onClick={fecharFotoAmpliada}
+          >
+            <motion.div
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              className="relative max-w-4xl w-full max-h-[90vh]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={fecharFotoAmpliada}
+                className="absolute -top-10 right-0 text-white hover:text-gray-300 z-10"
+              >
+                <FaTimes size={24} />
+              </button>
+              
+              <div className="bg-gray-800 rounded-lg overflow-hidden">
+                <img 
+                  src={fotoAmpliada.url} 
+                  alt={fotoAmpliada.nome}
+                  className="w-full h-auto max-h-[80vh] object-contain"
+                />
+                <div className="p-4 text-center text-white">
+                  {fotoAmpliada.nome}
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {!modoSelecao && (
         <AnimatePresence>
           {mensagemSucesso && (
@@ -284,7 +341,6 @@ const totalGeral = jogadores.length;
           animate={{ opacity: 1, y: 0 }}
           className="mb-8 relative pt-16 sm:pt-0 text-center"
         >
-          {/* Botão Voltar */}
           <motion.button 
             onClick={() => navigate('/dashboard')}
             whileHover={{ 
@@ -303,7 +359,6 @@ const totalGeral = jogadores.length;
             <div className="absolute inset-0 rounded-full bg-blue-400/10 animate-pulse" style={{ animationDuration: '3s' }} />
           </motion.button>
 
-          {/* Título e Subtítulo */}
           <div className="flex flex-col items-center gap-2">
             <div className="flex items-center justify-center gap-3">
               <FaUsers className="text-blue-400 text-2xl sm:text-3xl" />
@@ -682,9 +737,13 @@ const totalGeral = jogadores.length;
                   >
                     {jogador.foto ? (
                       <img 
-                        className="h-12 w-12 rounded-full object-cover" 
+                        className="h-12 w-12 rounded-full object-cover cursor-pointer" 
                         src={jogador.foto} 
-                        alt={jogador.nome} 
+                        alt={jogador.nome}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          abrirFotoAmpliada(jogador.foto, jogador.nome);
+                        }}
                       />
                     ) : (
                       <div className="h-12 w-12 rounded-full bg-gray-600 flex items-center justify-center">
@@ -706,7 +765,6 @@ const totalGeral = jogadores.length;
                   <div className="overflow-hidden">
                     <div className="max-h-[60vh] sm:max-h-[65vh] md:max-h-[70vh] lg:max-h-[75vh] overflow-y-auto">
                       <table className="min-w-full divide-y divide-gray-700">
-
                         <thead className="bg-gray-700 sticky top-0">
                           <tr>
                             <th className="px-4 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider sm:px-6">Jogador</th>
@@ -728,7 +786,10 @@ const totalGeral = jogadores.length;
                               <td className="px-4 py-4 whitespace-nowrap sm:px-6">
                                 <div className="flex items-center space-x-3">
                                   {jogador.foto ? (
-                                    <div className="flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12">
+                                    <div 
+                                      className="flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12 cursor-pointer"
+                                      onClick={() => abrirFotoAmpliada(jogador.foto, jogador.nome)}
+                                    >
                                       <img 
                                         className="h-10 w-10 sm:h-12 sm:w-12 rounded-full object-cover" 
                                         src={jogador.foto} 
@@ -832,18 +893,14 @@ const totalGeral = jogadores.length;
                         </tbody>
                       </table>
                     </div>
-                                                        {/* Rodapé com contagem de jogadores */}
-                      {/* Contador fixo e responsivo fora da rolagem */}
-<div className="sticky bottom-0 left-0 w-full bg-gray-900 border-t border-gray-700 py-3 px-4 text-center text-gray-300 text-sm sm:text-base z-20 shadow-inner">
-  <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
-    <span>Associados: <strong>{totalAssociados}</strong></span>
-    <span>Convidados: <strong>{totalConvidados}</strong></span>
-    <span>Visitantes: <strong>{totalVisitantes}</strong></span>
-    <span>Total: <strong>{totalGeral}</strong></span>
-  </div>
-</div>
-
-
+                    <div className="sticky bottom-0 left-0 w-full bg-gray-900 border-t border-gray-700 py-3 px-4 text-center text-gray-300 text-sm sm:text-base z-20 shadow-inner">
+                      <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
+                        <span>Associados: <strong>{totalAssociados}</strong></span>
+                        <span>Convidados: <strong>{totalConvidados}</strong></span>
+                        <span>Visitantes: <strong>{totalVisitantes}</strong></span>
+                        <span>Total: <strong>{totalGeral}</strong></span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -854,4 +911,3 @@ const totalGeral = jogadores.length;
     </div>
   );
 }
-
