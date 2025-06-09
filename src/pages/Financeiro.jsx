@@ -71,19 +71,23 @@ export default function Financeiro() {
 const [isento, setIsento] = useState(false);
 
   const STORAGE_KEY = 'dadosFinanceiros';
- useEffect(() => {
+useEffect(() => {
   const carregarDados = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.warn("Usuário não autenticado — carregamento abortado.");
+      return;
+    }
+
     try {
       setCarregando(true);
 
-      // Tenta carregar do cache primeiro
       const cachedData = JSON.parse(localStorage.getItem(STORAGE_KEY));
       if (cachedData) {
         setJogadores(cachedData.jogadoresCache || []);
         setTransacoes(cachedData.transacoesCache || []);
       }
 
-      // Busca dados da API
       const [jogadoresRes, transacoesRes] = await Promise.all([
         api.get('/jogadores'),
         api.get('/financeiro/transacoes')
