@@ -68,7 +68,72 @@ export default function Financeiro() {
   });
 
 // No início do componente, adicione:
-const [isento, setIsento] = useState(false);
+const [modalIsento, setModalIsento] = useState({
+  aberto: false,
+  jogadorId: null,
+  mesIndex: null,
+  dataSelecionada: new Date().toISOString().split('T')[0]
+});
+
+const abrirModalIsento = (jogadorId, mesIndex) => {
+  setModalIsento({
+    aberto: true,
+    jogadorId,
+    mesIndex,
+    dataSelecionada: new Date().toISOString().split('T')[0]
+  });
+};
+
+<Modal isOpen={modalIsento.aberto} onRequestClose={() => setModalIsento({...modalIsento, aberto: false})}>
+  <h2>Lançar Isenção</h2>
+  <label>Data do Pagamento:</label>
+  <input
+    type="date"
+    value={modalIsento.dataSelecionada}
+    onChange={(e) => setModalIsento({...modalIsento, dataSelecionada: e.target.value})}
+  />
+  <button onClick={async () => {
+    await handleIsento(modalIsento.jogadorId, modalIsento.mesIndex, modalIsento.dataSelecionada);
+    setModalIsento({...modalIsento, aberto: false});
+  }}>
+    Confirmar Isenção
+  </button>
+</Modal>
+
+const handleIsento = async (jogadorId, mesIndex, dataPagamento) => {
+  try {
+    const response = await api.post(`/jogadores/${jogadorId}/pagamentos`, {
+      mes: mesIndex,
+      pago: true,
+      isento: true,
+      valor: 0,
+      dataPagamento: new Date(dataPagamento).toISOString()
+    });
+
+    // Atualização otimista
+    setJogadores(prev => prev.map(j => {
+      if (j._id === jogadorId) {
+        const updatedPagamentos = [...j.pagamentos];
+        const updatedIsentoMeses = { ...j.isentoMeses };
+        
+        updatedPagamentos[mesIndex] = true;
+        updatedIsentoMeses[mesIndex] = true;
+
+        return {
+          ...j,
+          pagamentos: updatedPagamentos,
+          isentoMeses: updatedIsentoMeses
+        };
+      }
+      return j;
+    }));
+
+    toast.success('Isenção lançada com sucesso!');
+  } catch (error) {
+    console.error("Erro ao lançar isenção:", error);
+    toast.error('Erro ao lançar isenção');
+  }
+};
 
   const STORAGE_KEY = 'dadosFinanceiros';
 useEffect(() => {
@@ -100,14 +165,17 @@ useEffect(() => {
 
         const pagamentos = Array(12).fill(false);
         const isentoMeses = {}; // Novo objeto para armazenar meses isentos
+        const datasPagamento = {}; // Novo: armazena datas específicas
+
 
         transacoesJogador.forEach(t => {
           const mes = new Date(t.data).getMonth();
           pagamentos[mes] = true;
           
           // Marca como isento se a transação tiver isento: true
-          if (t.isento) {
+       if (t.isento) {
             isentoMeses[mes] = true;
+            datasPagamento[mes] = t.data; // Armazena a data específica
           }
         });
 
@@ -120,6 +188,7 @@ useEffect(() => {
           ...jogador,
           pagamentos,
           isentoMeses, // Adiciona informação de isenção
+           datasPagamento, // Adiciona ao estado
           statusFinanceiro: todosMesesPagos ? 'Adimplente' : 'Inadimplente'
         };
       });
