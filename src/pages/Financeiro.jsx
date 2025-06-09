@@ -978,6 +978,7 @@ const togglePagamento = async (jogadorId, mesIndex) => {
                   >
                     <option value="receita">Receita</option>
                     <option value="despesa">Despesa</option>
+                    <option value="despesa">Isento</option>
                   </select>
                 </div>
 
