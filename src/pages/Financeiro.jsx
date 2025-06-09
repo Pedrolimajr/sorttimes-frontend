@@ -326,7 +326,7 @@ const togglePagamento = async (jogadorId, mesIndex) => {
     setJogadores(jogadoresAtualizados);
 
     // Chamada à API
-    const response = await api.post(`/jogadores/${jogadorId}/pagamento`, {
+    const response = await api.post(`/jogadores/${jogadorId}/pagamentos`, {
       mes: mesIndex,
       pago: !jogador.pagamentos[mesIndex],
       isento: isentoFlag,
