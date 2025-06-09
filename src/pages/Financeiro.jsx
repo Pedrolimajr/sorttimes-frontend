@@ -67,6 +67,9 @@ export default function Financeiro() {
     totalJogadores: 0
   });
 
+// No início do componente, adicione:
+const [isento, setIsento] = useState(false);
+
   const STORAGE_KEY = 'dadosFinanceiros';
  useEffect(() => {
   const carregarDados = async () => {
@@ -144,9 +147,11 @@ export default function Financeiro() {
       if (!transacoes || !jogadores) return; // Evita cálculos desnecessários
       
       try {
-        const receitasMes = transacoes
-          .filter(t => t?.tipo === "receita" && t?.data?.startsWith(filtroMes?.slice(0, 4)))
-          .reduce((acc, t) => acc + (Number(t?.valor) || 0), 0);
+       const receitasMes = transacoes
+  .filter(t => t?.tipo === "receita" && 
+              t?.data?.startsWith(filtroMes?.slice(0, 4)) &&
+              !t.isento) // Ignora transações isentas
+  .reduce((acc, t) => acc + (Number(t?.valor) || 0), 0);
 
         const despesasMes = transacoes
           .filter(t => t.tipo === "despesa" && t.data?.startsWith(filtroMes.slice(0, 4)))
@@ -280,12 +285,11 @@ export default function Financeiro() {
   }
 };
 
-  const togglePagamento = async (jogadorId, mesIndex) => {
+const togglePagamento = async (jogadorId, mesIndex) => {
   try {
     const jogador = jogadores.find(j => j._id === jogadorId);
     if (!jogador) throw new Error('Jogador não encontrado');
 
-    const novoStatus = !jogador.pagamentos[mesIndex];
     const mesAtual = new Date().getMonth();
 
     if (mesIndex > mesAtual) {
@@ -293,11 +297,18 @@ export default function Financeiro() {
       return;
     }
 
+    // Pergunta se é isenção se estiver marcando como pago
+    let isentoFlag = false;
+    if (!jogador.pagamentos[mesIndex]) {
+      const confirmarIsento = window.confirm('Deseja marcar como isento? (Sem valor financeiro)');
+      isentoFlag = confirmarIsento;
+    }
+
     // Atualização otimista
     const jogadoresAtualizados = jogadores.map(j => {
       if (j._id === jogadorId) {
         const pagamentosAtualizados = [...j.pagamentos];
-        pagamentosAtualizados[mesIndex] = novoStatus;
+        pagamentosAtualizados[mesIndex] = !jogador.pagamentos[mesIndex] || isentoFlag;
 
         const todosMesesPagos = pagamentosAtualizados
           .slice(0, mesAtual + 1)
@@ -314,55 +325,34 @@ export default function Financeiro() {
 
     setJogadores(jogadoresAtualizados);
 
-    // Atualiza localStorage imediatamente
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      jogadoresCache: jogadoresAtualizados,
-      transacoesCache: transacoes,
-      lastUpdate: new Date().toISOString()
-    }));
-
     // Chamada à API
     const response = await api.post(`/jogadores/${jogadorId}/pagamento`, {
       mes: mesIndex,
-      pago: novoStatus,
-      valor: 100,
-      dataPagamento: novoStatus ? new Date().toISOString() : null
+      pago: !jogador.pagamentos[mesIndex],
+      isento: isentoFlag,
+      valor: isentoFlag ? 0 : 100,
+      dataPagamento: !jogador.pagamentos[mesIndex] ? new Date().toISOString() : null
     });
 
-    if (!response.data?.success) {
-      throw new Error('Erro ao atualizar pagamento na API');
-    }
-
-    // Se foi marcado como pago, cria a transação
-    if (novoStatus) {
-      const jogadorAtualizado = jogadoresAtualizados.find(j => j._id === jogadorId);
-      
+    // Atualiza transações se necessário
+    if (!jogador.pagamentos[mesIndex]) {
       const transacaoResponse = await api.post('/financeiro/transacoes', {
-        descricao: `Mensalidade - ${jogadorAtualizado.nome} (${mesIndex + 1}/${new Date().getFullYear()})`,
-        valor: 100,
+        descricao: `Mensalidade ${isentoFlag ? 'Isenta' : ''} - ${jogador.nome} (${mesIndex + 1}/${new Date().getFullYear()})`,
+        valor: isentoFlag ? 0 : 100,
         tipo: 'receita',
         categoria: 'mensalidade',
         data: new Date().toISOString(),
         jogadorId: jogadorId,
-        jogadorNome: jogadorAtualizado.nome
+        jogadorNome: jogador.nome,
+        isento: isentoFlag
       });
 
-      if (transacaoResponse.data?.success) {
-        setTransacoes(prev => [transacaoResponse.data.data, ...prev]);
-        
-        // Atualiza localStorage novamente com a nova transação
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-          jogadoresCache: jogadoresAtualizados,
-          transacoesCache: [transacaoResponse.data.data, ...transacoes],
-          lastUpdate: new Date().toISOString()
-        }));
-      }
+      setTransacoes(prev => [transacaoResponse.data.data, ...prev]);
     }
 
-    toast.success(`Pagamento ${novoStatus ? 'registrado' : 'removido'} com sucesso!`);
+    toast.success(`Mensalidade ${isentoFlag ? 'isentada' : jogador.pagamentos[mesIndex] ? 'removida' : 'registrada'} com sucesso!`);
   } catch (error) {
     console.error("Erro ao atualizar pagamento:", error);
-    // Reverte as mudanças
     setJogadores(jogadores);
     toast.error(error.message || 'Erro ao atualizar status de pagamento');
   }
@@ -960,21 +950,36 @@ export default function Financeiro() {
                 </div>
 
                 {novaTransacao.tipo === "receita" && (
-                  <div className="relative">
-                    <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Jogador</label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={novaTransacao.jogadorNome}
-                        onClick={() => setMostrarListaJogadores(true)}
-                        readOnly
-                        placeholder="Selecione um jogador"
-                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm cursor-pointer"
-                      />
-                      <FaUser className="absolute right-3 top-2.5 text-gray-400 text-xs sm:text-sm" />
-                    </div>
-                  </div>
-                )}
+  <div className="relative">
+    <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Jogador (opcional)</label>
+    <div className="relative">
+      <input
+        type="text"
+        value={novaTransacao.jogadorNome}
+        onClick={() => setMostrarListaJogadores(true)}
+        readOnly
+        placeholder="Selecione um jogador (opcional)"
+        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm cursor-pointer"
+      />
+      <FaUser className="absolute right-3 top-2.5 text-gray-400 text-xs sm:text-sm" />
+      {novaTransacao.jogadorNome && (
+        <button
+          type="button"
+          onClick={() => {
+            setNovaTransacao(prev => ({
+              ...prev,
+              jogadorId: "",
+              jogadorNome: ""
+            }));
+          }}
+          className="absolute right-8 top-2.5 text-gray-400 hover:text-white text-xs sm:text-sm"
+        >
+          <FaTimes />
+        </button>
+      )}
+    </div>
+  </div>
+)}
 
                 <motion.button
                   type="submit"
@@ -1155,24 +1160,31 @@ export default function Financeiro() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-700">
-                        {transacoesFiltradas.map((t) => (
-                          <tr key={t._id} className="hover:bg-gray-700/50">
-                            <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-gray-300">
-                              {new Date(t.data).toLocaleDateString('pt-BR')}
-                            </td>
-                            <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium text-white">
-                              {t.descricao}
-                              {t.jogadorId && (
-                                <span className="block text-xs text-gray-400">
-                                  {jogadores.find(j => j._id === t.jogadorId)?.nome || ''}
-                                </span>
-                              )}
-                            </td>
-                            <td className={`px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium ${
-                              t.tipo === "receita" ? "text-green-400" : "text-red-400"
-                            }`}>
-                              {t.tipo === "receita" ? "+" : "-"} R$ {t.valor.toFixed(2)}
-                            </td>
+                      {transacoesFiltradas.map((t) => (
+  <tr 
+    key={t._id} 
+    className={`hover:bg-gray-700/50 ${t.isento ? 'bg-yellow-900/10' : ''}`}
+  >
+    <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-gray-300">
+      {new Date(t.data).toLocaleDateString('pt-BR')}
+    </td>
+    <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium text-white">
+      {t.descricao}
+      {t.jogadorId && (
+        <span className="block text-xs text-gray-400">
+          {jogadores.find(j => j._id === t.jogadorId)?.nome || ''}
+          {t.isento && " (Isento)"}
+        </span>
+      )}
+    </td>
+    <td className={`px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium ${
+      t.tipo === "receita" ? 
+        (t.isento ? "text-yellow-400" : "text-green-400") : 
+        "text-red-400"
+    }`}>
+      {t.tipo === "receita" ? "+" : "-"} R$ {t.valor.toFixed(2)}
+      {t.isento && " (Isento)"}
+    </td>
                             <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-gray-400">
                               <motion.button
                                 onClick={() => deletarTransacao(t._id)}
@@ -1255,18 +1267,32 @@ export default function Financeiro() {
                                 {jogador.statusFinanceiro || 'Inadimplente'}
                               </span>
                             </td>
-                            {jogador.pagamentos.map((pago, i) => (
-                              <td key={i} className="px-1 sm:px-2 py-2 sm:py-3 whitespace-nowrap text-center">
-                                <motion.button
-                                  onClick={() => togglePagamento(jogador._id, i)}
-                                  whileHover={{ scale: 1.1 }}
-                                  whileTap={{ scale: 0.9 }}
-                                  className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center ${pago ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}
-                                >
-                                  {pago ? <FaCheck size={10} className="sm:text-xs" /> : <FaTimes size={10} className="sm:text-xs" />}
-                                </motion.button>
-                              </td>
-                            ))}
+                          {jogador.pagamentos.map((pago, i) => {
+  const transacao = transacoes.find(t => 
+    t.jogadorId === jogador._id && 
+    t.categoria === 'mensalidade' && 
+    new Date(t.data).getMonth() === i
+  );
+  const isIsento = transacao?.isento;
+
+  return (
+    <td key={i} className="px-1 sm:px-2 py-2 sm:py-3 whitespace-nowrap text-center">
+      <motion.button
+        onClick={() => togglePagamento(jogador._id, i)}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center ${
+          pago ? 
+            (isIsento ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-green-400') : 
+            'bg-red-500/20 text-red-400'
+        }`}
+        title={isIsento ? "Mensalidade isenta" : pago ? "Mensalidade paga" : "Mensalidade pendente"}
+      >
+        {pago ? (isIsento ? "I" : <FaCheck size={10} className="sm:text-xs" />) : <FaTimes size={10} className="sm:text-xs" />}
+      </motion.button>
+    </td>
+  );
+})}
                           </tr>
                         ))}
                       </tbody>
