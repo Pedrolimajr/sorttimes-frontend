@@ -30,7 +30,7 @@ import ListaJogadores from './ListaJogadores';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import api from '../services/api';
-
+import Modal from 'react-modal';
 Chart.register(...registerables);
 
 export default function Financeiro() {
