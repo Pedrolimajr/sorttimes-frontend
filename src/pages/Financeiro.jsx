@@ -299,19 +299,29 @@ const togglePagamento = async (jogadorId, mesIndex) => {
 
     // Pergunta se é isenção se estiver marcando como pago
     let isentoFlag = false;
+    // Only ask about exemption if the payment is currently unpaid
     if (!jogador.pagamentos[mesIndex]) {
       const confirmarIsento = window.confirm('Deseja marcar como isento? (Sem valor financeiro)');
       isentoFlag = confirmarIsento;
     }
 
+    // Capture the original state for potential revert if API fails
+    const originalJogadores = [...jogadores];
+
     // Atualização otimista
     const jogadoresAtualizados = jogadores.map(j => {
       if (j._id === jogadorId) {
         const pagamentosAtualizados = [...j.pagamentos];
-        pagamentosAtualizados[mesIndex] = !jogador.pagamentos[mesIndex] || isentoFlag;
+        // The logic here should reflect the new state:
+        // If it was unpaid, and we are marking it (either paid or exempt), it becomes true.
+        // If it was paid, and we are unmarking it, it becomes false.
+        // If 'isentoFlag' is true, it means it's being marked as paid (or exempt), so pagamentosAtualizados[mesIndex] should be true.
+        // Otherwise, it's just the toggle of the current state.
+        pagamentosAtualizados[mesIndex] = isentoFlag || !jogador.pagamentos[mesIndex];
 
+        // Recalculate statusFinanceiro based on updated payments up to the current month
         const todosMesesPagos = pagamentosAtualizados
-          .slice(0, mesAtual + 1)
+          .slice(0, mesAtual + 1) // Check payments up to the current month only
           .every(pago => pago);
 
         return {
@@ -323,19 +333,28 @@ const togglePagamento = async (jogadorId, mesIndex) => {
       return j;
     });
 
-    setJogadores(jogadoresAtualizados);
+    setJogadores(jogadoresAtualizados); // Apply optimistic update
 
     // Chamada à API
+    // Ensure the endpoint matches your backend route for plural 'pagamentos'
     const response = await api.post(`/jogadores/${jogadorId}/pagamentos`, {
       mes: mesIndex,
-      pago: !jogador.pagamentos[mesIndex],
+      pago: isentoFlag || !jogador.pagamentos[mesIndex], // Send the correct payment status to backend
       isento: isentoFlag,
       valor: isentoFlag ? 0 : 100,
-      dataPagamento: !jogador.pagamentos[mesIndex] ? new Date().toISOString() : null
+      dataPagamento: (isentoFlag || !jogador.pagamentos[mesIndex]) ? new Date().toISOString() : null // Set dataPagamento only if marking as paid/exempt
     });
 
+    // Check if the backend returned an updated status or data (optional but good for consistency)
+    if (response.data && response.data.data) {
+      // You might want to update the state again with the data from the backend
+      // to ensure full consistency, especially if backend has more complex logic
+      // setJogadores(jogadores.map(j => j._id === jogadorId ? response.data.data : j));
+    }
+
     // Atualiza transações se necessário
-    if (!jogador.pagamentos[mesIndex]) {
+    // This part should only run if a payment was *just marked* as paid/exempt, not if it was unmarked.
+    if (isentoFlag || !jogador.pagamentos[mesIndex]) { // Check if the new state is 'paid' (including exempt)
       const transacaoResponse = await api.post('/financeiro/transacoes', {
         descricao: `Mensalidade ${isentoFlag ? 'Isenta' : ''} - ${jogador.nome} (${mesIndex + 1}/${new Date().getFullYear()})`,
         valor: isentoFlag ? 0 : 100,
@@ -347,14 +366,27 @@ const togglePagamento = async (jogadorId, mesIndex) => {
         isento: isentoFlag
       });
 
+      // Assuming setTransacoes adds the new transaction to a list
       setTransacoes(prev => [transacaoResponse.data.data, ...prev]);
     }
 
-    toast.success(`Mensalidade ${isentoFlag ? 'isentada' : jogador.pagamentos[mesIndex] ? 'removida' : 'registrada'} com sucesso!`);
+    // Determine the toast message based on the action
+    let toastMessage;
+    if (isentoFlag) {
+      toastMessage = 'Mensalidade isentada com sucesso!';
+    } else if (!jogador.pagamentos[mesIndex]) { // If it was unpaid and now marked as paid (not exempt)
+      toastMessage = 'Mensalidade registrada com sucesso!';
+    } else { // If it was paid and now unmarked
+      toastMessage = 'Pagamento removido com sucesso!';
+    }
+    toast.success(toastMessage);
+
   } catch (error) {
     console.error("Erro ao atualizar pagamento:", error);
-    setJogadores(jogadores);
-    toast.error(error.message || 'Erro ao atualizar status de pagamento');
+    // Revert optimistic update if API call fails
+    setJogadores(originalJogadores); // Revert to original state
+
+    toast.error(error.response?.data?.message || error.message || 'Erro ao atualizar status de pagamento');
   }
 };
 
