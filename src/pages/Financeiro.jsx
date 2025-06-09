@@ -100,6 +100,7 @@ const abrirModalIsento = (jogadorId, mesIndex) => {
   </button>
 </Modal>
 
+
 const handleIsento = async (jogadorId, mesIndex, dataPagamento) => {
   try {
     const response = await api.post(`/jogadores/${jogadorId}/pagamentos`, {
