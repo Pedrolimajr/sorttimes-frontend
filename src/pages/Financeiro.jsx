@@ -71,23 +71,19 @@ export default function Financeiro() {
 const [isento, setIsento] = useState(false);
 
   const STORAGE_KEY = 'dadosFinanceiros';
-useEffect(() => {
+ useEffect(() => {
   const carregarDados = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      console.warn("Usuário não autenticado — carregamento abortado.");
-      return;
-    }
-
     try {
       setCarregando(true);
 
+      // Tenta carregar do cache primeiro
       const cachedData = JSON.parse(localStorage.getItem(STORAGE_KEY));
       if (cachedData) {
         setJogadores(cachedData.jogadoresCache || []);
         setTransacoes(cachedData.transacoesCache || []);
       }
 
+      // Busca dados da API
       const [jogadoresRes, transacoesRes] = await Promise.all([
         api.get('/jogadores'),
         api.get('/financeiro/transacoes')
@@ -290,9 +286,6 @@ useEffect(() => {
 };
 
 const togglePagamento = async (jogadorId, mesIndex) => {
-  // Declare originalJogadores here, so it's accessible in the catch block
-  let originalJogadores = [...jogadores]; 
-
   try {
     const jogador = jogadores.find(j => j._id === jogadorId);
     if (!jogador) throw new Error('Jogador não encontrado');
@@ -304,19 +297,26 @@ const togglePagamento = async (jogadorId, mesIndex) => {
       return;
     }
 
+    // Pergunta se é isenção se estiver marcando como pago
     let isentoFlag = false;
-    // Ask about exemption only if the payment is currently unpaid
+    // Only ask about exemption if the payment is currently unpaid
     if (!jogador.pagamentos[mesIndex]) {
       const confirmarIsento = window.confirm('Deseja marcar como isento? (Sem valor financeiro)');
       isentoFlag = confirmarIsento;
     }
 
-    // Optimistic update
+    // Capture the original state for potential revert if API fails
+    const originalJogadores = [...jogadores];
+
+    // Atualização otimista
     const jogadoresAtualizados = jogadores.map(j => {
       if (j._id === jogadorId) {
         const pagamentosAtualizados = [...j.pagamentos];
-        // Set the new state of the payment for the month
-        // It becomes true if it's marked as exempt OR if it was previously unpaid and is now being paid
+        // The logic here should reflect the new state:
+        // If it was unpaid, and we are marking it (either paid or exempt), it becomes true.
+        // If it was paid, and we are unmarking it, it becomes false.
+        // If 'isentoFlag' is true, it means it's being marked as paid (or exempt), so pagamentosAtualizados[mesIndex] should be true.
+        // Otherwise, it's just the toggle of the current state.
         pagamentosAtualizados[mesIndex] = isentoFlag || !jogador.pagamentos[mesIndex];
 
         // Recalculate statusFinanceiro based on updated payments up to the current month
@@ -335,30 +335,26 @@ const togglePagamento = async (jogadorId, mesIndex) => {
 
     setJogadores(jogadoresAtualizados); // Apply optimistic update
 
-    // API Call to update payment status
-    const response = await api.post(`/jogadores/${jogadorId}/pagamentos`, { // Corrected to plural 'pagamentos'
+    // Chamada à API
+    // Ensure the endpoint matches your backend route for plural 'pagamentos'
+    const response = await api.post(`/jogadores/${jogadorId}/pagamentos`, {
       mes: mesIndex,
-      // 'pago' should reflect the new state of the payment in the backend
-      // If it's exempt or was unpaid and now paid, send true. If unmarking, send false.
-      pago: isentoFlag || !jogador.pagamentos[mesIndex], 
+      pago: isentoFlag || !jogador.pagamentos[mesIndex], // Send the correct payment status to backend
       isento: isentoFlag,
-      valor: isentoFlag ? 0 : 100, // Send 0 for exempt, 100 otherwise
-      // Set dataPagamento only if marking as paid/exempt. If unmarking, it might be null or not sent.
-      dataPagamento: (isentoFlag || !jogador.pagamentos[mesIndex]) ? new Date().toISOString() : null 
+      valor: isentoFlag ? 0 : 100,
+      dataPagamento: (isentoFlag || !jogador.pagamentos[mesIndex]) ? new Date().toISOString() : null // Set dataPagamento only if marking as paid/exempt
     });
 
     // Check if the backend returned an updated status or data (optional but good for consistency)
-    // If your backend returns the updated player data, you might want to use it
-    if (response.data && response.data.data && response.data.data.jogador) {
-      setJogadores(prevJogadores => 
-        prevJogadores.map(j => j._id === jogadorId ? response.data.data.jogador : j)
-      );
+    if (response.data && response.data.data) {
+      // You might want to update the state again with the data from the backend
+      // to ensure full consistency, especially if backend has more complex logic
+      // setJogadores(jogadores.map(j => j._id === jogadorId ? response.data.data : j));
     }
 
-
-    // Update transactions (this block should only run if a payment was marked as paid/exempt)
-    // This is the transaction specifically for the financeiro/transacoes endpoint
-    if (isentoFlag || !jogador.pagamentos[mesIndex]) { // Condition for creating a transaction: if it's new payment (or exempt)
+    // Atualiza transações se necessário
+    // This part should only run if a payment was *just marked* as paid/exempt, not if it was unmarked.
+    if (isentoFlag || !jogador.pagamentos[mesIndex]) { // Check if the new state is 'paid' (including exempt)
       const transacaoResponse = await api.post('/financeiro/transacoes', {
         descricao: `Mensalidade ${isentoFlag ? 'Isenta' : ''} - ${jogador.nome} (${mesIndex + 1}/${new Date().getFullYear()})`,
         valor: isentoFlag ? 0 : 100,
@@ -370,6 +366,7 @@ const togglePagamento = async (jogadorId, mesIndex) => {
         isento: isentoFlag
       });
 
+      // Assuming setTransacoes adds the new transaction to a list
       setTransacoes(prev => [transacaoResponse.data.data, ...prev]);
     }
 
@@ -387,9 +384,8 @@ const togglePagamento = async (jogadorId, mesIndex) => {
   } catch (error) {
     console.error("Erro ao atualizar pagamento:", error);
     // Revert optimistic update if API call fails
-    setJogadores(originalJogadores); // Revert to original state using the scoped variable
+    setJogadores(originalJogadores); // Revert to original state
 
-    // Provide more specific error message from the backend if available
     toast.error(error.response?.data?.message || error.message || 'Erro ao atualizar status de pagamento');
   }
 };
@@ -1199,29 +1195,20 @@ const togglePagamento = async (jogadorId, mesIndex) => {
                       {transacoesFiltradas.map((t) => (
   <tr 
     key={t._id} 
-   className={`hover:bg-gray-700/50 ${t.isento ? 'bg-yellow-200 text-yellow-900 font-semibold' : ''}`}
-
+    className={`hover:bg-gray-700/50 ${t.isento ? 'bg-yellow-900/10' : ''}`}
   >
     <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-gray-300">
       {new Date(t.data).toLocaleDateString('pt-BR')}
     </td>
- <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium text-white">
-  <div className="flex items-center gap-2">
-    {t.descricao}
-    {t.isento && (
-      <span className="px-2 py-0.5 bg-yellow-300 text-yellow-900 text-[10px] font-bold rounded">
-        ISENTO
-      </span>
-    )}
-  </div>
-
-  {t.jogadorId && (
-    <div className="text-[11px] text-gray-400">
-      {jogadores.find(j => j._id === t.jogadorId)?.nome || ''}
-    </div>
-  )}
-</td>
-
+    <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium text-white">
+      {t.descricao}
+      {t.jogadorId && (
+        <span className="block text-xs text-gray-400">
+          {jogadores.find(j => j._id === t.jogadorId)?.nome || ''}
+          {t.isento && " (Isento)"}
+        </span>
+      )}
+    </td>
     <td className={`px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium ${
       t.tipo === "receita" ? 
         (t.isento ? "text-yellow-400" : "text-green-400") : 
