@@ -30,7 +30,7 @@ import ListaJogadores from './ListaJogadores';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import api from '../services/api';
-import Modal from 'react-modal';
+
 Chart.register(...registerables);
 
 export default function Financeiro() {
@@ -68,76 +68,10 @@ export default function Financeiro() {
   });
 
 // No início do componente, adicione:
-const [modalIsento, setModalIsento] = useState({
-  aberto: false,
-  jogadorId: null,
-  mesIndex: null,
-  dataSelecionada: new Date().toISOString().split('T')[0]
-});
-
-const abrirModalIsento = (jogadorId, mesIndex) => {
-  setModalIsento({
-    aberto: true,
-    jogadorId,
-    mesIndex,
-    dataSelecionada: new Date().toISOString().split('T')[0]
-  });
-};
-
-<Modal isOpen={modalIsento.aberto} onRequestClose={() => setModalIsento({...modalIsento, aberto: false})}>
-  <h2>Lançar Isenção</h2>
-  <label>Data do Pagamento:</label>
-  <input
-    type="date"
-    value={modalIsento.dataSelecionada}
-    onChange={(e) => setModalIsento({...modalIsento, dataSelecionada: e.target.value})}
-  />
-  <button onClick={async () => {
-    await handleIsento(modalIsento.jogadorId, modalIsento.mesIndex, modalIsento.dataSelecionada);
-    setModalIsento({...modalIsento, aberto: false});
-  }}>
-    Confirmar Isenção
-  </button>
-</Modal>
-
-
-const handleIsento = async (jogadorId, mesIndex, dataPagamento) => {
-  try {
-    const response = await api.post(`/jogadores/${jogadorId}/pagamentos`, {
-      mes: mesIndex,
-      pago: true,
-      isento: true,
-      valor: 0,
-      dataPagamento: new Date(dataPagamento).toISOString()
-    });
-
-    // Atualização otimista
-    setJogadores(prev => prev.map(j => {
-      if (j._id === jogadorId) {
-        const updatedPagamentos = [...j.pagamentos];
-        const updatedIsentoMeses = { ...j.isentoMeses };
-        
-        updatedPagamentos[mesIndex] = true;
-        updatedIsentoMeses[mesIndex] = true;
-
-        return {
-          ...j,
-          pagamentos: updatedPagamentos,
-          isentoMeses: updatedIsentoMeses
-        };
-      }
-      return j;
-    }));
-
-    toast.success('Isenção lançada com sucesso!');
-  } catch (error) {
-    console.error("Erro ao lançar isenção:", error);
-    toast.error('Erro ao lançar isenção');
-  }
-};
+const [isento, setIsento] = useState(false);
 
   const STORAGE_KEY = 'dadosFinanceiros';
-useEffect(() => {
+ useEffect(() => {
   const carregarDados = async () => {
     try {
       setCarregando(true);
@@ -152,34 +86,27 @@ useEffect(() => {
       // Busca dados da API
       const [jogadoresRes, transacoesRes] = await Promise.all([
         api.get('/jogadores'),
-        api.get('/financeiro/transacoes?categoria=mensalidade') // Filtra só mensalidades
+        api.get('/financeiro/transacoes')
       ]);
 
       const jogadoresData = jogadoresRes.data?.data || jogadoresRes.data || [];
       const transacoesData = transacoesRes.data?.data || transacoesRes.data || [];
 
-      // Processa os jogadores com informações de isenção
+      // Processa os jogadores
       const jogadoresProcessados = jogadoresData.map(jogador => {
+        // Verifica se há transações de mensalidade para este jogador
         const transacoesJogador = transacoesData.filter(t => 
-          t.jogadorId === jogador._id
+          t.jogadorId === jogador._id && t.categoria === 'mensalidade'
         );
 
+        // Cria array de pagamentos baseado nas transações
         const pagamentos = Array(12).fill(false);
-        const isentoMeses = {}; // Novo objeto para armazenar meses isentos
-        const datasPagamento = {}; // Novo: armazena datas específicas
-
-
         transacoesJogador.forEach(t => {
           const mes = new Date(t.data).getMonth();
           pagamentos[mes] = true;
-          
-          // Marca como isento se a transação tiver isento: true
-       if (t.isento) {
-            isentoMeses[mes] = true;
-            datasPagamento[mes] = t.data; // Armazena a data específica
-          }
         });
 
+        // Verifica status
         const mesAtual = new Date().getMonth();
         const todosMesesPagos = pagamentos
           .slice(0, mesAtual + 1)
@@ -187,9 +114,7 @@ useEffect(() => {
 
         return {
           ...jogador,
-          pagamentos,
-          isentoMeses, // Adiciona informação de isenção
-           datasPagamento, // Adiciona ao estado
+          pagamentos: pagamentos,
           statusFinanceiro: todosMesesPagos ? 'Adimplente' : 'Inadimplente'
         };
       });
@@ -198,7 +123,7 @@ useEffect(() => {
       setJogadores(jogadoresProcessados);
       setTransacoes(transacoesData);
 
-      // Atualiza cache com os novos dados
+      // Atualiza cache
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         jogadoresCache: jogadoresProcessados,
         transacoesCache: transacoesData,
@@ -1353,27 +1278,24 @@ const togglePagamento = async (jogadorId, mesIndex) => {
   );
   const isIsento = transacao?.isento;
 
-  
   return (
 <td key={i} className="px-1 sm:px-2 py-2 sm:py-3 whitespace-nowrap text-center">
-        <motion.button
-          onClick={() => togglePagamento(jogador._id, i)}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          className={`
-            w-6 h-6 rounded-full flex items-center justify-center text-sm
-            ${pago ? 
-              (jogador.isentoMeses?.[i] ? 
-                'bg-yellow-400 text-yellow-800' :  // Amarelo para isento
-                'bg-green-400 text-white') :       // Verde para pago normal
-              'bg-red-400 text-white'}             // Vermelho para não pago
-          `}
-        >
-          {pago ? 
-            (jogador.isentoMeses?.[i] ? 'I' : <FaCheck className="text-xs" />) : 
-            <FaTimes className="text-xs" />}
-        </motion.button>
-      </td>
+  <motion.button
+    onClick={() => togglePagamento(jogador._id, i)}
+    whileHover={{ scale: 1.1 }}
+    whileTap={{ scale: 0.9 }}
+    className={`
+      w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center
+      ${pago ? 
+        (isIsento ? "bg-yellow-500/20 text-yellow-400" : "bg-green-500/20 text-green-400") : 
+        "bg-red-500/20 text-red-400"
+      }
+    `}
+    title={isIsento ? "Mensalidade isenta" : pago ? "Mensalidade paga" : "Mensalidade pendente"}
+  >
+    {pago ? (isIsento ? "I" : <FaCheck size={10} className="sm:text-xs" />) : <FaTimes size={10} className="sm:text-xs" />}
+  </motion.button>
+</td>
   );
 })}
                           </tr>
