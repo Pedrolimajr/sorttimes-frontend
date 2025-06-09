@@ -1195,20 +1195,29 @@ const togglePagamento = async (jogadorId, mesIndex) => {
                       {transacoesFiltradas.map((t) => (
   <tr 
     key={t._id} 
-    className={`hover:bg-gray-700/50 ${t.isento ? 'bg-yellow-900/10' : ''}`}
+   className={`hover:bg-gray-700/50 ${t.isento ? 'bg-yellow-200 text-yellow-900 font-semibold' : ''}`}
+
   >
     <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-gray-300">
       {new Date(t.data).toLocaleDateString('pt-BR')}
     </td>
-    <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium text-white">
-      {t.descricao}
-      {t.jogadorId && (
-        <span className="block text-xs text-gray-400">
-          {jogadores.find(j => j._id === t.jogadorId)?.nome || ''}
-          {t.isento && " (Isento)"}
-        </span>
-      )}
-    </td>
+ <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium text-white">
+  <div className="flex items-center gap-2">
+    {t.descricao}
+    {t.isento && (
+      <span className="px-2 py-0.5 bg-yellow-300 text-yellow-900 text-[10px] font-bold rounded">
+        ISENTO
+      </span>
+    )}
+  </div>
+
+  {t.jogadorId && (
+    <div className="text-[11px] text-gray-400">
+      {jogadores.find(j => j._id === t.jogadorId)?.nome || ''}
+    </div>
+  )}
+</td>
+
     <td className={`px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium ${
       t.tipo === "receita" ? 
         (t.isento ? "text-yellow-400" : "text-green-400") : 
