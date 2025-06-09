@@ -71,7 +71,7 @@ export default function Financeiro() {
 const [isento, setIsento] = useState(false);
 
   const STORAGE_KEY = 'dadosFinanceiros';
- useEffect(() => {
+useEffect(() => {
   const carregarDados = async () => {
     try {
       setCarregando(true);
@@ -86,27 +86,31 @@ const [isento, setIsento] = useState(false);
       // Busca dados da API
       const [jogadoresRes, transacoesRes] = await Promise.all([
         api.get('/jogadores'),
-        api.get('/financeiro/transacoes')
+        api.get('/financeiro/transacoes?categoria=mensalidade') // Filtra só mensalidades
       ]);
 
       const jogadoresData = jogadoresRes.data?.data || jogadoresRes.data || [];
       const transacoesData = transacoesRes.data?.data || transacoesRes.data || [];
 
-      // Processa os jogadores
+      // Processa os jogadores com informações de isenção
       const jogadoresProcessados = jogadoresData.map(jogador => {
-        // Verifica se há transações de mensalidade para este jogador
         const transacoesJogador = transacoesData.filter(t => 
-          t.jogadorId === jogador._id && t.categoria === 'mensalidade'
+          t.jogadorId === jogador._id
         );
 
-        // Cria array de pagamentos baseado nas transações
         const pagamentos = Array(12).fill(false);
+        const isentoMeses = {}; // Novo objeto para armazenar meses isentos
+
         transacoesJogador.forEach(t => {
           const mes = new Date(t.data).getMonth();
           pagamentos[mes] = true;
+          
+          // Marca como isento se a transação tiver isento: true
+          if (t.isento) {
+            isentoMeses[mes] = true;
+          }
         });
 
-        // Verifica status
         const mesAtual = new Date().getMonth();
         const todosMesesPagos = pagamentos
           .slice(0, mesAtual + 1)
@@ -114,7 +118,8 @@ const [isento, setIsento] = useState(false);
 
         return {
           ...jogador,
-          pagamentos: pagamentos,
+          pagamentos,
+          isentoMeses, // Adiciona informação de isenção
           statusFinanceiro: todosMesesPagos ? 'Adimplente' : 'Inadimplente'
         };
       });
@@ -123,7 +128,7 @@ const [isento, setIsento] = useState(false);
       setJogadores(jogadoresProcessados);
       setTransacoes(transacoesData);
 
-      // Atualiza cache
+      // Atualiza cache com os novos dados
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         jogadoresCache: jogadoresProcessados,
         transacoesCache: transacoesData,
@@ -299,17 +304,26 @@ const togglePagamento = async (jogadorId, mesIndex) => {
     // Salva estado original para fallback
     const originalJogadores = [...jogadores];
     
-    // Pergunta se é isenção se estiver marcando como pago
+    // Pergunta se é isenção apenas se estiver marcando como pago (status anterior false)
     let isento = false;
     if (!jogador.pagamentos[mesIndex]) {
       isento = window.confirm('Deseja marcar como isento? (Sem valor financeiro)');
     }
 
-    // Atualização otimista
+    // Atualização otimista incluindo informação de isenção
     const updatedJogadores = jogadores.map(j => {
       if (j._id === jogadorId) {
         const updatedPagamentos = [...j.pagamentos];
+        const updatedIsentoMeses = { ...(j.isentoMeses || {}) };
+        
         updatedPagamentos[mesIndex] = !j.pagamentos[mesIndex] || isento;
+        
+        // Atualiza o status de isenção
+        if (isento) {
+          updatedIsentoMeses[mesIndex] = true;
+        } else if (updatedPagamentos[mesIndex] === false) {
+          delete updatedIsentoMeses[mesIndex];
+        }
 
         const todosMesesPagos = updatedPagamentos
           .slice(0, mesAtual + 1)
@@ -318,6 +332,7 @@ const togglePagamento = async (jogadorId, mesIndex) => {
         return {
           ...j,
           pagamentos: updatedPagamentos,
+          isentoMeses: updatedIsentoMeses,
           statusFinanceiro: todosMesesPagos ? 'Adimplente' : 'Inadimplente'
         };
       }
@@ -1268,24 +1283,27 @@ const togglePagamento = async (jogadorId, mesIndex) => {
   );
   const isIsento = transacao?.isento;
 
+  
   return (
 <td key={i} className="px-1 sm:px-2 py-2 sm:py-3 whitespace-nowrap text-center">
-  <motion.button
-    onClick={() => togglePagamento(jogador._id, i)}
-    whileHover={{ scale: 1.1 }}
-    whileTap={{ scale: 0.9 }}
-    className={`
-      w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center
-      ${pago ? 
-        (isIsento ? "bg-yellow-500/20 text-yellow-400" : "bg-green-500/20 text-green-400") : 
-        "bg-red-500/20 text-red-400"
-      }
-    `}
-    title={isIsento ? "Mensalidade isenta" : pago ? "Mensalidade paga" : "Mensalidade pendente"}
-  >
-    {pago ? (isIsento ? "I" : <FaCheck size={10} className="sm:text-xs" />) : <FaTimes size={10} className="sm:text-xs" />}
-  </motion.button>
-</td>
+        <motion.button
+          onClick={() => togglePagamento(jogador._id, i)}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          className={`
+            w-6 h-6 rounded-full flex items-center justify-center text-sm
+            ${pago ? 
+              (jogador.isentoMeses?.[i] ? 
+                'bg-yellow-400 text-yellow-800' :  // Amarelo para isento
+                'bg-green-400 text-white') :       // Verde para pago normal
+              'bg-red-400 text-white'}             // Vermelho para não pago
+          `}
+        >
+          {pago ? 
+            (jogador.isentoMeses?.[i] ? 'I' : <FaCheck className="text-xs" />) : 
+            <FaTimes className="text-xs" />}
+        </motion.button>
+      </td>
   );
 })}
                           </tr>
