@@ -1156,10 +1156,7 @@ const togglePagamento = async (jogadorId, mesIndex) => {
                       </thead>
                       <tbody className="divide-y divide-gray-700">
                       {transacoesFiltradas.map((t) => (
-  <tr 
-    key={t._id} 
-    className={`hover:bg-gray-700/50 ${t.isento ? 'bg-yellow-900/10' : ''}`}
-  >
+ <tr className={`${t.isento ? "bg-yellow-100/10 border-l-4 border-yellow-400/50" : ""}`}>
     <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-gray-300">
       {new Date(t.data).toLocaleDateString('pt-BR')}
     </td>
@@ -1247,14 +1244,7 @@ const togglePagamento = async (jogadorId, mesIndex) => {
                             </th>
                           ))}
                         </tr>
-                        <tr className={t.isento ? "transacao-isenta" : ""}></tr>
-                        className={`
-  w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center
-  ${pago ? 
-    (isIsento ? "bg-yellow-500/20 text-yellow-400" : "bg-green-500/20 text-green-400") : 
-    "bg-red-500/20 text-red-400"
-  }
-`}
+                        
                       </thead>
                       <tbody className="divide-y divide-gray-700">
                         {jogadores.map((jogador) => (
@@ -1279,21 +1269,23 @@ const togglePagamento = async (jogadorId, mesIndex) => {
   const isIsento = transacao?.isento;
 
   return (
-    <td key={i} className="px-1 sm:px-2 py-2 sm:py-3 whitespace-nowrap text-center">
-      <motion.button
-        onClick={() => togglePagamento(jogador._id, i)}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center ${
-          pago ? 
-            (isIsento ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-green-400') : 
-            'bg-red-500/20 text-red-400'
-        }`}
-        title={isIsento ? "Mensalidade isenta" : pago ? "Mensalidade paga" : "Mensalidade pendente"}
-      >
-        {pago ? (isIsento ? "I" : <FaCheck size={10} className="sm:text-xs" />) : <FaTimes size={10} className="sm:text-xs" />}
-      </motion.button>
-    </td>
+<td key={i} className="px-1 sm:px-2 py-2 sm:py-3 whitespace-nowrap text-center">
+  <motion.button
+    onClick={() => togglePagamento(jogador._id, i)}
+    whileHover={{ scale: 1.1 }}
+    whileTap={{ scale: 0.9 }}
+    className={`
+      w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center
+      ${pago ? 
+        (isIsento ? "bg-yellow-500/20 text-yellow-400" : "bg-green-500/20 text-green-400") : 
+        "bg-red-500/20 text-red-400"
+      }
+    `}
+    title={isIsento ? "Mensalidade isenta" : pago ? "Mensalidade paga" : "Mensalidade pendente"}
+  >
+    {pago ? (isIsento ? "I" : <FaCheck size={10} className="sm:text-xs" />) : <FaTimes size={10} className="sm:text-xs" />}
+  </motion.button>
+</td>
   );
 })}
                           </tr>
