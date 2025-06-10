@@ -75,67 +75,36 @@ const [isento, setIsento] = useState(false);
  useEffect(() => {
   const carregarDados = async () => {
     try {
-      setCarregando(true);
-
-      // Tenta carregar do cache primeiro
-      const cachedData = JSON.parse(localStorage.getItem(STORAGE_KEY));
-      if (cachedData) {
-        setJogadores(cachedData.jogadoresCache || []);
-        setTransacoes(cachedData.transacoesCache || []);
-      }
-
-      // Busca dados da API
-      const [jogadoresRes, transacoesRes] = await Promise.all([
+      const [jogadoresResponse, transacoesResponse] = await Promise.all([
         api.get('/jogadores'),
-        api.get('/financeiro/transacoes')
+        api.get('/transacoes')
       ]);
 
-      const jogadoresData = jogadoresRes.data?.data || jogadoresRes.data || [];
-      const transacoesData = transacoesRes.data?.data || transacoesRes.data || [];
-
-      // Processa os jogadores
-      const jogadoresProcessados = jogadoresData.map(jogador => {
-        // Verifica se há transações de mensalidade para este jogador
-        const transacoesJogador = transacoesData.filter(t => 
-          t.jogadorId === jogador._id && t.categoria === 'mensalidade'
-        );
-
-        // Cria array de pagamentos baseado nas transações
-        const pagamentos = Array(12).fill(false);
-        transacoesJogador.forEach(t => {
-          const mes = new Date(t.data).getMonth();
-          pagamentos[mes] = true;
-        });
-
-        // Verifica status
-        const mesAtual = new Date().getMonth();
-        const todosMesesPagos = pagamentos
-          .slice(0, mesAtual + 1)
-          .every(pago => pago);
-
-        return {
+      if (jogadoresResponse.data.success) {
+        // Garante que os pagamentos sejam objetos válidos
+        const jogadoresFormatados = jogadoresResponse.data.data.map(jogador => ({
           ...jogador,
-          pagamentos: pagamentos,
-          statusFinanceiro: todosMesesPagos ? 'Adimplente' : 'Inadimplente'
-        };
-      });
+          pagamentos: jogador.pagamentos.map((pagamento, index) => {
+            if (typeof pagamento === 'boolean') {
+              return {
+                pago: pagamento,
+                isento: false,
+                dataPagamento: pagamento ? new Date() : null,
+                dataLimite: new Date(new Date().getFullYear(), index, 20)
+              };
+            }
+            return pagamento;
+          })
+        }));
+        setJogadores(jogadoresFormatados);
+      }
 
-      // Atualiza estados
-      setJogadores(jogadoresProcessados);
-      setTransacoes(transacoesData);
-
-      // Atualiza cache
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        jogadoresCache: jogadoresProcessados,
-        transacoesCache: transacoesData,
-        lastUpdate: new Date().toISOString()
-      }));
-
+      if (transacoesResponse.data.success) {
+        setTransacoes(transacoesResponse.data.data);
+      }
     } catch (error) {
-      console.error("Erro ao carregar dados:", error);
-      toast.error('Erro ao carregar dados. Usando cache local se disponível.');
-    } finally {
-      setCarregando(false);
+      console.error('Erro ao carregar dados:', error);
+      toast.error('Erro ao carregar dados');
     }
   };
 
