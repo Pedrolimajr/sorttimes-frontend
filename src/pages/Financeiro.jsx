@@ -287,6 +287,9 @@ const [isento, setIsento] = useState(false);
 };
 
 const togglePagamento = async (jogadorId, mesIndex) => {
+  // 💡 Agora visível no catch
+  const originalJogadores = [...jogadores];
+
   try {
     const jogador = jogadores.find(j => j._id === jogadorId);
     if (!jogador) throw new Error('Jogador não encontrado');
@@ -297,24 +300,18 @@ const togglePagamento = async (jogadorId, mesIndex) => {
       return;
     }
 
-    // Salva estado original para fallback
-    const originalJogadores = [...jogadores];
-    
-    // Pergunta se é isenção apenas se estiver marcando como pago (status anterior false)
     let isento = false;
     if (!jogador.pagamentos[mesIndex]) {
       isento = window.confirm('Deseja marcar como isento? (Sem valor financeiro)');
     }
 
-    // Atualização otimista incluindo informação de isenção
     const updatedJogadores = jogadores.map(j => {
       if (j._id === jogadorId) {
         const updatedPagamentos = [...j.pagamentos];
         const updatedIsentoMeses = { ...(j.isentoMeses || {}) };
-        
+
         updatedPagamentos[mesIndex] = !j.pagamentos[mesIndex] || isento;
-        
-        // Atualiza o status de isenção
+
         if (isento) {
           updatedIsentoMeses[mesIndex] = true;
         } else if (updatedPagamentos[mesIndex] === false) {
@@ -337,16 +334,14 @@ const togglePagamento = async (jogadorId, mesIndex) => {
 
     setJogadores(updatedJogadores);
 
-    // Chamada à API
     const response = await api.post(`/jogadores/${jogadorId}/pagamentos`, {
       mes: mesIndex,
-      pago: !jogador.pagamentos[mesIndex], // Inverte o status
-      isento,                              // Passa a flag de isenção
-      valor: isento ? 0 : 100,             // Zero se isento
+      pago: !jogador.pagamentos[mesIndex],
+      isento,
+      valor: isento ? 0 : 100,
       dataPagamento: !jogador.pagamentos[mesIndex] ? new Date().toISOString() : null
     });
 
-    // Atualiza transações se necessário
     if (response.data.data.transacao) {
       setTransacoes(prev => [response.data.data.transacao, ...prev]);
     }
@@ -358,10 +353,11 @@ const togglePagamento = async (jogadorId, mesIndex) => {
 
   } catch (error) {
     console.error("Erro ao atualizar pagamento:", error);
-    setJogadores(originalJogadores);
+    setJogadores(originalJogadores); // Agora funciona sem erro
     toast.error(error.response?.data?.message || 'Erro ao atualizar pagamento');
   }
 };
+
 
   const deletarTransacao = async (id) => {
   try {
