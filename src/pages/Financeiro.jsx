@@ -324,6 +324,32 @@ const togglePagamento = async (jogadorId, mesIndex) => {
   }
 };
 
+const toggleStatusFinanceiro = async (jogadorId) => {
+  try {
+    const jogador = jogadores.find(j => j._id === jogadorId);
+    if (!jogador) return;
+
+    const novoStatus = jogador.statusFinanceiro === 'Adimplente' ? 'Inadimplente' : 'Adimplente';
+
+    const response = await api.patch(`/jogadores/${jogadorId}/status`, {
+      status: novoStatus
+    });
+
+    if (response.data.success) {
+      setJogadores(prevJogadores => 
+        prevJogadores.map(j => 
+          j._id === jogadorId 
+            ? { ...j, statusFinanceiro: novoStatus }
+            : j
+        )
+      );
+      toast.success(`Status atualizado para ${novoStatus}`);
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar status:', error);
+    toast.error('Erro ao atualizar status');
+  }
+};
 
   const deletarTransacao = async (id) => {
   try {
@@ -1238,12 +1264,27 @@ const togglePagamento = async (jogadorId, mesIndex) => {
                               {jogador.nome}
                             </td>
                             <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap">
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${jogador.statusFinanceiro === 'Adimplente' ?
-                                  'bg-green-500/20 text-green-400' :
-                                  'bg-red-500/20 text-red-400'
+                              <div className="flex items-center space-x-2">
+                                <span className={`px-2 py-1 rounded text-sm ${
+                                  jogador.statusFinanceiro === 'Adimplente' 
+                                    ? 'bg-green-100 text-green-800' 
+                                    : 'bg-red-100 text-red-800'
                                 }`}>
-                                {jogador.statusFinanceiro || 'Inadimplente'}
-                              </span>
+                                  {jogador.statusFinanceiro}
+                                </span>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleStatusFinanceiro(jogador._id);
+                                  }}
+                                  className="p-1 text-gray-500 hover:text-gray-700"
+                                  title="Alterar status"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                  </svg>
+                                </button>
+                              </div>
                             </td>
                           {jogador.pagamentos.map((pago, i) => {
   const transacao = transacoes.find(t => 
