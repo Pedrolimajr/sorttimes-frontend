@@ -1,4 +1,3 @@
-// Financeiro.jsx
 import { useState, useEffect } from "react";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -9,9 +8,10 @@ import {
   FaCheck,
   FaTimes,
   FaFilePdf,
-  FaChartBar,
+  FaFileImage,
   FaPrint,
   FaCalendarAlt,
+  FaUser,
   FaPlus,
   FaArrowLeft,
   FaEdit,
@@ -21,15 +21,15 @@ import {
   FaShare,
   FaSearch
 } from "react-icons/fa";
-// Os ícones FaFileImage, RiArrowLeftDoubleLine, FaUser não estão sendo usados neste componente
-// e por isso não foram incluídos nos imports. Se você planeja usá-los, pode adicioná-los.
+import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bar, Pie } from "react-chartjs-2";
 import { Chart, registerables } from 'chart.js';
 import { useNavigate } from 'react-router-dom';
+import ListaJogadores from './ListaJogadores';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import api from '../services/api'; // Certifique-se que este caminho está correto
+import api from '../services/api';
 
 Chart.register(...registerables);
 
@@ -37,7 +37,18 @@ export default function Financeiro() {
   const navigate = useNavigate();
   const [transacoes, setTransacoes] = useState([]);
   const [jogadores, setJogadores] = useState([]);
-  const [filtroMes, setFiltroMes] = useState(new Date().toISOString().substring(0, 7)); // YYYY-MM
+  const [filtroMes, setFiltroMes] = useState(new Date().toISOString().slice(0, 7));
+  const [carregando, setCarregando] = useState(true);
+  const [relatorioModal, setRelatorioModal] = useState(false);
+  const [editarModal, setEditarModal] = useState(false);
+  const [mostrarListaJogadores, setMostrarListaJogadores] = useState(false);
+  const [jogadorSelecionado, setJogadorSelecionado] = useState(null);
+  const [filtroJogador, setFiltroJogador] = useState('');
+  const [filtroHistorico, setFiltroHistorico] = useState({
+    jogador: '',
+    tipo: 'todos',
+    categoria: ''
+  });
   const [novaTransacao, setNovaTransacao] = useState({
     descricao: "",
     valor: "",
@@ -48,828 +59,1464 @@ export default function Financeiro() {
     jogadorNome: "",
     isento: false // Adicionando o estado para 'isento'
   });
-  const [totalReceitas, setTotalReceitas] = useState(0);
-  const [totalDespesas, setTotalDespesas] = useState(0);
-  const [saldo, setSaldo] = useState(0);
-  const [pagamentosPendentes, setPagamentosPendentes] = useState(0);
-  const [mostrarFormulario, setMostrarFormulario] = useState(false);
-  const [mostrarGraficos, setMostrarGraficos] = useState(false);
-  const [mostrarListaJogadores, setMostrarListaJogadores] = useState(false);
-  const [jogadorSelecionado, setJogadorSelecionado] = useState(null);
 
-  // ESTES SÃO OS ESTADOS QUE ESTAVAM CAUSANDO O ERRO DE REFERÊNCIA INDEFINIDA
-  const [filtroTransacaoTipo, setFiltroTransacaoTipo] = useState("");
-  const [filtroTransacaoCategoria, setFiltroTransacaoCategoria] = useState("");
-  const [filtroTransacaoJogador, setFiltroTransacaoJogador] = useState("");
-  // FIM DOS ESTADOS CRÍTICOS
+  const [estatisticas, setEstatisticas] = useState({
+    totalReceitas: 0,
+    totalDespesas: 0,
+    saldo: 0,
+    pagamentosPendentes: 0,
+    totalJogadores: 0
+  });
 
-  const [pesquisaJogador, setPesquisaJogador] = useState('');
-  const [valorMensalidade, setValorMensalidade] = useState(50); // Valor padrão da mensalidade, pode ser buscado do backend se for dinâmico
+// No início do componente, adicione:
+const [isento, setIsento] = useState(false);
 
-  const meses = [
-    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-  ];
-
-  const categoriasReceita = ["Mensalidade", "Doação", "Venda", "Outros"];
-  const categoriasDespesa = ["Aluguel", "Material Esportivo", "Transporte", "Alimentação", "Manutenção", "Outros"];
-
-  // Funções de busca de dados
-  useEffect(() => {
-    fetchEstatisticas();
-    fetchTransacoes();
-    fetchJogadores();
-  }, [filtroMes]);
-
-  useEffect(() => {
-    fetchTransacoes();
-  }, [filtroTransacaoTipo, filtroTransacaoCategoria, filtroTransacaoJogador]);
-
-  const fetchEstatisticas = async () => {
+  const STORAGE_KEY = 'dadosFinanceiros';
+ useEffect(() => {
+  const carregarDados = async () => {
     try {
-      const response = await api.get(`/financeiro/estatisticas?mes=${filtroMes}`);
-      const { totalReceitas, totalDespesas, saldo, pagamentosPendentes } = response.data.data;
-      setTotalReceitas(totalReceitas);
-      setTotalDespesas(totalDespesas);
-      setSaldo(saldo);
-      setPagamentosPendentes(pagamentosPendentes);
-    } catch (error) {
-      console.error("Erro ao buscar estatísticas:", error);
-      toast.error("Erro ao carregar estatísticas.");
-    }
-  };
+      setCarregando(true);
 
-  const fetchTransacoes = async () => {
-    try {
-      const params = {
-        mes: filtroMes,
-        tipo: filtroTransacaoTipo,
-        categoria: filtroTransacaoCategoria,
-        jogadorId: filtroTransacaoJogador
-      };
-      const response = await api.get("/financeiro/transacoes", { params });
-      setTransacoes(response.data.data);
-    } catch (error) {
-      console.error("Erro ao buscar transações:", error);
-      toast.error("Erro ao carregar transações.");
-    }
-  };
-
-  const fetchJogadores = async () => {
-    try {
-      const response = await api.get("/jogadores");
-      setJogadores(response.data.data);
-    } catch (error) {
-      console.error("Erro ao buscar jogadores:", error);
-      toast.error("Erro ao carregar jogadores.");
-    }
-  };
-
-  // Funções de manipulação de formulário e dados
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setNovaTransacao(prevState => ({
-      ...prevState,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
-
-  const handleTipoChange = (e) => {
-    const tipo = e.target.value;
-    setNovaTransacao(prevState => ({
-      ...prevState,
-      tipo,
-      categoria: "", // Limpa a categoria ao mudar o tipo
-      jogadorId: "",
-      jogadorNome: "",
-      isento: false // Reseta isento ao mudar o tipo
-    }));
-  };
-
-  const handleJogadorChange = (e) => {
-    const jogadorId = e.target.value;
-    const jogador = jogadores.find(j => j._id === jogadorId);
-    setNovaTransacao(prevState => ({
-      ...prevState,
-      jogadorId: jogadorId,
-      jogadorNome: jogador ? jogador.nome : ""
-    }));
-  };
-
-  const adicionarTransacao = async (e) => {
-    e.preventDefault();
-    if (!novaTransacao.descricao || !novaTransacao.valor || !novaTransacao.tipo || !novaTransacao.data) {
-      toast.error("Por favor, preencha todos os campos obrigatórios da transação.");
-      return;
-    }
-    if (novaTransacao.tipo === 'receita' && novaTransacao.categoria === 'Mensalidade' && !novaTransacao.jogadorId) {
-      toast.error("Por favor, selecione um jogador para a mensalidade.");
-      return;
-    }
-
-    try {
-      const transacaoParaEnviar = { ...novaTransacao };
-      // Se for uma mensalidade isenta, o valor enviado deve ser 0
-      if (transacaoParaEnviar.tipo === 'receita' && transacaoParaEnviar.categoria === 'Mensalidade' && transacaoParaEnviar.isento) {
-        transacaoParaEnviar.valor = 0;
+      // Tenta carregar do cache primeiro
+      const cachedData = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      if (cachedData) {
+        setJogadores(cachedData.jogadoresCache || []);
+        setTransacoes(cachedData.transacoesCache || []);
       }
 
-      await api.post("/financeiro/transacoes", transacaoParaEnviar);
-      toast.success("Transação adicionada com sucesso!");
-      setNovaTransacao({
-        descricao: "",
-        valor: "",
-        tipo: "receita",
-        categoria: "",
-        data: new Date().toISOString().substring(0, 10),
-        jogadorId: "",
-        jogadorNome: "",
-        isento: false
+      // Busca dados da API
+      const [jogadoresRes, transacoesRes] = await Promise.all([
+        api.get('/jogadores'),
+        api.get('/financeiro/transacoes')
+      ]);
+
+      const jogadoresData = jogadoresRes.data?.data || jogadoresRes.data || [];
+      const transacoesData = transacoesRes.data?.data || transacoesRes.data || [];
+
+      // Processa os jogadores
+      const jogadoresProcessados = jogadoresData.map(jogador => {
+        // Verifica se há transações de mensalidade para este jogador
+        const transacoesJogador = transacoesData.filter(t => 
+          t.jogadorId === jogador._id && t.categoria === 'mensalidade'
+        );
+
+        // Cria array de pagamentos baseado nas transações
+        const pagamentos = Array(12).fill(false);
+        transacoesJogador.forEach(t => {
+          const mes = new Date(t.data).getMonth();
+          pagamentos[mes] = true;
+        });
+
+        // Verifica status
+        const mesAtual = new Date().getMonth();
+        const todosMesesPagos = pagamentos
+          .slice(0, mesAtual + 1)
+          .every(pago => pago);
+
+        return {
+          ...jogador,
+          pagamentos: pagamentos,
+          statusFinanceiro: todosMesesPagos ? 'Adimplente' : 'Inadimplente'
+        };
       });
-      fetchTransacoes();
-      fetchEstatisticas();
-      setMostrarFormulario(false);
+
+      // Atualiza estados
+      setJogadores(jogadoresProcessados);
+      setTransacoes(transacoesData);
+
+      // Atualiza cache
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        jogadoresCache: jogadoresProcessados,
+        transacoesCache: transacoesData,
+        lastUpdate: new Date().toISOString()
+      }));
+
     } catch (error) {
-      console.error("Erro ao adicionar transação:", error);
-      toast.error("Erro ao adicionar transação.");
+      console.error("Erro ao carregar dados:", error);
+      toast.error('Erro ao carregar dados. Usando cache local se disponível.');
+    } finally {
+      setCarregando(false);
     }
   };
+
+  carregarDados();
+}, []);
+
+  // Atualizar estatísticas
+  useEffect(() => {
+    const carregarEstatisticas = async () => {
+      if (!transacoes || !jogadores) return; // Evita cálculos desnecessários
+      
+      try {
+       const receitasMes = transacoes
+  .filter(t => t?.tipo === "receita" && 
+              t?.data?.startsWith(filtroMes?.slice(0, 4)) &&
+              !t.isento) // Ignora transações isentas
+  .reduce((acc, t) => acc + (Number(t?.valor) || 0), 0);
+
+        const despesasMes = transacoes
+          .filter(t => t.tipo === "despesa" && t.data?.startsWith(filtroMes.slice(0, 4)))
+          .reduce((acc, t) => acc + (Number(t.valor) || 0), 0);
+
+        const pagamentosPendentes = jogadores.reduce((total, jogador) => {
+          return total + (jogador.pagamentos || []).filter(p => !p).length;
+        }, 0);
+
+        setEstatisticas(prev => ({
+          ...prev,
+          totalReceitas: receitasMes,
+          totalDespesas: despesasMes,
+          saldo: receitasMes - despesasMes,
+          pagamentosPendentes,
+          totalJogadores: jogadores.length
+        }));
+
+      } catch (error) {
+        console.error("Erro ao calcular estatísticas:", error);
+        toast.error('Erro ao calcular estatísticas');
+      }
+    };
+
+    carregarEstatisticas();
+  }, [filtroMes, transacoes, jogadores]); // Dependências necessárias
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNovaTransacao(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Adicionando transação
+  const adicionarTransacao = async (e) => {
+  e.preventDefault();
+
+  try {
+    if (!novaTransacao.data || !novaTransacao.valor || !novaTransacao.descricao) {
+      throw new Error('Preencha todos os campos obrigatórios');
+    }
+
+    // Verifica se já existe uma transação para o mesmo jogador na mesma data
+    if (novaTransacao.jogadorId) {
+      const transacaoExistente = transacoes.find(t => 
+        t.jogadorId === novaTransacao.jogadorId && 
+        new Date(t.data).toISOString().split('T')[0] === novaTransacao.data
+      );
+
+      if (transacaoExistente) {
+        toast.error('Já existe uma transação registrada para este jogador nesta data');
+        return;
+      }
+    }
+
+    const payload = {
+      ...novaTransacao,
+      valor: parseFloat(novaTransacao.valor),
+      data: new Date(novaTransacao.data + 'T12:00:00').toISOString()
+    };
+
+    // Atualização otimista - adiciona a transação imediatamente
+    const transacaoTemporaria = {
+      ...payload,
+      _id: 'temp-' + Date.now(), // ID temporário
+      createdAt: new Date().toISOString()
+    };
+    
+    setTransacoes(prev => [transacaoTemporaria, ...prev]);
+
+    // Se for uma receita de mensalidade
+    if (payload.tipo === 'receita' && payload.jogadorId) {
+      const dataTransacao = new Date(payload.data);
+      const mesTransacao = dataTransacao.getMonth();
+
+      setJogadores(prevJogadores => {
+        return prevJogadores.map(j => {
+          if (j._id === payload.jogadorId) {
+            const pagamentosAtualizados = [...j.pagamentos];
+            pagamentosAtualizados[mesTransacao] = true;
+
+            const mesAtual = new Date().getMonth();
+            const todosMesesPagos = pagamentosAtualizados
+              .slice(0, mesAtual + 1)
+              .every(pago => pago);
+
+            return {
+              ...j,
+              pagamentos: pagamentosAtualizados,
+              statusFinanceiro: todosMesesPagos ? 'Adimplente' : 'Inadimplente'
+            };
+          }
+          return j;
+        });
+      });
+    }
+
+    // Faz a chamada à API
+    const response = await api.post('/financeiro/transacoes', payload);
+    const transacaoReal = response.data.data;
+
+    // Substitui a transação temporária pela real
+    setTransacoes(prev => [
+      transacaoReal,
+      ...prev.filter(t => t._id !== transacaoTemporaria._id)
+    ]);
+
+    // Atualiza localStorage
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      jogadoresCache: jogadores,
+      transacoesCache: [transacaoReal, ...transacoes.filter(t => t._id !== transacaoTemporaria._id)],
+      lastUpdate: new Date().toISOString()
+    }));
+
+    // Reset do formulário
+    toast.success('Transação registrada com sucesso!');
+    setNovaTransacao({
+      descricao: "",
+      valor: "",
+      tipo: "receita",
+      categoria: "",
+      data: new Date().toISOString().split("T")[0],
+      jogadorId: "",
+      jogadorNome: ""
+    });
+
+  } catch (error) {
+    console.error("Erro ao adicionar transação:", error);
+    // Remove a transação temporária em caso de erro
+    setTransacoes(prev => prev.filter(t => t._id !== transacaoTemporaria?._id));
+    toast.error(error.message || 'Erro ao adicionar transação');
+  }
+};
+
+const togglePagamento = async (jogadorId, mesIndex) => {
+  try {
+    const jogador = jogadores.find(j => j._id === jogadorId);
+    if (!jogador) throw new Error('Jogador não encontrado');
+
+    const mesAtual = new Date().getMonth();
+    if (mesIndex > mesAtual) {
+      toast.warning('Não é possível marcar pagamentos de meses futuros');
+      return;
+    }
+
+    // Salva estado original para fallback
+    const originalJogadores = [...jogadores];
+    
+    // Pergunta se é isenção apenas se estiver marcando como pago (status anterior false)
+    let isento = false;
+    if (!jogador.pagamentos[mesIndex]) {
+      isento = window.confirm('Deseja marcar como isento? (Sem valor financeiro)');
+    }
+
+    // Atualização otimista incluindo informação de isenção
+    const updatedJogadores = jogadores.map(j => {
+      if (j._id === jogadorId) {
+        const updatedPagamentos = [...j.pagamentos];
+        const updatedIsentoMeses = { ...(j.isentoMeses || {}) };
+        
+        updatedPagamentos[mesIndex] = !j.pagamentos[mesIndex] || isento;
+        
+        // Atualiza o status de isenção
+        if (isento) {
+          updatedIsentoMeses[mesIndex] = true;
+        } else if (updatedPagamentos[mesIndex] === false) {
+          delete updatedIsentoMeses[mesIndex];
+        }
+
+        const todosMesesPagos = updatedPagamentos
+          .slice(0, mesAtual + 1)
+          .every(pago => pago);
+
+        return {
+          ...j,
+          pagamentos: updatedPagamentos,
+          isentoMeses: updatedIsentoMeses,
+          statusFinanceiro: todosMesesPagos ? 'Adimplente' : 'Inadimplente'
+        };
+      }
+      return j;
+    });
+
+    setJogadores(updatedJogadores);
+
+    // Chamada à API
+    const response = await api.post(`/jogadores/${jogadorId}/pagamentos`, {
+      mes: mesIndex,
+      pago: !jogador.pagamentos[mesIndex], // Inverte o status
+      isento,                              // Passa a flag de isenção
+      valor: isento ? 0 : 100,             // Zero se isento
+      dataPagamento: !jogador.pagamentos[mesIndex] ? new Date().toISOString() : null
+    });
+
+    // Atualiza transações se necessário
+    if (response.data.data.transacao) {
+      setTransacoes(prev => [response.data.data.transacao, ...prev]);
+    }
+
+    toast.success(
+      isento ? 'Mensalidade isentada com sucesso!' :
+      jogador.pagamentos[mesIndex] ? 'Pagamento removido!' : 'Pagamento registrado!'
+    );
+
+  } catch (error) {
+    console.error("Erro ao atualizar pagamento:", error);
+    setJogadores(originalJogadores);
+    toast.error(error.response?.data?.message || 'Erro ao atualizar pagamento');
+  }
+};
 
   const deletarTransacao = async (id) => {
-    try {
-      await api.delete(`/financeiro/transacoes/${id}`);
-      toast.success("Transação removida com sucesso!");
-      fetchTransacoes();
-      fetchEstatisticas();
-    } catch (error) {
-      console.error("Erro ao remover transação:", error);
-      toast.error("Erro ao remover transação.");
+  try {
+    // Encontra a transação que será deletada
+    const transacaoParaDeletar = transacoes.find(t => t._id === id);
+    if (!transacaoParaDeletar) {
+      throw new Error('Transação não encontrada');
     }
-  };
 
-  const deletarJogador = async (jogadorId) => {
-    if (window.confirm("Tem certeza que deseja excluir este jogador? Todas as transações relacionadas serão mantidas, mas o status de pagamento será desvinculado.")) {
-      try {
-        await api.delete(`/jogadores/${jogadorId}`);
-        toast.success("Jogador removido com sucesso!");
-        fetchJogadores();
-        fetchEstatisticas();
-        setJogadorSelecionado(null); // Fecha o modal após a exclusão
-      } catch (error) {
-        console.error("Erro ao excluir jogador:", error);
-        toast.error("Erro ao excluir jogador.");
-      }
-    }
-  };
+    // Atualização otimista - remove a transação imediatamente
+    setTransacoes(prev => prev.filter(t => t._id !== id));
 
-  const handleTogglePagamento = async (jogadorId, mesIndex, currentPago, currentIsento) => {
-    try {
-      let newPago = currentPago;
-      let newIsento = currentIsento;
-
-      if (currentIsento) {
-        // Se já está isento, desmarcar isenção e perguntar se quer marcar como pago
-        newIsento = false;
-        const confirmar = window.confirm("A mensalidade de " + meses[mesIndex] + " não será mais isenta. Deseja marcar como Paga?");
-        if (confirmar) {
-          newPago = true;
-        } else {
-          newPago = false; // Se não quer pagar, fica "não pago"
-        }
-      } else if (currentPago) {
-        // Se já está pago, desmarcar pagamento e perguntar se quer marcar como isento
-        newPago = false;
-        const confirmar = window.confirm("A mensalidade de " + meses[mesIndex] + " não será mais paga. Deseja marcar como Isenta?");
-        if (confirmar) {
-          newIsento = true;
-        } else {
-          newIsento = false; // Se não quer isentar, fica "não pago"
-        }
-      } else {
-        // Se não está pago nem isento, perguntar a intenção
-        const tipoConfirmado = window.prompt("A mensalidade de " + meses[mesIndex] + " está pendente. Digite 'pago' para marcar como pago, ou 'isento' para marcar como isento:");
-        if (tipoConfirmado && tipoConfirmado.toLowerCase() === 'pago') {
-          newPago = true;
-          newIsento = false;
-        } else if (tipoConfirmado && tipoConfirmado.toLowerCase() === 'isento') {
-          newIsento = true;
-          newPago = false;
-        } else {
-          toast.info("Ação de pagamento/isenção cancelada ou inválida.");
-          return; // Usuário cancelou ou digitou algo inválido
-        }
-      }
-
-      await api.post(`/jogadores/${jogadorId}/pagamentos/${mesIndex}`, {
-        pago: newPago,
-        isento: newIsento,
-        valorMensalidade: valorMensalidade // Envia o valor da mensalidade para o backend
+    // Se for uma transação de mensalidade, desmarca o mês correspondente
+    if (transacaoParaDeletar.categoria === 'mensalidade' && transacaoParaDeletar.jogadorId) {
+      const dataTransacao = new Date(transacaoParaDeletar.data);
+      const mesTransacao = dataTransacao.getMonth();
+      
+      setJogadores(prevJogadores => {
+        return prevJogadores.map(jogador => {
+          if (jogador._id === transacaoParaDeletar.jogadorId) {
+            const pagamentosAtualizados = [...jogador.pagamentos];
+            pagamentosAtualizados[mesTransacao] = false;
+            
+            const mesAtual = new Date().getMonth();
+            const todosMesesPagos = pagamentosAtualizados
+              .slice(0, mesAtual + 1)
+              .every(pago => pago);
+            
+            return {
+              ...jogador,
+              pagamentos: pagamentosAtualizados,
+              statusFinanceiro: todosMesesPagos ? 'Adimplente' : 'Inadimplente'
+            };
+          }
+          return jogador;
+        });
       });
+    }
 
-      toast.success(`Mensalidade de ${meses[mesIndex]} ${newIsento ? 'isenta' : newPago ? 'paga' : 'removida'} com sucesso!`);
-      fetchJogadores(); // Atualiza a lista de jogadores para refletir o novo status
-      fetchEstatisticas(); // Atualiza as estatísticas financeiras
+    // Faz a chamada à API para deletar
+    await api.delete(`/financeiro/transacoes/${id}`);
+
+    // Atualiza localStorage
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      jogadoresCache: jogadores,
+      transacoesCache: transacoes.filter(t => t._id !== id),
+      lastUpdate: new Date().toISOString()
+    }));
+
+    toast.success('Transação removida com sucesso!');
+  } catch (error) {
+    console.error("Erro ao deletar transação:", error);
+    // Reverte as mudanças em caso de erro
+    setTransacoes(transacoes);
+    setJogadores(jogadores);
+    toast.error(error.message || 'Erro ao deletar transação');
+  }
+};
+
+  const deletarJogador = async (id) => {
+    try {
+      // Deletar jogador
+      await api.delete(`/api/jogadores/${id}`);
+
+      setJogadores(jogadores.filter(j => j._id !== id));
+      setEditarModal(false);
+      toast.success('Jogador removido com sucesso!');
     } catch (error) {
-      console.error("Erro ao atualizar pagamento:", error);
-      toast.error("Erro ao atualizar pagamento.");
+      console.error("Erro ao deletar jogador:", error);
+      toast.error('Erro ao deletar jogador');
     }
   };
 
-  // Dados para os gráficos
-  const pieData = {
-    labels: ['Receitas', 'Despesas'],
-    datasets: [{
-      data: [totalReceitas, totalDespesas],
-      backgroundColor: ['#36A2EB', '#FF6384'],
-      hoverBackgroundColor: ['#36A2EB', '#FF6384']
-    }]
-  };
+  // Filtrar transações por mês/ano
+  const transacoesFiltradas = transacoes
+    .filter(t => {
+      if (!t.data) return false;
+      
+      // Filtro por ano (não por mês)
+      try {
+        const dataStr = typeof t.data === 'string' 
+          ? t.data 
+          : new Date(t.data).toISOString();
+        return dataStr.startsWith(filtroMes.slice(0, 4)); // Filtra por ano apenas
+      } catch {
+        return false;
+      }
+    })
+    .filter(t => {
+      // Filtro por jogador
+      if (filtroHistorico.jogador && t.jogadorId) {
+        const jogador = jogadores.find(j => j._id === t.jogadorId);
+        return jogador?.nome.toLowerCase().includes(filtroHistorico.jogador.toLowerCase());
+      }
+      return true;
+    })
+    .filter(t => {
+      // Filtro por tipo
+      if (filtroHistorico.tipo !== 'todos') {
+        return t.tipo === filtroHistorico.tipo;
+      }
+      return true;
+    })
+    .sort((a, b) => new Date(b.data) - new Date(a.data)); // Ordena do mais recente para o mais antigo
 
-  const barData = {
-    labels: meses,
+  const dadosGraficoBarras = {
+    labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
     datasets: [
       {
-        label: 'Receitas por Mês',
-        backgroundColor: 'rgba(54, 162, 235, 0.5)',
-        borderColor: 'rgba(54, 162, 235, 1)',
-        borderWidth: 1,
-        data: meses.map((_, index) => {
-          const mesTransacoes = transacoes.filter(t =>
-            new Date(t.data).getMonth() === index && t.tipo === 'receita' && !t.isento // Apenas receitas NÃO ISENTAS
-          );
-          return mesTransacoes.reduce((sum, t) => sum + t.valor, 0);
-        })
+        label: 'Receitas',
+        data: Array(12).fill(0).map((_, i) => {
+          const mes = (i + 1).toString().padStart(2, '0');
+          return transacoes
+            .filter(t => {
+              try {
+                const dataStr = typeof t.data === 'string' ? t.data : new Date(t.data).toISOString();
+                return dataStr.startsWith(`${filtroMes.slice(0, 4)}-${mes}`) && t.tipo === "receita";
+              } catch {
+                return false;
+              }
+            })
+            .reduce((acc, t) => acc + (t.valor || 0), 0);
+        }),
+        backgroundColor: '#4ade80',
+        borderRadius: 6
       },
       {
-        label: 'Despesas por Mês',
-        backgroundColor: 'rgba(255, 99, 132, 0.5)',
-        borderColor: 'rgba(255, 99, 132, 1)',
-        borderWidth: 1,
-        data: meses.map((_, index) => {
-          const mesTransacoes = transacoes.filter(t => new Date(t.data).getMonth() === index && t.tipo === 'despesa');
-          return mesTransacoes.reduce((sum, t) => sum + t.valor, 0);
-        })
+        label: 'Despesas',
+        data: Array(12).fill(0).map((_, i) => {
+          const mes = (i + 1).toString().padStart(2, '0');
+          return transacoes
+            .filter(t => {
+              try {
+                const dataStr = typeof t.data === 'string' ? t.data : new Date(t.data).toISOString();
+                return dataStr.startsWith(`${filtroMes.slice(0, 4)}-${mes}`) && t.tipo === "despesa";
+              } catch {
+                return false;
+              }
+            })
+            .reduce((acc, t) => acc + (t.valor || 0), 0);
+        }),
+        backgroundColor: '#f87171',
+        borderRadius: 6
       }
     ]
   };
 
-  // Funções de exportação e impressão
-  const handleDownloadPDF = async () => {
-    const input = document.getElementById('relatorio-financeiro');
-    if (!input) {
-      toast.error("Elemento para PDF não encontrado.");
-      return;
-    }
+  const dadosGraficoPizza = {
+    labels: ['Pagamentos em dia', 'Pagamentos pendentes'],
+    datasets: [{
+      data: [
+        jogadores.reduce((total, jogador) => 
+          total + jogador.pagamentos.filter(pago => pago).length, 0
+        ),
+        jogadores.reduce((total, jogador) => 
+          total + jogador.pagamentos.filter(pago => !pago).length, 0
+        )
+      ],
+      backgroundColor: ['#4ade80', '#f87171'],
+      hoverOffset: 4,
+      borderWidth: 0
+    }]
+  };
 
+  const exportarPDF = async () => {
     try {
-      const canvas = await html2canvas(input, { scale: 2 });
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgWidth = 210;
-      const pageHeight = 297;
-      const imgHeight = canvas.height * imgWidth / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
+      // Fecha o modal de relatório antes de gerar o PDF
+      setRelatorioModal(false);
+      
+      // Aguarda um pequeno delay para garantir que o modal foi fechado
+      await new Promise(resolve => setTimeout(resolve, 300));
 
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
-
-      pdf.save(`relatorio-financeiro-${filtroMes}.pdf`);
-      toast.success("PDF gerado com sucesso!");
-    } catch (error) {
-      console.error("Erro ao gerar PDF:", error);
-      toast.error("Erro ao gerar PDF.");
-    }
-  };
-
-  const handlePrint = () => {
-    const content = document.getElementById('relatorio-financeiro');
-    if (content) {
-      const printWindow = window.open('', '', 'height=800,width=1200');
-      printWindow.document.write('<html><head><title>Relatório Financeiro</title>');
-      printWindow.document.write('<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">');
-      printWindow.document.write('<style>');
-      printWindow.document.write('@media print { body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }');
-      printWindow.document.write('</style>');
-      printWindow.document.write('</head><body>');
-      printWindow.document.write('<div class="p-8">');
-      printWindow.document.write(content.innerHTML);
-      printWindow.document.write('</div></body></html>');
-      printWindow.document.close();
-      printWindow.focus();
-      printWindow.print();
-      toast.success("Preparando impressão...");
-    } else {
-      toast.error("Conteúdo para impressão não encontrado.");
-    }
-  };
-
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        const title = `Relatório Financeiro - ${filtroMes}`;
-        const text = `Confira o relatório financeiro do mês ${filtroMes} da nossa equipe.`;
-        const url = window.location.href; // Ou uma URL específica para o relatório
-
-        await navigator.share({
-          title,
-          text,
-          url,
+      const element = document.getElementById('relatorio-content');
+      if (!element) {
+        // Cria um elemento temporário para o relatório
+        const tempElement = document.createElement('div');
+        tempElement.id = 'relatorio-content';
+        tempElement.innerHTML = `
+          <div style="padding: 20px; background-color: #1f2937; color: white;">
+            <h2 style="margin-bottom: 20px;">Relatório Financeiro - ${new Date(filtroMes).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</h2>
+            
+            <div style="margin-bottom: 20px;">
+              <h3>Resumo Financeiro</h3>
+              <p>Receitas: R$ ${estatisticas.totalReceitas.toFixed(2)}</p>
+              <p>Despesas: R$ ${estatisticas.totalDespesas.toFixed(2)}</p>
+              <p>Saldo: R$ ${estatisticas.saldo.toFixed(2)}</p>
+            </div>
+            
+            <div>
+              <h3>Informações Adicionais</h3>
+              <p>Total de Jogadores: ${estatisticas.totalJogadores}</p>
+              <p>Pagamentos Pendentes: ${estatisticas.pagamentosPendentes}</p>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(tempElement);
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        const canvas = await html2canvas(tempElement, {
+          scale: 2,
+          logging: false,
+          useCORS: true,
+          backgroundColor: '#1f2937'
         });
-        toast.success("Relatório compartilhado com sucesso!");
-      } catch (error) {
-        console.error('Erro ao compartilhar:', error);
-        toast.error("Erro ao compartilhar o relatório.");
+        
+        document.body.removeChild(tempElement);
+        
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save(`relatorio-financeiro-${filtroMes}.pdf`);
+      } else {
+        const canvas = await html2canvas(element, {
+          scale: 2,
+          logging: false,
+          useCORS: true,
+          backgroundColor: '#1f2937'
+        });
+        
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save(`relatorio-financeiro-${filtroMes}.pdf`);
       }
-    } else {
-      toast.info("A funcionalidade de compartilhamento não é suportada neste navegador.");
+      
+      toast.success('Relatório PDF gerado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      toast.error('Erro ao gerar PDF. Tente novamente.');
     }
   };
 
-  const formatarValor = (valor) => {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
+  const exportarImagem = async () => {
+    try {
+      // Fecha o modal de relatório antes de gerar a imagem
+      setRelatorioModal(false);
+      
+      // Aguarda um pequeno delay para garantir que o modal foi fechado
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      const element = document.getElementById('relatorio-content');
+      if (!element) {
+        // Cria um elemento temporário para o relatório
+        const tempElement = document.createElement('div');
+        tempElement.id = 'relatorio-content';
+        tempElement.innerHTML = `
+          <div style="padding: 20px; background-color: #1f2937; color: white;">
+            <h2 style="margin-bottom: 20px;">Relatório Financeiro - ${new Date(filtroMes).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</h2>
+            
+            <div style="margin-bottom: 20px;">
+              <h3>Resumo Financeiro</h3>
+              <p>Receitas: R$ ${estatisticas.totalReceitas.toFixed(2)}</p>
+              <p>Despesas: R$ ${estatisticas.totalDespesas.toFixed(2)}</p>
+              <p>Saldo: R$ ${estatisticas.saldo.toFixed(2)}</p>
+            </div>
+            
+            <div>
+              <h3>Informações Adicionais</h3>
+              <p>Total de Jogadores: ${estatisticas.totalJogadores}</p>
+              <p>Pagamentos Pendentes: ${estatisticas.pagamentosPendentes}</p>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(tempElement);
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        const canvas = await html2canvas(tempElement, {
+          scale: 2,
+          logging: false,
+          useCORS: true,
+          backgroundColor: '#1f2937'
+        });
+        
+        document.body.removeChild(tempElement);
+        
+        // Cria um link temporário para download da imagem
+        const link = document.createElement('a');
+        link.download = `relatorio-financeiro-${filtroMes}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      } else {
+        const canvas = await html2canvas(element, {
+          scale: 2,
+          logging: false,
+          useCORS: true,
+          backgroundColor: '#1f2937'
+        });
+        
+        // Cria um link temporário para download da imagem
+        const link = document.createElement('a');
+        link.download = `relatorio-financeiro-${filtroMes}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      }
+      
+      toast.success('Imagem gerada com sucesso!');
+    } catch (error) {
+      console.error('Erro ao gerar imagem:', error);
+      toast.error('Erro ao gerar imagem. Tente novamente.');
+    }
   };
 
-  const filtrarJogadores = jogadores.filter(jogador =>
-    jogador.nome.toLowerCase().includes(pesquisaJogador.toLowerCase())
+  // const compartilharRelatorio = async () => {
+  //   try {
+  //     if (navigator.share) {
+  //       const element = document.getElementById('relatorio-content');
+  //       const canvas = await html2canvas(element, {
+  //         scale: 2,
+  //         logging: false,
+  //         useCORS: true,
+  //         backgroundColor: '#1f2937'
+  //       });
+        
+  //       const blob = await (await fetch(canvas.toDataURL('image/png'))).blob();
+  //       const file = new File([blob], 'relatorio-financeiro.png', { type: blob.type });
+        
+  //       await navigator.share({
+  //         title: `Relatório Financeiro - ${filtroMes}`,
+  //         text: `Status financeiro do time: ${estatisticas.saldo >= 0 ? 'Positivo' : 'Negativo'}`,
+  //         files: [file]
+  //       });
+  //     } else {
+  //       toast.info('Compartilhamento não suportado neste navegador');
+  //     }
+  //   } catch (error) {
+  //     console.error('Erro ao compartilhar:', error);
+  //     if (error.name !== 'AbortError') {
+  //       toast.error('Erro ao compartilhar relatório');
+  //     }
+  //   }
+  // };
+
+  const compartilharControle = async (elementId) => {
+    try {
+      if (navigator.share) {
+        const element = document.getElementById(elementId);
+        const canvas = await html2canvas(element, {
+          scale: 2,
+          logging: false,
+          useCORS: true,
+          backgroundColor: '#1f2937'
+        });
+        
+        const blob = await (await fetch(canvas.toDataURL('image/png'))).blob();
+        const file = new File([blob], 'controle-mensalidades.png', { type: blob.type });
+        
+        await navigator.share({
+          title: `Controle de Mensalidades - ${new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`,
+          text: `Controle de mensalidades dos jogadores`,
+          files: [file]
+        });
+      } else {
+        toast.info('Compartilhamento não suportado neste navegador');
+      }
+    } catch (error) {
+      console.error('Erro ao compartilhar:', error);
+      if (error.name !== 'AbortError') {
+        toast.error('Erro ao compartilhar controle');
+      }
+    }
+  };
+
+  const compartilharHistorico = async (elementId) => {
+    try {
+      if (navigator.share) {
+        const element = document.getElementById(elementId);
+        const canvas = await html2canvas(element, {
+          scale: 2,
+          logging: false,
+          useCORS: true,
+          backgroundColor: '#1f2937'
+        });
+        
+        const blob = await (await fetch(canvas.toDataURL('image/png'))).blob();
+        const file = new File([blob], 'historico-transacoes.png', { type: blob.type });
+        
+        await navigator.share({
+          title: `Histórico de Transações - ${new Date(filtroMes).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`,
+          text: `Histórico de transações financeiras`,
+          files: [file]
+        });
+      } else {
+        toast.info('Compartilhamento não suportado neste navegador');
+      }
+    } catch (error) {
+      console.error('Erro ao compartilhar:', error);
+      if (error.name !== 'AbortError') {
+        toast.error('Erro ao compartilhar histórico');
+      }
+    }
+  };
+
+  const jogadoresFiltrados = jogadores.filter(jogador =>
+    jogador.nome.toLowerCase().includes(filtroJogador.toLowerCase())
   );
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center p-4 sm:p-6 lg:p-8 relative">
-      <ToastContainer />
+    <div className="min-h-screen bg-gray-900 p-4 sm:p-6">
+      <div className="fixed inset-0 overflow-hidden -z-10 opacity-20">
+        {[...Array(15)].map((_, i) => (
+          <motion.div
+            key={i}
+            initial={{ x: Math.random() * 100, y: Math.random() * 100, opacity: 0.3 }}
+            animate={{ y: [null, (Math.random() - 0.5) * 50], x: [null, (Math.random() - 0.5) * 50] }}
+            transition={{ duration: 15 + Math.random() * 20, repeat: Infinity, repeatType: "reverse" }}
+            className="absolute w-1 h-1 bg-white rounded-full"
+            style={{ left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%` }}
+          />
+        ))}
+      </div>
 
-      <motion.button
-        onClick={() => navigate('/')}
-        className="absolute top-4 left-4 bg-gray-300 hover:bg-gray-400 text-gray-800 p-2 rounded-full shadow-lg transition-all"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        title="Voltar ao Início"
-      >
-        <FaArrowLeft className="text-xl" />
-      </motion.button>
+      <div className="max-w-7xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-12 sm:mb-16 relative"
+        >
+          {/* Novo botão voltar */}
+          <motion.button 
+            onClick={() => navigate('/dashboard')}
+            whileHover={{ 
+              scale: 1.05,
+              x: -5,
+              backgroundColor: "rgba(37, 99, 235, 0.1)"
+            }}
+            whileTap={{ scale: 0.95 }}
+            className="absolute left-2 -top-8 sm:-top-0 w-11 h-11 flex items-center justify-center bg-gray-800/40 hover:bg-gray-700/40 text-gray-200 rounded-full transition-all duration-300 backdrop-blur-sm border border-gray-700/50 shadow-lg hover:shadow-blue-500/20"
+            title="Voltar para o Dashboard"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <RiArrowLeftDoubleLine className="text-blue-400 text-2xl transform transition-transform group-hover:translate-x-1" />
+            <div className="absolute inset-0 rounded-full bg-blue-400/10 animate-pulse" style={{ animationDuration: '3s' }} />
+          </motion.button>
 
-      <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-8 text-center">Gestão Financeira</h1>
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-14 sm:mt-0">
+            <div className="flex-grow flex justify-center items-center">
+              <div className="flex flex-col items-center gap-2">
+                <div className="flex items-center justify-center gap-3">
+                  <FaMoneyBillWave className="text-blue-400 text-2xl sm:text-3xl" />
+                  <motion.h1
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.1 }}
+                    className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300"
+                  >
+                    Financeiro
+                  </motion.h1>
+                </div>
 
-      <div className="w-full max-w-6xl bg-white p-6 sm:p-8 rounded-lg shadow-xl mb-8">
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold text-gray-700 mb-4 sm:mb-0">Visão Geral do Mês</h2>
-          <div className="flex items-center space-x-2">
-            <FaCalendarAlt className="text-gray-500 text-xl" />
-            <input
-              type="month"
-              value={filtroMes}
-              onChange={(e) => setFiltroMes(e.target.value)}
-              className="p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-            />
+                {/* Novo subtítulo */}
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.8 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-gray-400 text-sm sm:text-base"
+                >
+                  Gerencie as finanças e mensalidades do time
+                </motion.p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 sm:gap-4 mt-4 md:mt-0">
+              <div className="flex items-center gap-2 bg-gray-800 bg-opacity-50 px-3 py-2 rounded-lg">
+                <FaCalendarAlt className="text-blue-400 text-sm sm:text-base" />
+                <input
+                  type="month"
+                  value={filtroMes}
+                  onChange={(e) => setFiltroMes(e.target.value)}
+                  className="bg-transparent text-white focus:outline-none text-xs sm:text-sm"
+                />
+              </div>
+              <motion.button
+                onClick={() => setRelatorioModal(true)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg text-xs sm:text-sm"
+              >
+                <FaPrint className="text-xs sm:text-sm" />
+                <span>Relatório</span>
+              </motion.button>
+            </div>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {/* Cards de Estatísticas */}
+        <div className="grid grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <motion.div
-            className="bg-blue-100 p-4 rounded-lg shadow-md flex items-center justify-between"
-            whileHover={{ scale: 1.02 }}
+            whileHover={{ y: -5 }}
+            className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
           >
-            <div className="flex items-center gap-3">
-              <FaArrowUp className="text-blue-600 text-2xl" />
-              <div>
-                <p className="text-sm text-gray-600">Total Receitas</p>
-                <p className="text-lg font-bold text-blue-800">{formatarValor(totalReceitas)}</p>
-              </div>
-            </div>
+            <h3 className="text-sm font-medium text-gray-300 mb-1 flex items-center gap-1 sm:gap-2">
+              <FaArrowUp className="text-green-400 text-sm" /> Receitas
+            </h3>
+            <p className="text-lg sm:text-xl font-bold text-white">
+              R$ {(estatisticas.totalReceitas || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            </p>
           </motion.div>
+
           <motion.div
-            className="bg-red-100 p-4 rounded-lg shadow-md flex items-center justify-between"
-            whileHover={{ scale: 1.02 }}
+            whileHover={{ y: -5 }}
+            className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
           >
-            <div className="flex items-center gap-3">
-              <FaArrowDown className="text-red-600 text-2xl" />
-              <div>
-                <p className="text-sm text-gray-600">Total Despesas</p>
-                <p className="text-lg font-bold text-red-800">{formatarValor(totalDespesas)}</p>
-              </div>
-            </div>
+            <h3 className="text-sm font-medium text-gray-300 mb-1 flex items-center gap-1 sm:gap-2">
+              <FaArrowDown className="text-red-400 text-sm" /> Despesas
+            </h3>
+            <p className="text-lg sm:text-xl font-bold text-white">
+              R$ {(estatisticas.totalDespesas || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            </p>
           </motion.div>
+
           <motion.div
-            className={`p-4 rounded-lg shadow-md flex items-center justify-between ${saldo >= 0 ? 'bg-green-100' : 'bg-orange-100'}`}
-            whileHover={{ scale: 1.02 }}
+            whileHover={{ y: -5 }}
+            className={`bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border ${(estatisticas.saldo || 0) >= 0 ? 'border-green-500/30' : 'border-red-500/30'}`}
           >
-            <div className="flex items-center gap-3">
-              <FaMoneyBillWave className={`text-2xl ${saldo >= 0 ? 'text-green-600' : 'text-orange-600'}`} />
-              <div>
-                <p className="text-sm text-gray-600">Saldo Atual</p>
-                <p className={`text-lg font-bold ${saldo >= 0 ? 'text-green-800' : 'text-orange-800'}`}>{formatarValor(saldo)}</p>
-              </div>
-            </div>
-          </motion.div>
-          <motion.div
-            className="bg-yellow-100 p-4 rounded-lg shadow-md flex items-center justify-between"
-            whileHover={{ scale: 1.02 }}
-          >
-            <div className="flex items-center gap-3">
-              <FaUsers className="text-yellow-600 text-2xl" />
-              <div>
-                <p className="text-sm text-gray-600">Mens. Pendentes</p>
-                <p className="text-lg font-bold text-yellow-800">{pagamentosPendentes}</p>
-              </div>
-            </div>
+            <h3 className="text-sm font-medium text-gray-300 mb-1">Saldo</h3>
+            <p className={`text-lg sm:text-xl font-bold ${(estatisticas.saldo || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              R$ {(estatisticas.saldo || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            </p>
           </motion.div>
         </div>
 
-        <div className="flex flex-wrap gap-2 mb-6 justify-center">
-          <motion.button
-            onClick={() => setMostrarFormulario(!mostrarFormulario)}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-md text-sm sm:text-base"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <FaPlus className="text-sm" /> Adicionar Transação
-          </motion.button>
-          <motion.button
-            onClick={() => setMostrarGraficos(!mostrarGraficos)}
-            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-md text-sm sm:text-base"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <FaChartBar className="text-sm" /> {mostrarGraficos ? "Ocultar Gráficos" : "Mostrar Gráficos"}
-          </motion.button>
-          <motion.button
-            onClick={() => setMostrarListaJogadores(!mostrarListaJogadores)}
-            className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-md text-sm sm:text-base"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <FaUsers className="text-sm" /> {mostrarListaJogadores ? "Ocultar Jogadores" : "Ver Pagamentos"}
-          </motion.button>
-          <motion.button
-            onClick={handleDownloadPDF}
-            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-md text-sm sm:text-base"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <FaFilePdf className="text-sm" /> Baixar PDF
-          </motion.button>
-          <motion.button
-            onClick={handlePrint}
-            className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-md text-sm sm:text-base"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <FaPrint className="text-sm" /> Imprimir
-          </motion.button>
-          <motion.button
-            onClick={handleShare}
-            className="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-md text-sm sm:text-base"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <FaShare className="text-sm" /> Compartilhar
-          </motion.button>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="lg:col-span-1">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
+            >
+              <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Novo Lançamento</h2>
+
+              <form onSubmit={adicionarTransacao} className="space-y-3 sm:space-y-4">
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Data</label>
+                  <input
+                    type="date"
+                    name="data"
+                    value={novaTransacao.data}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Descrição</label>
+                  <input
+                    type="text"
+                    name="descricao"
+                    value={novaTransacao.descricao}
+                    onChange={handleInputChange}
+                    placeholder="Ex: Mensalidade João"
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Valor</label>
+                  <input
+                    type="number"
+                    name="valor"
+                    min="0.01"
+                    step="0.01"
+                    value={novaTransacao.valor}
+                    onChange={handleInputChange}
+                    placeholder="0,00"
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Tipo</label>
+                  <select
+                    name="tipo"
+                    value={novaTransacao.tipo}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                  >
+                    <option value="receita">Receita</option>
+                    <option value="despesa">Despesa</option>
+                    
+                  </select>
+                </div>
+
+                {novaTransacao.tipo === "receita" && (
+  <div className="relative">
+    <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Jogador (opcional)</label>
+    <div className="relative">
+      <input
+        type="text"
+        value={novaTransacao.jogadorNome}
+        onClick={() => setMostrarListaJogadores(true)}
+        readOnly
+        placeholder="Selecione um jogador (opcional)"
+        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm cursor-pointer"
+      />
+      <FaUser className="absolute right-3 top-2.5 text-gray-400 text-xs sm:text-sm" />
+      {novaTransacao.jogadorNome && (
+        <button
+          type="button"
+          onClick={() => {
+            setNovaTransacao(prev => ({
+              ...prev,
+              jogadorId: "",
+              jogadorNome: ""
+            }));
+          }}
+          className="absolute right-8 top-2.5 text-gray-400 hover:text-white text-xs sm:text-sm"
+        >
+          <FaTimes />
+        </button>
+      )}
+    </div>
+  </div>
+)}
+
+                <motion.button
+                  type="submit"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg text-xs sm:text-sm"
+                >
+                  <FaPlus className="text-xs sm:text-sm" /> Adicionar
+                </motion.button>
+              </form>
+            </motion.div>
+
+            {/* Modal de seleção de jogadores */}
+            <AnimatePresence>
+              {mostrarListaJogadores && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+                >
+                  <motion.div
+                    initial={{ scale: 0.95, y: 20 }}
+                    animate={{ scale: 1, y: 0 }}
+                    exit={{ scale: 0.95, y: 20 }}
+                    className="bg-gray-800 rounded-xl shadow-2xl border border-gray-700 w-full max-w-4xl max-h-[90vh] flex flex-col"
+                  >
+                    <div className="p-4 border-b border-gray-700 flex justify-between items-center">
+                      <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                        <FaUsers className="text-blue-400" />
+                        Selecionar Jogador
+                      </h3>
+                      <button
+                        onClick={() => setMostrarListaJogadores(false)}
+                        className="text-gray-400 hover:text-white"
+                      >
+                        <FaTimesCircle />
+                      </button>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-4">
+                      <ListaJogadores
+                        modoSelecao={true}
+                        onJogadorSelecionado={(jogador) => {
+                          setNovaTransacao(prev => ({
+                            ...prev,
+                            jogadorId: jogador.id || jogador._id,
+                            jogadorNome: jogador.nome
+                          }));
+                          setMostrarListaJogadores(false);
+                        }}
+                        closeModal={() => setMostrarListaJogadores(false)}
+                      />
+                    </div>
+
+                    <div className="p-4 border-t border-gray-700 flex justify-end">
+                      <motion.button
+                        onClick={() => setMostrarListaJogadores(false)}
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.97 }}
+                        className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-white"
+                      >
+                        Cancelar
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700 mt-4 sm:mt-6"
+            >
+              <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Status de Pagamentos</h2>
+              <div className="h-48 sm:h-64">
+                <Pie
+                  data={dadosGraficoPizza}
+                  options={{
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        position: 'bottom',
+                        labels: {
+                          color: '#e5e7eb',
+                          font: {
+                            size: window.innerWidth < 640 ? 10 : 12
+                          }
+                        }
+                      }
+                    }
+                  }}
+                />
+              </div>
+              <div className="mt-3 sm:mt-4 text-center text-xs sm:text-sm text-gray-400">
+                {estatisticas.pagamentosPendentes} Pagamentos pendentes este ano
+              </div>
+            </motion.div>
+          </div>
+
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
+            >
+              <div className="flex justify-between items-center mb-3 sm:mb-4">
+                <div className="flex items-center justify-between w-full">
+                  <h2 className="text-lg sm:text-xl font-semibold text-white">Histórico de Transações</h2>
+                  <motion.button
+                    onClick={() => compartilharHistorico('tabela-historico')}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    className="bg-blue-600 p-2 rounded-lg text-white hover:bg-blue-600 transition-colors"
+                    title="Compartilhar histórico de transações"
+                  >
+                    <FaShare className="text-sm sm:text-base" />
+                  </motion.button>
+                </div>
+              </div>
+
+              {/* Filtros do histórico */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Filtrar por jogador"
+                    value={filtroHistorico.jogador}
+                    onChange={(e) => setFiltroHistorico({...filtroHistorico, jogador: e.target.value})}
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                  />
+                  <FaSearch className="absolute right-3 top-2.5 text-gray-400 text-xs sm:text-sm" />
+                </div>
+                
+                <select
+                  value={filtroHistorico.tipo}
+                  onChange={(e) => setFiltroHistorico({...filtroHistorico, tipo: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                >
+                  <option value="todos">Todos os tipos</option>
+                  <option value="receita">Receitas</option>
+                  <option value="despesa">Despesas</option>
+                </select>
+                
+                <button
+                  onClick={() => setFiltroHistorico({ jogador: '', tipo: 'todos', categoria: '' })}
+                  className="w-full bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-xs sm:text-sm"
+                >
+                  Limpar filtros
+                </button>
+              </div>
+
+              {carregando ? (
+                <div className="flex justify-center py-6 sm:py-8">
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    className="h-6 w-6 sm:h-8 sm:w-8 border-4 border-blue-500 border-t-transparent rounded-full"
+                  />
+                </div>
+              ) : transacoes.length === 0 ? (
+                <div className="text-center py-6 sm:py-8 text-gray-400 text-xs sm:text-sm">
+                  Nenhuma transação encontrada
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <div className="max-h-[400px] overflow-y-auto" id="tabela-historico">
+                    <table className="min-w-full divide-y divide-gray-700">
+                      <thead className="bg-gray-700 sticky top-0">
+                        <tr>
+                          <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Data</th>
+                          <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Descrição</th>
+                          <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Valor</th>
+                          <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-700">
+                      {transacoesFiltradas.map((t) => (
+ <tr className={`${t.isento ? "bg-yellow-100/10 border-l-4 border-yellow-400/50" : ""}`}>
+    <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-gray-300">
+      {new Date(t.data).toLocaleDateString('pt-BR')}
+    </td>
+    <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium text-white">
+      {t.descricao}
+      {t.jogadorId && (
+        <span className="block text-xs text-gray-400">
+          {jogadores.find(j => j._id === t.jogadorId)?.nome || ''}
+          {t.isento && " (Isento)"}
+        </span>
+      )}
+    </td>
+    <td className={`px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium ${
+      t.tipo === "receita" ? 
+        (t.isento ? "text-yellow-400" : "text-green-400") : 
+        "text-red-400"
+    }`}>
+      {t.tipo === "receita" ? "+" : "-"} R$ {t.valor.toFixed(2)}
+      {t.isento && " (Isento)"}
+    </td>
+                            <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-gray-400">
+                              <motion.button
+                                onClick={() => deletarTransacao(t._id)}
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                className="text-red-400 hover:text-red-500 mr-2"
+                              >
+                                <FaTrash className="text-xs sm:text-sm" />
+                              </motion.button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="text-xs text-gray-500 mt-2">
+                    Mostrando {transacoesFiltradas.length} de {transacoes.length} transações
+                  </div>
+                </div>
+              )}
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
+            >
+              <div className="flex justify-between items-center mb-3 sm:mb-4">
+                <h2 className="text-lg sm:text-xl font-semibold text-white">Controle de Mensalidades</h2>
+                <motion.button
+                  onClick={() => compartilharControle('tabela-mensalidades')}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="bg-blue-600 p-2 rounded-lg text-white hover:bg-blue-700 transition-colors"
+                  title="Compartilhar controle de mensalidades"
+                >
+                  <FaShare className="text-sm sm:text-base" />
+                </motion.button>
+              </div>
+
+              {carregando ? (
+                <div className="flex justify-center py-6 sm:py-8">
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    className="h-6 w-6 sm:h-8 sm:w-8 border-4 border-blue-500 border-t-transparent rounded-full"
+                  />
+                </div>
+              ) : jogadores.length === 0 ? (
+                <div className="text-center py-6 sm:py-8 text-gray-400 text-xs sm:text-sm">
+                  Nenhum jogador cadastrado
+                </div>
+              ) : (
+                <div className="overflow-x-auto max-h-[80vh]">
+                  <div id="tabela-mensalidades">
+                    <table className="min-w-full divide-y divide-gray-700">
+                      <thead className="bg-gray-700">
+                        <tr>
+                          <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Jogador</th>
+                          <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
+                          {dadosGraficoBarras.labels.map((mes, i) => (
+                            <th key={i} className="px-1 sm:px-2 py-2 sm:py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">
+                              {mes}
+                            </th>
+                          ))}
+                        </tr>
+                        
+                      </thead>
+                      <tbody className="divide-y divide-gray-700">
+                        {jogadores.map((jogador) => (
+                          <tr key={jogador._id} className="hover:bg-gray-700/50">
+                            <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium text-white">
+                              {jogador.nome}
+                            </td>
+                            <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap">
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${jogador.statusFinanceiro === 'Adimplente' ?
+                                  'bg-green-500/20 text-green-400' :
+                                  'bg-red-500/20 text-red-400'
+                                }`}>
+                                {jogador.statusFinanceiro || 'Inadimplente'}
+                              </span>
+                            </td>
+                          {jogador.pagamentos.map((pago, i) => {
+  const transacao = transacoes.find(t => 
+    t.jogadorId === jogador._id && 
+    t.categoria === 'mensalidade' && 
+    new Date(t.data).getMonth() === i
+  );
+  const isIsento = transacao?.isento;
+
+  return (
+<td key={i} className="px-1 sm:px-2 py-2 sm:py-3 whitespace-nowrap text-center">
+  <motion.button
+    onClick={() => togglePagamento(jogador._id, i)}
+    whileHover={{ scale: 1.1 }}
+    whileTap={{ scale: 0.9 }}
+    className={`
+      w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center
+      ${pago ? 
+        (isIsento ? "bg-yellow-500/20 text-yellow-400" : "bg-green-500/20 text-green-400") : 
+        "bg-red-500/20 text-red-400"
+      }
+    `}
+    title={isIsento ? "Mensalidade isenta" : pago ? "Mensalidade paga" : "Mensalidade pendente"}
+  >
+    {pago ? (isIsento ? "I" : <FaCheck size={10} className="sm:text-xs" />) : <FaTimes size={10} className="sm:text-xs" />}
+  </motion.button>
+</td>
+  );
+})}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
+            >
+              <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Fluxo Anual</h2>
+              <div className="h-48 sm:h-64">
+                <Bar
+                  data={dadosGraficoBarras}
+                  options={{
+                    maintainAspectRatio: false,
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        grid: {
+                          color: 'rgba(229, 231, 235, 0.1)'
+                        },
+                        ticks: {
+                          color: '#e5e7eb',
+                          font: {
+                            size: window.innerWidth < 640 ? 10 : 12
+                          }
+                        }
+                      },
+                      x: {
+                        grid: {
+                          color: 'rgba(229, 231, 235, 0.1)'
+                        },
+                        ticks: {
+                          color: '#e5e7eb',
+                          font: {
+                            size: window.innerWidth < 640 ? 10 : 12
+                          }
+                        }
+                      }
+                    },
+                    plugins: {
+                      legend: {
+                        position: 'bottom',
+                        labels: {
+                          color: '#e5e7eb',
+                          font: {
+                            size: window.innerWidth < 640 ? 10 : 12
+                          }
+                        }
+                      }
+                    }
+                  }}
+                />
+              </div>
+            </motion.div>
+          </div>
         </div>
       </div>
 
+      {/* Modal de Relatório */}
       <AnimatePresence>
-        {mostrarFormulario && (
-          <motion.div
-            initial={{ opacity: 0, y: -50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -50 }}
-            transition={{ duration: 0.3 }}
-            className="w-full max-w-6xl bg-white p-6 sm:p-8 rounded-lg shadow-xl mb-8"
-          >
-            <h2 className="text-2xl font-semibold text-gray-700 mb-6 flex items-center justify-between">
-              Adicionar Nova Transação
-              <motion.button
-                onClick={() => setMostrarFormulario(false)}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <FaTimesCircle className="text-2xl" />
-              </motion.button>
-            </h2>
-            <form onSubmit={adicionarTransacao} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="descricao" className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
-                <input
-                  type="text"
-                  id="descricao"
-                  name="descricao"
-                  value={novaTransacao.descricao}
-                  onChange={handleInputChange}
-                  placeholder="Ex: Mensalidade, Aluguel Campo"
-                  className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="valor" className="block text-sm font-medium text-gray-700 mb-1">Valor</label>
-                <input
-                  type="number"
-                  id="valor"
-                  name="valor"
-                  value={novaTransacao.valor}
-                  onChange={handleInputChange}
-                  placeholder="Ex: 50.00"
-                  className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-                  min="0"
-                  step="0.01"
-                  required
-                  disabled={novaTransacao.isento && novaTransacao.tipo === 'receita' && novaTransacao.categoria === 'Mensalidade'} // Desabilita se for isento
-                />
-              </div>
-              <div>
-                <label htmlFor="tipo" className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
-                <select
-                  id="tipo"
-                  name="tipo"
-                  value={novaTransacao.tipo}
-                  onChange={handleTipoChange}
-                  className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-                  required
-                >
-                  <option value="receita">Receita</option>
-                  <option value="despesa">Despesa</option>
-                </select>
-              </div>
-              <div>
-                <label htmlFor="categoria" className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
-                <select
-                  id="categoria"
-                  name="categoria"
-                  value={novaTransacao.categoria}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-                  required
-                >
-                  <option value="">Selecione a Categoria</option>
-                  {novaTransacao.tipo === "receita" ?
-                    categoriasReceita.map(cat => <option key={cat} value={cat}>{cat}</option>) :
-                    categoriasDespesa.map(cat => <option key={cat} value={cat}>{cat}</option>)
-                  }
-                </select>
-              </div>
-              <div>
-                <label htmlFor="data" className="block text-sm font-medium text-gray-700 mb-1">Data</label>
-                <input
-                  type="date"
-                  id="data"
-                  name="data"
-                  value={novaTransacao.data}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-                  required
-                />
-              </div>
-              {novaTransacao.tipo === "receita" && novaTransacao.categoria === "Mensalidade" && (
-                <div>
-                  <label htmlFor="jogador" className="block text-sm font-medium text-gray-700 mb-1">Jogador</label>
-                  <select
-                    id="jogador"
-                    name="jogadorId"
-                    value={novaTransacao.jogadorId}
-                    onChange={handleJogadorChange}
-                    className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-                    required
-                  >
-                    <option value="">Selecione um Jogador</option>
-                    {jogadores.map(jogador => (
-                      <option key={jogador._id} value={jogador._id}>{jogador.nome}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-              {novaTransacao.tipo === "receita" && novaTransacao.categoria === "Mensalidade" && (
-                <div className="flex items-center mt-2 col-span-full md:col-span-1">
-                  <input
-                    type="checkbox"
-                    id="isento"
-                    name="isento"
-                    checked={novaTransacao.isento}
-                    onChange={handleInputChange}
-                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <label htmlFor="isento" className="ml-2 block text-sm text-gray-900">Marcar como Isento</label>
-                </div>
-              )}
-
-              <div className="md:col-span-2 flex justify-end">
-                <motion.button
-                  type="submit"
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-6 py-2 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg text-sm sm:text-base"
-                >
-                  <FaPlus className="text-sm" /> Adicionar Transação
-                </motion.button>
-              </div>
-            </form>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {mostrarGraficos && (
-          <motion.div
-            initial={{ opacity: 0, y: -50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -50 }}
-            transition={{ duration: 0.3 }}
-            className="w-full max-w-6xl bg-white p-6 sm:p-8 rounded-lg shadow-xl mb-8"
-          >
-            <h2 className="text-2xl font-semibold text-gray-700 mb-6 flex items-center justify-between">
-              Gráficos Financeiros
-              <motion.button
-                onClick={() => setMostrarGraficos(false)}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <FaTimesCircle className="text-2xl" />
-              </motion.button>
-            </h2>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div>
-                <h3 className="text-xl font-semibold text-gray-700 mb-4 text-center">Distribuição de Receitas e Despesas</h3>
-                <Pie data={pieData} />
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold text-gray-700 mb-4 text-center">Movimentação Mensal</h3>
-                <Bar data={barData} />
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {mostrarListaJogadores && (
-          <motion.div
-            initial={{ opacity: 0, y: -50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -50 }}
-            transition={{ duration: 0.3 }}
-            className="w-full max-w-6xl bg-white p-6 sm:p-8 rounded-lg shadow-xl mb-8"
-          >
-            <h2 className="text-2xl font-semibold text-gray-700 mb-6 flex items-center justify-between">
-              Status de Pagamento dos Jogadores
-              <motion.button
-                onClick={() => setMostrarListaJogadores(false)}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <FaTimesCircle className="text-2xl" />
-              </motion.button>
-            </h2>
-            <div className="mb-4 relative">
-              <input
-                type="text"
-                placeholder="Pesquisar jogador..."
-                className="w-full p-2 pl-10 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-                value={pesquisaJogador}
-                onChange={(e) => setPesquisaJogador(e.target.value)}
-              />
-              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="min-w-full bg-white rounded-lg shadow-md">
-                <thead className="bg-gray-200">
-                  <tr>
-                    <th className="py-3 px-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Jogador</th>
-                    {meses.map((mes, index) => (
-                      <th key={index} className="py-3 px-2 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        {mes.substring(0, 3)}
-                      </th>
-                    ))}
-                    <th className="py-3 px-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtrarJogadores.map(jogador => (
-                    <tr key={jogador._id} className="border-b border-gray-200 hover:bg-gray-50">
-                      <td className="py-3 px-4 text-sm font-medium text-gray-900">{jogador.nome}</td>
-                      {jogador.pagamentos.map((statusMes, mesIndex) => (
-                        <td key={mesIndex} className="py-3 px-2 text-center text-sm">
-                          <motion.button
-                            onClick={() => handleTogglePagamento(jogador._id, mesIndex, statusMes.pago, statusMes.isento)}
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            className={`p-1 rounded-full transition-all ${
-                              statusMes.isento
-                                ? 'bg-indigo-200 text-indigo-700'
-                                : statusMes.pago
-                                  ? 'bg-green-200 text-green-700'
-                                  : 'bg-red-200 text-red-700'
-                            }`}
-                            title={statusMes.isento ? 'Isento' : statusMes.pago ? 'Pago' : 'Não Pago'}
-                          >
-                            {statusMes.isento ? <FaCheck className="text-sm" /> : statusMes.pago ? <FaCheck className="text-sm" /> : <FaTimes className="text-sm" />}
-                          </motion.button>
-                        </td>
-                      ))}
-                      <td className="py-3 px-4 text-sm">
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                          jogador.statusFinanceiro === 'Adimplente'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {jogador.statusFinanceiro}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-sm">
-                        <div className="flex gap-2">
-                          <motion.button
-                            onClick={() => setJogadorSelecionado(jogador)}
-                            whileHover={{ scale: 1.03 }}
-                            whileTap={{ scale: 0.97 }}
-                            className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded-md text-xs flex items-center gap-1"
-                          >
-                            <FaEdit className="text-xs" /> Gerenciar
-                          </motion.button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {jogadorSelecionado && (
+        {relatorioModal && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 backdrop-blur-sm"
+            onClick={() => setRelatorioModal(false)}
           >
             <motion.div
-              initial={{ scale: 0.9, y: 50 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 50 }}
-              transition={{ duration: 0.3 }}
-              className="bg-white p-6 sm:p-8 rounded-lg shadow-2xl w-full max-w-lg relative"
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 20, opacity: 0 }}
+              className="bg-gray-800 rounded-xl shadow-2xl p-4 sm:p-6 w-full max-w-md sm:max-w-2xl border border-gray-700"
+              onClick={(e) => e.stopPropagation()}
             >
-              <motion.button
-                onClick={() => setJogadorSelecionado(null)}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-              >
-                <FaTimesCircle className="text-2xl" />
-              </motion.button>
-              <h3 className="text-2xl font-bold text-gray-800 mb-4 text-center">
-                Gerenciar Pagamentos de {jogadorSelecionado.nome}
-              </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-6">
-                {meses.map((mes, index) => (
-                  <div key={index} className="flex flex-col items-center p-2 border rounded-lg shadow-sm">
-                    <p className="text-sm font-semibold text-gray-700 mb-2">{mes}</p>
-                    <motion.button
-                      onClick={() => handleTogglePagamento(jogadorSelecionado._id, index, jogadorSelecionado.pagamentos[index]?.pago, jogadorSelecionado.pagamentos[index]?.isento)}
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${
-                        jogadorSelecionado.pagamentos[index]?.isento
-                          ? 'bg-indigo-500 text-white hover:bg-indigo-600'
-                          : jogadorSelecionado.pagamentos[index]?.pago
-                            ? 'bg-green-500 text-white hover:bg-green-600'
-                            : 'bg-red-500 text-white hover:bg-red-600'
-                      }`}
-                    >
-                      {jogadorSelecionado.pagamentos[index]?.isento ? (
-                        <FaCheck className="text-lg" />
-                      ) : jogadorSelecionado.pagamentos[index]?.pago ? (
-                        <FaCheck className="text-lg" />
-                      ) : (
-                        <FaTimes className="text-lg" />
-                      )}
-                    </motion.button>
-                    <p className={`mt-2 text-xs font-medium ${
-                      jogadorSelecionado.pagamentos[index]?.isento
-                        ? 'text-indigo-700'
-                        : jogadorSelecionado.pagamentos[index]?.pago
-                          ? 'text-green-700'
-                          : 'text-red-700'
-                    }`}>
-                      {jogadorSelecionado.pagamentos[index]?.isento ? 'Isento' : jogadorSelecionado.pagamentos[index]?.pago ? 'Pago' : 'Não Pago'}
+              <div className="flex justify-between items-center mb-3 sm:mb-4">
+                <h3 className="text-lg sm:text-xl font-bold text-white">Relatório Financeiro</h3>
+                <motion.button
+                  onClick={() => setRelatorioModal(false)}
+                  whileHover={{ rotate: 90 }}
+                  className="text-gray-400 hover:text-white text-sm sm:text-base"
+                >
+                  <FaTimes />
+                </motion.button>
+              </div>
+
+              <div id="relatorio-content" className="space-y-3 sm:space-y-4">
+                {/* Conteúdo existente do modal */}
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                  <div className="bg-gray-700/50 p-3 sm:p-4 rounded-lg">
+                    <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">Receitas</h4>
+                    <p className="text-xl sm:text-2xl font-bold text-green-400">
+                      R$ {estatisticas.totalReceitas.toFixed(2)}
                     </p>
                   </div>
-                ))}
+                  <div className="bg-gray-700/50 p-3 sm:p-4 rounded-lg">
+                    <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">Despesas</h4>
+                    <p className="text-xl sm:text-2xl font-bold text-red-400">
+                      R$ {estatisticas.totalDespesas.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+                {/* Resto do conteúdo do modal */}
+                <div className="bg-gray-700/50 p-3 sm:p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">Saldo</h4>
+                  <p className={`text-xl sm:text-2xl font-bold ${estatisticas.saldo >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    R$ {estatisticas.saldo.toFixed(2)}
+                  </p>
+                </div>
+
+                <div className="bg-gray-700/50 p-3 sm:p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">Pagamentos Pendentes</h4>
+                  <p className="text-lg sm:text-xl font-bold text-white">
+                    {estatisticas.pagamentosPendentes} mensalidades
+                  </p>
+                </div>
+
+                <div className="bg-gray-700/50 p-3 sm:p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">Total de Jogadores</h4>
+                  <p className="text-lg sm:text-xl font-bold text-white">
+                    {estatisticas.totalJogadores} jogadores
+                  </p>
+                </div>
               </div>
-              <div className="flex justify-center mt-6">
-                <div className="flex space-x-4">
+
+              <div className="mt-4 sm:mt-6 flex justify-end gap-2 sm:gap-3">
+                <motion.button
+                  onClick={exportarPDF}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 transition-all text-xs sm:text-sm"
+                >
+                  <FaFilePdf className="text-xs sm:text-sm" /> Exportar PDF
+                </motion.button>
+                <motion.button
+                  onClick={exportarImagem}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 transition-all text-xs sm:text-sm"
+                >
+                  <FaFileImage className="text-xs sm:text-sm" /> Exportar Imagem
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal de Editar Jogador */}
+      <AnimatePresence>
+        {editarModal && jogadorSelecionado && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 backdrop-blur-sm"
+            onClick={() => setEditarModal(false)}
+          >
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 20, opacity: 0 }}
+              className="bg-gray-800 rounded-xl shadow-2xl p-4 sm:p-6 w-full max-w-md border border-gray-700"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center mb-3 sm:mb-4">
+                <h3 className="text-lg sm:text-xl font-bold text-white">Editar Jogador</h3>
+                <motion.button
+                  onClick={() => setEditarModal(false)}
+                  whileHover={{ rotate: 90 }}
+                  className="text-gray-400 hover:text-white text-sm sm:text-base"
+                >
+                  <FaTimes />
+                </motion.button>
+              </div>
+
+              <div className="space-y-3 sm:space-y-4">
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Nome</label>
+                  <input
+                    type="text"
+                    value={jogadorSelecionado.nome}
+                    onChange={(e) => setJogadorSelecionado({ ...jogadorSelecionado, nome: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Email</label>
+                  <input
+                    type="email"
+                    value={jogadorSelecionado.email}
+                    onChange={(e) => setJogadorSelecionado({ ...jogadorSelecionado, email: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Status de Pagamento</label>
+                  <select
+                    value={jogadorSelecionado.statusFinanceiro || 'Inadimplente'}
+                    onChange={(e) => setJogadorSelecionado({ ...jogadorSelecionado, statusFinanceiro: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                  >
+                    <option value="Adimplente">Adimplente</option>
+                    <option value="Inadimplente">Inadimplente</option>
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 pt-2">
                   <motion.button
                     type="button"
                     onClick={() => deletarJogador(jogadorSelecionado._id)}
@@ -877,19 +1524,16 @@ export default function Financeiro() {
                     whileTap={{ scale: 0.97 }}
                     className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 sm:py-2 rounded-lg flex items-center justify-center gap-2 transition-all text-xs sm:text-sm"
                   >
-                    <FaTrash className="text-xs sm:text-sm" /> Excluir Jogador
+                    <FaTrash className="text-xs sm:text-sm" /> Excluir
                   </motion.button>
-                  {/* Mantido o botão "Salvar Alterações" para o caso de você ter outra lógica em mente para ele,
-                      mas se for apenas para fechar o modal, mude o texto e o onClick para:
-                      onClick={() => setJogadorSelecionado(null)} */}
                   <motion.button
                     type="button"
-                    onClick={() => setJogadorSelecionado(null)} // Este botão agora fecha o modal
+                    onClick={editarJogador}
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
                     className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-3 py-2 sm:py-2 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg text-xs sm:text-sm"
                   >
-                    <FaEdit className="text-xs sm:text-sm" /> Fechar
+                    <FaEdit className="text-xs sm:text-sm" /> Salvar Alterações
                   </motion.button>
                 </div>
               </div>
@@ -898,100 +1542,11 @@ export default function Financeiro() {
         )}
       </AnimatePresence>
 
-      <div id="relatorio-financeiro" className="w-full max-w-6xl bg-white p-6 sm:p-8 rounded-lg shadow-xl mt-8">
-        <h2 className="text-2xl font-semibold text-gray-700 mb-6 flex items-center justify-between">
-          Histórico de Transações
-          <div className="flex items-center space-x-2">
-            <input
-              type="text"
-              placeholder="Filtrar por jogador..."
-              value={filtroTransacaoJogador}
-              onChange={(e) => setFiltroTransacaoJogador(e.target.value)}
-              className="p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-            />
-            <select
-              value={filtroTransacaoTipo}
-              onChange={(e) => setFiltroTransacaoTipo(e.target.value)}
-              className="p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-            >
-              <option value="">Todos os Tipos</option>
-              <option value="receita">Receita</option>
-              <option value="despesa">Despesa</option>
-            </select>
-            <select
-              value={filtroTransacaoCategoria}
-              onChange={(e) => setFiltroTransacaoCategoria(e.target.value)}
-              className="p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-            >
-              <option value="">Todas as Categorias</option>
-              {filtroTransacaoTipo === "receita" ?
-                categoriasReceita.map(cat => <option key={cat} value={cat}>{cat}</option>) :
-                filtroTransacaoTipo === "despesa" ?
-                  categoriasDespesa.map(cat => <option key={cat} value={cat}>{cat}</option>) :
-                  [...categoriasReceita, ...categoriasDespesa].map(cat => <option key={cat} value={cat}>{cat}</option>)
-              }
-            </select>
-          </div>
-        </h2>
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white rounded-lg shadow-md">
-            <thead className="bg-gray-200">
-              <tr>
-                <th className="py-3 px-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Data</th>
-                <th className="py-3 px-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Descrição</th>
-                <th className="py-3 px-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Categoria</th>
-                <th className="py-3 px-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Tipo</th>
-                <th className="py-3 px-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor</th>
-                <th className="py-3 px-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Jogador</th>
-                <th className="py-3 px-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Isento</th>
-                <th className="py-3 px-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {transacoes.map(transacao => (
-                <tr key={transacao._id} className="border-b border-gray-200 hover:bg-gray-50">
-                  <td className="py-3 px-4 text-sm">{new Date(transacao.data).toLocaleDateString()}</td>
-                  <td className="py-3 px-4 text-sm">{transacao.descricao}</td>
-                  <td className="py-3 px-4 text-sm">{transacao.categoria}</td>
-                  <td className="py-3 px-4 text-sm">
-                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                      transacao.tipo === 'receita' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {transacao.tipo.charAt(0).toUpperCase() + transacao.tipo.slice(1)}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-right text-sm font-medium">
-                    {transacao.isento ? (
-                      <span className="text-gray-500">Isento</span>
-                    ) : (
-                      formatarValor(transacao.valor)
-                    )}
-                  </td>
-                  <td className="py-3 px-4 text-sm">{transacao.jogadorNome || 'N/A'}</td>
-                  <td className="py-3 px-4 text-center text-sm">
-                    {transacao.isento ? <FaCheck className="text-green-500 mx-auto" /> : <FaTimes className="text-red-500 mx-auto" />}
-                  </td>
-                  <td className="py-3 px-4 text-sm">
-                    <motion.button
-                      onClick={() => deletarTransacao(transacao._id)}
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded-md text-xs flex items-center gap-1"
-                    >
-                      <FaTrash className="text-xs" /> Excluir
-                    </motion.button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <ToastContainer
+      <ToastContainer 
         position="bottom-right"
         autoClose={5000}
         hideProgressBar={false}
-        newestOnTop={false}
+        newestOnTop
         closeOnClick
         rtl={false}
         pauseOnFocusLoss
@@ -1001,3 +1556,4 @@ export default function Financeiro() {
     </div>
   );
 }
+
