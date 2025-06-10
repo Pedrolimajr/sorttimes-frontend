@@ -75,9 +75,10 @@ const [isento, setIsento] = useState(false);
  useEffect(() => {
   const carregarDados = async () => {
     try {
+      setCarregando(true);
       const [jogadoresResponse, transacoesResponse] = await Promise.all([
         api.get('/jogadores'),
-        api.get('/transacoes')
+        api.get('/financeiro/transacoes')
       ]);
 
       if (jogadoresResponse.data.success) {
@@ -105,6 +106,8 @@ const [isento, setIsento] = useState(false);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
       toast.error('Erro ao carregar dados');
+    } finally {
+      setCarregando(false);
     }
   };
 
