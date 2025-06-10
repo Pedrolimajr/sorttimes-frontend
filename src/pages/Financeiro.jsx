@@ -264,59 +264,97 @@ const togglePagamento = async (jogadorId, mesIndex) => {
     if (!jogador) return;
 
     const pagamentoAtual = jogador.pagamentos[mesIndex];
-    const novoStatus = !pagamentoAtual.pago;
-    const isento = pagamentoAtual.isento;
+    
+    // Se estiver desmarcado, mostra as opções
+    if (!pagamentoAtual.pago) {
+      const opcoes = ['Pagamento Normal', 'Isento', 'Cancelar'];
+      const resposta = window.confirm(
+        'Escolha o tipo de pagamento:\n\n' +
+        '1. Pagamento Normal - Contabiliza o valor\n' +
+        '2. Isento - Não contabiliza o valor\n' +
+        '3. Cancelar - Não faz nada'
+      );
 
-    // Se estiver marcando como pago, pergunta se é isento
-    let isentoConfirmado = isento;
-    if (novoStatus && !isento) {
-      const resposta = window.confirm('Deseja marcar esta mensalidade como isenta?');
-      isentoConfirmado = resposta;
-    }
+      if (!resposta) return; // Se clicou em Cancelar
 
-    const response = await api.post(`/jogadores/${jogadorId}/pagamentos`, {
-      mes: mesIndex,
-      pago: novoStatus,
-      isento: isentoConfirmado,
-      valorMensalidade: jogador.valorMensalidade || 0
-    });
+      const isento = resposta === 'Isento';
+      const pago = resposta === 'Pagamento Normal';
 
-    if (response.data.success) {
-      // Atualiza o estado local imediatamente
-      const jogadoresAtualizados = jogadores.map(j => {
-        if (j._id === jogadorId) {
-          const pagamentosAtualizados = [...j.pagamentos];
-          pagamentosAtualizados[mesIndex] = {
-            ...pagamentosAtualizados[mesIndex],
-            pago: novoStatus,
-            isento: isentoConfirmado,
-            dataPagamento: novoStatus ? new Date() : null
-          };
-          return {
-            ...j,
-            pagamentos: pagamentosAtualizados,
-            statusFinanceiro: response.data.data.jogador.statusFinanceiro
-          };
-        }
-        return j;
+      if (!pago && !isento) return; // Se não escolheu nenhuma opção
+
+      const response = await api.post(`/jogadores/${jogadorId}/pagamentos`, {
+        mes: mesIndex,
+        pago: pago,
+        isento: isento,
+        valorMensalidade: jogador.valorMensalidade || 0
       });
 
-      setJogadores(jogadoresAtualizados);
-
-      // Atualiza as transações se houver uma nova
-      if (response.data.data.transacao) {
-        setTransacoes(prev => {
-          // Remove transação antiga se existir
-          const transacoesFiltradas = prev.filter(t => 
-            t.jogadorId !== jogadorId || 
-            t.descricao !== response.data.data.transacao.descricao
-          );
-          // Adiciona a nova transação
-          return [response.data.data.transacao, ...transacoesFiltradas];
+      if (response.data.success) {
+        // Atualiza o estado local imediatamente
+        const jogadoresAtualizados = jogadores.map(j => {
+          if (j._id === jogadorId) {
+            const pagamentosAtualizados = [...j.pagamentos];
+            pagamentosAtualizados[mesIndex] = {
+              ...pagamentosAtualizados[mesIndex],
+              pago: pago,
+              isento: isento,
+              dataPagamento: pago ? new Date() : null
+            };
+            return {
+              ...j,
+              pagamentos: pagamentosAtualizados,
+              statusFinanceiro: response.data.data.jogador.statusFinanceiro
+            };
+          }
+          return j;
         });
-      }
 
-      toast.success(response.data.message);
+        setJogadores(jogadoresAtualizados);
+
+        // Atualiza as transações se houver uma nova
+        if (response.data.data.transacao) {
+          setTransacoes(prev => {
+            const transacoesFiltradas = prev.filter(t => 
+              t.jogadorId !== jogadorId || 
+              t.descricao !== response.data.data.transacao.descricao
+            );
+            return [response.data.data.transacao, ...transacoesFiltradas];
+          });
+        }
+
+        toast.success(response.data.message);
+      }
+    } else {
+      // Se estiver marcado, apenas desmarca
+      const response = await api.post(`/jogadores/${jogadorId}/pagamentos`, {
+        mes: mesIndex,
+        pago: false,
+        isento: false,
+        valorMensalidade: 0
+      });
+
+      if (response.data.success) {
+        const jogadoresAtualizados = jogadores.map(j => {
+          if (j._id === jogadorId) {
+            const pagamentosAtualizados = [...j.pagamentos];
+            pagamentosAtualizados[mesIndex] = {
+              ...pagamentosAtualizados[mesIndex],
+              pago: false,
+              isento: false,
+              dataPagamento: null
+            };
+            return {
+              ...j,
+              pagamentos: pagamentosAtualizados,
+              statusFinanceiro: response.data.data.jogador.statusFinanceiro
+            };
+          }
+          return j;
+        });
+
+        setJogadores(jogadoresAtualizados);
+        toast.success('Pagamento removido');
+      }
     }
   } catch (error) {
     console.error('Erro ao atualizar pagamento:', error);
@@ -1265,24 +1303,19 @@ const toggleStatusFinanceiro = async (jogadorId) => {
                             </td>
                             <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap">
                               <div className="flex items-center space-x-2">
-                                <span className={`px-2 py-1 rounded text-sm ${
-                                  jogador.statusFinanceiro === 'Adimplente' 
-                                    ? 'bg-green-100 text-green-800' 
-                                    : 'bg-red-100 text-red-800'
-                                }`}>
-                                  {jogador.statusFinanceiro}
-                                </span>
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     toggleStatusFinanceiro(jogador._id);
                                   }}
-                                  className="p-1 text-gray-500 hover:text-gray-700"
-                                  title="Alterar status"
+                                  className={`px-2 py-1 rounded text-sm cursor-pointer transition-colors ${
+                                    jogador.statusFinanceiro === 'Adimplente' 
+                                      ? 'bg-green-100 text-green-800 hover:bg-green-200' 
+                                      : 'bg-red-100 text-red-800 hover:bg-red-200'
+                                  }`}
+                                  title="Clique para alterar o status"
                                 >
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                  </svg>
+                                  {jogador.statusFinanceiro}
                                 </button>
                               </div>
                             </td>
