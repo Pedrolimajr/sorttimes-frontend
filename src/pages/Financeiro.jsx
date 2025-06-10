@@ -287,7 +287,6 @@ const [isento, setIsento] = useState(false);
 };
 
 const togglePagamento = async (jogadorId, mesIndex) => {
-  // 💡 Agora visível no catch
   const originalJogadores = [...jogadores];
 
   try {
@@ -300,60 +299,48 @@ const togglePagamento = async (jogadorId, mesIndex) => {
       return;
     }
 
+    const dataAtual = new Date();
+    const dataLimite = new Date(new Date().getFullYear(), mesIndex, 20);
+    const isPagamentoAtrasado = dataAtual > dataLimite;
+
+    // Se o pagamento estiver atrasado, mostra um aviso
+    if (isPagamentoAtrasado && !jogador.pagamentos[mesIndex].pago) {
+      const confirmarAtraso = window.confirm(
+        'Este pagamento está atrasado. Deseja marcar como pago mesmo assim?'
+      );
+      if (!confirmarAtraso) return;
+    }
+
+    // Pergunta se deseja marcar como isento
     let isento = false;
-    if (!jogador.pagamentos[mesIndex]) {
+    if (!jogador.pagamentos[mesIndex].pago) {
       isento = window.confirm('Deseja marcar como isento? (Sem valor financeiro)');
     }
 
-    const updatedJogadores = jogadores.map(j => {
-      if (j._id === jogadorId) {
-        const updatedPagamentos = [...j.pagamentos];
-        const updatedIsentoMeses = { ...(j.isentoMeses || {}) };
-
-        updatedPagamentos[mesIndex] = !j.pagamentos[mesIndex] || isento;
-
-        if (isento) {
-          updatedIsentoMeses[mesIndex] = true;
-        } else if (updatedPagamentos[mesIndex] === false) {
-          delete updatedIsentoMeses[mesIndex];
-        }
-
-        const todosMesesPagos = updatedPagamentos
-          .slice(0, mesAtual + 1)
-          .every(pago => pago);
-
-        return {
-          ...j,
-          pagamentos: updatedPagamentos,
-          isentoMeses: updatedIsentoMeses,
-          statusFinanceiro: todosMesesPagos ? 'Adimplente' : 'Inadimplente'
-        };
-      }
-      return j;
-    });
-
-    setJogadores(updatedJogadores);
-
     const response = await api.post(`/jogadores/${jogadorId}/pagamentos`, {
       mes: mesIndex,
-      pago: !jogador.pagamentos[mesIndex],
+      pago: !jogador.pagamentos[mesIndex].pago,
       isento,
-      valor: isento ? 0 : 100,
-      dataPagamento: !jogador.pagamentos[mesIndex] ? new Date().toISOString() : null
+      valorMensalidade: isento ? 0 : 100 // Valor padrão da mensalidade
     });
 
-    if (response.data.data.transacao) {
-      setTransacoes(prev => [response.data.data.transacao, ...prev]);
-    }
+    if (response.data.success) {
+      const jogadorAtualizado = response.data.data.jogador;
+      setJogadores(prevJogadores => 
+        prevJogadores.map(j => 
+          j._id === jogadorId ? jogadorAtualizado : j
+        )
+      );
 
-    toast.success(
-      isento ? 'Mensalidade isentada com sucesso!' :
-      jogador.pagamentos[mesIndex] ? 'Pagamento removido!' : 'Pagamento registrado!'
-    );
+      toast.success(
+        isento ? 'Mensalidade isentada com sucesso!' :
+        jogador.pagamentos[mesIndex].pago ? 'Pagamento removido!' : 'Pagamento registrado!'
+      );
+    }
 
   } catch (error) {
     console.error("Erro ao atualizar pagamento:", error);
-    setJogadores(originalJogadores); // Agora funciona sem erro
+    setJogadores(originalJogadores);
     toast.error(error.response?.data?.message || 'Erro ao atualizar pagamento');
   }
 };
@@ -1177,9 +1164,7 @@ const togglePagamento = async (jogadorId, mesIndex) => {
       )}
     </td>
     <td className={`px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium ${
-      t.tipo === "receita" ? 
-        (t.isento ? "text-yellow-400" : "text-green-400") : 
-        "text-red-400"
+      t.tipo === "receita" ? "text-green-400" : "text-red-400"
     }`}>
       {t.tipo === "receita" ? "+" : "-"} R$ {t.valor.toFixed(2)}
       {t.isento && " (Isento)"}
@@ -1267,34 +1252,45 @@ const togglePagamento = async (jogadorId, mesIndex) => {
                                 {jogador.statusFinanceiro || 'Inadimplente'}
                               </span>
                             </td>
-                          {jogador.pagamentos.map((pago, i) => {
-  const transacao = transacoes.find(t => 
-    t.jogadorId === jogador._id && 
-    t.categoria === 'mensalidade' && 
-    new Date(t.data).getMonth() === i
-  );
-  const isIsento = transacao?.isento;
+                          {jogador.pagamentos.map((pagamento, i) => {
+                            const dataAtual = new Date();
+                            const dataLimite = new Date(new Date().getFullYear(), i, 20);
+                            const isAtrasado = !pagamento.pago && !pagamento.isento && dataAtual > dataLimite;
 
-  return (
-<td key={i} className="px-1 sm:px-2 py-2 sm:py-3 whitespace-nowrap text-center">
-  <motion.button
-    onClick={() => togglePagamento(jogador._id, i)}
-    whileHover={{ scale: 1.1 }}
-    whileTap={{ scale: 0.9 }}
-    className={`
-      w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center
-      ${pago ? 
-        (isIsento ? "bg-yellow-500/20 text-yellow-400" : "bg-green-500/20 text-green-400") : 
-        "bg-red-500/20 text-red-400"
-      }
-    `}
-    title={isIsento ? "Mensalidade isenta" : pago ? "Mensalidade paga" : "Mensalidade pendente"}
-  >
-    {pago ? (isIsento ? "I" : <FaCheck size={10} className="sm:text-xs" />) : <FaTimes size={10} className="sm:text-xs" />}
-  </motion.button>
-</td>
-  );
-})}
+                            return (
+                              <td key={i} className="px-1 sm:px-2 py-2 sm:py-3 whitespace-nowrap text-center">
+                                <motion.button
+                                  onClick={() => togglePagamento(jogador._id, i)}
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
+                                  className={`
+                                    w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center
+                                    ${(pagamento.pago || pagamento.isento) ? 
+                                      "bg-green-500/20 text-green-400" : 
+                                      isAtrasado ? "bg-red-500/20 text-red-400" : 
+                                      "bg-gray-500/20 text-gray-400"
+                                    }
+                                  `}
+                                  title={
+                                    pagamento.isento ? "Mensalidade isenta" :
+                                    pagamento.pago ? "Mensalidade paga" :
+                                    isAtrasado ? "Mensalidade atrasada" :
+                                    "Mensalidade pendente"
+                                  }
+                                >
+                                  {(pagamento.pago || pagamento.isento) ? 
+                                    <FaCheck size={10} className="sm:text-xs" /> : 
+                                    <FaTimes size={10} className="sm:text-xs" />
+                                  }
+                                </motion.button>
+                                {isAtrasado && (
+                                  <span className="block text-xs text-red-400 mt-1">
+                                    Atrasado
+                                  </span>
+                                )}
+                              </td>
+                            );
+                          })}
                           </tr>
                         ))}
                       </tbody>
