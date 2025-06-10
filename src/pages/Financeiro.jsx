@@ -300,13 +300,13 @@ const togglePagamento = async (jogadorId, mesIndex) => {
     }
 
     let isento = false;
-    if (!jogador.pagamentos[mesIndex]) {
+    if (!jogador.pagamentos[mesIndex].pago) {
       isento = window.confirm('Deseja marcar como isento? (Sem valor financeiro)');
     }
 
     const response = await api.post(`/jogadores/${jogadorId}/pagamentos`, {
       mes: mesIndex,
-      pago: !jogador.pagamentos[mesIndex],
+      pago: !jogador.pagamentos[mesIndex].pago,
       isento,
       valorMensalidade: isento ? 0 : 100
     });
@@ -325,7 +325,7 @@ const togglePagamento = async (jogadorId, mesIndex) => {
 
       toast.success(
         isento ? 'Mensalidade isentada com sucesso!' :
-        jogador.pagamentos[mesIndex] ? 'Pagamento removido!' : 'Pagamento registrado!'
+        jogador.pagamentos[mesIndex].pago ? 'Pagamento removido!' : 'Pagamento registrado!'
       );
     }
 
@@ -737,6 +737,20 @@ const togglePagamento = async (jogadorId, mesIndex) => {
   const jogadoresFiltrados = jogadores.filter(jogador =>
     jogador.nome.toLowerCase().includes(filtroJogador.toLowerCase())
   );
+
+  const migrarPagamentos = async () => {
+    try {
+      const response = await api.post('/jogadores/migrar-pagamentos');
+      if (response.data.success) {
+        toast.success('Migração concluída com sucesso!');
+        // Recarrega os dados
+        carregarDados();
+      }
+    } catch (error) {
+      console.error('Erro na migração:', error);
+      toast.error('Erro ao migrar pagamentos');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-900 p-4 sm:p-6">
@@ -1155,9 +1169,7 @@ const togglePagamento = async (jogadorId, mesIndex) => {
       )}
     </td>
     <td className={`px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium ${
-      t.tipo === "receita" ? 
-        (t.isento ? "text-yellow-400" : "text-green-400") : 
-        "text-red-400"
+      t.tipo === "receita" ? "text-green-400" : "text-red-400"
     }`}>
       {t.tipo === "receita" ? "+" : "-"} R$ {t.valor.toFixed(2)}
       {t.isento && " (Isento)"}
@@ -1254,23 +1266,20 @@ const togglePagamento = async (jogadorId, mesIndex) => {
   const isIsento = transacao?.isento;
 
   return (
-<td key={i} className="px-1 sm:px-2 py-2 sm:py-3 whitespace-nowrap text-center">
-  <motion.button
-    onClick={() => togglePagamento(jogador._id, i)}
-    whileHover={{ scale: 1.1 }}
-    whileTap={{ scale: 0.9 }}
-    className={`
-      w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center
-      ${pago ? 
-        (isIsento ? "bg-yellow-500/20 text-yellow-400" : "bg-green-500/20 text-green-400") : 
-        "bg-red-500/20 text-red-400"
-      }
-    `}
-    title={isIsento ? "Mensalidade isenta" : pago ? "Mensalidade paga" : "Mensalidade pendente"}
-  >
-    {pago ? (isIsento ? "I" : <FaCheck size={10} className="sm:text-xs" />) : <FaTimes size={10} className="sm:text-xs" />}
-  </motion.button>
-</td>
+    <td key={i} className="px-1 sm:px-2 py-2 sm:py-3 whitespace-nowrap text-center">
+      <motion.button
+        onClick={() => togglePagamento(jogador._id, i)}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        className={`
+          w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center
+          ${pago ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}
+        `}
+        title={isIsento ? "Mensalidade isenta" : pago ? "Mensalidade paga" : "Mensalidade pendente"}
+      >
+        {pago ? <FaCheck size={10} className="sm:text-xs" /> : <FaTimes size={10} className="sm:text-xs" />}
+      </motion.button>
+    </td>
   );
 })}
                           </tr>
@@ -1515,6 +1524,17 @@ const togglePagamento = async (jogadorId, mesIndex) => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <div className="flex space-x-2">
+        <motion.button
+          onClick={migrarPagamentos}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+        >
+          Migrar Pagamentos
+        </motion.button>
+      </div>
 
       <ToastContainer 
         position="bottom-right"
