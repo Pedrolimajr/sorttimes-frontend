@@ -101,24 +101,26 @@ const [isento, setIsento] = useState(false);
         );
 
         // Cria array de pagamentos baseado nas transações
-        const pagamentos = Array(12).fill(false);
-        transacoesJogador.forEach(t => {
-          const mes = new Date(t.data).getMonth();
-          pagamentos[mes] = true;
-        });
+      const pagamentos = Array(12).fill().map(() => ({ pago: false, isento: false })); // Initialize with objects
+   transacoesJogador.forEach(t => {
+     const mes = new Date(t.data).getMonth();
+     // Assuming a transaction means it was paid and not exempt, or you have 'isento' on the transaction
+     pagamentos[mes] = { pago: true, isento: t.isento || false }; // Populate with object
+   });
+
 
         // Verifica status
-        const mesAtual = new Date().getMonth();
-        const todosMesesPagos = pagamentos
-          .slice(0, mesAtual + 1)
-          .every(pago => pago);
+      const mesAtual = new Date().getMonth();
+   const todosMesesPagos = pagamentos
+     .slice(0, mesAtual + 1)
+     .every(p => p.pago || p.isento); // Check pago or isento
 
-        return {
-          ...jogador,
-          pagamentos: pagamentos,
-          statusFinanceiro: todosMesesPagos ? 'Adimplente' : 'Inadimplente'
-        };
-      });
+   return {
+     ...jogador,
+     pagamentos: pagamentos,
+     statusFinanceiro: todosMesesPagos ? 'Adimplente' : 'Inadimplente'
+   };
+ });
 
       // Atualiza estados
       setJogadores(jogadoresProcessados);
@@ -231,12 +233,12 @@ const [isento, setIsento] = useState(false);
         return prevJogadores.map(j => {
           if (j._id === payload.jogadorId) {
             const pagamentosAtualizados = [...j.pagamentos];
-            pagamentosAtualizados[mesTransacao] = true;
+            pagamentosAtualizados[mesTransacao] = { pago: true, isento: payload.isento || false };
 
             const mesAtual = new Date().getMonth();
             const todosMesesPagos = pagamentosAtualizados
               .slice(0, mesAtual + 1)
-              .every(pago => pago);
+              .every(p => p.pago || p.isento);
 
             return {
               ...j,
@@ -287,76 +289,78 @@ const [isento, setIsento] = useState(false);
 };
 
 const togglePagamento = async (jogadorId, mesIndex) => {
-  // 💡 Agora visível no catch
-  const originalJogadores = [...jogadores];
-
+  const originalJogadores = [...jogadores]; //
   try {
-    const jogador = jogadores.find(j => j._id === jogadorId);
-    if (!jogador) throw new Error('Jogador não encontrado');
+    const jogador = jogadores.find(j => j._id === jogadorId); //
+    if (!jogador) throw new Error('Jogador não encontrado'); //
 
-    const mesAtual = new Date().getMonth();
-    if (mesIndex > mesAtual) {
-      toast.warning('Não é possível marcar pagamentos de meses futuros');
-      return;
+    const mesAtual = new Date().getMonth(); //
+    if (mesIndex > mesAtual) { //
+      toast.warning('Não é possível marcar pagamentos de meses futuros'); //
+      return; //
     }
 
-    let isento = false;
-    if (!jogador.pagamentos[mesIndex]) {
-      isento = window.confirm('Deseja marcar como isento? (Sem valor financeiro)');
-    }
+    let currentPagoStatus = jogador.pagamentos[mesIndex]?.pago || false; // Access .pago
+    let currentIsentoStatus = jogador.pagamentos[mesIndex]?.isento || false; // Access .isento
 
-    const updatedJogadores = jogadores.map(j => {
-      if (j._id === jogadorId) {
-        const updatedPagamentos = [...j.pagamentos];
-        const updatedIsentoMeses = { ...(j.isentoMeses || {}) };
+    let newPagoStatus = false;
+    let newIsentoStatus = false;
 
-        updatedPagamentos[mesIndex] = !j.pagamentos[mesIndex] || isento;
-
-        if (isento) {
-          updatedIsentoMeses[mesIndex] = true;
-        } else if (updatedPagamentos[mesIndex] === false) {
-          delete updatedIsentoMeses[mesIndex];
-        }
-
-        const todosMesesPagos = updatedPagamentos
-          .slice(0, mesAtual + 1)
-          .every(pago => pago);
-
-        return {
-          ...j,
-          pagamentos: updatedPagamentos,
-          isentoMeses: updatedIsentoMeses,
-          statusFinanceiro: todosMesesPagos ? 'Adimplente' : 'Inadimplente'
-        };
+    if (currentPagoStatus || currentIsentoStatus) { // If currently paid or exempt, unmark
+      newPagoStatus = false;
+      newIsentoStatus = false;
+    } else { // If not paid or exempt, mark as paid or ask for exemption
+      const confirmIsento = window.confirm('Deseja marcar como isento? (Sem valor financeiro)'); //
+      if (confirmIsento) {
+        newIsentoStatus = true;
+      } else {
+        newPagoStatus = true;
       }
-      return j;
-    });
-
-    setJogadores(updatedJogadores);
-
-    const response = await api.post(`/jogadores/${jogadorId}/pagamentos`, {
-      mes: mesIndex,
-      pago: !jogador.pagamentos[mesIndex],
-      isento,
-      valor: isento ? 0 : 100,
-      dataPagamento: !jogador.pagamentos[mesIndex] ? new Date().toISOString() : null
-    });
-
-    if (response.data.data.transacao) {
-      setTransacoes(prev => [response.data.data.transacao, ...prev]);
     }
 
-    toast.success(
-      isento ? 'Mensalidade isentada com sucesso!' :
-      jogador.pagamentos[mesIndex] ? 'Pagamento removido!' : 'Pagamento registrado!'
-    );
+    const updatedJogadores = jogadores.map(j => { //
+      if (j._id === jogadorId) { //
+        const updatedPagamentos = [...j.pagamentos]; //
+        updatedPagamentos[mesIndex] = { pago: newPagoStatus, isento: newIsentoStatus }; // Update the object
 
-  } catch (error) {
-    console.error("Erro ao atualizar pagamento:", error);
-    setJogadores(originalJogadores); // Agora funciona sem erro
-    toast.error(error.response?.data?.message || 'Erro ao atualizar pagamento');
-  }
-};
+        const todosMesesPagos = updatedPagamentos //
+          .slice(0, mesAtual + 1) //
+          .every(p => p.pago || p.isento); // Check pago or isento
+
+        return { //
+          ...j, //
+          pagamentos: updatedPagamentos, //
+          statusFinanceiro: todosMesesPagos ? 'Adimplente' : 'Inadimplente' //
+        }; //
+      } //
+      return j; //
+    }); //
+
+    setJogadores(updatedJogadores); //
+
+    const response = await api.post(`/jogadores/${jogadorId}/pagamentos`, { //
+      mes: mesIndex, //
+      pago: newPagoStatus, //
+      isento: newIsentoStatus, //
+      valor: (newPagoStatus && !newIsentoStatus) ? 100 : 0, // Adjust value based on payment status
+      dataPagamento: (newPagoStatus || newIsentoStatus) ? new Date().toISOString() : null //
+    }); //
+
+    if (response.data.data.transacao) { //
+      setTransacoes(prev => [response.data.data.transacao, ...prev]); //
+    } //
+
+    toast.success( //
+      newIsentoStatus ? 'Mensalidade isentada com sucesso!' : //
+      !newPagoStatus && !newIsentoStatus ? 'Pagamento removido!' : 'Pagamento registrado!' //
+    ); //
+
+  } catch (error) { //
+    console.error("Erro ao atualizar pagamento:", error); //
+    setJogadores(originalJogadores); //
+    toast.error(error.response?.data?.message || 'Erro ao atualizar pagamento'); //
+  } //
+}; //
 
 
   const deletarTransacao = async (id) => {
@@ -379,12 +383,12 @@ const togglePagamento = async (jogadorId, mesIndex) => {
         return prevJogadores.map(jogador => {
           if (jogador._id === transacaoParaDeletar.jogadorId) {
             const pagamentosAtualizados = [...jogador.pagamentos];
-            pagamentosAtualizados[mesTransacao] = false;
+            pagamentosAtualizados[mesTransacao] = { pago: false, isento: false };
             
             const mesAtual = new Date().getMonth();
             const todosMesesPagos = pagamentosAtualizados
               .slice(0, mesAtual + 1)
-              .every(pago => pago);
+              .every(p => p.pago || p.isento);
             
             return {
               ...jogador,
@@ -510,10 +514,10 @@ const togglePagamento = async (jogadorId, mesIndex) => {
     datasets: [{
       data: [
         jogadores.reduce((total, jogador) => 
-          total + jogador.pagamentos.filter(pago => pago).length, 0
+           total + jogador.pagamentos.filter(p => p.pago || p.isento).length, 0
         ),
-        jogadores.reduce((total, jogador) => 
-          total + jogador.pagamentos.filter(pago => !pago).length, 0
+        jogadores.reduce((total, jogador) =>
+      total + jogador.pagamentos.filter(p => !p.pago && !p.isento).length, 0
         )
       ],
       backgroundColor: ['#4ade80', '#f87171'],
