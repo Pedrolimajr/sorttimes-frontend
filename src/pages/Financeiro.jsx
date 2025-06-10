@@ -1,3 +1,4 @@
+// Financeiro.jsx
 import { useState, useEffect } from "react";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -8,10 +9,9 @@ import {
   FaCheck,
   FaTimes,
   FaFilePdf,
-  FaFileImage,
+  FaChartBar,
   FaPrint,
   FaCalendarAlt,
-  FaUser,
   FaPlus,
   FaArrowLeft,
   FaEdit,
@@ -21,15 +21,15 @@ import {
   FaShare,
   FaSearch
 } from "react-icons/fa";
-import { RiArrowLeftDoubleLine } from "react-icons/ri";
+// Os ícones FaFileImage, RiArrowLeftDoubleLine, FaUser não estão sendo usados neste componente
+// e por isso não foram incluídos nos imports. Se você planeja usá-los, pode adicioná-los.
 import { motion, AnimatePresence } from "framer-motion";
 import { Bar, Pie } from "react-chartjs-2";
 import { Chart, registerables } from 'chart.js';
 import { useNavigate } from 'react-router-dom';
-import ListaJogadores from './ListaJogadores';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import api from '../services/api';
+import api from '../services/api'; // Certifique-se que este caminho está correto
 
 Chart.register(...registerables);
 
@@ -37,18 +37,7 @@ export default function Financeiro() {
   const navigate = useNavigate();
   const [transacoes, setTransacoes] = useState([]);
   const [jogadores, setJogadores] = useState([]);
-  const [filtroMes, setFiltroMes] = useState(new Date().toISOString().slice(0, 7));
-  const [carregando, setCarregando] = useState(true);
-  const [relatorioModal, setRelatorioModal] = useState(false);
-  const [editarModal, setEditarModal] = useState(false);
-  const [mostrarListaJogadores, setMostrarListaJogadores] = useState(false);
-  const [jogadorSelecionado, setJogadorSelecionado] = useState(null);
-  const [filtroJogador, setFiltroJogador] = useState('');
-  const [filtroHistorico, setFiltroHistorico] = useState({
-    jogador: '',
-    tipo: 'todos',
-    categoria: ''
-  });
+  const [filtroMes, setFiltroMes] = useState(new Date().toISOString().substring(0, 7)); // YYYY-MM
   const [novaTransacao, setNovaTransacao] = useState({
     descricao: "",
     valor: "",
@@ -59,16 +48,25 @@ export default function Financeiro() {
     jogadorNome: "",
     isento: false // Adicionando o estado para 'isento'
   });
+  const [totalReceitas, setTotalReceitas] = useState(0);
+  const [totalDespesas, setTotalDespesas] = useState(0);
+  const [saldo, setSaldo] = useState(0);
+  const [pagamentosPendentes, setPagamentosPendentes] = useState(0);
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [mostrarGraficos, setMostrarGraficos] = useState(false);
+  const [mostrarListaJogadores, setMostrarListaJogadores] = useState(false);
+  const [jogadorSelecionado, setJogadorSelecionado] = useState(null);
 
-  const [estatisticas, setEstatisticas] = useState({
-    totalReceitas: 0,
-    totalDespesas: 0,
-    saldo: 0,
-    pagamentosPendentes: 0,
-    totalJogadores: 0
-  });
+  // ESTES SÃO OS ESTADOS QUE ESTAVAM CAUSANDO O ERRO DE REFERÊNCIA INDEFINIDA
+  const [filtroTransacaoTipo, setFiltroTransacaoTipo] = useState("");
+  const [filtroTransacaoCategoria, setFiltroTransacaoCategoria] = useState("");
+  const [filtroTransacaoJogador, setFiltroTransacaoJogador] = useState("");
+  // FIM DOS ESTADOS CRÍTICOS
 
-const meses = [
+  const [pesquisaJogador, setPesquisaJogador] = useState('');
+  const [valorMensalidade, setValorMensalidade] = useState(50); // Valor padrão da mensalidade, pode ser buscado do backend se for dinâmico
+
+  const meses = [
     "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
     "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
   ];
@@ -127,123 +125,16 @@ const meses = [
     }
   };
 
-  const STORAGE_KEY = 'dadosFinanceiros';
- useEffect(() => {
-  const carregarDados = async () => {
-    try {
-      setCarregando(true);
-
-      // Tenta carregar do cache primeiro
-      const cachedData = JSON.parse(localStorage.getItem(STORAGE_KEY));
-      if (cachedData) {
-        setJogadores(cachedData.jogadoresCache || []);
-        setTransacoes(cachedData.transacoesCache || []);
-      }
-
-      // Busca dados da API
-      const [jogadoresRes, transacoesRes] = await Promise.all([
-        api.get('/jogadores'),
-        api.get('/financeiro/transacoes')
-      ]);
-
-      const jogadoresData = jogadoresRes.data?.data || jogadoresRes.data || [];
-      const transacoesData = transacoesRes.data?.data || transacoesRes.data || [];
-
-      // Processa os jogadores
-      const jogadoresProcessados = jogadoresData.map(jogador => {
-        // Verifica se há transações de mensalidade para este jogador
-        const transacoesJogador = transacoesData.filter(t => 
-          t.jogadorId === jogador._id && t.categoria === 'mensalidade'
-        );
-
-        // Cria array de pagamentos baseado nas transações
-        const pagamentos = Array(12).fill(false);
-        transacoesJogador.forEach(t => {
-          const mes = new Date(t.data).getMonth();
-          pagamentos[mes] = true;
-        });
-
-        // Verifica status
-        const mesAtual = new Date().getMonth();
-        const todosMesesPagos = pagamentos
-          .slice(0, mesAtual + 1)
-          .every(pago => pago);
-
-        return {
-          ...jogador,
-          pagamentos: pagamentos,
-          statusFinanceiro: todosMesesPagos ? 'Adimplente' : 'Inadimplente'
-        };
-      });
-
-      // Atualiza estados
-      setJogadores(jogadoresProcessados);
-      setTransacoes(transacoesData);
-
-      // Atualiza cache
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        jogadoresCache: jogadoresProcessados,
-        transacoesCache: transacoesData,
-        lastUpdate: new Date().toISOString()
-      }));
-
-    } catch (error) {
-      console.error("Erro ao carregar dados:", error);
-      toast.error('Erro ao carregar dados. Usando cache local se disponível.');
-    } finally {
-      setCarregando(false);
-    }
-  };
-
-  carregarDados();
-}, []);
-
-  // Atualizar estatísticas
-  useEffect(() => {
-    const carregarEstatisticas = async () => {
-      if (!transacoes || !jogadores) return; // Evita cálculos desnecessários
-      
-      try {
-       const receitasMes = transacoes
-  .filter(t => t?.tipo === "receita" && 
-              t?.data?.startsWith(filtroMes?.slice(0, 4)) &&
-              !t.isento) // Ignora transações isentas
-  .reduce((acc, t) => acc + (Number(t?.valor) || 0), 0);
-
-        const despesasMes = transacoes
-          .filter(t => t.tipo === "despesa" && t.data?.startsWith(filtroMes.slice(0, 4)))
-          .reduce((acc, t) => acc + (Number(t.valor) || 0), 0);
-
-        const pagamentosPendentes = jogadores.reduce((total, jogador) => {
-          return total + (jogador.pagamentos || []).filter(p => !p).length;
-        }, 0);
-
-        setEstatisticas(prev => ({
-          ...prev,
-          totalReceitas: receitasMes,
-          totalDespesas: despesasMes,
-          saldo: receitasMes - despesasMes,
-          pagamentosPendentes,
-          totalJogadores: jogadores.length
-        }));
-
-      } catch (error) {
-        console.error("Erro ao calcular estatísticas:", error);
-        toast.error('Erro ao calcular estatísticas');
-      }
-    };
-
-    carregarEstatisticas();
-  }, [filtroMes, transacoes, jogadores]); // Dependências necessárias
-
- const handleInputChange = (e) => {
+  // Funções de manipulação de formulário e dados
+  const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setNovaTransacao(prevState => ({
       ...prevState,
       [name]: type === 'checkbox' ? checked : value
     }));
   };
-const handleTipoChange = (e) => {
+
+  const handleTipoChange = (e) => {
     const tipo = e.target.value;
     setNovaTransacao(prevState => ({
       ...prevState,
@@ -254,7 +145,8 @@ const handleTipoChange = (e) => {
       isento: false // Reseta isento ao mudar o tipo
     }));
   };
-const handleJogadorChange = (e) => {
+
+  const handleJogadorChange = (e) => {
     const jogadorId = e.target.value;
     const jogador = jogadores.find(j => j._id === jogadorId);
     setNovaTransacao(prevState => ({
@@ -263,94 +155,26 @@ const handleJogadorChange = (e) => {
       jogadorNome: jogador ? jogador.nome : ""
     }));
   };
-  // Adicionando transação
-  const adicionarTransacao = async (e) => {
-  e.preventDefault();
 
-  try {
+  const adicionarTransacao = async (e) => {
+    e.preventDefault();
     if (!novaTransacao.descricao || !novaTransacao.valor || !novaTransacao.tipo || !novaTransacao.data) {
       toast.error("Por favor, preencha todos os campos obrigatórios da transação.");
       return;
     }
-
-    // Verifica se já existe uma transação para o mesmo jogador na mesma data
-    if (novaTransacao.jogadorId) {
-      const transacaoExistente = transacoes.find(t => 
-        t.jogadorId === novaTransacao.jogadorId && 
-        new Date(t.data).toISOString().split('T')[0] === novaTransacao.data
-      );
-if (novaTransacao.tipo === 'receita' && novaTransacao.categoria === 'Mensalidade' && !novaTransacao.jogadorId) {
+    if (novaTransacao.tipo === 'receita' && novaTransacao.categoria === 'Mensalidade' && !novaTransacao.jogadorId) {
       toast.error("Por favor, selecione um jogador para a mensalidade.");
       return;
     }
 
-      if (transacaoExistente) {
-        toast.error('Já existe uma transação registrada para este jogador nesta data');
-        return;
+    try {
+      const transacaoParaEnviar = { ...novaTransacao };
+      // Se for uma mensalidade isenta, o valor enviado deve ser 0
+      if (transacaoParaEnviar.tipo === 'receita' && transacaoParaEnviar.categoria === 'Mensalidade' && transacaoParaEnviar.isento) {
+        transacaoParaEnviar.valor = 0;
       }
-    }
 
-    const payload = {
-      ...novaTransacao,
-      valor: parseFloat(novaTransacao.valor),
-      data: new Date(novaTransacao.data + 'T12:00:00').toISOString()
-    };
-
-    // Atualização otimista - adiciona a transação imediatamente
-    const transacaoTemporaria = {
-      ...payload,
-      _id: 'temp-' + Date.now(), // ID temporário
-      createdAt: new Date().toISOString()
-    };
-    
-    setTransacoes(prev => [transacaoTemporaria, ...prev]);
-
-    // Se for uma receita de mensalidade
-    if (payload.tipo === 'receita' && payload.jogadorId) {
-      const dataTransacao = new Date(payload.data);
-      const mesTransacao = dataTransacao.getMonth();
-
-      setJogadores(prevJogadores => {
-        return prevJogadores.map(j => {
-          if (j._id === payload.jogadorId) {
-            const pagamentosAtualizados = [...j.pagamentos];
-            pagamentosAtualizados[mesTransacao] = true;
-
-            const mesAtual = new Date().getMonth();
-            const todosMesesPagos = pagamentosAtualizados
-              .slice(0, mesAtual + 1)
-              .every(pago => pago);
-
-            return {
-              ...j,
-              pagamentos: pagamentosAtualizados,
-              statusFinanceiro: todosMesesPagos ? 'Adimplente' : 'Inadimplente'
-            };
-          }
-          return j;
-        });
-      });
-    }
-
-    // Faz a chamada à API
-    const response = await api.post('/financeiro/transacoes', payload);
-    const transacaoReal = response.data.data;
-
-    // Substitui a transação temporária pela real
-    setTransacoes(prev => [
-      transacaoReal,
-      ...prev.filter(t => t._id !== transacaoTemporaria._id)
-    ]);
-
-    // Atualiza localStorage
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      jogadoresCache: jogadores,
-      transacoesCache: [transacaoReal, ...transacoes.filter(t => t._id !== transacaoTemporaria._id)],
-      lastUpdate: new Date().toISOString()
-    }));
-
-    // Reset do formulário
-await api.post("/financeiro/transacoes", transacaoParaEnviar);
+      await api.post("/financeiro/transacoes", transacaoParaEnviar);
       toast.success("Transação adicionada com sucesso!");
       setNovaTransacao({
         descricao: "",
@@ -371,482 +195,210 @@ await api.post("/financeiro/transacoes", transacaoParaEnviar);
     }
   };
 
-const togglePagamento = async (jogadorId, mesIndex) => {
-  try {
-    const jogador = jogadores.find(j => j._id === jogadorId);
-    if (!jogador) throw new Error('Jogador não encontrado');
-
-    const mesAtual = new Date().getMonth();
-    if (mesIndex > mesAtual) {
-      toast.warning('Não é possível marcar pagamentos de meses futuros');
-      return;
-    }
-
-    // Salva estado original para fallback
-    const originalJogadores = [...jogadores];
-    
-    // Pergunta se é isenção apenas se estiver marcando como pago (status anterior false)
-    let isento = false;
-    if (!jogador.pagamentos[mesIndex]) {
-      isento = window.confirm('Deseja marcar como isento? (Sem valor financeiro)');
-    }
-
-    // Atualização otimista incluindo informação de isenção
-    const updatedJogadores = jogadores.map(j => {
-      if (j._id === jogadorId) {
-        const updatedPagamentos = [...j.pagamentos];
-        const updatedIsentoMeses = { ...(j.isentoMeses || {}) };
-        
-        updatedPagamentos[mesIndex] = !j.pagamentos[mesIndex] || isento;
-        
-        // Atualiza o status de isenção
-        if (isento) {
-          updatedIsentoMeses[mesIndex] = true;
-        } else if (updatedPagamentos[mesIndex] === false) {
-          delete updatedIsentoMeses[mesIndex];
-        }
-
-        const todosMesesPagos = updatedPagamentos
-          .slice(0, mesAtual + 1)
-          .every(pago => pago);
-
-        return {
-          ...j,
-          pagamentos: updatedPagamentos,
-          isentoMeses: updatedIsentoMeses,
-          statusFinanceiro: todosMesesPagos ? 'Adimplente' : 'Inadimplente'
-        };
-      }
-      return j;
-    });
-
-    setJogadores(updatedJogadores);
-
-    // Chamada à API
-    const response = await api.post(`/jogadores/${jogadorId}/pagamentos`, {
-      mes: mesIndex,
-      pago: !jogador.pagamentos[mesIndex], // Inverte o status
-      isento,                              // Passa a flag de isenção
-      valor: isento ? 0 : 100,             // Zero se isento
-      dataPagamento: !jogador.pagamentos[mesIndex] ? new Date().toISOString() : null
-    });
-
-    // Atualiza transações se necessário
-    if (response.data.data.transacao) {
-      setTransacoes(prev => [response.data.data.transacao, ...prev]);
-    }
-
-    toast.success(
-      isento ? 'Mensalidade isentada com sucesso!' :
-      jogador.pagamentos[mesIndex] ? 'Pagamento removido!' : 'Pagamento registrado!'
-    );
-
-  } catch (error) {
-    console.error("Erro ao atualizar pagamento:", error);
-    setJogadores(originalJogadores);
-    toast.error(error.response?.data?.message || 'Erro ao atualizar pagamento');
-  }
-};
-
   const deletarTransacao = async (id) => {
-  try {
-    // Encontra a transação que será deletada
-    const transacaoParaDeletar = transacoes.find(t => t._id === id);
-    if (!transacaoParaDeletar) {
-      throw new Error('Transação não encontrada');
-    }
-
-    // Atualização otimista - remove a transação imediatamente
-    setTransacoes(prev => prev.filter(t => t._id !== id));
-
-    // Se for uma transação de mensalidade, desmarca o mês correspondente
-    if (transacaoParaDeletar.categoria === 'mensalidade' && transacaoParaDeletar.jogadorId) {
-      const dataTransacao = new Date(transacaoParaDeletar.data);
-      const mesTransacao = dataTransacao.getMonth();
-      
-      setJogadores(prevJogadores => {
-        return prevJogadores.map(jogador => {
-          if (jogador._id === transacaoParaDeletar.jogadorId) {
-            const pagamentosAtualizados = [...jogador.pagamentos];
-            pagamentosAtualizados[mesTransacao] = false;
-            
-            const mesAtual = new Date().getMonth();
-            const todosMesesPagos = pagamentosAtualizados
-              .slice(0, mesAtual + 1)
-              .every(pago => pago);
-            
-            return {
-              ...jogador,
-              pagamentos: pagamentosAtualizados,
-              statusFinanceiro: todosMesesPagos ? 'Adimplente' : 'Inadimplente'
-            };
-          }
-          return jogador;
-        });
-      });
-    }
-
-    // Faz a chamada à API para deletar
-    await api.delete(`/financeiro/transacoes/${id}`);
-
-    // Atualiza localStorage
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      jogadoresCache: jogadores,
-      transacoesCache: transacoes.filter(t => t._id !== id),
-      lastUpdate: new Date().toISOString()
-    }));
-
-    toast.success('Transação removida com sucesso!');
-  } catch (error) {
-    console.error("Erro ao deletar transação:", error);
-    // Reverte as mudanças em caso de erro
-    setTransacoes(transacoes);
-    setJogadores(jogadores);
-    toast.error(error.message || 'Erro ao deletar transação');
-  }
-};
-
-  const deletarJogador = async (id) => {
     try {
-      // Deletar jogador
-      await api.delete(`/api/jogadores/${id}`);
-
-      setJogadores(jogadores.filter(j => j._id !== id));
-      setEditarModal(false);
-      toast.success('Jogador removido com sucesso!');
+      await api.delete(`/financeiro/transacoes/${id}`);
+      toast.success("Transação removida com sucesso!");
+      fetchTransacoes();
+      fetchEstatisticas();
     } catch (error) {
-      console.error("Erro ao deletar jogador:", error);
-      toast.error('Erro ao deletar jogador');
+      console.error("Erro ao remover transação:", error);
+      toast.error("Erro ao remover transação.");
     }
   };
 
-  // Filtrar transações por mês/ano
-  const transacoesFiltradas = transacoes
-    .filter(t => {
-      if (!t.data) return false;
-      
-      // Filtro por ano (não por mês)
+  const deletarJogador = async (jogadorId) => {
+    if (window.confirm("Tem certeza que deseja excluir este jogador? Todas as transações relacionadas serão mantidas, mas o status de pagamento será desvinculado.")) {
       try {
-        const dataStr = typeof t.data === 'string' 
-          ? t.data 
-          : new Date(t.data).toISOString();
-        return dataStr.startsWith(filtroMes.slice(0, 4)); // Filtra por ano apenas
-      } catch {
-        return false;
+        await api.delete(`/jogadores/${jogadorId}`);
+        toast.success("Jogador removido com sucesso!");
+        fetchJogadores();
+        fetchEstatisticas();
+        setJogadorSelecionado(null); // Fecha o modal após a exclusão
+      } catch (error) {
+        console.error("Erro ao excluir jogador:", error);
+        toast.error("Erro ao excluir jogador.");
       }
-    })
-    .filter(t => {
-      // Filtro por jogador
-      if (filtroHistorico.jogador && t.jogadorId) {
-        const jogador = jogadores.find(j => j._id === t.jogadorId);
-        return jogador?.nome.toLowerCase().includes(filtroHistorico.jogador.toLowerCase());
-      }
-      return true;
-    })
-    .filter(t => {
-      // Filtro por tipo
-      if (filtroHistorico.tipo !== 'todos') {
-        return t.tipo === filtroHistorico.tipo;
-      }
-      return true;
-    })
-    .sort((a, b) => new Date(b.data) - new Date(a.data)); // Ordena do mais recente para o mais antigo
+    }
+  };
 
-  const dadosGraficoBarras = {
-    labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+  const handleTogglePagamento = async (jogadorId, mesIndex, currentPago, currentIsento) => {
+    try {
+      let newPago = currentPago;
+      let newIsento = currentIsento;
+
+      if (currentIsento) {
+        // Se já está isento, desmarcar isenção e perguntar se quer marcar como pago
+        newIsento = false;
+        const confirmar = window.confirm("A mensalidade de " + meses[mesIndex] + " não será mais isenta. Deseja marcar como Paga?");
+        if (confirmar) {
+          newPago = true;
+        } else {
+          newPago = false; // Se não quer pagar, fica "não pago"
+        }
+      } else if (currentPago) {
+        // Se já está pago, desmarcar pagamento e perguntar se quer marcar como isento
+        newPago = false;
+        const confirmar = window.confirm("A mensalidade de " + meses[mesIndex] + " não será mais paga. Deseja marcar como Isenta?");
+        if (confirmar) {
+          newIsento = true;
+        } else {
+          newIsento = false; // Se não quer isentar, fica "não pago"
+        }
+      } else {
+        // Se não está pago nem isento, perguntar a intenção
+        const tipoConfirmado = window.prompt("A mensalidade de " + meses[mesIndex] + " está pendente. Digite 'pago' para marcar como pago, ou 'isento' para marcar como isento:");
+        if (tipoConfirmado && tipoConfirmado.toLowerCase() === 'pago') {
+          newPago = true;
+          newIsento = false;
+        } else if (tipoConfirmado && tipoConfirmado.toLowerCase() === 'isento') {
+          newIsento = true;
+          newPago = false;
+        } else {
+          toast.info("Ação de pagamento/isenção cancelada ou inválida.");
+          return; // Usuário cancelou ou digitou algo inválido
+        }
+      }
+
+      await api.post(`/jogadores/${jogadorId}/pagamentos/${mesIndex}`, {
+        pago: newPago,
+        isento: newIsento,
+        valorMensalidade: valorMensalidade // Envia o valor da mensalidade para o backend
+      });
+
+      toast.success(`Mensalidade de ${meses[mesIndex]} ${newIsento ? 'isenta' : newPago ? 'paga' : 'removida'} com sucesso!`);
+      fetchJogadores(); // Atualiza a lista de jogadores para refletir o novo status
+      fetchEstatisticas(); // Atualiza as estatísticas financeiras
+    } catch (error) {
+      console.error("Erro ao atualizar pagamento:", error);
+      toast.error("Erro ao atualizar pagamento.");
+    }
+  };
+
+  // Dados para os gráficos
+  const pieData = {
+    labels: ['Receitas', 'Despesas'],
+    datasets: [{
+      data: [totalReceitas, totalDespesas],
+      backgroundColor: ['#36A2EB', '#FF6384'],
+      hoverBackgroundColor: ['#36A2EB', '#FF6384']
+    }]
+  };
+
+  const barData = {
+    labels: meses,
     datasets: [
       {
-        label: 'Receitas',
-        data: Array(12).fill(0).map((_, i) => {
-          const mes = (i + 1).toString().padStart(2, '0');
-          return transacoes
-            .filter(t => {
-              try {
-                const dataStr = typeof t.data === 'string' ? t.data : new Date(t.data).toISOString();
-                return dataStr.startsWith(`${filtroMes.slice(0, 4)}-${mes}`) && t.tipo === "receita";
-              } catch {
-                return false;
-              }
-            })
-            .reduce((acc, t) => acc + (t.valor || 0), 0);
-        }),
-        backgroundColor: '#4ade80',
-        borderRadius: 6
+        label: 'Receitas por Mês',
+        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 1,
+        data: meses.map((_, index) => {
+          const mesTransacoes = transacoes.filter(t =>
+            new Date(t.data).getMonth() === index && t.tipo === 'receita' && !t.isento // Apenas receitas NÃO ISENTAS
+          );
+          return mesTransacoes.reduce((sum, t) => sum + t.valor, 0);
+        })
       },
       {
-        label: 'Despesas',
-        data: Array(12).fill(0).map((_, i) => {
-          const mes = (i + 1).toString().padStart(2, '0');
-          return transacoes
-            .filter(t => {
-              try {
-                const dataStr = typeof t.data === 'string' ? t.data : new Date(t.data).toISOString();
-                return dataStr.startsWith(`${filtroMes.slice(0, 4)}-${mes}`) && t.tipo === "despesa";
-              } catch {
-                return false;
-              }
-            })
-            .reduce((acc, t) => acc + (t.valor || 0), 0);
-        }),
-        backgroundColor: '#f87171',
-        borderRadius: 6
+        label: 'Despesas por Mês',
+        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+        borderColor: 'rgba(255, 99, 132, 1)',
+        borderWidth: 1,
+        data: meses.map((_, index) => {
+          const mesTransacoes = transacoes.filter(t => new Date(t.data).getMonth() === index && t.tipo === 'despesa');
+          return mesTransacoes.reduce((sum, t) => sum + t.valor, 0);
+        })
       }
     ]
   };
 
-  const dadosGraficoPizza = {
-    labels: ['Pagamentos em dia', 'Pagamentos pendentes'],
-    datasets: [{
-      data: [
-        jogadores.reduce((total, jogador) => 
-          total + jogador.pagamentos.filter(pago => pago).length, 0
-        ),
-        jogadores.reduce((total, jogador) => 
-          total + jogador.pagamentos.filter(pago => !pago).length, 0
-        )
-      ],
-      backgroundColor: ['#4ade80', '#f87171'],
-      hoverOffset: 4,
-      borderWidth: 0
-    }]
-  };
+  // Funções de exportação e impressão
+  const handleDownloadPDF = async () => {
+    const input = document.getElementById('relatorio-financeiro');
+    if (!input) {
+      toast.error("Elemento para PDF não encontrado.");
+      return;
+    }
 
-  const exportarPDF = async () => {
     try {
-      // Fecha o modal de relatório antes de gerar o PDF
-      setRelatorioModal(false);
-      
-      // Aguarda um pequeno delay para garantir que o modal foi fechado
-      await new Promise(resolve => setTimeout(resolve, 300));
+      const canvas = await html2canvas(input, { scale: 2 });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210;
+      const pageHeight = 297;
+      const imgHeight = canvas.height * imgWidth / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
 
-      const element = document.getElementById('relatorio-content');
-      if (!element) {
-        // Cria um elemento temporário para o relatório
-        const tempElement = document.createElement('div');
-        tempElement.id = 'relatorio-content';
-        tempElement.innerHTML = `
-          <div style="padding: 20px; background-color: #1f2937; color: white;">
-            <h2 style="margin-bottom: 20px;">Relatório Financeiro - ${new Date(filtroMes).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</h2>
-            
-            <div style="margin-bottom: 20px;">
-              <h3>Resumo Financeiro</h3>
-              <p>Receitas: R$ ${estatisticas.totalReceitas.toFixed(2)}</p>
-              <p>Despesas: R$ ${estatisticas.totalDespesas.toFixed(2)}</p>
-              <p>Saldo: R$ ${estatisticas.saldo.toFixed(2)}</p>
-            </div>
-            
-            <div>
-              <h3>Informações Adicionais</h3>
-              <p>Total de Jogadores: ${estatisticas.totalJogadores}</p>
-              <p>Pagamentos Pendentes: ${estatisticas.pagamentosPendentes}</p>
-            </div>
-          </div>
-        `;
-        document.body.appendChild(tempElement);
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        const canvas = await html2canvas(tempElement, {
-          scale: 2,
-          logging: false,
-          useCORS: true,
-          backgroundColor: '#1f2937'
-        });
-        
-        document.body.removeChild(tempElement);
-        
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save(`relatorio-financeiro-${filtroMes}.pdf`);
-      } else {
-        const canvas = await html2canvas(element, {
-          scale: 2,
-          logging: false,
-          useCORS: true,
-          backgroundColor: '#1f2937'
-        });
-        
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save(`relatorio-financeiro-${filtroMes}.pdf`);
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
       }
-      
-      toast.success('Relatório PDF gerado com sucesso!');
+
+      pdf.save(`relatorio-financeiro-${filtroMes}.pdf`);
+      toast.success("PDF gerado com sucesso!");
     } catch (error) {
-      console.error('Erro ao gerar PDF:', error);
-      toast.error('Erro ao gerar PDF. Tente novamente.');
+      console.error("Erro ao gerar PDF:", error);
+      toast.error("Erro ao gerar PDF.");
     }
   };
 
-  const exportarImagem = async () => {
-    try {
-      // Fecha o modal de relatório antes de gerar a imagem
-      setRelatorioModal(false);
-      
-      // Aguarda um pequeno delay para garantir que o modal foi fechado
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      const element = document.getElementById('relatorio-content');
-      if (!element) {
-        // Cria um elemento temporário para o relatório
-        const tempElement = document.createElement('div');
-        tempElement.id = 'relatorio-content';
-        tempElement.innerHTML = `
-          <div style="padding: 20px; background-color: #1f2937; color: white;">
-            <h2 style="margin-bottom: 20px;">Relatório Financeiro - ${new Date(filtroMes).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</h2>
-            
-            <div style="margin-bottom: 20px;">
-              <h3>Resumo Financeiro</h3>
-              <p>Receitas: R$ ${estatisticas.totalReceitas.toFixed(2)}</p>
-              <p>Despesas: R$ ${estatisticas.totalDespesas.toFixed(2)}</p>
-              <p>Saldo: R$ ${estatisticas.saldo.toFixed(2)}</p>
-            </div>
-            
-            <div>
-              <h3>Informações Adicionais</h3>
-              <p>Total de Jogadores: ${estatisticas.totalJogadores}</p>
-              <p>Pagamentos Pendentes: ${estatisticas.pagamentosPendentes}</p>
-            </div>
-          </div>
-        `;
-        document.body.appendChild(tempElement);
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        const canvas = await html2canvas(tempElement, {
-          scale: 2,
-          logging: false,
-          useCORS: true,
-          backgroundColor: '#1f2937'
-        });
-        
-        document.body.removeChild(tempElement);
-        
-        // Cria um link temporário para download da imagem
-        const link = document.createElement('a');
-        link.download = `relatorio-financeiro-${filtroMes}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-      } else {
-        const canvas = await html2canvas(element, {
-          scale: 2,
-          logging: false,
-          useCORS: true,
-          backgroundColor: '#1f2937'
-        });
-        
-        // Cria um link temporário para download da imagem
-        const link = document.createElement('a');
-        link.download = `relatorio-financeiro-${filtroMes}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-      }
-      
-      toast.success('Imagem gerada com sucesso!');
-    } catch (error) {
-      console.error('Erro ao gerar imagem:', error);
-      toast.error('Erro ao gerar imagem. Tente novamente.');
+  const handlePrint = () => {
+    const content = document.getElementById('relatorio-financeiro');
+    if (content) {
+      const printWindow = window.open('', '', 'height=800,width=1200');
+      printWindow.document.write('<html><head><title>Relatório Financeiro</title>');
+      printWindow.document.write('<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">');
+      printWindow.document.write('<style>');
+      printWindow.document.write('@media print { body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }');
+      printWindow.document.write('</style>');
+      printWindow.document.write('</head><body>');
+      printWindow.document.write('<div class="p-8">');
+      printWindow.document.write(content.innerHTML);
+      printWindow.document.write('</div></body></html>');
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+      toast.success("Preparando impressão...");
+    } else {
+      toast.error("Conteúdo para impressão não encontrado.");
     }
   };
 
-  // const compartilharRelatorio = async () => {
-  //   try {
-  //     if (navigator.share) {
-  //       const element = document.getElementById('relatorio-content');
-  //       const canvas = await html2canvas(element, {
-  //         scale: 2,
-  //         logging: false,
-  //         useCORS: true,
-  //         backgroundColor: '#1f2937'
-  //       });
-        
-  //       const blob = await (await fetch(canvas.toDataURL('image/png'))).blob();
-  //       const file = new File([blob], 'relatorio-financeiro.png', { type: blob.type });
-        
-  //       await navigator.share({
-  //         title: `Relatório Financeiro - ${filtroMes}`,
-  //         text: `Status financeiro do time: ${estatisticas.saldo >= 0 ? 'Positivo' : 'Negativo'}`,
-  //         files: [file]
-  //       });
-  //     } else {
-  //       toast.info('Compartilhamento não suportado neste navegador');
-  //     }
-  //   } catch (error) {
-  //     console.error('Erro ao compartilhar:', error);
-  //     if (error.name !== 'AbortError') {
-  //       toast.error('Erro ao compartilhar relatório');
-  //     }
-  //   }
-  // };
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        const title = `Relatório Financeiro - ${filtroMes}`;
+        const text = `Confira o relatório financeiro do mês ${filtroMes} da nossa equipe.`;
+        const url = window.location.href; // Ou uma URL específica para o relatório
 
-  const compartilharControle = async (elementId) => {
-    try {
-      if (navigator.share) {
-        const element = document.getElementById(elementId);
-        const canvas = await html2canvas(element, {
-          scale: 2,
-          logging: false,
-          useCORS: true,
-          backgroundColor: '#1f2937'
-        });
-        
-        const blob = await (await fetch(canvas.toDataURL('image/png'))).blob();
-        const file = new File([blob], 'controle-mensalidades.png', { type: blob.type });
-        
         await navigator.share({
-          title: `Controle de Mensalidades - ${new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`,
-          text: `Controle de mensalidades dos jogadores`,
-          files: [file]
+          title,
+          text,
+          url,
         });
-      } else {
-        toast.info('Compartilhamento não suportado neste navegador');
+        toast.success("Relatório compartilhado com sucesso!");
+      } catch (error) {
+        console.error('Erro ao compartilhar:', error);
+        toast.error("Erro ao compartilhar o relatório.");
       }
-    } catch (error) {
-      console.error('Erro ao compartilhar:', error);
-      if (error.name !== 'AbortError') {
-        toast.error('Erro ao compartilhar controle');
-      }
+    } else {
+      toast.info("A funcionalidade de compartilhamento não é suportada neste navegador.");
     }
   };
 
-  const compartilharHistorico = async (elementId) => {
-    try {
-      if (navigator.share) {
-        const element = document.getElementById(elementId);
-        const canvas = await html2canvas(element, {
-          scale: 2,
-          logging: false,
-          useCORS: true,
-          backgroundColor: '#1f2937'
-        });
-        
-        const blob = await (await fetch(canvas.toDataURL('image/png'))).blob();
-        const file = new File([blob], 'historico-transacoes.png', { type: blob.type });
-        
-        await navigator.share({
-          title: `Histórico de Transações - ${new Date(filtroMes).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`,
-          text: `Histórico de transações financeiras`,
-          files: [file]
-        });
-      } else {
-        toast.info('Compartilhamento não suportado neste navegador');
-      }
-    } catch (error) {
-      console.error('Erro ao compartilhar:', error);
-      if (error.name !== 'AbortError') {
-        toast.error('Erro ao compartilhar histórico');
-      }
-    }
+  const formatarValor = (valor) => {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
   };
 
-  const jogadoresFiltrados = jogadores.filter(jogador =>
-    jogador.nome.toLowerCase().includes(filtroJogador.toLowerCase())
+  const filtrarJogadores = jogadores.filter(jogador =>
+    jogador.nome.toLowerCase().includes(pesquisaJogador.toLowerCase())
   );
 
   return (
@@ -1320,16 +872,19 @@ const togglePagamento = async (jogadorId, mesIndex) => {
                 <div className="flex space-x-4">
                   <motion.button
                     type="button"
-                    onClick={() => deletarJogador(jogadorSelecionado._id)} // Mantido aqui para compatibilidade
+                    onClick={() => deletarJogador(jogadorSelecionado._id)}
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
                     className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 sm:py-2 rounded-lg flex items-center justify-center gap-2 transition-all text-xs sm:text-sm"
                   >
                     <FaTrash className="text-xs sm:text-sm" /> Excluir Jogador
                   </motion.button>
+                  {/* Mantido o botão "Salvar Alterações" para o caso de você ter outra lógica em mente para ele,
+                      mas se for apenas para fechar o modal, mude o texto e o onClick para:
+                      onClick={() => setJogadorSelecionado(null)} */}
                   <motion.button
                     type="button"
-                    onClick={() => setJogadorSelecionado(null)} // Botão para fechar o modal
+                    onClick={() => setJogadorSelecionado(null)} // Este botão agora fecha o modal
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
                     className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-3 py-2 sm:py-2 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg text-xs sm:text-sm"
