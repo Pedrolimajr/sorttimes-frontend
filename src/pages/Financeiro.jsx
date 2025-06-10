@@ -330,6 +330,20 @@ const togglePagamento = async (jogadorId, mesIndex) => {
       });
 
       setJogadores(jogadoresAtualizados);
+
+      // Atualiza as transações se houver uma nova
+      if (response.data.data.transacao) {
+        setTransacoes(prev => {
+          // Remove transação antiga se existir
+          const transacoesFiltradas = prev.filter(t => 
+            t.jogadorId !== jogadorId || 
+            t.descricao !== response.data.data.transacao.descricao
+          );
+          // Adiciona a nova transação
+          return [response.data.data.transacao, ...transacoesFiltradas];
+        });
+      }
+
       toast.success(response.data.message);
     }
   } catch (error) {
