@@ -82,20 +82,15 @@ const [isento, setIsento] = useState(false);
       ]);
 
       if (jogadoresResponse.data.success) {
-        // Garante que os pagamentos sejam objetos válidos
+        // Garante que os pagamentos sejam objetos válidos e desmarcados por padrão
         const jogadoresFormatados = jogadoresResponse.data.data.map(jogador => ({
           ...jogador,
-          pagamentos: jogador.pagamentos.map((pagamento, index) => {
-            if (typeof pagamento === 'boolean') {
-              return {
-                pago: pagamento,
-                isento: false,
-                dataPagamento: pagamento ? new Date() : null,
-                dataLimite: new Date(new Date().getFullYear(), index, 20)
-              };
-            }
-            return pagamento;
-          })
+          pagamentos: Array(12).fill().map((_, index) => ({
+            pago: false,
+            isento: false,
+            dataPagamento: null,
+            dataLimite: new Date(new Date().getFullYear(), index, 20)
+          }))
         }));
         setJogadores(jogadoresFormatados);
       }
@@ -295,10 +290,10 @@ const togglePagamento = async (jogadorId, mesIndex) => {
           if (j._id === jogadorId) {
             const pagamentosAtualizados = [...j.pagamentos];
             pagamentosAtualizados[mesIndex] = {
-              ...pagamentosAtualizados[mesIndex],
               pago: pago,
               isento: isento,
-              dataPagamento: pago ? new Date() : null
+              dataPagamento: pago ? new Date() : null,
+              dataLimite: new Date(new Date().getFullYear(), mesIndex, 20)
             };
             return {
               ...j,
@@ -338,10 +333,10 @@ const togglePagamento = async (jogadorId, mesIndex) => {
           if (j._id === jogadorId) {
             const pagamentosAtualizados = [...j.pagamentos];
             pagamentosAtualizados[mesIndex] = {
-              ...pagamentosAtualizados[mesIndex],
               pago: false,
               isento: false,
-              dataPagamento: null
+              dataPagamento: null,
+              dataLimite: new Date(new Date().getFullYear(), mesIndex, 20)
             };
             return {
               ...j,
