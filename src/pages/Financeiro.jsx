@@ -287,52 +287,54 @@ const [isento, setIsento] = useState(false);
 };
 
 const togglePagamento = async (jogadorId, mesIndex) => {
-  const originalJogadores = [...jogadores];
-
   try {
     const jogador = jogadores.find(j => j._id === jogadorId);
-    if (!jogador) throw new Error('Jogador não encontrado');
+    if (!jogador) return;
 
-    const mesAtual = new Date().getMonth();
-    if (mesIndex > mesAtual) {
-      toast.warning('Não é possível marcar pagamentos de meses futuros');
-      return;
-    }
+    const pagamentoAtual = jogador.pagamentos[mesIndex];
+    const novoStatus = !pagamentoAtual.pago;
+    const isento = pagamentoAtual.isento;
 
-    let isento = false;
-    if (!jogador.pagamentos[mesIndex].pago) {
-      isento = window.confirm('Deseja marcar como isento? (Sem valor financeiro)');
+    // Se estiver marcando como pago, pergunta se é isento
+    let isentoConfirmado = isento;
+    if (novoStatus && !isento) {
+      const resposta = window.confirm('Deseja marcar esta mensalidade como isenta?');
+      isentoConfirmado = resposta;
     }
 
     const response = await api.post(`/jogadores/${jogadorId}/pagamentos`, {
       mes: mesIndex,
-      pago: !jogador.pagamentos[mesIndex].pago,
-      isento,
-      valorMensalidade: isento ? 0 : 100
+      pago: novoStatus,
+      isento: isentoConfirmado,
+      valorMensalidade: jogador.valorMensalidade || 0
     });
 
     if (response.data.success) {
-      const jogadorAtualizado = response.data.data.jogador;
-      setJogadores(prevJogadores => 
-        prevJogadores.map(j => 
-          j._id === jogadorId ? jogadorAtualizado : j
-        )
-      );
+      // Atualiza o estado local imediatamente
+      const jogadoresAtualizados = jogadores.map(j => {
+        if (j._id === jogadorId) {
+          const pagamentosAtualizados = [...j.pagamentos];
+          pagamentosAtualizados[mesIndex] = {
+            ...pagamentosAtualizados[mesIndex],
+            pago: novoStatus,
+            isento: isentoConfirmado,
+            dataPagamento: novoStatus ? new Date() : null
+          };
+          return {
+            ...j,
+            pagamentos: pagamentosAtualizados,
+            statusFinanceiro: response.data.data.jogador.statusFinanceiro
+          };
+        }
+        return j;
+      });
 
-      if (response.data.data.transacao) {
-        setTransacoes(prev => [response.data.data.transacao, ...prev]);
-      }
-
-      toast.success(
-        isento ? 'Mensalidade isentada com sucesso!' :
-        jogador.pagamentos[mesIndex].pago ? 'Pagamento removido!' : 'Pagamento registrado!'
-      );
+      setJogadores(jogadoresAtualizados);
+      toast.success(response.data.message);
     }
-
   } catch (error) {
-    console.error("Erro ao atualizar pagamento:", error);
-    setJogadores(originalJogadores);
-    toast.error(error.response?.data?.message || 'Erro ao atualizar pagamento');
+    console.error('Erro ao atualizar pagamento:', error);
+    toast.error('Erro ao atualizar pagamento');
   }
 };
 
