@@ -794,9 +794,31 @@ const toggleStatusFinanceiro = async (jogadorId) => {
     try {
       const response = await api.post('/jogadores/migrar-pagamentos');
       if (response.data.success) {
+        // Recarrega os dados após a migração
+        const [jogadoresResponse, transacoesResponse] = await Promise.all([
+          api.get('/jogadores'),
+          api.get('/financeiro/transacoes')
+        ]);
+
+        if (jogadoresResponse.data.success) {
+          // Garante que os pagamentos sejam objetos válidos e desmarcados por padrão
+          const jogadoresFormatados = jogadoresResponse.data.data.map(jogador => ({
+            ...jogador,
+            pagamentos: Array(12).fill().map((_, index) => ({
+              pago: false,
+              isento: false,
+              dataPagamento: null,
+              dataLimite: new Date(new Date().getFullYear(), index, 20)
+            }))
+          }));
+          setJogadores(jogadoresFormatados);
+        }
+
+        if (transacoesResponse.data.success) {
+          setTransacoes(transacoesResponse.data.data);
+        }
+
         toast.success('Migração concluída com sucesso!');
-        // Recarrega os dados
-        carregarDados();
       }
     } catch (error) {
       console.error('Erro na migração:', error);
@@ -1325,31 +1347,22 @@ const toggleStatusFinanceiro = async (jogadorId) => {
                                   </button>
                                 </div>
                               </td>
-                            {jogador.pagamentos.map((pago, i) => {
-  const transacao = transacoes.find(t => 
-    t.jogadorId === jogador._id && 
-    t.categoria === 'mensalidade' && 
-    new Date(t.data).getMonth() === i
-  );
-  const isIsento = transacao?.isento;
-
-  return (
-    <td key={i} className="px-1 sm:px-2 py-2 sm:py-3 whitespace-nowrap text-center">
-      <motion.button
-        onClick={() => togglePagamento(jogador._id, i)}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        className={`
-          w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center
-          ${pago ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}
-        `}
-        title={isIsento ? "Mensalidade isenta" : pago ? "Mensalidade paga" : "Mensalidade pendente"}
-      >
-        {pago ? <FaCheck size={10} className="sm:text-xs" /> : <FaTimes size={10} className="sm:text-xs" />}
-      </motion.button>
-    </td>
-  );
-})}
+                            {jogador.pagamentos.map((pagamento, i) => (
+                              <td key={i} className="px-1 sm:px-2 py-2 sm:py-3 whitespace-nowrap text-center">
+                                <motion.button
+                                  onClick={() => togglePagamento(jogador._id, i)}
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
+                                  className={`
+                                    w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center
+                                    ${pagamento.pago ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}
+                                  `}
+                                  title={pagamento.isento ? "Mensalidade isenta" : pagamento.pago ? "Mensalidade paga" : "Mensalidade pendente"}
+                                >
+                                  {pagamento.pago ? <FaCheck size={10} className="sm:text-xs" /> : <FaTimes size={10} className="sm:text-xs" />}
+                                </motion.button>
+                              </td>
+                            ))}
                             </tr>
                           ))}
                         </tbody>
@@ -1634,20 +1647,20 @@ const toggleStatusFinanceiro = async (jogadorId) => {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-lg p-6 max-w-sm w-full mx-4"
+              className="bg-gray-800 rounded-lg p-6 max-w-sm w-full mx-4 border border-gray-700"
               onClick={e => e.stopPropagation()}
             >
-              <h3 className="text-lg font-semibold mb-4">Escolha o tipo de pagamento</h3>
+              <h3 className="text-xl font-bold text-white mb-4 text-center">Escolha o tipo de pagamento</h3>
               <div className="space-y-3">
                 <button
                   onClick={() => handleTipoPagamento('normal')}
-                  className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors"
+                  className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors"
                 >
                   Pagamento Normal (Contabiliza o valor)
                 </button>
                 <button
                   onClick={() => handleTipoPagamento('isento')}
-                  className="w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition-colors"
+                  className="w-full bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 transition-colors"
                 >
                   Isento (Não contabiliza o valor)
                 </button>
@@ -1656,7 +1669,7 @@ const toggleStatusFinanceiro = async (jogadorId) => {
                     setShowPagamentoModal(false);
                     setPagamentoSelecionado(null);
                   }}
-                  className="w-full bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600 transition-colors"
+                  className="w-full bg-gray-600 text-white py-2 px-4 rounded hover:bg-gray-700 transition-colors"
                 >
                   Cancelar
                 </button>
