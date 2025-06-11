@@ -286,77 +286,40 @@ const [isento, setIsento] = useState(false);
 };
 
 const togglePagamento = async (jogadorId, mesIndex) => {
-  // 💡 Agora visível no catch
-  const originalJogadores = [...jogadores];
-
   try {
-    const jogador = jogadores.find(j => j._id === jogadorId);
-    if (!jogador) throw new Error('Jogador não encontrado');
-
-    const mesAtual = new Date().getMonth();
-    if (mesIndex > mesAtual) {
-      toast.warning('Não é possível marcar pagamentos de meses futuros');
-      return;
-    }
-
-    let isento = false;
-    if (!jogador.pagamentos[mesIndex]) {
-      isento = window.confirm('Deseja marcar como isento? (Sem valor financeiro)');
-    }
-
-    const updatedJogadores = jogadores.map(j => {
-      if (j._id === jogadorId) {
-        const updatedPagamentos = [...j.pagamentos];
-        const updatedIsentoMeses = { ...(j.isentoMeses || {}) };
-
-        updatedPagamentos[mesIndex] = !j.pagamentos[mesIndex] || isento;
-
-        if (isento) {
-          updatedIsentoMeses[mesIndex] = true;
-        } else if (updatedPagamentos[mesIndex] === false) {
-          delete updatedIsentoMeses[mesIndex];
+    setJogadores(prevJogadores => {
+      return prevJogadores.map(j => {
+        if (j._id === jogadorId) {
+          const updatedPagamentos = [...j.pagamentos];
+          updatedPagamentos[mesIndex] = !j.pagamentos[mesIndex];
+          return {
+            ...j,
+            pagamentos: updatedPagamentos
+          };
         }
+        return j;
+      });
+    });
+  } catch (error) {
+    console.error("Erro ao atualizar pagamento:", error);
+    toast.error('Erro ao atualizar pagamento');
+  }
+};
 
-        const todosMesesPagos = updatedPagamentos
-          .slice(0, mesAtual + 1)
-          .every(pago => pago);
-
+// Adicionar função para alternar status manualmente
+const toggleStatus = (jogadorId) => {
+  setJogadores(prevJogadores => {
+    return prevJogadores.map(j => {
+      if (j._id === jogadorId) {
         return {
           ...j,
-          pagamentos: updatedPagamentos,
-          isentoMeses: updatedIsentoMeses,
-          statusFinanceiro: todosMesesPagos ? 'Adimplente' : 'Inadimplente'
+          statusFinanceiro: j.statusFinanceiro === 'Adimplente' ? 'Inadimplente' : 'Adimplente'
         };
       }
       return j;
     });
-
-    setJogadores(updatedJogadores);
-
-    const response = await api.post(`/jogadores/${jogadorId}/pagamentos`, {
-      mes: mesIndex,
-      pago: !jogador.pagamentos[mesIndex],
-      isento,
-      valor: isento ? 0 : 100,
-      dataPagamento: !jogador.pagamentos[mesIndex] ? new Date().toISOString() : null
-    });
-
-    if (response.data.data.transacao) {
-      setTransacoes(prev => [response.data.data.transacao, ...prev]);
-    }
-
-    toast.success(
-      isento ? 'Mensalidade isentada com sucesso!' :
-      jogador.pagamentos[mesIndex] ? 'Pagamento removido!' : 'Pagamento registrado!'
-    );
-
-  } catch (error) {
-    console.error("Erro ao atualizar pagamento:", error);
-    setJogadores(originalJogadores); // Agora funciona sem erro
-    toast.error(error.response?.data?.message || 'Erro ao atualizar pagamento');
-  }
+  });
 };
-
 
   const deletarTransacao = async (id) => {
   try {
@@ -1220,7 +1183,7 @@ const togglePagamento = async (jogadorId, mesIndex) => {
                       placeholder="Buscar jogador..."
                       value={filtroJogador}
                       onChange={(e) => setFiltroJogador(e.target.value)}
-                      className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                      className="w-48 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
                     />
                     <FaSearch className="absolute right-3 top-2.5 text-gray-400 text-xs sm:text-sm" />
                   </div>
@@ -1273,41 +1236,35 @@ const togglePagamento = async (jogadorId, mesIndex) => {
                               {jogador.nome}
                             </td>
                             <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap">
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${jogador.statusFinanceiro === 'Adimplente' ?
-                                  'bg-green-500/20 text-green-400' :
-                                  'bg-red-500/20 text-red-400'
-                                }`}>
+                              <motion.button
+                                onClick={() => toggleStatus(jogador._id)}
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  jogador.statusFinanceiro === 'Adimplente' ?
+                                    'bg-green-500/20 text-green-400' :
+                                    'bg-red-500/20 text-red-400'
+                                }`}
+                              >
                                 {jogador.statusFinanceiro || 'Inadimplente'}
-                              </span>
+                              </motion.button>
                             </td>
-                          {jogador.pagamentos.map((pago, i) => {
-  const transacao = transacoes.find(t => 
-    t.jogadorId === jogador._id && 
-    t.categoria === 'mensalidade' && 
-    new Date(t.data).getMonth() === i
-  );
-  const isIsento = transacao?.isento;
-
-  return (
-<td key={i} className="px-1 sm:px-2 py-2 sm:py-3 whitespace-nowrap text-center">
-  <motion.button
-    onClick={() => togglePagamento(jogador._id, i)}
-    whileHover={{ scale: 1.1 }}
-    whileTap={{ scale: 0.9 }}
-    className={`
-      w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center
-      ${pago ? 
-        (isIsento ? "bg-yellow-500/20 text-yellow-400" : "bg-green-500/20 text-green-400") : 
-        "bg-red-500/20 text-red-400"
-      }
-    `}
-    title={isIsento ? "Mensalidade isenta" : pago ? "Mensalidade paga" : "Mensalidade pendente"}
-  >
-    {pago ? (isIsento ? "I" : <FaCheck size={10} className="sm:text-xs" />) : <FaTimes size={10} className="sm:text-xs" />}
-  </motion.button>
-</td>
-  );
-})}
+                            {jogador.pagamentos.map((pago, i) => (
+                              <td key={i} className="px-1 sm:px-2 py-2 sm:py-3 whitespace-nowrap text-center">
+                                <motion.button
+                                  onClick={() => togglePagamento(jogador._id, i)}
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
+                                  className={`
+                                    w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center
+                                    ${pago ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}
+                                  `}
+                                  title={pago ? "Mensalidade paga" : "Mensalidade pendente"}
+                                >
+                                  {pago ? <FaCheck size={10} className="sm:text-xs" /> : <FaTimes size={10} className="sm:text-xs" />}
+                                </motion.button>
+                              </td>
+                            ))}
                           </tr>
                         ))}
                       </tbody>
@@ -1565,4 +1522,3 @@ const togglePagamento = async (jogadorId, mesIndex) => {
     </div>
   );
 }
-
