@@ -85,13 +85,11 @@ export default function Financeiro() {
       const jogadoresProcessados = (Array.isArray(jogadoresRes.data.data) ? jogadoresRes.data.data : [])
         .map(jogador => ({
           ...jogador,
-          pagamentos: Array.isArray(jogador.pagamentos) && jogador.pagamentos.length === 12
-            ? jogador.pagamentos
-            : Array(12).fill(false)
+          pagamentos: Array.isArray(jogador.pagamentos) ? jogador.pagamentos.map(p => p.pago) : Array(12).fill(false)
         }));
 
       setJogadores(jogadoresProcessados);
-      setTransacoes(Array.isArray(transacoesRes.data) ? transacoesRes.data : []);
+      setTransacoes(Array.isArray(transacoesRes.data.data) ? transacoesRes.data.data : []);
 
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
@@ -281,10 +279,10 @@ export default function Financeiro() {
       setJogadores(jogadoresAtualizados);
 
       // Chamada à API
-      await api.put(`/jogadores/${jogadorId}/pagamentos/${mesIndex}`, { 
+      await api.post(`/jogadores/${jogadorId}/pagamentos`, { 
+        mes: mesIndex,
         pago: novoStatus,
-        valor: 100,
-        dataPagamento: novoStatus ? new Date().toISOString() : null
+        isento: false
       });
 
       // Se for um novo pagamento, registra a transação
@@ -299,7 +297,7 @@ export default function Financeiro() {
           jogadorNome: jogador.nome
         });
 
-        const novaTransacao = response.data;
+        const novaTransacao = response.data.data;
         setTransacoes(prev => [novaTransacao, ...prev]);
       }
 
