@@ -272,7 +272,7 @@ const [isento, setIsento] = useState(false);
       });
 
       // Atualiza no banco de dados usando a rota correta
-      await api.put(`/api/jogadores/${jogadorId}`, {
+      await api.put(`/jogadores/${jogadorId}`, {
         pagamentos: jogadores.find(j => j._id === jogadorId)?.pagamentos.map((pago, index) => ({
           mes: index,
           pago: index === mesIndex ? !pago : pago
@@ -336,7 +336,7 @@ const [isento, setIsento] = useState(false);
       });
 
       // Atualiza no banco de dados usando a rota correta
-      await api.put(`/api/jogadores/${jogadorId}`, {
+      await api.put(`/jogadores/${jogadorId}`, {
         statusFinanceiro: newStatus
       });
 
