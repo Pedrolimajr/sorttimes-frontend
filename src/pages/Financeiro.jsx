@@ -33,8 +33,6 @@ import api from '../services/api';
 
 Chart.register(...registerables);
 
-const API_URL = 'http://localhost:5000/api';
-
 export default function Financeiro() {
   const navigate = useNavigate();
   const [transacoes, setTransacoes] = useState([]);

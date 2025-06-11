@@ -16,7 +16,9 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: import.meta.env.PROD 
+          ? 'https://sorttimes-backend.onrender.com'
+          : 'http://localhost:5000',
         changeOrigin: true,
         secure: false,
         ws: true
