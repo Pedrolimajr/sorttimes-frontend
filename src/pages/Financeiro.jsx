@@ -245,35 +245,77 @@ const [isento, setIsento] = useState(false);
     }
   };
 
-  const togglePagamento = (jogadorId, mesIndex) => {
-    setJogadores(prevJogadores => {
-      return prevJogadores.map(j => {
-        if (j._id === jogadorId) {
-          const updatedPagamentos = [...j.pagamentos];
-          updatedPagamentos[mesIndex] = !j.pagamentos[mesIndex];
-          return {
-            ...j,
-            pagamentos: updatedPagamentos
-          };
-        }
-        return j;
+  const togglePagamento = async (jogadorId, mesIndex) => {
+    try {
+      // Atualiza o estado local primeiro
+      setJogadores(prevJogadores => {
+        const updatedJogadores = prevJogadores.map(j => {
+          if (j._id === jogadorId) {
+            const updatedPagamentos = [...j.pagamentos];
+            updatedPagamentos[mesIndex] = !j.pagamentos[mesIndex];
+            return {
+              ...j,
+              pagamentos: updatedPagamentos
+            };
+          }
+          return j;
+        });
+
+        // Atualiza o localStorage
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          jogadoresCache: updatedJogadores,
+          transacoesCache: transacoes,
+          lastUpdate: new Date().toISOString()
+        }));
+
+        return updatedJogadores;
       });
-    });
+
+      // Atualiza no banco de dados
+      await api.put(`/jogadores/${jogadorId}/pagamentos`, {
+        mes: mesIndex,
+        pago: !jogadores.find(j => j._id === jogadorId)?.pagamentos[mesIndex]
+      });
+
+    } catch (error) {
+      console.error("Erro ao atualizar pagamento:", error);
+      toast.error('Erro ao atualizar pagamento');
+    }
   };
 
-  // Adicionar função para alternar status manualmente
-  const toggleStatus = (jogadorId) => {
-    setJogadores(prevJogadores => {
-      return prevJogadores.map(j => {
-        if (j._id === jogadorId) {
-          return {
-            ...j,
-            statusFinanceiro: j.statusFinanceiro === 'Adimplente' ? 'Inadimplente' : 'Adimplente'
-          };
-        }
-        return j;
+  const toggleStatus = async (jogadorId) => {
+    try {
+      setJogadores(prevJogadores => {
+        const updatedJogadores = prevJogadores.map(j => {
+          if (j._id === jogadorId) {
+            const newStatus = j.statusFinanceiro === 'Adimplente' ? 'Inadimplente' : 'Adimplente';
+            return {
+              ...j,
+              statusFinanceiro: newStatus
+            };
+          }
+          return j;
+        });
+
+        // Atualiza o localStorage
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          jogadoresCache: updatedJogadores,
+          transacoesCache: transacoes,
+          lastUpdate: new Date().toISOString()
+        }));
+
+        return updatedJogadores;
       });
-    });
+
+      // Atualiza no banco de dados
+      await api.put(`/jogadores/${jogadorId}/status`, {
+        status: jogadores.find(j => j._id === jogadorId)?.statusFinanceiro === 'Adimplente' ? 'Inadimplente' : 'Adimplente'
+      });
+
+    } catch (error) {
+      console.error("Erro ao atualizar status:", error);
+      toast.error('Erro ao atualizar status');
+    }
   };
 
   const deletarTransacao = async (id) => {
