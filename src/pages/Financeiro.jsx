@@ -1540,55 +1540,6 @@ const toggleStatusFinanceiro = async (jogadorId) => {
         draggable
         pauseOnHover
       />
-
-      {/* Modal de Opções de Pagamento */}
-      <AnimatePresence>
-        {showPagamentoModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-            onClick={() => {
-              setShowPagamentoModal(false);
-              setPagamentoSelecionado(null);
-            }}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-gray-800 rounded-lg p-6 max-w-sm w-full mx-4 border border-gray-700"
-              onClick={e => e.stopPropagation()}
-            >
-              <h3 className="text-xl font-bold text-white mb-4 text-center">Escolha o tipo de pagamento</h3>
-              <div className="space-y-3">
-                <button
-                  onClick={() => handleTipoPagamento('normal')}
-                  className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors"
-                >
-                  Pagamento Normal (Contabiliza o valor)
-                </button>
-                <button
-                  onClick={() => handleTipoPagamento('isento')}
-                  className="w-full bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 transition-colors"
-                >
-                  Isento (Não contabiliza o valor)
-                </button>
-                <button
-                  onClick={() => {
-                    setShowPagamentoModal(false);
-                    setPagamentoSelecionado(null);
-                  }}
-                  className="w-full bg-gray-600 text-white py-2 px-4 rounded hover:bg-gray-700 transition-colors"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </>
   );
 }
