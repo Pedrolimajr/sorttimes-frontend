@@ -271,13 +271,22 @@ const [isento, setIsento] = useState(false);
         return updatedJogadores;
       });
 
-      // Atualiza no banco de dados usando a rota correta
-      await api.put(`/jogadores/${jogadorId}`, {
-        pagamentos: jogadores.find(j => j._id === jogadorId)?.pagamentos.map((pago, index) => ({
-          mes: index,
-          pago: index === mesIndex ? !pago : pago
-        }))
+      // Prepara os dados para a API
+      const jogador = jogadores.find(j => j._id === jogadorId);
+      const updatedPagamentos = jogador.pagamentos.map((pago, index) => ({
+        mes: index,
+        pago: index === mesIndex ? !pago : pago
+      }));
+
+      // Atualiza no banco de dados
+      const response = await api.put(`/jogadores/${jogadorId}`, {
+        pagamentos: updatedPagamentos,
+        statusFinanceiro: jogador.statusFinanceiro
       });
+
+      if (!response.data) {
+        throw new Error('Resposta inválida do servidor');
+      }
 
     } catch (error) {
       console.error("Erro ao atualizar pagamento:", error);
@@ -311,7 +320,8 @@ const [isento, setIsento] = useState(false);
 
   const toggleStatus = async (jogadorId) => {
     try {
-      const newStatus = jogadores.find(j => j._id === jogadorId)?.statusFinanceiro === 'Adimplente' ? 'Inadimplente' : 'Adimplente';
+      const jogador = jogadores.find(j => j._id === jogadorId);
+      const newStatus = jogador.statusFinanceiro === 'Adimplente' ? 'Inadimplente' : 'Adimplente';
 
       // Atualiza o estado local primeiro
       setJogadores(prevJogadores => {
@@ -335,10 +345,15 @@ const [isento, setIsento] = useState(false);
         return updatedJogadores;
       });
 
-      // Atualiza no banco de dados usando a rota correta
-      await api.put(`/jogadores/${jogadorId}`, {
-        statusFinanceiro: newStatus
+      // Atualiza no banco de dados
+      const response = await api.put(`/jogadores/${jogadorId}`, {
+        statusFinanceiro: newStatus,
+        pagamentos: jogador.pagamentos
       });
+
+      if (!response.data) {
+        throw new Error('Resposta inválida do servidor');
+      }
 
     } catch (error) {
       console.error("Erro ao atualizar status:", error);
