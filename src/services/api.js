@@ -2,7 +2,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: 'https://sorttimes-backend.onrender.com/api',
   headers: {
     'Content-Type': 'application/json'
   }
