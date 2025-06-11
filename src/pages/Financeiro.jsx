@@ -19,7 +19,9 @@ import {
   FaUsers,
   FaTimesCircle,
   FaShare,
-  FaSearch
+  FaSearch,
+  FaFileAlt,
+  FaImage
 } from "react-icons/fa";
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { motion, AnimatePresence } from "framer-motion";
@@ -33,6 +35,8 @@ import api from '../services/api';
 import { useJogadores } from '../context/JogadoresContext';
 
 Chart.register(...registerables);
+
+const API_URL = 'http://localhost:5000/api';
 
 export default function Financeiro() {
   const navigate = useNavigate();
@@ -55,10 +59,9 @@ export default function Financeiro() {
     valor: "",
     tipo: "receita",
     categoria: "",
-    data: new Date().toISOString().substring(0, 10),
+    data: new Date().toISOString().split('T')[0],
     jogadorId: "",
-    jogadorNome: "",
-    isento: false
+    jogadorNome: ""
   });
 
   const [estatisticas, setEstatisticas] = useState({
@@ -67,34 +70,6 @@ export default function Financeiro() {
     saldo: 0,
     pagamentosPendentes: 0,
     totalJogadores: 0
-  });
-
-  const [dadosGraficoPizza, setDadosGraficoPizza] = useState({
-    labels: ['Pagamentos em dia', 'Pagamentos pendentes'],
-    datasets: [{
-      data: [0, 0],
-      backgroundColor: ['#4ade80', '#f87171'],
-      hoverOffset: 4,
-      borderWidth: 0
-    }]
-  });
-
-  const [dadosGraficoBarras, setDadosGraficoBarras] = useState({
-    labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
-    datasets: [
-      {
-        label: 'Receitas',
-        data: Array(12).fill(0),
-        backgroundColor: '#4ade80',
-        borderRadius: 6
-      },
-      {
-        label: 'Despesas',
-        data: Array(12).fill(0),
-        backgroundColor: '#f87171',
-        borderRadius: 6
-      }
-    ]
   });
 
   const [barChartData, setBarChartData] = useState({
@@ -121,159 +96,207 @@ export default function Financeiro() {
 
   const STORAGE_KEY = 'dadosFinanceiros';
 
+  // Carregar dados iniciais
   useEffect(() => {
-    const carregarDados = async () => {
+    carregarDados();
+  }, []); // Executar apenas uma vez
+
+  const carregarDados = async () => {
+    try {
+      setCarregando(true);
+      
+      const [jogadoresRes, transacoesRes] = await Promise.all([
+        fetch(`${API_URL}/jogadores`),
+        fetch(`${API_URL}/financeiro/transacoes`)
+      ]);
+
+      if (!jogadoresRes.ok) throw new Error('Erro ao carregar jogadores');
+      if (!transacoesRes.ok) throw new Error('Erro ao carregar transações');
+
+      const jogadoresData = await jogadoresRes.json();
+      const transacoesData = await transacoesRes.json();
+
+      // Normaliza os dados dos jogadores com validação
+      const jogadoresProcessados = (Array.isArray(jogadoresData.data) ? jogadoresData.data : [])
+        .map(jogador => ({
+          ...jogador,
+          pagamentos: Array.isArray(jogador.pagamentos) && jogador.pagamentos.length === 12
+            ? jogador.pagamentos
+            : Array(12).fill(false)
+        }));
+
+      setJogadores(jogadoresProcessados);
+      setTransacoes(Array.isArray(transacoesData) ? transacoesData : []);
+
+    } catch (error) {
+      console.error("Erro ao carregar dados:", error);
+      toast.error('Erro ao carregar dados');
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  // Atualizar estatísticas
+  useEffect(() => {
+    const carregarEstatisticas = async () => {
+      if (!transacoes || !jogadores) return; // Evita cálculos desnecessários
+      
       try {
-        setCarregando(true);
-        const [jogadoresResponse, transacoesResponse] = await Promise.all([
-          api.get('/jogadores'),
-          api.get('/financeiro/transacoes')
-        ]);
+        const receitasMes = transacoes
+          .filter(t => t?.tipo === "receita" && t?.data?.startsWith(filtroMes?.slice(0, 4)))
+          .reduce((acc, t) => acc + (Number(t?.valor) || 0), 0);
 
-        if (jogadoresResponse.data.success) {
-          const jogadoresFormatados = jogadoresResponse.data.data.map(jogador => ({
-            ...jogador,
-            pagamentos: Array(12).fill().map((_, index) => {
-              const pagamentoExistente = jogador.pagamentos?.[index];
-              return {
-                pago: pagamentoExistente?.pago || false,
-                isento: pagamentoExistente?.isento || false,
-                dataPagamento: pagamentoExistente?.dataPagamento || null,
-                dataLimite: pagamentoExistente?.dataLimite || new Date(new Date().getFullYear(), index, 20)
-              };
-            })
-          }));
-          setJogadores(jogadoresFormatados);
+        const despesasMes = transacoes
+          .filter(t => t.tipo === "despesa" && t.data?.startsWith(filtroMes.slice(0, 4)))
+          .reduce((acc, t) => acc + (Number(t.valor) || 0), 0);
 
-          // Atualizar dados do gráfico de pizza
-          const pagamentosPendentes = jogadoresFormatados.reduce((total, jogador) => {
-            return total + (jogador.pagamentos || []).filter(p => !p.pago && !p.isento).length;
-          }, 0);
+        const pagamentosPendentes = jogadores.reduce((total, jogador) => {
+          return total + (jogador.pagamentos || []).filter(p => !p).length;
+        }, 0);
 
-          const pagamentosEmDia = jogadoresFormatados.reduce((total, jogador) => {
-            return total + (jogador.pagamentos || []).filter(p => p.pago || p.isento).length;
-          }, 0);
+        setEstatisticas(prev => ({
+          ...prev,
+          totalReceitas: receitasMes,
+          totalDespesas: despesasMes,
+          saldo: receitasMes - despesasMes,
+          pagamentosPendentes,
+          totalJogadores: jogadores.length
+        }));
 
-          setDadosGraficoPizza({
-            labels: ['Pagamentos em dia', 'Pagamentos pendentes'],
-            datasets: [{
-              data: [pagamentosEmDia, pagamentosPendentes],
-              backgroundColor: ['#4ade80', '#f87171'],
-              hoverOffset: 4,
-              borderWidth: 0
-            }]
-          });
-
-          // Atualizar dados do gráfico de barras
-          const receitasPorMes = Array(12).fill(0).map((_, i) => {
-            return jogadoresFormatados.reduce((total, jogador) => {
-              const pagamento = jogador.pagamentos[i];
-              return total + (pagamento && pagamento.pago ? (jogador.valorMensalidade || 0) : 0);
-            }, 0);
-          });
-
-          const despesasPorMes = Array(12).fill(0).map((_, i) => {
-            return transacoesResponse.data.data
-              .filter(t => {
-                try {
-                  const dataStr = typeof t.data === 'string' ? t.data : new Date(t.data).toISOString();
-                  return dataStr.startsWith(`${filtroMes.slice(0, 4)}-${(i + 1).toString().padStart(2, '0')}`) && t.tipo === "despesa";
-                } catch {
-                  return false;
-                }
-              })
-              .reduce((acc, t) => acc + (t.valor || 0), 0);
-          });
-
-          setDadosGraficoBarras({
-            labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
-            datasets: [
-              {
-                label: 'Receitas',
-                data: receitasPorMes,
-                backgroundColor: '#4ade80',
-                borderRadius: 6
-              },
-              {
-                label: 'Despesas',
-                data: despesasPorMes,
-                backgroundColor: '#f87171',
-                borderRadius: 6
-              }
-            ]
-          });
-
-          // Atualizar dados do gráfico de fluxo
-          const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-          const receitas = Array(12).fill(0);
-          const despesas = Array(12).fill(0);
-
-          transacoesResponse.data.data.forEach(transacao => {
-            const data = new Date(transacao.data);
-            const mes = data.getMonth();
-            if (transacao.tipo === 'receita') {
-              receitas[mes] += Number(transacao.valor) || 0;
-            } else {
-              despesas[mes] += Number(transacao.valor) || 0;
-            }
-          });
-
-          setBarChartData({
-            labels: meses,
-            datasets: [
-              {
-                label: 'Receitas',
-                data: receitas,
-                backgroundColor: 'rgba(34, 197, 94, 0.5)',
-                borderColor: 'rgb(34, 197, 94)',
-                borderWidth: 1
-              },
-              {
-                label: 'Despesas',
-                data: despesas,
-                backgroundColor: 'rgba(239, 68, 68, 0.5)',
-                borderColor: 'rgb(239, 68, 68)',
-                borderWidth: 1
-              }
-            ]
-          });
-        }
-
-        if (transacoesResponse.data.success) {
-          setTransacoes(transacoesResponse.data.data);
-        }
       } catch (error) {
-        console.error('Erro ao carregar dados:', error);
-        toast.error('Erro ao carregar dados');
-      } finally {
-        setCarregando(false);
+        console.error("Erro ao calcular estatísticas:", error);
+        toast.error('Erro ao calcular estatísticas');
       }
     };
 
-    carregarDados();
-  }, [filtroMes]);
+    carregarEstatisticas();
+  }, [filtroMes, transacoes, jogadores]); // Dependências necessárias
 
-  const handleNovaTransacao = async (e) => {
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNovaTransacao(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Adicionando transação
+  const adicionarTransacao = async (e) => {
     e.preventDefault();
+
     try {
-      const response = await api.post('/financeiro/transacoes', novaTransacao);
-      if (response.data.success) {
-        toast.success('Transação registrada com sucesso!');
-        setTransacoes([...transacoes, response.data.data]);
-        setNovaTransacao({
-          descricao: "",
-          valor: "",
-          tipo: "receita",
-          categoria: "",
-          data: new Date().toISOString().substring(0, 10),
-          jogadorId: "",
-          jogadorNome: "",
-          isento: false
-        });
+      if (!novaTransacao.data || !novaTransacao.valor || !novaTransacao.descricao) {
+        throw new Error('Preencha todos os campos obrigatórios');
       }
+
+      // Verifica se já existe uma transação para o mesmo jogador na mesma data
+      if (novaTransacao.jogadorId) {
+        const transacaoExistente = transacoes.find(t => 
+          t.jogadorId === novaTransacao.jogadorId && 
+          new Date(t.data).toISOString().split('T')[0] === novaTransacao.data
+        );
+
+        if (transacaoExistente) {
+          toast.error('Já existe uma transação registrada para este jogador nesta data');
+          return;
+        }
+      }
+
+      const payload = {
+        ...novaTransacao,
+        valor: parseFloat(novaTransacao.valor),
+        data: new Date(novaTransacao.data + 'T12:00:00').toISOString()
+      };
+
+      // Se for uma receita de mensalidade
+      if (payload.tipo === 'receita' && payload.jogadorId) {
+        const dataTransacao = new Date(payload.data);
+        const mesTransacao = dataTransacao.getMonth();
+
+        // Primeiro, atualiza o estado local ANTES da chamada à API
+        setJogadores(prevJogadores => {
+          const jogadoresAtualizados = prevJogadores.map(j => {
+            if (j._id === payload.jogadorId) {
+              const pagamentosAtualizados = [...j.pagamentos];
+              pagamentosAtualizados[mesTransacao] = true;
+
+              const mesAtual = new Date().getMonth();
+              const mesesDevendo = pagamentosAtualizados
+                .slice(0, mesAtual + 1)
+                .filter(pago => !pago).length;
+
+              return {
+                ...j,
+                pagamentos: pagamentosAtualizados,
+                statusFinanceiro: mesesDevendo === 0 ? 'Adimplente' : 'Inadimplente'
+              };
+            }
+            return j;
+          });
+
+          // Atualiza localStorage
+          localStorage.setItem('dadosFinanceiros', JSON.stringify({
+            jogadoresCache: jogadoresAtualizados,
+            transacoesCache: transacoes
+          }));
+
+          return jogadoresAtualizados;
+        });
+
+        // Depois faz a chamada à API
+        const pagamentoResponse = await fetch(`${API_URL}/jogadores/${payload.jogadorId}/pagamentos/${mesTransacao}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            pago: true,
+            valor: payload.valor,
+            dataPagamento: payload.data
+          })
+        });
+
+        if (!pagamentoResponse.ok) {
+          throw new Error('Erro ao atualizar status de pagamento');
+        }
+      }
+
+      // Continua com o registro da transação...
+      const response = await fetch(`${API_URL}/financeiro/transacoes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) throw new Error('Erro ao adicionar transação');
+
+      const data = await response.json();
+      
+      // Atualiza o estado local das transações
+      setTransacoes(prev => [data.data, ...prev]);
+      
+      // Atualiza as estatísticas
+      setEstatisticas(prev => ({
+        ...prev,
+        totalReceitas: payload.tipo === 'receita' 
+          ? prev.totalReceitas + parseFloat(payload.valor) 
+          : prev.totalReceitas,
+        totalDespesas: payload.tipo === 'despesa' 
+          ? prev.totalDespesas + parseFloat(payload.valor) 
+          : prev.totalDespesas,
+        saldo: prev.totalReceitas - prev.totalDespesas
+      }));
+
+      // Reset do formulário
+      toast.success('Transação registrada com sucesso!');
+      setNovaTransacao({
+        descricao: "",
+        valor: "",
+        tipo: "receita",
+        categoria: "",
+        data: new Date().toISOString().split("T")[0],
+        jogadorId: "",
+        jogadorNome: ""
+      });
+      
     } catch (error) {
-      console.error('Erro ao registrar transação:', error);
-      toast.error('Erro ao registrar transação');
+      console.error("Erro ao adicionar transação:", error);
+      toast.error(error.message || 'Erro ao adicionar transação');
     }
   };
 
@@ -386,82 +409,597 @@ export default function Financeiro() {
     navigate('/');
   };
 
+  const togglePagamento = async (jogadorId, mesIndex) => {
+    try {
+      const jogador = jogadores.find(j => j._id === jogadorId);
+      if (!jogador) throw new Error('Jogador não encontrado');
+
+      const novoStatus = !jogador.pagamentos[mesIndex];
+      const mesAtual = new Date().getMonth();
+
+      // Previne mudança de meses futuros
+      if (mesIndex > mesAtual) {
+        toast.warning('Não é possível marcar pagamentos de meses futuros');
+        return;
+      }
+
+      // Atualização otimista do estado
+      const jogadoresAtualizados = jogadores.map(j => {
+        if (j._id === jogadorId) {
+          const pagamentosAtualizados = [...j.pagamentos];
+          pagamentosAtualizados[mesIndex] = novoStatus;
+
+          // Verifica pagamentos até o mês atual para definir status
+          const mesesDevendo = pagamentosAtualizados
+            .slice(0, mesAtual + 1)
+            .filter(pago => !pago).length;
+
+          return {
+            ...j,
+            pagamentos: pagamentosAtualizados,
+            statusFinanceiro: mesesDevendo === 0 ? 'Adimplente' : 'Inadimplente'
+          };
+        }
+        return j;
+      });
+
+      setJogadores(jogadoresAtualizados);
+
+      // Chamada à API
+      const response = await fetch(`${API_URL}/jogadores/${jogadorId}/pagamentos/${mesIndex}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          pago: novoStatus,
+          valor: 100,
+          dataPagamento: novoStatus ? new Date().toISOString() : null
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao atualizar pagamento');
+      }
+
+      // Se for um novo pagamento, registra a transação
+      if (novoStatus) {
+        const transacaoResponse = await fetch(`${API_URL}/financeiro/transacoes`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            descricao: `Mensalidade - ${jogador.nome} (${mesIndex + 1}/${new Date().getFullYear()})`,
+            valor: 100,
+            tipo: 'receita',
+            categoria: 'mensalidade',
+            data: new Date().toISOString(),
+            jogadorId: jogadorId,
+            jogadorNome: jogador.nome
+          })
+        });
+
+        if (!transacaoResponse.ok) {
+          throw new Error('Erro ao registrar transação');
+        }
+
+        const novaTransacao = await transacaoResponse.json();
+        setTransacoes(prev => [novaTransacao, ...prev]);
+      }
+
+      toast.success(`Pagamento ${novoStatus ? 'registrado' : 'removido'} com sucesso!`);
+
+    } catch (error) {
+      console.error("Erro ao atualizar pagamento:", error);
+      // Reverte o estado em caso de erro
+      setJogadores(prev => [...prev]);
+      toast.error('Erro ao atualizar status de pagamento');
+    }
+  };
+
+  const deletarTransacao = async (id) => {
+    try {
+      // Primeiro, encontre a transação que será excluída
+      const transacao = transacoes.find(t => t._id === id);
+      if (!transacao) throw new Error('Transação não encontrada');
+
+      // Se for uma transação de mensalidade (tipo receita com jogadorId)
+      if (transacao.tipo === 'receita' && transacao.jogadorId) {
+        const dataTransacao = new Date(transacao.data);
+        const mesTransacao = dataTransacao.getMonth();
+
+        // Atualiza o estado local dos jogadores IMEDIATAMENTE
+        setJogadores(prevJogadores => {
+          const jogadoresAtualizados = prevJogadores.map(j => {
+            if (j._id === transacao.jogadorId) {
+              const pagamentosAtualizados = [...j.pagamentos];
+              pagamentosAtualizados[mesTransacao] = false;
+
+              // Verifica se todos os meses até o mês atual estão pagos
+              const mesAtual = new Date().getMonth();
+              const mesesDevendo = pagamentosAtualizados
+                .slice(0, mesAtual + 1)
+                .filter(pago => !pago).length;
+
+              return {
+                ...j,
+                pagamentos: pagamentosAtualizados,
+                statusFinanceiro: mesesDevendo === 0 ? 'Adimplente' : 'Inadimplente'
+              };
+            }
+            return j;
+          });
+
+          // Atualiza localStorage
+          localStorage.setItem('dadosFinanceiros', JSON.stringify({
+            jogadoresCache: jogadoresAtualizados,
+            transacoesCache: transacoes.filter(t => t._id !== id)
+          }));
+
+          return jogadoresAtualizados;
+        });
+
+        // Depois faz a chamada à API para atualizar o pagamento
+        await fetch(`${API_URL}/jogadores/${transacao.jogadorId}/pagamentos/${mesTransacao}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            pago: false,
+            valor: 0,
+            dataPagamento: null
+          })
+        });
+      }
+
+      // Faz a chamada à API para deletar a transação
+      const response = await fetch(`${API_URL}/financeiro/transacoes/${id}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) throw new Error('Erro ao deletar transação');
+
+      // Remove a transação do estado local
+      setTransacoes(prev => prev.filter(t => t._id !== id));
+      
+      // Atualiza as estatísticas
+      setEstatisticas(prev => ({
+        ...prev,
+        totalReceitas: transacao.tipo === 'receita' 
+          ? prev.totalReceitas - transacao.valor 
+          : prev.totalReceitas,
+        totalDespesas: transacao.tipo === 'despesa' 
+          ? prev.totalDespesas - transacao.valor 
+          : prev.totalDespesas,
+        saldo: prev.totalReceitas - prev.totalDespesas
+      }));
+
+      toast.success('Transação removida com sucesso!');
+    } catch (error) {
+      console.error("Erro ao deletar transação:", error);
+      toast.error(error.message);
+    }
+  };
+
+  const editarJogador = async () => {
+    try {
+      const response = await fetch(`${API_URL}/jogadores/${jogadorSelecionado._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(jogadorSelecionado)
+      });
+
+      if (!response.ok) throw new Error('Erro ao atualizar jogador');
+
+      const data = await response.json();
+      setJogadores(jogadores.map(j => j._id === data._id ? data : j));
+      setEditarModal(false);
+      toast.success('Jogador atualizado com sucesso!');
+    } catch (error) {
+      console.error("Erro ao atualizar jogador:", error);
+      toast.error(error.message);
+    }
+  };
+
+  const deletarJogador = async (id) => {
+    try {
+      const response = await fetch(`${API_URL}/jogadores/${id}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) throw new Error('Erro ao deletar jogador');
+
+      setJogadores(jogadores.filter(j => j._id !== id));
+      setEditarModal(false);
+      toast.success('Jogador removido com sucesso!');
+    } catch (error) {
+      console.error("Erro ao deletar jogador:", error);
+      toast.error(error.message);
+    }
+  };
+
+  // Filtrar transações por mês/ano
+  const transacoesFiltradas = transacoes
+    .filter(t => {
+      if (!t.data) return false;
+      
+      // Filtro por ano (não por mês)
+      try {
+        const dataStr = typeof t.data === 'string' 
+          ? t.data 
+          : new Date(t.data).toISOString();
+        return dataStr.startsWith(filtroMes.slice(0, 4)); // Filtra por ano apenas
+      } catch {
+        return false;
+      }
+    })
+    .filter(t => {
+      // Filtro por jogador
+      if (filtroHistorico.jogador && t.jogadorId) {
+        const jogador = jogadores.find(j => j._id === t.jogadorId);
+        return jogador?.nome.toLowerCase().includes(filtroHistorico.jogador.toLowerCase());
+      }
+      return true;
+    })
+    .filter(t => {
+      // Filtro por tipo
+      if (filtroHistorico.tipo !== 'todos') {
+        return t.tipo === filtroHistorico.tipo;
+      }
+      return true;
+    })
+    .sort((a, b) => new Date(b.data) - new Date(a.data)); // Ordena do mais recente para o mais antigo
+
+  const dadosGraficoBarras = {
+    labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+    datasets: [
+      {
+        label: 'Receitas',
+        data: Array(12).fill(0).map((_, i) => {
+          const mes = (i + 1).toString().padStart(2, '0');
+          return transacoes
+            .filter(t => {
+              try {
+                const dataStr = typeof t.data === 'string' ? t.data : new Date(t.data).toISOString();
+                return dataStr.startsWith(`${filtroMes.slice(0, 4)}-${mes}`) && t.tipo === "receita";
+              } catch {
+                return false;
+              }
+            })
+            .reduce((acc, t) => acc + (t.valor || 0), 0);
+        }),
+        backgroundColor: '#4ade80',
+        borderRadius: 6
+      },
+      {
+        label: 'Despesas',
+        data: Array(12).fill(0).map((_, i) => {
+          const mes = (i + 1).toString().padStart(2, '0');
+          return transacoes
+            .filter(t => {
+              try {
+                const dataStr = typeof t.data === 'string' ? t.data : new Date(t.data).toISOString();
+                return dataStr.startsWith(`${filtroMes.slice(0, 4)}-${mes}`) && t.tipo === "despesa";
+              } catch {
+                return false;
+              }
+            })
+            .reduce((acc, t) => acc + (t.valor || 0), 0);
+        }),
+        backgroundColor: '#f87171',
+        borderRadius: 6
+      }
+    ]
+  };
+
+  const dadosGraficoPizza = {
+    labels: ['Pagamentos em dia', 'Pagamentos pendentes'],
+    datasets: [{
+      data: [
+        jogadores.reduce((total, jogador) => 
+          total + jogador.pagamentos.filter(pago => pago).length, 0
+        ),
+        jogadores.reduce((total, jogador) => 
+          total + jogador.pagamentos.filter(pago => !pago).length, 0
+        )
+      ],
+      backgroundColor: ['#4ade80', '#f87171'],
+      hoverOffset: 4,
+      borderWidth: 0
+    }]
+  };
+
+  const exportarPDF = async () => {
+    try {
+      // Fecha o modal de relatório antes de gerar o PDF
+      setRelatorioModal(false);
+      
+      // Aguarda um pequeno delay para garantir que o modal foi fechado
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      const element = document.getElementById('relatorio-content');
+      if (!element) {
+        // Cria um elemento temporário para o relatório
+        const tempElement = document.createElement('div');
+        tempElement.id = 'relatorio-content';
+        tempElement.innerHTML = `
+          <div style="padding: 20px; background-color: #1f2937; color: white;">
+            <h2 style="margin-bottom: 20px;">Relatório Financeiro - ${new Date(filtroMes).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</h2>
+            
+            <div style="margin-bottom: 20px;">
+              <h3>Resumo Financeiro</h3>
+              <p>Receitas: R$ ${estatisticas.totalReceitas.toFixed(2)}</p>
+              <p>Despesas: R$ ${estatisticas.totalDespesas.toFixed(2)}</p>
+              <p>Saldo: R$ ${estatisticas.saldo.toFixed(2)}</p>
+            </div>
+            
+            <div>
+              <h3>Informações Adicionais</h3>
+              <p>Total de Jogadores: ${estatisticas.totalJogadores}</p>
+              <p>Pagamentos Pendentes: ${estatisticas.pagamentosPendentes}</p>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(tempElement);
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        const canvas = await html2canvas(tempElement, {
+          scale: 2,
+          logging: false,
+          useCORS: true,
+          backgroundColor: '#1f2937'
+        });
+        
+        document.body.removeChild(tempElement);
+        
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save(`relatorio-financeiro-${filtroMes}.pdf`);
+      } else {
+        const canvas = await html2canvas(element, {
+          scale: 2,
+          logging: false,
+          useCORS: true,
+          backgroundColor: '#1f2937'
+        });
+        
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save(`relatorio-financeiro-${filtroMes}.pdf`);
+      }
+      
+      toast.success('Relatório PDF gerado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      toast.error('Erro ao gerar PDF. Tente novamente.');
+    }
+  };
+
+  const exportarImagem = async () => {
+    try {
+      // Fecha o modal de relatório antes de gerar a imagem
+      setRelatorioModal(false);
+      
+      // Aguarda um pequeno delay para garantir que o modal foi fechado
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      const element = document.getElementById('relatorio-content');
+      if (!element) {
+        // Cria um elemento temporário para o relatório
+        const tempElement = document.createElement('div');
+        tempElement.id = 'relatorio-content';
+        tempElement.innerHTML = `
+          <div style="padding: 20px; background-color: #1f2937; color: white;">
+            <h2 style="margin-bottom: 20px;">Relatório Financeiro - ${new Date(filtroMes).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</h2>
+            
+            <div style="margin-bottom: 20px;">
+              <h3>Resumo Financeiro</h3>
+              <p>Receitas: R$ ${estatisticas.totalReceitas.toFixed(2)}</p>
+              <p>Despesas: R$ ${estatisticas.totalDespesas.toFixed(2)}</p>
+              <p>Saldo: R$ ${estatisticas.saldo.toFixed(2)}</p>
+            </div>
+            
+            <div>
+              <h3>Informações Adicionais</h3>
+              <p>Total de Jogadores: ${estatisticas.totalJogadores}</p>
+              <p>Pagamentos Pendentes: ${estatisticas.pagamentosPendentes}</p>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(tempElement);
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        const canvas = await html2canvas(tempElement, {
+          scale: 2,
+          logging: false,
+          useCORS: true,
+          backgroundColor: '#1f2937'
+        });
+        
+        document.body.removeChild(tempElement);
+        
+        // Cria um link temporário para download da imagem
+        const link = document.createElement('a');
+        link.download = `relatorio-financeiro-${filtroMes}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      } else {
+        const canvas = await html2canvas(element, {
+          scale: 2,
+          logging: false,
+          useCORS: true,
+          backgroundColor: '#1f2937'
+        });
+        
+        // Cria um link temporário para download da imagem
+        const link = document.createElement('a');
+        link.download = `relatorio-financeiro-${filtroMes}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      }
+      
+      toast.success('Imagem gerada com sucesso!');
+    } catch (error) {
+      console.error('Erro ao gerar imagem:', error);
+      toast.error('Erro ao gerar imagem. Tente novamente.');
+    }
+  };
+
+  const compartilharRelatorio = async () => {
+    try {
+      if (navigator.share) {
+        const element = document.getElementById('relatorio-content');
+        const canvas = await html2canvas(element, {
+          scale: 2,
+          logging: false,
+          useCORS: true,
+          backgroundColor: '#1f2937'
+        });
+        
+        const blob = await (await fetch(canvas.toDataURL('image/png'))).blob();
+        const file = new File([blob], 'relatorio-financeiro.png', { type: blob.type });
+        
+        await navigator.share({
+          title: `Relatório Financeiro - ${filtroMes}`,
+          text: `Status financeiro do time: ${estatisticas.saldo >= 0 ? 'Positivo' : 'Negativo'}`,
+          files: [file]
+        });
+      } else {
+        toast.info('Compartilhamento não suportado neste navegador');
+      }
+    } catch (error) {
+      console.error('Erro ao compartilhar:', error);
+      if (error.name !== 'AbortError') {
+        toast.error('Erro ao compartilhar relatório');
+      }
+    }
+  };
+
+  const compartilharControle = async (elementId) => {
+    try {
+      if (navigator.share) {
+        const element = document.getElementById(elementId);
+        const canvas = await html2canvas(element, {
+          scale: 2,
+          logging: false,
+          useCORS: true,
+          backgroundColor: '#1f2937'
+        });
+        
+        const blob = await (await fetch(canvas.toDataURL('image/png'))).blob();
+        const file = new File([blob], 'controle-mensalidades.png', { type: blob.type });
+        
+        await navigator.share({
+          title: `Controle de Mensalidades - ${new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`,
+          text: `Controle de mensalidades dos jogadores`,
+          files: [file]
+        });
+      } else {
+        toast.info('Compartilhamento não suportado neste navegador');
+      }
+    } catch (error) {
+      console.error('Erro ao compartilhar:', error);
+      if (error.name !== 'AbortError') {
+        toast.error('Erro ao compartilhar controle');
+      }
+    }
+  };
+
+  const compartilharHistorico = async (elementId) => {
+    try {
+      if (navigator.share) {
+        const element = document.getElementById(elementId);
+        const canvas = await html2canvas(element, {
+          scale: 2,
+          logging: false,
+          useCORS: true,
+          backgroundColor: '#1f2937'
+        });
+        
+        const blob = await (await fetch(canvas.toDataURL('image/png'))).blob();
+        const file = new File([blob], 'historico-transacoes.png', { type: blob.type });
+        
+        await navigator.share({
+          title: `Histórico de Transações - ${new Date(filtroMes).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`,
+          text: `Histórico de transações financeiras`,
+          files: [file]
+        });
+      } else {
+        toast.info('Compartilhamento não suportado neste navegador');
+      }
+    } catch (error) {
+      console.error('Erro ao compartilhar:', error);
+      if (error.name !== 'AbortError') {
+        toast.error('Erro ao compartilhar histórico');
+      }
+    }
+  };
+
+  const jogadoresFiltrados = jogadores.filter(jogador =>
+    jogador.nome.toLowerCase().includes(filtroJogador.toLowerCase())
+  );
+
   return (
-    <div className="min-h-screen bg-gray-900 px-4 py-8 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-900 text-white p-4">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <button
-            onClick={handleVoltar}
-            className="flex items-center text-gray-400 hover:text-white transition-colors"
-          >
-            <RiArrowLeftDoubleLine className="mr-2" />
-            Voltar
-          </button>
-          <h1 className="text-3xl font-bold text-white">Gestão Financeira</h1>
-          <div className="flex space-x-4">
+        {/* Cabeçalho */}
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Financeiro</h1>
+          <div className="flex gap-2">
             <button
               onClick={() => setRelatorioModal(true)}
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
             >
-              <FaFilePdf className="mr-2" />
+              <FaFileAlt />
               Relatório
             </button>
             <button
               onClick={() => setEditarModal(true)}
-              className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
             >
-              <FaPlus className="mr-2" />
+              <FaPlus />
               Nova Transação
             </button>
           </div>
         </div>
 
         {/* Cards de Estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-400">Total Receitas</p>
-                <p className="text-2xl font-bold text-green-500">R$ {estatisticas.totalReceitas.toFixed(2)}</p>
-              </div>
-              <FaArrowUp className="text-green-500 text-2xl" />
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="bg-gray-800 p-4 rounded-lg">
+            <h3 className="text-gray-400 text-sm">Total de Receitas</h3>
+            <p className="text-2xl font-bold text-green-500">
+              R$ {estatisticas.totalReceitas.toFixed(2)}
+            </p>
           </div>
-          <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-400">Total Despesas</p>
-                <p className="text-2xl font-bold text-red-500">R$ {estatisticas.totalDespesas.toFixed(2)}</p>
-              </div>
-              <FaArrowDown className="text-red-500 text-2xl" />
-            </div>
+          <div className="bg-gray-800 p-4 rounded-lg">
+            <h3 className="text-gray-400 text-sm">Total de Despesas</h3>
+            <p className="text-2xl font-bold text-red-500">
+              R$ {estatisticas.totalDespesas.toFixed(2)}
+            </p>
           </div>
-          <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-400">Saldo</p>
-                <p className={`text-2xl font-bold ${estatisticas.saldo >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                  R$ {estatisticas.saldo.toFixed(2)}
-                </p>
-              </div>
-              <FaMoneyBillWave className={`${estatisticas.saldo >= 0 ? 'text-green-500' : 'text-red-500'} text-2xl`} />
-            </div>
+          <div className="bg-gray-800 p-4 rounded-lg">
+            <h3 className="text-gray-400 text-sm">Saldo</h3>
+            <p className={`text-2xl font-bold ${estatisticas.saldo >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+              R$ {estatisticas.saldo.toFixed(2)}
+            </p>
           </div>
-          <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-400">Pagamentos Pendentes</p>
-                <p className="text-2xl font-bold text-yellow-500">{estatisticas.pagamentosPendentes}</p>
-              </div>
-              <FaUsers className="text-yellow-500 text-2xl" />
-            </div>
+          <div className="bg-gray-800 p-4 rounded-lg">
+            <h3 className="text-gray-400 text-sm">Pagamentos Pendentes</h3>
+            <p className="text-2xl font-bold text-yellow-500">
+              {estatisticas.pagamentosPendentes}
+            </p>
           </div>
         </div>
 
         {/* Gráficos */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
-            <h3 className="text-lg font-semibold text-gray-200 mb-4">Status de Pagamentos</h3>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Gráfico de Pizza - Status de Pagamento */}
+          <div className="bg-gray-800 p-4 rounded-lg">
+            <h3 className="text-lg font-semibold mb-4">Status de Pagamento</h3>
             <div className="h-64">
               <Pie data={dadosGraficoPizza} options={{
                 responsive: true,
@@ -470,7 +1008,7 @@ export default function Financeiro() {
                   legend: {
                     position: 'bottom',
                     labels: {
-                      color: '#e5e7eb'
+                      color: 'white'
                     }
                   }
                 }
@@ -478,8 +1016,9 @@ export default function Financeiro() {
             </div>
           </div>
 
-          <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
-            <h3 className="text-lg font-semibold text-gray-200 mb-4">Fluxo de Caixa</h3>
+          {/* Gráfico de Barras - Fluxo de Caixa */}
+          <div className="bg-gray-800 p-4 rounded-lg">
+            <h3 className="text-lg font-semibold mb-4">Fluxo de Caixa</h3>
             <div className="h-64">
               <Bar data={dadosGraficoBarras} options={{
                 responsive: true,
@@ -488,7 +1027,7 @@ export default function Financeiro() {
                   legend: {
                     position: 'bottom',
                     labels: {
-                      color: '#e5e7eb'
+                      color: 'white'
                     }
                   }
                 },
@@ -499,7 +1038,7 @@ export default function Financeiro() {
                       color: 'rgba(255, 255, 255, 0.1)'
                     },
                     ticks: {
-                      color: '#e5e7eb'
+                      color: 'white'
                     }
                   },
                   x: {
@@ -507,46 +1046,7 @@ export default function Financeiro() {
                       color: 'rgba(255, 255, 255, 0.1)'
                     },
                     ticks: {
-                      color: '#e5e7eb'
-                    }
-                  }
-                }
-              }} />
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-6 mb-8">
-          <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
-            <h3 className="text-lg font-semibold text-gray-200 mb-4">Fluxo Anual</h3>
-            <div className="h-64">
-              <Bar data={barChartData} options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                  legend: {
-                    position: 'bottom',
-                    labels: {
-                      color: '#e5e7eb'
-                    }
-                  }
-                },
-                scales: {
-                  y: {
-                    beginAtZero: true,
-                    grid: {
-                      color: 'rgba(255, 255, 255, 0.1)'
-                    },
-                    ticks: {
-                      color: '#e5e7eb'
-                    }
-                  },
-                  x: {
-                    grid: {
-                      color: 'rgba(255, 255, 255, 0.1)'
-                    },
-                    ticks: {
-                      color: '#e5e7eb'
+                      color: 'white'
                     }
                   }
                 }
@@ -556,90 +1056,74 @@ export default function Financeiro() {
         </div>
 
         {/* Lista de Transações */}
-        <div className="bg-gray-800 rounded-lg p-6 shadow-lg mb-8">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-semibold text-gray-200">Histórico de Transações</h3>
-            <div className="flex space-x-4">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Filtrar por jogador..."
-                  value={filtroJogador}
-                  onChange={(e) => setFiltroJogador(e.target.value)}
-                  className="bg-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <FaSearch className="absolute right-3 top-3 text-gray-400" />
-              </div>
+        <div className="bg-gray-800 rounded-lg p-4">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Histórico de Transações</h2>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Filtrar por jogador..."
+                value={filtroHistorico.jogador}
+                onChange={(e) => setFiltroHistorico(prev => ({ ...prev, jogador: e.target.value }))}
+                className="bg-gray-700 text-white px-3 py-2 rounded-lg"
+              />
               <select
                 value={filtroHistorico.tipo}
                 onChange={(e) => setFiltroHistorico(prev => ({ ...prev, tipo: e.target.value }))}
-                className="bg-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="bg-gray-700 text-white px-3 py-2 rounded-lg"
               >
                 <option value="todos">Todos os tipos</option>
                 <option value="receita">Receitas</option>
                 <option value="despesa">Despesas</option>
               </select>
-              <select
-                value={filtroHistorico.categoria}
-                onChange={(e) => setFiltroHistorico(prev => ({ ...prev, categoria: e.target.value }))}
-                className="bg-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Todas as categorias</option>
-                <option value="mensalidade">Mensalidade</option>
-                <option value="equipamento">Equipamento</option>
-                <option value="aluguel">Aluguel</option>
-                <option value="outros">Outros</option>
-              </select>
-              <button
-                onClick={handleLimparFiltros}
-                className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
-              >
-                Limpar Filtros
-              </button>
             </div>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-700">
+            <table className="w-full">
               <thead>
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Data</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Descrição</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Jogador</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Categoria</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Valor</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Ações</th>
+                <tr className="text-left border-b border-gray-700">
+                  <th className="pb-2">Data</th>
+                  <th className="pb-2">Descrição</th>
+                  <th className="pb-2">Jogador</th>
+                  <th className="pb-2">Tipo</th>
+                  <th className="pb-2">Valor</th>
+                  <th className="pb-2">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-700">
-                {transacoes.map((transacao) => (
-                  <tr key={transacao.id} className="hover:bg-gray-700">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                      {new Date(transacao.data).toLocaleDateString()}
+              <tbody>
+                {transacoesFiltradas.map((transacao) => (
+                  <tr key={transacao._id} className="border-b border-gray-700">
+                    <td className="py-2">
+                      {new Date(transacao.data).toLocaleDateString('pt-BR')}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{transacao.descricao}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{transacao.jogadorNome || '-'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{transacao.categoria}</td>
-                    <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
-                      transacao.tipo === 'receita' ? 'text-green-500' : 'text-red-500'
-                    }`}>
-                      R$ {Number(transacao.valor).toFixed(2)}
+                    <td className="py-2">{transacao.descricao}</td>
+                    <td className="py-2">
+                      {jogadores.find(j => j._id === transacao.jogadorId)?.nome || 'N/A'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => handleEditarTransacao(transacao.id, transacao)}
-                          className="text-blue-500 hover:text-blue-400"
-                        >
-                          <FaEdit />
-                        </button>
-                        <button
-                          onClick={() => handleExcluirTransacao(transacao.id)}
-                          className="text-red-500 hover:text-red-400"
-                        >
-                          <FaTrash />
-                        </button>
-                      </div>
+                    <td className="py-2">
+                      <span className={`px-2 py-1 rounded-full text-sm ${
+                        transacao.tipo === 'receita' ? 'bg-green-500' : 'bg-red-500'
+                      }`}>
+                        {transacao.tipo === 'receita' ? 'Receita' : 'Despesa'}
+                      </span>
+                    </td>
+                    <td className="py-2">
+                      R$ {transacao.valor.toFixed(2)}
+                    </td>
+                    <td className="py-2">
+                      <button
+                        onClick={() => handleEditarTransacao(transacao._id, transacao)}
+                        className="text-blue-500 hover:text-blue-400 mr-2"
+                      >
+                        <FaEdit />
+                      </button>
+                      <button
+                        onClick={() => handleExcluirTransacao(transacao._id)}
+                        className="text-red-500 hover:text-red-400"
+                      >
+                        <FaTrash />
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -650,229 +1134,266 @@ export default function Financeiro() {
       </div>
 
       {/* Modal de Nova Transação */}
-      <AnimatePresence>
-        {editarModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-gray-800 rounded-lg p-6 w-full max-w-md"
-            >
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-white">Nova Transação</h3>
-                <button
-                  onClick={() => setEditarModal(false)}
-                  className="text-gray-400 hover:text-white"
+      {editarModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-semibold mb-4">Nova Transação</h2>
+            <form onSubmit={adicionarTransacao} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-1">
+                  Tipo
+                </label>
+                <select
+                  value={novaTransacao.tipo}
+                  onChange={handleInputChange}
+                  name="tipo"
+                  className="w-full bg-gray-700 text-white px-3 py-2 rounded-lg"
+                  required
                 >
-                  <FaTimes />
-                </button>
+                  <option value="receita">Receita</option>
+                  <option value="despesa">Despesa</option>
+                </select>
               </div>
-              <form onSubmit={handleNovaTransacao} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Tipo</label>
-                  <select
-                    value={novaTransacao.tipo}
-                    onChange={(e) => setNovaTransacao(prev => ({ ...prev, tipo: e.target.value }))}
-                    className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="receita">Receita</option>
-                    <option value="despesa">Despesa</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Descrição</label>
-                  <input
-                    type="text"
-                    value={novaTransacao.descricao}
-                    onChange={(e) => setNovaTransacao(prev => ({ ...prev, descricao: e.target.value }))}
-                    className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Valor</label>
-                  <input
-                    type="number"
-                    value={novaTransacao.valor}
-                    onChange={(e) => setNovaTransacao(prev => ({ ...prev, valor: e.target.value }))}
-                    className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Categoria</label>
-                  <select
-                    value={novaTransacao.categoria}
-                    onChange={(e) => setNovaTransacao(prev => ({ ...prev, categoria: e.target.value }))}
-                    className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Selecione uma categoria</option>
-                    <option value="mensalidade">Mensalidade</option>
-                    <option value="equipamento">Equipamento</option>
-                    <option value="aluguel">Aluguel</option>
-                    <option value="outros">Outros</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Data</label>
-                  <input
-                    type="date"
-                    value={novaTransacao.data}
-                    onChange={(e) => setNovaTransacao(prev => ({ ...prev, data: e.target.value }))}
-                    className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Jogador</label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={novaTransacao.jogadorNome}
-                      onClick={() => setMostrarListaJogadores(true)}
-                      readOnly
-                      placeholder="Selecione um jogador..."
-                      className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <FaUser className="absolute right-3 top-3 text-gray-400" />
-                  </div>
-                </div>
-                <div className="flex justify-end space-x-4">
-                  <button
-                    type="button"
-                    onClick={() => setEditarModal(false)}
-                    className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Salvar
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Modal de Lista de Jogadores */}
-      <AnimatePresence>
-        {mostrarListaJogadores && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-gray-800 rounded-lg p-6 w-full max-w-2xl"
-            >
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-white">Selecionar Jogador</h3>
-                <button
-                  onClick={() => setMostrarListaJogadores(false)}
-                  className="text-gray-400 hover:text-white"
-                >
-                  <FaTimes />
-                </button>
-              </div>
-              <div className="relative mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-1">
+                  Descrição
+                </label>
                 <input
                   type="text"
-                  placeholder="Buscar jogador..."
-                  value={filtroJogadorModal}
-                  onChange={(e) => setFiltroJogadorModal(e.target.value)}
-                  className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <FaSearch className="absolute right-3 top-3 text-gray-400" />
-              </div>
-              <div className="max-h-96 overflow-y-auto">
-                <ListaJogadores
-                  onSelect={handleSelecionarJogador}
-                  filtro={filtroJogadorModal}
+                  name="descricao"
+                  value={novaTransacao.descricao}
+                  onChange={handleInputChange}
+                  className="w-full bg-gray-700 text-white px-3 py-2 rounded-lg"
+                  required
                 />
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Modal de Relatório */}
-      <AnimatePresence>
-        {relatorioModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-gray-800 rounded-lg p-6 w-full max-w-4xl"
-            >
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-white">Gerar Relatório</h3>
-                <button
-                  onClick={() => setRelatorioModal(false)}
-                  className="text-gray-400 hover:text-white"
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-1">
+                  Valor
+                </label>
+                <input
+                  type="number"
+                  name="valor"
+                  value={novaTransacao.valor}
+                  onChange={handleInputChange}
+                  className="w-full bg-gray-700 text-white px-3 py-2 rounded-lg"
+                  required
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-1">
+                  Data
+                </label>
+                <input
+                  type="date"
+                  name="data"
+                  value={novaTransacao.data}
+                  onChange={handleInputChange}
+                  className="w-full bg-gray-700 text-white px-3 py-2 rounded-lg"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-1">
+                  Jogador
+                </label>
+                <select
+                  name="jogadorId"
+                  value={novaTransacao.jogadorId}
+                  onChange={handleInputChange}
+                  className="w-full bg-gray-700 text-white px-3 py-2 rounded-lg"
+                  required
                 >
-                  <FaTimes />
+                  <option value="">Selecione um jogador</option>
+                  {jogadores.map((jogador) => (
+                    <option key={jogador._id} value={jogador._id}>
+                      {jogador.nome}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEditarModal(false)}
+                  className="px-4 py-2 text-gray-400 hover:text-white"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+                >
+                  Salvar
                 </button>
               </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Mês</label>
-                  <input
-                    type="month"
-                    value={filtroMes}
-                    onChange={(e) => setFiltroMes(e.target.value)}
-                    className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Seleção de Jogador */}
+      {mostrarListaJogadores && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Selecionar Jogador</h2>
+              <input
+                type="text"
+                placeholder="Buscar jogador..."
+                value={filtroJogador}
+                onChange={(e) => setFiltroJogador(e.target.value)}
+                className="bg-gray-700 text-white px-3 py-2 rounded-lg"
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
+              {jogadoresFiltrados.map((jogador) => (
+                <div
+                  key={jogador._id}
+                  className={`p-4 rounded-lg cursor-pointer transition-colors ${
+                    jogadorSelecionado?._id === jogador._id
+                      ? 'bg-blue-600'
+                      : 'bg-gray-700 hover:bg-gray-600'
+                  }`}
+                  onClick={() => handleSelecionarJogador(jogador)}
+                >
+                  <h3 className="font-semibold">{jogador.nome}</h3>
+                  <p className="text-sm text-gray-400">
+                    Status: {jogador.pagamentos[parseInt(filtroMes.slice(5, 7)) - 1] ? 'Pago' : 'Pendente'}
+                  </p>
                 </div>
-                <div className="flex justify-end space-x-4">
-                  <button
-                    onClick={handleImprimirRelatorio}
-                    className="flex items-center px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
-                  >
-                    <FaPrint className="mr-2" />
-                    Imprimir
-                  </button>
-                  <button
-                    onClick={handleExportarPDF}
-                    className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                  >
-                    <FaFilePdf className="mr-2" />
-                    Exportar PDF
-                  </button>
-                  <button
-                    onClick={handleCompartilharRelatorio}
-                    className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    <FaShare className="mr-2" />
-                    Compartilhar
-                  </button>
+              ))}
+            </div>
+            <div className="flex justify-end mt-4">
+              <button
+                onClick={() => setMostrarListaJogadores(false)}
+                className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Relatório */}
+      {relatorioModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-2xl">
+            <div id="relatorio-content">
+              <h2 className="text-xl font-semibold mb-4">
+                Relatório Financeiro - {new Date(filtroMes).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+              </h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div className="bg-gray-700 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold mb-2">Resumo Financeiro</h3>
+                  <p className="text-green-500">Receitas: R$ {estatisticas.totalReceitas.toFixed(2)}</p>
+                  <p className="text-red-500">Despesas: R$ {estatisticas.totalDespesas.toFixed(2)}</p>
+                  <p className={`font-bold ${estatisticas.saldo >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    Saldo: R$ {estatisticas.saldo.toFixed(2)}
+                  </p>
+                </div>
+                
+                <div className="bg-gray-700 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold mb-2">Informações Adicionais</h3>
+                  <p>Total de Jogadores: {estatisticas.totalJogadores}</p>
+                  <p className="text-yellow-500">Pagamentos Pendentes: {estatisticas.pagamentosPendentes}</p>
                 </div>
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
-      <ToastContainer position="bottom-right" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div className="bg-gray-700 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold mb-2">Status de Pagamento</h3>
+                  <div className="h-48">
+                    <Pie data={dadosGraficoPizza} options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          position: 'bottom',
+                          labels: {
+                            color: 'white'
+                          }
+                        }
+                      }
+                    }} />
+                  </div>
+                </div>
+                
+                <div className="bg-gray-700 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold mb-2">Fluxo de Caixa</h3>
+                  <div className="h-48">
+                    <Bar data={dadosGraficoBarras} options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          position: 'bottom',
+                          labels: {
+                            color: 'white'
+                          }
+                        }
+                      },
+                      scales: {
+                        y: {
+                          beginAtZero: true,
+                          grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                          },
+                          ticks: {
+                            color: 'white'
+                          }
+                        },
+                        x: {
+                          grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                          },
+                          ticks: {
+                            color: 'white'
+                          }
+                        }
+                      }
+                    }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={exportarPDF}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+              >
+                <FaFilePdf />
+                Exportar PDF
+              </button>
+              <button
+                onClick={exportarImagem}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+              >
+                <FaImage />
+                Exportar Imagem
+              </button>
+              <button
+                onClick={compartilharRelatorio}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+              >
+                <FaShare />
+                Compartilhar
+              </button>
+              <button
+                onClick={() => setRelatorioModal(false)}
+                className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
-} 
+}
