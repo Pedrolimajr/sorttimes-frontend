@@ -265,7 +265,7 @@ const togglePagamento = async (jogadorId, mesIndex) => {
       mes: mesIndex,
       pago: novoEstado,
       isento: false,
-      valorMensalidade: novoEstado ? jogador.valorMensalidade || 0 : 0
+      valorMensalidade: 0 // Removido o valorMensalidade para evitar transações
     });
 
     if (response.data.success) {
@@ -294,11 +294,74 @@ const togglePagamento = async (jogadorId, mesIndex) => {
         return total + (jogador.pagamentos || []).filter(p => !p.pago && !p.isento).length;
       }, 0);
 
+      // Atualiza os dados do gráfico de pizza
+      const dadosGraficoPizzaAtualizado = {
+        labels: ['Pagamentos em dia', 'Pagamentos pendentes'],
+        datasets: [{
+          data: [
+            jogadoresAtualizados.reduce((total, jogador) => 
+              total + jogador.pagamentos.filter(p => p.pago || p.isento).length, 0
+            ),
+            pagamentosPendentes
+          ],
+          backgroundColor: ['#4ade80', '#f87171'],
+          hoverOffset: 4,
+          borderWidth: 0
+        }]
+      };
+
+      // Atualiza os dados do gráfico de barras
+      const dadosGraficoBarrasAtualizado = {
+        labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+        datasets: [
+          {
+            label: 'Receitas',
+            data: Array(12).fill(0).map((_, i) => {
+              const mes = (i + 1).toString().padStart(2, '0');
+              return transacoes
+                .filter(t => {
+                  try {
+                    const dataStr = typeof t.data === 'string' ? t.data : new Date(t.data).toISOString();
+                    return dataStr.startsWith(`${filtroMes.slice(0, 4)}-${mes}`) && t.tipo === "receita";
+                  } catch {
+                    return false;
+                  }
+                })
+                .reduce((acc, t) => acc + (t.valor || 0), 0);
+            }),
+            backgroundColor: '#4ade80',
+            borderRadius: 6
+          },
+          {
+            label: 'Despesas',
+            data: Array(12).fill(0).map((_, i) => {
+              const mes = (i + 1).toString().padStart(2, '0');
+              return transacoes
+                .filter(t => {
+                  try {
+                    const dataStr = typeof t.data === 'string' ? t.data : new Date(t.data).toISOString();
+                    return dataStr.startsWith(`${filtroMes.slice(0, 4)}-${mes}`) && t.tipo === "despesa";
+                  } catch {
+                    return false;
+                  }
+                })
+                .reduce((acc, t) => acc + (t.valor || 0), 0);
+            }),
+            backgroundColor: '#f87171',
+            borderRadius: 6
+          }
+        ]
+      };
+
       setEstatisticas(prev => ({
         ...prev,
         pagamentosPendentes,
         totalJogadores: jogadoresAtualizados.length
       }));
+
+      // Atualiza os dados dos gráficos
+      setDadosGraficoPizza(dadosGraficoPizzaAtualizado);
+      setDadosGraficoBarras(dadosGraficoBarrasAtualizado);
 
       toast.success(novoEstado ? 'Mês marcado como pago' : 'Mês desmarcado');
     }
