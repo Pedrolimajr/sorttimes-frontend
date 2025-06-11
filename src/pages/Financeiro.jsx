@@ -280,12 +280,15 @@ const [isento, setIsento] = useState(false);
         return updatedJogadores;
       });
 
-      // Prepara o payload para a API com todos os dados do jogador
+      // Prepara o payload para a API
       const payload = {
         nome: jogadorAtual.nome,
         email: jogadorAtual.email,
         statusFinanceiro: jogadorAtual.statusFinanceiro,
-        pagamentos: updatedPagamentos
+        pagamentos: updatedPagamentos.map((pago, index) => ({
+          mes: index + 1, // Mês começa em 1
+          status: pago ? 'pago' : 'pendente'
+        }))
       };
 
       console.log('Enviando para API:', {
@@ -369,12 +372,15 @@ const [isento, setIsento] = useState(false);
         return updatedJogadores;
       });
 
-      // Prepara o payload para a API com todos os dados do jogador
+      // Prepara o payload para a API
       const payload = {
         nome: jogadorAtual.nome,
         email: jogadorAtual.email,
         statusFinanceiro: newStatus,
-        pagamentos: jogadorAtual.pagamentos
+        pagamentos: jogadorAtual.pagamentos.map((pago, index) => ({
+          mes: index + 1, // Mês começa em 1
+          status: pago ? 'pago' : 'pendente'
+        }))
       };
 
       console.log('Enviando para API:', {
