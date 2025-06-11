@@ -246,7 +246,6 @@ const [isento, setIsento] = useState(false);
   };
 
   const togglePagamento = async (jogadorId, mesIndex) => {
-    // Encontra o jogador atual antes de qualquer operação
     const jogadorAtual = jogadores.find(j => j._id === jogadorId);
     if (!jogadorAtual) {
       toast.error('Jogador não encontrado');
@@ -254,7 +253,7 @@ const [isento, setIsento] = useState(false);
     }
 
     try {
-      // Cria uma cópia do array de pagamentos
+      // Atualização otimista - atualiza o estado imediatamente
       const updatedPagamentos = [...jogadorAtual.pagamentos];
       updatedPagamentos[mesIndex] = !updatedPagamentos[mesIndex];
 
@@ -270,17 +269,19 @@ const [isento, setIsento] = useState(false);
           return j;
         });
 
-        // Atualiza o localStorage
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-          jogadoresCache: updatedJogadores,
-          transacoesCache: transacoes,
-          lastUpdate: new Date().toISOString()
-        }));
+        // Atualiza o localStorage em batch
+        requestAnimationFrame(() => {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            jogadoresCache: updatedJogadores,
+            transacoesCache: transacoes,
+            lastUpdate: new Date().toISOString()
+          }));
+        });
 
         return updatedJogadores;
       });
 
-      // Prepara o payload para a API no formato correto
+      // Prepara o payload para a API
       const payload = {
         mes: mesIndex,
         pago: updatedPagamentos[mesIndex],
@@ -289,14 +290,8 @@ const [isento, setIsento] = useState(false);
         dataLimite: new Date(new Date().getFullYear(), mesIndex, 20)
       };
 
-      console.log('Dados do jogador:', jogadorAtual);
-      console.log('Payload sendo enviado:', payload);
-      console.log('URL da requisição:', `/jogadores/${jogadorId}/pagamentos`);
-
-      // Atualiza no banco de dados usando a rota correta
+      // Atualiza no banco de dados
       const response = await api.post(`/jogadores/${jogadorId}/pagamentos`, payload);
-
-      console.log('Resposta completa:', response);
 
       if (!response.data) {
         throw new Error('Resposta inválida do servidor');
@@ -314,26 +309,21 @@ const [isento, setIsento] = useState(false);
             } : j
           );
 
-          localStorage.setItem(STORAGE_KEY, JSON.stringify({
-            jogadoresCache: newJogadores,
-            transacoesCache: transacoes,
-            lastUpdate: new Date().toISOString()
-          }));
+          // Atualiza o localStorage em batch
+          requestAnimationFrame(() => {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+              jogadoresCache: newJogadores,
+              transacoesCache: transacoes,
+              lastUpdate: new Date().toISOString()
+            }));
+          });
 
           return newJogadores;
         });
       }
 
     } catch (error) {
-      console.error("Erro completo:", error);
-      console.error("Detalhes do erro:", {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-        payload: error.config?.data,
-        headers: error.config?.headers
-      });
-      
+      console.error("Erro ao atualizar pagamento:", error);
       toast.error('Erro ao atualizar pagamento');
       
       // Reverte a mudança em caso de erro
@@ -348,12 +338,14 @@ const [isento, setIsento] = useState(false);
           return j;
         });
 
-        // Atualiza o localStorage com os dados revertidos
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-          jogadoresCache: revertedJogadores,
-          transacoesCache: transacoes,
-          lastUpdate: new Date().toISOString()
-        }));
+        // Atualiza o localStorage em batch
+        requestAnimationFrame(() => {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            jogadoresCache: revertedJogadores,
+            transacoesCache: transacoes,
+            lastUpdate: new Date().toISOString()
+          }));
+        });
 
         return revertedJogadores;
       });
@@ -361,7 +353,6 @@ const [isento, setIsento] = useState(false);
   };
 
   const toggleStatus = async (jogadorId) => {
-    // Encontra o jogador atual antes de qualquer operação
     const jogadorAtual = jogadores.find(j => j._id === jogadorId);
     if (!jogadorAtual) {
       toast.error('Jogador não encontrado');
@@ -371,7 +362,7 @@ const [isento, setIsento] = useState(false);
     try {
       const newStatus = jogadorAtual.statusFinanceiro === 'Adimplente' ? 'Inadimplente' : 'Adimplente';
 
-      // Atualiza o estado local primeiro
+      // Atualização otimista - atualiza o estado imediatamente
       setJogadores(prevJogadores => {
         const updatedJogadores = prevJogadores.map(j => {
           if (j._id === jogadorId) {
@@ -383,44 +374,27 @@ const [isento, setIsento] = useState(false);
           return j;
         });
 
-        // Atualiza o localStorage
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-          jogadoresCache: updatedJogadores,
-          transacoesCache: transacoes,
-          lastUpdate: new Date().toISOString()
-        }));
+        // Atualiza o localStorage em batch
+        requestAnimationFrame(() => {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            jogadoresCache: updatedJogadores,
+            transacoesCache: transacoes,
+            lastUpdate: new Date().toISOString()
+          }));
+        });
 
         return updatedJogadores;
       });
 
-      // Prepara o payload para a API no formato correto
-      const payload = {
-        status: newStatus
-      };
-
-      console.log('Dados do jogador:', jogadorAtual);
-      console.log('Payload sendo enviado:', payload);
-      console.log('URL da requisição:', `/jogadores/${jogadorId}/status`);
-
-      // Atualiza no banco de dados usando a rota correta
-      const response = await api.patch(`/jogadores/${jogadorId}/status`, payload);
-
-      console.log('Resposta completa:', response);
+      // Atualiza no banco de dados
+      const response = await api.patch(`/jogadores/${jogadorId}/status`, { status: newStatus });
 
       if (!response.data) {
         throw new Error('Resposta inválida do servidor');
       }
 
     } catch (error) {
-      console.error("Erro completo:", error);
-      console.error("Detalhes do erro:", {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-        payload: error.config?.data,
-        headers: error.config?.headers
-      });
-      
+      console.error("Erro ao atualizar status:", error);
       toast.error('Erro ao atualizar status');
       
       // Reverte a mudança em caso de erro
@@ -435,12 +409,14 @@ const [isento, setIsento] = useState(false);
           return j;
         });
 
-        // Atualiza o localStorage com os dados revertidos
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-          jogadoresCache: revertedJogadores,
-          transacoesCache: transacoes,
-          lastUpdate: new Date().toISOString()
-        }));
+        // Atualiza o localStorage em batch
+        requestAnimationFrame(() => {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            jogadoresCache: revertedJogadores,
+            transacoesCache: transacoes,
+            lastUpdate: new Date().toISOString()
+          }));
+        });
 
         return revertedJogadores;
       });
