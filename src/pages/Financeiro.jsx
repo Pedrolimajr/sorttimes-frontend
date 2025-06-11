@@ -95,17 +95,17 @@ const [isento, setIsento] = useState(false);
 
       // Processa os jogadores
       const jogadoresProcessados = jogadoresData.map(jogador => {
-        // Verifica se há transações de mensalidade para este jogador
-        const transacoesJogador = transacoesData.filter(t => 
-          t.jogadorId === jogador._id && t.categoria === 'mensalidade'
-        );
-
-        // Cria array de pagamentos baseado nas transações
+        // Converte os pagamentos do formato do backend para o formato do frontend
         const pagamentos = Array(12).fill(false);
-        transacoesJogador.forEach(t => {
-          const mes = new Date(t.data).getMonth();
-          pagamentos[mes] = true;
-        });
+        if (jogador.pagamentos && Array.isArray(jogador.pagamentos)) {
+          jogador.pagamentos.forEach((pagamento, index) => {
+            if (typeof pagamento === 'object' && pagamento !== null) {
+              pagamentos[index] = pagamento.pago || false;
+            } else {
+              pagamentos[index] = pagamento || false;
+            }
+          });
+        }
 
         // Verifica status - Nova lógica considerando o mês anterior
         const mesAtual = new Date().getMonth();
@@ -284,7 +284,9 @@ const [isento, setIsento] = useState(false);
       const payload = {
         mes: mesIndex,
         pago: updatedPagamentos[mesIndex],
-        isento: false
+        isento: false,
+        dataPagamento: updatedPagamentos[mesIndex] ? new Date() : null,
+        dataLimite: new Date(new Date().getFullYear(), mesIndex, 20)
       };
 
       console.log('Dados do jogador:', jogadorAtual);
@@ -298,6 +300,28 @@ const [isento, setIsento] = useState(false);
 
       if (!response.data) {
         throw new Error('Resposta inválida do servidor');
+      }
+
+      // Atualiza o cache com os dados mais recentes
+      const updatedJogador = response.data.data.jogador;
+      if (updatedJogador) {
+        setJogadores(prevJogadores => {
+          const newJogadores = prevJogadores.map(j => 
+            j._id === jogadorId ? {
+              ...j,
+              pagamentos: updatedJogador.pagamentos.map(p => p.pago),
+              statusFinanceiro: updatedJogador.statusFinanceiro
+            } : j
+          );
+
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            jogadoresCache: newJogadores,
+            transacoesCache: transacoes,
+            lastUpdate: new Date().toISOString()
+          }));
+
+          return newJogadores;
+        });
       }
 
     } catch (error) {
