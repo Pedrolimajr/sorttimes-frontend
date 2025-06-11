@@ -2,12 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
-  plugins: [react({
-    babel: {
-      configFile: false,
-      babelrc: false
-    }
-  })],
+  plugins: [react()],
   define: {
     // Define variáveis globais para evitar erros de 'process is not defined'
     'process.env': {}
@@ -16,13 +11,15 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: import.meta.env.PROD 
-          ? 'https://sorttimes-backend.onrender.com'
-          : 'http://localhost:5000',
+        target: 'https://sorttimes-backend.onrender.com',
         changeOrigin: true,
         secure: false,
         ws: true
       }
     }
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: true
   }
 });

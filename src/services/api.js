@@ -1,17 +1,11 @@
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
-const BASE_URL = import.meta.env.PROD 
-  ? 'https://sorttimes-backend.onrender.com/api'
-  : 'http://localhost:5000/api';
-
 const api = axios.create({
-  baseURL: BASE_URL,
-  timeout: 10000,
+  baseURL: '/api',
   headers: {
     'Content-Type': 'application/json'
-  },
-  withCredentials: true
+  }
 });
 
 // Interceptor para requisições
