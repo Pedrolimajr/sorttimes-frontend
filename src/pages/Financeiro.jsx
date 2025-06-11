@@ -304,8 +304,7 @@ const [isento, setIsento] = useState(false);
           const newJogadores = prevJogadores.map(j => 
             j._id === jogadorId ? {
               ...j,
-              pagamentos: updatedJogador.pagamentos.map(p => p.pago),
-              statusFinanceiro: updatedJogador.statusFinanceiro
+              pagamentos: updatedJogador.pagamentos.map(p => p.pago)
             } : j
           );
 
