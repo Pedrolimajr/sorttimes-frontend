@@ -1001,25 +1001,35 @@ const TimeSorteado = ({ time, index }) => {
 
             {/* Lista de jogadores selecionados */}
             <div className="mb-4 sm:mb-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-  <h3 className="text-xs sm:text-sm font-medium text-gray-400 flex items-center gap-2">
-    <FaTshirt className="text-blue-400 text-sm sm:text-base" />
-    Jogadores Selecionados ({jogadoresSelecionados.filter(j => j.presente).length}/{jogadoresSelecionados.length})
-  </h3>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                <h3 className="text-xs sm:text-sm font-medium text-gray-400 flex items-center gap-2">
+                  <FaTshirt className="text-blue-400 text-sm sm:text-base" />
+                  Jogadores Selecionados ({jogadoresSelecionados.filter(j => j.presente).length}/{jogadoresSelecionados.length})
+                </h3>
 
-  <motion.button
-    onClick={compartilharJogadoresSelecionados}
-    whileHover={{ scale: 1.05 }}
-    whileTap={{ scale: 0.95 }}
-    className="w-full sm:w-auto flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg text-xs sm:text-sm text-white bg-blue-600 hover:bg-blue-700 transition-all"
-    title="Compartilhar jogadores presentes"
-  >
-    <FaShare className="text-white text-sm" />
-    Compartilhar
-  </motion.button>
+                <div className="flex items-center gap-2">
+                  {/* Campo de pesquisa */}
+                  <div className="relative w-48">
+                    <input
+                      type="text"
+                      placeholder="Pesquisar jogador..."
+                      value={filtroJogadoresSelecionados}
+                      onChange={(e) => setFiltroJogadoresSelecionados(e.target.value)}
+                      className="w-full px-3 py-1.5 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs"
+                    />
+                    <FaSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xs" />
+                  </div>
 
-                <div className="text-xs text-gray-400">
-                  Serão formados 2 times
+                  <motion.button
+                    onClick={compartilharJogadoresSelecionados}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg text-xs sm:text-sm text-white bg-blue-600 hover:bg-blue-700 transition-all"
+                    title="Compartilhar jogadores presentes"
+                  >
+                    <FaShare className="text-white text-sm" />
+                    Compartilhar
+                  </motion.button>
                 </div>
               </div>
 
@@ -1035,9 +1045,13 @@ const TimeSorteado = ({ time, index }) => {
                         Nenhum jogador cadastrado encontrado
                       </div>
                     ) : (
-                      jogadoresSelecionados.map((jogador) => (
-                        <JogadorItem key={jogador._id} jogador={jogador} />
-                      ))
+                      jogadoresSelecionados
+                        .filter(jogador => 
+                          jogador.nome.toLowerCase().includes(filtroJogadoresSelecionados.toLowerCase())
+                        )
+                        .map((jogador) => (
+                          <JogadorItem key={jogador._id} jogador={jogador} />
+                        ))
                     )}
                   </AnimatePresence>
                 </div>
