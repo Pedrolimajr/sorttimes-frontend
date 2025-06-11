@@ -1647,4 +1647,3 @@ const [isento, setIsento] = useState(false);
     </div>
   );
 }
-
