@@ -10,6 +10,7 @@ const api = axios.create({
   withCredentials: true
 });
 
+
 // Serviço de pagamentos
 export const pagamentosAPI = {
   async atualizarPagamento(jogadorId, mes, dados) {
