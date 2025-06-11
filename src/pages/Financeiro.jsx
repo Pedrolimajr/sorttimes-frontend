@@ -186,107 +186,66 @@ const [isento, setIsento] = useState(false);
 
   // Adicionando transação
   const adicionarTransacao = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  try {
-    if (!novaTransacao.data || !novaTransacao.valor || !novaTransacao.descricao) {
-      throw new Error('Preencha todos os campos obrigatórios');
-    }
-
-    // Verifica se já existe uma transação para o mesmo jogador na mesma data
-    if (novaTransacao.jogadorId) {
-      const transacaoExistente = transacoes.find(t => 
-        t.jogadorId === novaTransacao.jogadorId && 
-        new Date(t.data).toISOString().split('T')[0] === novaTransacao.data
-      );
-
-      if (transacaoExistente) {
-        toast.error('Já existe uma transação registrada para este jogador nesta data');
-        return;
+    try {
+      if (!novaTransacao.data || !novaTransacao.valor || !novaTransacao.descricao) {
+        throw new Error('Preencha todos os campos obrigatórios');
       }
-    }
 
-    const payload = {
-      ...novaTransacao,
-      valor: parseFloat(novaTransacao.valor),
-      data: new Date(novaTransacao.data + 'T12:00:00').toISOString()
-    };
+      const payload = {
+        ...novaTransacao,
+        valor: parseFloat(novaTransacao.valor),
+        data: new Date(novaTransacao.data + 'T12:00:00').toISOString()
+      };
 
-    // Atualização otimista - adiciona a transação imediatamente
-    const transacaoTemporaria = {
-      ...payload,
-      _id: 'temp-' + Date.now(), // ID temporário
-      createdAt: new Date().toISOString()
-    };
-    
-    setTransacoes(prev => [transacaoTemporaria, ...prev]);
+      // Atualização otimista - adiciona a transação imediatamente
+      const transacaoTemporaria = {
+        ...payload,
+        _id: 'temp-' + Date.now(),
+        createdAt: new Date().toISOString()
+      };
+      
+      setTransacoes(prev => [transacaoTemporaria, ...prev]);
 
-    // Se for uma receita de mensalidade
-    if (payload.tipo === 'receita' && payload.jogadorId) {
-      const dataTransacao = new Date(payload.data);
-      const mesTransacao = dataTransacao.getMonth();
+      // Faz a chamada à API
+      const response = await api.post('/financeiro/transacoes', payload);
+      const transacaoReal = response.data.data;
 
-      setJogadores(prevJogadores => {
-        return prevJogadores.map(j => {
-          if (j._id === payload.jogadorId) {
-            const pagamentosAtualizados = [...j.pagamentos];
-            pagamentosAtualizados[mesTransacao] = true;
+      // Substitui a transação temporária pela real
+      setTransacoes(prev => [
+        transacaoReal,
+        ...prev.filter(t => t._id !== transacaoTemporaria._id)
+      ]);
 
-            const mesAtual = new Date().getMonth();
-            const todosMesesPagos = pagamentosAtualizados
-              .slice(0, mesAtual + 1)
-              .every(pago => pago);
+      // Atualiza localStorage
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        jogadoresCache: jogadores,
+        transacoesCache: [transacaoReal, ...transacoes.filter(t => t._id !== transacaoTemporaria._id)],
+        lastUpdate: new Date().toISOString()
+      }));
 
-            return {
-              ...j,
-              pagamentos: pagamentosAtualizados,
-              statusFinanceiro: todosMesesPagos ? 'Adimplente' : 'Inadimplente'
-            };
-          }
-          return j;
-        });
+      // Reset do formulário
+      toast.success('Transação registrada com sucesso!');
+      setNovaTransacao({
+        descricao: "",
+        valor: "",
+        tipo: "receita",
+        categoria: "",
+        data: new Date().toISOString().split("T")[0],
+        jogadorId: "",
+        jogadorNome: ""
       });
+
+    } catch (error) {
+      console.error("Erro ao adicionar transação:", error);
+      // Remove a transação temporária em caso de erro
+      setTransacoes(prev => prev.filter(t => t._id !== transacaoTemporaria?._id));
+      toast.error(error.message || 'Erro ao adicionar transação');
     }
+  };
 
-    // Faz a chamada à API
-    const response = await api.post('/financeiro/transacoes', payload);
-    const transacaoReal = response.data.data;
-
-    // Substitui a transação temporária pela real
-    setTransacoes(prev => [
-      transacaoReal,
-      ...prev.filter(t => t._id !== transacaoTemporaria._id)
-    ]);
-
-    // Atualiza localStorage
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      jogadoresCache: jogadores,
-      transacoesCache: [transacaoReal, ...transacoes.filter(t => t._id !== transacaoTemporaria._id)],
-      lastUpdate: new Date().toISOString()
-    }));
-
-    // Reset do formulário
-    toast.success('Transação registrada com sucesso!');
-    setNovaTransacao({
-      descricao: "",
-      valor: "",
-      tipo: "receita",
-      categoria: "",
-      data: new Date().toISOString().split("T")[0],
-      jogadorId: "",
-      jogadorNome: ""
-    });
-
-  } catch (error) {
-    console.error("Erro ao adicionar transação:", error);
-    // Remove a transação temporária em caso de erro
-    setTransacoes(prev => prev.filter(t => t._id !== transacaoTemporaria?._id));
-    toast.error(error.message || 'Erro ao adicionar transação');
-  }
-};
-
-const togglePagamento = async (jogadorId, mesIndex) => {
-  try {
+  const togglePagamento = (jogadorId, mesIndex) => {
     setJogadores(prevJogadores => {
       return prevJogadores.map(j => {
         if (j._id === jogadorId) {
@@ -300,84 +259,80 @@ const togglePagamento = async (jogadorId, mesIndex) => {
         return j;
       });
     });
-  } catch (error) {
-    console.error("Erro ao atualizar pagamento:", error);
-    toast.error('Erro ao atualizar pagamento');
-  }
-};
+  };
 
-// Adicionar função para alternar status manualmente
-const toggleStatus = (jogadorId) => {
-  setJogadores(prevJogadores => {
-    return prevJogadores.map(j => {
-      if (j._id === jogadorId) {
-        return {
-          ...j,
-          statusFinanceiro: j.statusFinanceiro === 'Adimplente' ? 'Inadimplente' : 'Adimplente'
-        };
-      }
-      return j;
+  // Adicionar função para alternar status manualmente
+  const toggleStatus = (jogadorId) => {
+    setJogadores(prevJogadores => {
+      return prevJogadores.map(j => {
+        if (j._id === jogadorId) {
+          return {
+            ...j,
+            statusFinanceiro: j.statusFinanceiro === 'Adimplente' ? 'Inadimplente' : 'Adimplente'
+          };
+        }
+        return j;
+      });
     });
-  });
-};
+  };
 
   const deletarTransacao = async (id) => {
-  try {
-    // Encontra a transação que será deletada
-    const transacaoParaDeletar = transacoes.find(t => t._id === id);
-    if (!transacaoParaDeletar) {
-      throw new Error('Transação não encontrada');
-    }
+    try {
+      // Encontra a transação que será deletada
+      const transacaoParaDeletar = transacoes.find(t => t._id === id);
+      if (!transacaoParaDeletar) {
+        throw new Error('Transação não encontrada');
+      }
 
-    // Atualização otimista - remove a transação imediatamente
-    setTransacoes(prev => prev.filter(t => t._id !== id));
+      // Atualização otimista - remove a transação imediatamente
+      setTransacoes(prev => prev.filter(t => t._id !== id));
 
-    // Se for uma transação de mensalidade, desmarca o mês correspondente
-    if (transacaoParaDeletar.categoria === 'mensalidade' && transacaoParaDeletar.jogadorId) {
-      const dataTransacao = new Date(transacaoParaDeletar.data);
-      const mesTransacao = dataTransacao.getMonth();
-      
-      setJogadores(prevJogadores => {
-        return prevJogadores.map(jogador => {
-          if (jogador._id === transacaoParaDeletar.jogadorId) {
-            const pagamentosAtualizados = [...jogador.pagamentos];
-            pagamentosAtualizados[mesTransacao] = false;
-            
-            const mesAtual = new Date().getMonth();
-            const todosMesesPagos = pagamentosAtualizados
-              .slice(0, mesAtual + 1)
-              .every(pago => pago);
-            
-            return {
-              ...jogador,
-              pagamentos: pagamentosAtualizados,
-              statusFinanceiro: todosMesesPagos ? 'Adimplente' : 'Inadimplente'
-            };
-          }
-          return jogador;
+      // Se for uma transação de mensalidade, desmarca o mês correspondente
+      if (transacaoParaDeletar.categoria === 'mensalidade' && transacaoParaDeletar.jogadorId) {
+        const dataTransacao = new Date(transacaoParaDeletar.data);
+        const mesTransacao = dataTransacao.getMonth();
+        
+        setJogadores(prevJogadores => {
+          return prevJogadores.map(jogador => {
+            if (jogador._id === transacaoParaDeletar.jogadorId) {
+              const pagamentosAtualizados = [...jogador.pagamentos];
+              pagamentosAtualizados[mesTransacao] = false;
+              
+              const mesAtual = new Date().getMonth();
+              const todosMesesPagos = pagamentosAtualizados
+                .slice(0, mesAtual + 1)
+                .every(pago => pago);
+              
+              return {
+                ...jogador,
+                pagamentos: pagamentosAtualizados,
+                statusFinanceiro: todosMesesPagos ? 'Adimplente' : 'Inadimplente'
+              };
+            }
+            return jogador;
+          });
         });
-      });
+      }
+
+      // Faz a chamada à API para deletar
+      await api.delete(`/financeiro/transacoes/${id}`);
+
+      // Atualiza localStorage
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        jogadoresCache: jogadores,
+        transacoesCache: transacoes.filter(t => t._id !== id),
+        lastUpdate: new Date().toISOString()
+      }));
+
+      toast.success('Transação removida com sucesso!');
+    } catch (error) {
+      console.error("Erro ao deletar transação:", error);
+      // Reverte as mudanças em caso de erro
+      setTransacoes(transacoes);
+      setJogadores(jogadores);
+      toast.error(error.message || 'Erro ao deletar transação');
     }
-
-    // Faz a chamada à API para deletar
-    await api.delete(`/financeiro/transacoes/${id}`);
-
-    // Atualiza localStorage
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      jogadoresCache: jogadores,
-      transacoesCache: transacoes.filter(t => t._id !== id),
-      lastUpdate: new Date().toISOString()
-    }));
-
-    toast.success('Transação removida com sucesso!');
-  } catch (error) {
-    console.error("Erro ao deletar transação:", error);
-    // Reverte as mudanças em caso de erro
-    setTransacoes(transacoes);
-    setJogadores(jogadores);
-    toast.error(error.message || 'Erro ao deletar transação');
-  }
-};
+  };
 
   const deletarJogador = async (id) => {
     try {
