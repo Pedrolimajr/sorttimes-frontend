@@ -97,6 +97,27 @@ export default function Financeiro() {
     ]
   });
 
+  // Adicionar estado para o gráfico de fluxo
+  const [barChartData, setBarChartData] = useState({
+    labels: [],
+    datasets: [
+      {
+        label: 'Receitas',
+        data: [],
+        backgroundColor: 'rgba(34, 197, 94, 0.5)',
+        borderColor: 'rgb(34, 197, 94)',
+        borderWidth: 1
+      },
+      {
+        label: 'Despesas',
+        data: [],
+        backgroundColor: 'rgba(239, 68, 68, 0.5)',
+        borderColor: 'rgb(239, 68, 68)',
+        borderWidth: 1
+      }
+    ]
+  });
+
   // Adicionar estado para filtro de jogadores no modal
   const [filtroJogadorModal, setFiltroJogadorModal] = useState('');
 
@@ -864,9 +885,9 @@ const toggleStatusFinanceiro = async (jogadorId) => {
         }
         
         if (transacao.tipo === 'receita') {
-          acc[mesAno].receitas += transacao.valor;
+          acc[mesAno].receitas += Number(transacao.valor) || 0;
         } else {
-          acc[mesAno].despesas += transacao.valor;
+          acc[mesAno].despesas += Number(transacao.valor) || 0;
         }
         
         return acc;
