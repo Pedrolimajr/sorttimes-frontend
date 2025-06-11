@@ -1,8 +1,10 @@
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
+const BASE_URL = 'https://sorttimes-backend.onrender.com/api';
+
 const api = axios.create({
-  baseURL: 'https://sorttimes-backend.onrender.com/api',
+  baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json'
   }
