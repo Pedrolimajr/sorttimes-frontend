@@ -282,16 +282,17 @@ const [isento, setIsento] = useState(false);
 
       // Prepara o payload para a API
       const payload = {
+        nome: jogadorAtual.nome,
+        email: jogadorAtual.email,
+        statusFinanceiro: jogadorAtual.statusFinanceiro,
         pagamentos: updatedPagamentos.map((pago, index) => ({
           mes: index,
           pago: pago
         }))
       };
 
-      console.log('Enviando para API:', {
-        url: `/jogadores/${jogadorId}`,
-        payload
-      });
+      console.log('Dados do jogador atual:', jogadorAtual);
+      console.log('Payload sendo enviado:', payload);
 
       // Atualiza no banco de dados
       const response = await api.put(`/jogadores/${jogadorId}`, payload);
@@ -302,7 +303,8 @@ const [isento, setIsento] = useState(false);
       console.error("Erro detalhado:", {
         message: error.message,
         response: error.response?.data,
-        status: error.response?.status
+        status: error.response?.status,
+        data: error.response?.data
       });
       
       toast.error('Erro ao atualizar pagamento');
@@ -366,13 +368,17 @@ const [isento, setIsento] = useState(false);
 
       // Prepara o payload para a API
       const payload = {
-        statusFinanceiro: newStatus
+        nome: jogadorAtual.nome,
+        email: jogadorAtual.email,
+        statusFinanceiro: newStatus,
+        pagamentos: jogadorAtual.pagamentos.map((pago, index) => ({
+          mes: index,
+          pago: pago
+        }))
       };
 
-      console.log('Enviando para API:', {
-        url: `/jogadores/${jogadorId}`,
-        payload
-      });
+      console.log('Dados do jogador atual:', jogadorAtual);
+      console.log('Payload sendo enviado:', payload);
 
       // Atualiza no banco de dados
       const response = await api.put(`/jogadores/${jogadorId}`, payload);
@@ -383,7 +389,8 @@ const [isento, setIsento] = useState(false);
       console.error("Erro detalhado:", {
         message: error.message,
         response: error.response?.data,
-        status: error.response?.status
+        status: error.response?.status,
+        data: error.response?.data
       });
       
       toast.error('Erro ao atualizar status');
