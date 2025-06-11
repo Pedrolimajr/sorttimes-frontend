@@ -13,12 +13,13 @@ export default defineConfig({
     'process.env': {}
   },
   server: {
+    port: 5173,
     proxy: {
-      // Configura proxy para evitar problemas de CORS
       '/api': {
         target: 'http://localhost:5000',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
+        secure: false,
+        ws: true
       }
     }
   }
