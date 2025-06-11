@@ -848,6 +848,89 @@ const toggleStatusFinanceiro = async (jogadorId) => {
     }
   };
 
+  // Atualiza os dados do gráfico quando as transações mudam
+  useEffect(() => {
+    if (transacoes.length > 0) {
+      // Organiza as transações por mês
+      const transacoesPorMes = transacoes.reduce((acc, transacao) => {
+        const data = new Date(transacao.data);
+        const mesAno = `${data.getMonth() + 1}/${data.getFullYear()}`;
+        
+        if (!acc[mesAno]) {
+          acc[mesAno] = {
+            receitas: 0,
+            despesas: 0
+          };
+        }
+        
+        if (transacao.tipo === 'receita') {
+          acc[mesAno].receitas += transacao.valor;
+        } else {
+          acc[mesAno].despesas += transacao.valor;
+        }
+        
+        return acc;
+      }, {});
+
+      // Ordena os meses
+      const mesesOrdenados = Object.keys(transacoesPorMes).sort((a, b) => {
+        const [mesA, anoA] = a.split('/');
+        const [mesB, anoB] = b.split('/');
+        return new Date(anoA, mesA - 1) - new Date(anoB, mesB - 1);
+      });
+
+      // Prepara os dados para o gráfico
+      const labels = mesesOrdenados.map(mes => {
+        const [mesNum, ano] = mes.split('/');
+        return `${mesNum}/${ano}`;
+      });
+
+      const receitas = mesesOrdenados.map(mes => transacoesPorMes[mes].receitas);
+      const despesas = mesesOrdenados.map(mes => transacoesPorMes[mes].despesas);
+
+      setBarChartData({
+        labels,
+        datasets: [
+          {
+            label: 'Receitas',
+            data: receitas,
+            backgroundColor: 'rgba(34, 197, 94, 0.5)',
+            borderColor: 'rgb(34, 197, 94)',
+            borderWidth: 1
+          },
+          {
+            label: 'Despesas',
+            data: despesas,
+            backgroundColor: 'rgba(239, 68, 68, 0.5)',
+            borderColor: 'rgb(239, 68, 68)',
+            borderWidth: 1
+          }
+        ]
+      });
+    } else {
+      // Se não houver transações, mostra gráfico vazio
+      setBarChartData({
+        labels: [],
+        datasets: [
+          {
+            label: 'Receitas',
+            data: [],
+            backgroundColor: 'rgba(34, 197, 94, 0.5)',
+            borderColor: 'rgb(34, 197, 94)',
+            borderWidth: 1
+          },
+          {
+            label: 'Despesas',
+            data: [],
+            backgroundColor: 'rgba(239, 68, 68, 0.5)',
+            borderColor: 'rgb(239, 68, 68)',
+            borderWidth: 1
+          }
+        ]
+      });
+    }
+  }, [transacoes]);
+
   return (
     <>
       <div className="min-h-screen bg-gray-900 p-4 sm:p-6">
@@ -1480,6 +1563,46 @@ const toggleStatusFinanceiro = async (jogadorId) => {
                   />
                 </div>
               </motion.div>
+
+              {/* Gráfico de Fluxo */}
+              <div className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700">
+                <h2 className="text-lg sm:text-xl font-semibold text-white mb-4">Fluxo de Caixa</h2>
+                <div className="h-64 sm:h-80">
+                  <Bar
+                    data={barChartData}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      scales: {
+                        y: {
+                          beginAtZero: true,
+                          grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                          },
+                          ticks: {
+                            color: 'rgba(255, 255, 255, 0.7)'
+                          }
+                        },
+                        x: {
+                          grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                          },
+                          ticks: {
+                            color: 'rgba(255, 255, 255, 0.7)'
+                          }
+                        }
+                      },
+                      plugins: {
+                        legend: {
+                          labels: {
+                            color: 'rgba(255, 255, 255, 0.7)'
+                          }
+                        }
+                      }
+                    }}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
