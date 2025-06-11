@@ -324,11 +324,11 @@ const togglePagamento = async (jogadorId, mesIndex) => {
     const pagamentoAtual = jogador.pagamentos[mesIndex];
     
     // Se estiver desmarcado, mostra o modal de opções
-    if (!pagamentoAtual.pago) {
+    if (!pagamentoAtual.pago && !pagamentoAtual.isento) {
       setPagamentoSelecionado({ jogadorId, mesIndex });
       setShowPagamentoModal(true);
     } else {
-      // Se estiver marcado, apenas desmarca
+      // Se estiver marcado (pago ou isento), apenas desmarca
       const response = await api.post(`/jogadores/${jogadorId}/pagamentos`, {
         mes: mesIndex,
         pago: false,
