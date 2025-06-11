@@ -280,28 +280,26 @@ const [isento, setIsento] = useState(false);
         return updatedJogadores;
       });
 
-      // Prepara o payload para a API - apenas os dados necessários
+      // Prepara o payload para a API
       const payload = {
-        pagamentos: updatedPagamentos
+        pagamentos: updatedPagamentos.map((pago, index) => ({
+          mes: index,
+          pago: pago
+        }))
       };
 
-      console.log('Tentando atualizar pagamento:', {
-        jogadorId,
-        mesIndex,
+      console.log('Enviando para API:', {
+        url: `/jogadores/${jogadorId}`,
         payload
       });
 
       // Atualiza no banco de dados
-      const response = await api.patch(`/jogadores/${jogadorId}/pagamentos`, payload);
+      const response = await api.put(`/jogadores/${jogadorId}`, payload);
 
-      if (!response.data) {
-        throw new Error('Resposta inválida do servidor');
-      }
-
-      console.log('Pagamento atualizado com sucesso:', response.data);
+      console.log('Resposta da API:', response.data);
 
     } catch (error) {
-      console.error("Erro ao atualizar pagamento:", {
+      console.error("Erro detalhado:", {
         message: error.message,
         response: error.response?.data,
         status: error.response?.status
@@ -366,27 +364,23 @@ const [isento, setIsento] = useState(false);
         return updatedJogadores;
       });
 
-      // Prepara o payload para a API - apenas o status
+      // Prepara o payload para a API
       const payload = {
         statusFinanceiro: newStatus
       };
 
-      console.log('Tentando atualizar status:', {
-        jogadorId,
+      console.log('Enviando para API:', {
+        url: `/jogadores/${jogadorId}`,
         payload
       });
 
       // Atualiza no banco de dados
-      const response = await api.patch(`/jogadores/${jogadorId}/status`, payload);
+      const response = await api.put(`/jogadores/${jogadorId}`, payload);
 
-      if (!response.data) {
-        throw new Error('Resposta inválida do servidor');
-      }
-
-      console.log('Status atualizado com sucesso:', response.data);
+      console.log('Resposta da API:', response.data);
 
     } catch (error) {
-      console.error("Erro ao atualizar status:", {
+      console.error("Erro detalhado:", {
         message: error.message,
         response: error.response?.data,
         status: error.response?.status
