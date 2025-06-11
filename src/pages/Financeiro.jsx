@@ -789,6 +789,65 @@ const toggleStatusFinanceiro = async (jogadorId) => {
     jogador.nome.toLowerCase().includes(filtroJogador.toLowerCase())
   );
 
+  // Adicionar a função para desmarcar todos os pagamentos
+  const desmarcarTodosPagamentos = async () => {
+    try {
+      const confirmacao = window.confirm('Tem certeza que deseja desmarcar todos os pagamentos? Esta ação não pode ser desfeita.');
+      if (!confirmacao) return;
+
+      setCarregando(true);
+      
+      // Atualiza o estado local primeiro
+      const jogadoresAtualizados = jogadores.map(jogador => ({
+        ...jogador,
+        pagamentos: Array(12).fill().map(() => ({
+          pago: false,
+          isento: false,
+          dataPagamento: null,
+          dataLimite: new Date(new Date().getFullYear(), 0, 20)
+        })),
+        statusFinanceiro: 'Inadimplente'
+      }));
+
+      setJogadores(jogadoresAtualizados);
+
+      // Atualiza no backend
+      await Promise.all(jogadores.map(jogador => 
+        api.post(`/jogadores/${jogador._id}/pagamentos`, {
+          mes: 0,
+          pago: false,
+          isento: false
+        })
+      ));
+
+      // Atualiza os gráficos
+      const pagamentosPendentes = jogadoresAtualizados.reduce((total, jogador) => {
+        return total + (jogador.pagamentos || []).filter(p => !p.pago && !p.isento).length;
+      }, 0);
+
+      const pagamentosEmDia = jogadoresAtualizados.reduce((total, jogador) => {
+        return total + (jogador.pagamentos || []).filter(p => p.pago || p.isento).length;
+      }, 0);
+
+      setDadosGraficoPizza({
+        labels: ['Pagamentos em dia', 'Pagamentos pendentes'],
+        datasets: [{
+          data: [pagamentosEmDia, pagamentosPendentes],
+          backgroundColor: ['#4ade80', '#f87171'],
+          hoverOffset: 4,
+          borderWidth: 0
+        }]
+      });
+
+      toast.success('Todos os pagamentos foram desmarcados com sucesso!');
+    } catch (error) {
+      console.error('Erro ao desmarcar pagamentos:', error);
+      toast.error('Erro ao desmarcar pagamentos');
+    } finally {
+      setCarregando(false);
+    }
+  };
+
   return (
     <>
       <div className="min-h-screen bg-gray-900 p-4 sm:p-6">
@@ -1266,6 +1325,17 @@ const toggleStatusFinanceiro = async (jogadorId) => {
                       />
                       <FaSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
                     </div>
+                    {/* Botão Desmarcar Pagamentos */}
+                    <motion.button
+                      onClick={desmarcarTodosPagamentos}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg flex items-center gap-2 transition-all text-sm"
+                      title="Desmarcar todos os pagamentos"
+                    >
+                      <FaTimes className="text-sm" />
+                      <span>Desmarcar Pagamentos</span>
+                    </motion.button>
                     <motion.button
                       onClick={() => compartilharControle('tabela-mensalidades')}
                       whileHover={{ scale: 1.1 }}
@@ -1304,10 +1374,13 @@ const toggleStatusFinanceiro = async (jogadorId) => {
                               </th>
                             ))}
                           </tr>
-                          
                         </thead>
                         <tbody className="divide-y divide-gray-700">
-                          {jogadores.map((jogador) => (
+                          {jogadores
+                            .filter(jogador => 
+                              jogador.nome.toLowerCase().includes(filtroJogador.toLowerCase())
+                            )
+                            .map((jogador) => (
                             <tr key={jogador._id} className="hover:bg-gray-700/50">
                               <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium text-white">
                                 {jogador.nome}
@@ -1330,22 +1403,22 @@ const toggleStatusFinanceiro = async (jogadorId) => {
                                   </button>
                                 </div>
                               </td>
-                            {jogador.pagamentos.map((pagamento, i) => (
-                              <td key={i} className="px-1 sm:px-2 py-2 sm:py-3 whitespace-nowrap text-center">
-                                <motion.button
-                                  onClick={() => togglePagamento(jogador._id, i)}
-                                  whileHover={{ scale: 1.1 }}
-                                  whileTap={{ scale: 0.9 }}
-                                  className={`
-                                    w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center
-                                    ${pagamento.pago || pagamento.isento ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}
-                                  `}
-                                  title={pagamento.isento ? "Mensalidade isenta" : pagamento.pago ? "Mensalidade paga" : "Mensalidade pendente"}
-                                >
-                                  {(pagamento.pago || pagamento.isento) ? <FaCheck size={10} className="sm:text-xs" /> : <FaTimes size={10} className="sm:text-xs" />}
-                                </motion.button>
-                              </td>
-                            ))}
+                              {jogador.pagamentos.map((pagamento, i) => (
+                                <td key={i} className="px-1 sm:px-2 py-2 sm:py-3 whitespace-nowrap text-center">
+                                  <motion.button
+                                    onClick={() => togglePagamento(jogador._id, i)}
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    className={`
+                                      w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center
+                                      ${pagamento.pago || pagamento.isento ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}
+                                    `}
+                                    title={pagamento.isento ? "Mensalidade isenta" : pagamento.pago ? "Mensalidade paga" : "Mensalidade pendente"}
+                                  >
+                                    {(pagamento.pago || pagamento.isento) ? <FaCheck size={10} className="sm:text-xs" /> : <FaTimes size={10} className="sm:text-xs" />}
+                                  </motion.button>
+                                </td>
+                              ))}
                             </tr>
                           ))}
                         </tbody>
