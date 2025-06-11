@@ -1522,3 +1522,4 @@ const toggleStatus = (jogadorId) => {
     </div>
   );
 }
+
