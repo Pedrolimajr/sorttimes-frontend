@@ -107,11 +107,10 @@ const [isento, setIsento] = useState(false);
           pagamentos[mes] = true;
         });
 
-        // Verifica status
+        // Verifica status - Nova lógica considerando o mês anterior
         const mesAtual = new Date().getMonth();
-        const todosMesesPagos = pagamentos
-          .slice(0, mesAtual + 1)
-          .every(pago => pago);
+        const mesAnterior = mesAtual === 0 ? 11 : mesAtual - 1;
+        const todosMesesPagos = pagamentos[mesAnterior];
 
         return {
           ...jogador,
@@ -1214,15 +1213,27 @@ const togglePagamento = async (jogadorId, mesIndex) => {
             >
               <div className="flex justify-between items-center mb-3 sm:mb-4">
                 <h2 className="text-lg sm:text-xl font-semibold text-white">Controle de Mensalidades</h2>
-                <motion.button
-                  onClick={() => compartilharControle('tabela-mensalidades')}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="bg-blue-600 p-2 rounded-lg text-white hover:bg-blue-700 transition-colors"
-                  title="Compartilhar controle de mensalidades"
-                >
-                  <FaShare className="text-sm sm:text-base" />
-                </motion.button>
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Buscar jogador..."
+                      value={filtroJogador}
+                      onChange={(e) => setFiltroJogador(e.target.value)}
+                      className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                    />
+                    <FaSearch className="absolute right-3 top-2.5 text-gray-400 text-xs sm:text-sm" />
+                  </div>
+                  <motion.button
+                    onClick={() => compartilharControle('tabela-mensalidades')}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    className="bg-blue-600 p-2 rounded-lg text-white hover:bg-blue-700 transition-colors"
+                    title="Compartilhar controle de mensalidades"
+                  >
+                    <FaShare className="text-sm sm:text-base" />
+                  </motion.button>
+                </div>
               </div>
 
               {carregando ? (
@@ -1254,7 +1265,9 @@ const togglePagamento = async (jogadorId, mesIndex) => {
                         
                       </thead>
                       <tbody className="divide-y divide-gray-700">
-                        {jogadores.map((jogador) => (
+                        {jogadores.filter(jogador =>
+                          jogador.nome.toLowerCase().includes(filtroJogador.toLowerCase())
+                        ).map((jogador) => (
                           <tr key={jogador._id} className="hover:bg-gray-700/50">
                             <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium text-white">
                               {jogador.nome}

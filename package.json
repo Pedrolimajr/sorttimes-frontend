@@ -5,9 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite --force",
-    "build": "vite build --mode production",
-    "preview": "vite preview",
-    "vercel-build": "vite build"
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@originjs/vite-plugin-commonjs": "^1.0.3",
