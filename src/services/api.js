@@ -2,20 +2,15 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL: 'https://sorttimes-backend.onrender.com/api',
   headers: {
     'Content-Type': 'application/json'
-  },
-  timeout: 10000 // 10 segundos de timeout
+  }
 });
 
 // Interceptor para requisições
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
     console.log('Requisição:', config.url, config.data);
     return config;
   },
@@ -34,11 +29,7 @@ api.interceptors.response.use(
   (error) => {
     console.error('Erro na resposta:', error.response?.status, error.response?.data);
     
-    if (error.code === 'ECONNABORTED') {
-      toast.error('Tempo limite de conexão excedido. Verifique sua conexão.');
-    } else if (error.code === 'ERR_NETWORK') {
-      toast.error('Não foi possível conectar ao servidor. Verifique se o servidor está rodando.');
-    } else if (error.response) {
+    if (error.response) {
       switch (error.response.status) {
         case 401:
           toast.error('Não autorizado. Por favor, faça login novamente.');
