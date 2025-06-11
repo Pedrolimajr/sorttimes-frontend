@@ -33,6 +33,8 @@ import api from '../services/api';
 
 Chart.register(...registerables);
 
+const API_URL = 'http://localhost:5000/api';
+
 export default function Financeiro() {
   const navigate = useNavigate();
   const [transacoes, setTransacoes] = useState([]);
@@ -85,11 +87,13 @@ export default function Financeiro() {
       const jogadoresProcessados = (Array.isArray(jogadoresRes.data.data) ? jogadoresRes.data.data : [])
         .map(jogador => ({
           ...jogador,
-          pagamentos: Array.isArray(jogador.pagamentos) ? jogador.pagamentos.map(p => p.pago) : Array(12).fill(false)
+          pagamentos: Array.isArray(jogador.pagamentos) && jogador.pagamentos.length === 12
+            ? jogador.pagamentos
+            : Array(12).fill(false)
         }));
 
       setJogadores(jogadoresProcessados);
-      setTransacoes(Array.isArray(transacoesRes.data.data) ? transacoesRes.data.data : []);
+      setTransacoes(Array.isArray(transacoesRes.data) ? transacoesRes.data : []);
 
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
@@ -279,10 +283,10 @@ export default function Financeiro() {
       setJogadores(jogadoresAtualizados);
 
       // Chamada à API
-      await api.post(`/jogadores/${jogadorId}/pagamentos`, { 
-        mes: mesIndex,
+      await api.put(`/jogadores/${jogadorId}/pagamentos/${mesIndex}`, { 
         pago: novoStatus,
-        isento: false
+        valor: 100,
+        dataPagamento: novoStatus ? new Date().toISOString() : null
       });
 
       // Se for um novo pagamento, registra a transação
@@ -297,7 +301,7 @@ export default function Financeiro() {
           jogadorNome: jogador.nome
         });
 
-        const novaTransacao = response.data.data;
+        const novaTransacao = response.data;
         setTransacoes(prev => [novaTransacao, ...prev]);
       }
 

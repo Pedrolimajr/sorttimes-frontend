@@ -9,13 +9,14 @@ export default defineConfig({
     }
   })],
   define: {
+    // Define variáveis globais para evitar erros de 'process is not defined'
     'process.env': {}
   },
   server: {
     port: 5173,
     proxy: {
       '/api': {
-        target: process.env.NODE_ENV === 'production' 
+        target: import.meta.env.PROD 
           ? 'https://sorttimes-backend.onrender.com'
           : 'http://localhost:5000',
         changeOrigin: true,
