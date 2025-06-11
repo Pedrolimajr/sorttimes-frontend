@@ -93,7 +93,7 @@ export default function Financeiro() {
 
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
-      toast.error(error.response?.data?.message || 'Erro ao carregar dados');
+      toast.error(error.message || 'Erro ao carregar dados');
     } finally {
       setCarregando(false);
     }
@@ -307,7 +307,7 @@ export default function Financeiro() {
       console.error("Erro ao atualizar pagamento:", error);
       // Reverte o estado em caso de erro
       setJogadores(prev => [...prev]);
-      toast.error(error.response?.data?.message || 'Erro ao atualizar status de pagamento');
+      toast.error('Erro ao atualizar status de pagamento');
     }
   };
 
@@ -348,10 +348,10 @@ export default function Financeiro() {
         });
 
         // Depois faz a chamada à API para atualizar o pagamento
-        await api.post(`/jogadores/${transacao.jogadorId}/pagamentos`, {
-          mes: mesTransacao,
+        await api.put(`/jogadores/${transacao.jogadorId}/pagamentos/${mesTransacao}`, {
           pago: false,
-          isento: false
+          valor: 0,
+          dataPagamento: null
         });
       }
 
@@ -376,7 +376,7 @@ export default function Financeiro() {
       toast.success('Transação removida com sucesso!');
     } catch (error) {
       console.error("Erro ao deletar transação:", error);
-      toast.error(error.response?.data?.message || 'Erro ao deletar transação');
+      toast.error(error.message);
     }
   };
 
