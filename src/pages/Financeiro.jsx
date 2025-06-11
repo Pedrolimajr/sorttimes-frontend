@@ -97,6 +97,9 @@ export default function Financeiro() {
     ]
   });
 
+  // Adicionar estado para filtro de jogadores no modal
+  const [filtroJogadorModal, setFiltroJogadorModal] = useState('');
+
   const STORAGE_KEY = 'dadosFinanceiros';
  useEffect(() => {
   const carregarDados = async () => {
@@ -108,7 +111,6 @@ export default function Financeiro() {
       ]);
 
       if (jogadoresResponse.data.success) {
-        // Mantém os pagamentos existentes, apenas garante que sejam objetos válidos
         const jogadoresFormatados = jogadoresResponse.data.data.map(jogador => ({
           ...jogador,
           pagamentos: Array(12).fill().map((_, index) => {
@@ -122,6 +124,61 @@ export default function Financeiro() {
           })
         }));
         setJogadores(jogadoresFormatados);
+
+        // Atualizar dados do gráfico de pizza
+        const pagamentosPendentes = jogadoresFormatados.reduce((total, jogador) => {
+          return total + (jogador.pagamentos || []).filter(p => !p.pago && !p.isento).length;
+        }, 0);
+
+        setDadosGraficoPizza({
+          labels: ['Pagamentos em dia', 'Pagamentos pendentes'],
+          datasets: [{
+            data: [
+              jogadoresFormatados.reduce((total, jogador) => 
+                total + jogador.pagamentos.filter(p => p.pago || p.isento).length, 0
+              ),
+              pagamentosPendentes
+            ],
+            backgroundColor: ['#4ade80', '#f87171'],
+            hoverOffset: 4,
+            borderWidth: 0
+          }]
+        });
+
+        // Atualizar dados do gráfico de barras
+        setDadosGraficoBarras({
+          labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+          datasets: [
+            {
+              label: 'Receitas',
+              data: Array(12).fill(0).map((_, i) => {
+                return jogadoresFormatados.reduce((total, jogador) => {
+                  const pagamento = jogador.pagamentos[i];
+                  return total + (pagamento && pagamento.pago ? (jogador.valorMensalidade || 0) : 0);
+                }, 0);
+              }),
+              backgroundColor: '#4ade80',
+              borderRadius: 6
+            },
+            {
+              label: 'Despesas',
+              data: Array(12).fill(0).map((_, i) => {
+                return transacoesResponse.data.data
+                  .filter(t => {
+                    try {
+                      const dataStr = typeof t.data === 'string' ? t.data : new Date(t.data).toISOString();
+                      return dataStr.startsWith(`${filtroMes.slice(0, 4)}-${(i + 1).toString().padStart(2, '0')}`) && t.tipo === "despesa";
+                    } catch {
+                      return false;
+                    }
+                  })
+                  .reduce((acc, t) => acc + (t.valor || 0), 0);
+              }),
+              backgroundColor: '#f87171',
+              borderRadius: 6
+            }
+          ]
+        });
       }
 
       if (transacoesResponse.data.success) {
@@ -136,7 +193,7 @@ export default function Financeiro() {
   };
 
   carregarDados();
-}, []);
+}, [filtroMes]);
 
   // Atualizar estatísticas
   useEffect(() => {
@@ -1001,56 +1058,63 @@ const toggleStatusFinanceiro = async (jogadorId) => {
               <AnimatePresence>
                 {mostrarListaJogadores && (
                   <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
                   >
-                    <motion.div
-                      initial={{ scale: 0.95, y: 20 }}
-                      animate={{ scale: 1, y: 0 }}
-                      exit={{ scale: 0.95, y: 20 }}
-                      className="bg-gray-800 rounded-xl shadow-2xl border border-gray-700 w-full max-w-4xl max-h-[90vh] flex flex-col"
-                    >
-                      <div className="p-4 border-b border-gray-700 flex justify-between items-center">
-                        <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                          <FaUsers className="text-blue-400" />
-                          Selecionar Jogador
-                        </h3>
+                    <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+                      <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-2xl font-bold text-gray-800">Controle de Mensalidade</h2>
                         <button
                           onClick={() => setMostrarListaJogadores(false)}
-                          className="text-gray-400 hover:text-white"
+                          className="text-gray-500 hover:text-gray-700"
                         >
-                          <FaTimesCircle />
+                          <FaTimes size={24} />
                         </button>
                       </div>
 
-                      <div className="flex-1 overflow-y-auto p-4">
-                        <ListaJogadores
-                          modoSelecao={true}
-                          onJogadorSelecionado={(jogador) => {
-                            setNovaTransacao(prev => ({
-                              ...prev,
-                              jogadorId: jogador.id || jogador._id,
-                              jogadorNome: jogador.nome
-                            }));
-                            setMostrarListaJogadores(false);
-                          }}
-                          closeModal={() => setMostrarListaJogadores(false)}
-                        />
+                      {/* Campo de pesquisa */}
+                      <div className="mb-4">
+                        <div className="relative">
+                          <input
+                            type="text"
+                            placeholder="Pesquisar jogador..."
+                            value={filtroJogadorModal}
+                            onChange={(e) => setFiltroJogadorModal(e.target.value)}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                          <FaSearch className="absolute right-3 top-3 text-gray-400" />
+                        </div>
                       </div>
 
-                      <div className="p-4 border-t border-gray-700 flex justify-end">
-                        <motion.button
-                          onClick={() => setMostrarListaJogadores(false)}
-                          whileHover={{ scale: 1.03 }}
-                          whileTap={{ scale: 0.97 }}
-                          className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-white"
-                        >
-                          Cancelar
-                        </motion.button>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {jogadores
+                          .filter(jogador => 
+                            jogador.nome.toLowerCase().includes(filtroJogadorModal.toLowerCase())
+                          )
+                          .map(jogador => (
+                          <div key={jogador._id} className="p-4 border border-gray-200 rounded-lg">
+                            <h3 className="text-lg font-semibold mb-2">{jogador.nome}</h3>
+                            <p className="text-sm text-gray-500">Status: {jogador.statusFinanceiro}</p>
+                            <div className="mt-2">
+                              {jogador.pagamentos.map((pagamento, i) => (
+                                <button
+                                  key={i}
+                                  onClick={() => togglePagamento(jogador._id, i)}
+                                  className={`px-2 py-1 rounded-full text-sm ${
+                                    pagamento.pago || pagamento.isento ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+                                  }`}
+                                  title={pagamento.isento ? "Mensalidade isenta" : pagamento.pago ? "Mensalidade paga" : "Mensalidade pendente"}
+                                >
+                                  {(pagamento.pago || pagamento.isento) ? <FaCheck size={12} /> : <FaTimes size={12} />}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    </motion.div>
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
