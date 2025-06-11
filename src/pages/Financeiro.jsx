@@ -97,6 +97,26 @@ export default function Financeiro() {
     ]
   });
 
+  const [barChartData, setBarChartData] = useState({
+    labels: [],
+    datasets: [
+      {
+        label: 'Receitas',
+        data: [],
+        backgroundColor: 'rgba(34, 197, 94, 0.5)',
+        borderColor: 'rgb(34, 197, 94)',
+        borderWidth: 1
+      },
+      {
+        label: 'Despesas',
+        data: [],
+        backgroundColor: 'rgba(239, 68, 68, 0.5)',
+        borderColor: 'rgb(239, 68, 68)',
+        borderWidth: 1
+      }
+    ]
+  });
+
   const [filtroJogadorModal, setFiltroJogadorModal] = useState('');
 
   const STORAGE_KEY = 'dadosFinanceiros';
@@ -182,6 +202,41 @@ export default function Financeiro() {
               }
             ]
           });
+
+          // Atualizar dados do gráfico de fluxo
+          const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+          const receitas = Array(12).fill(0);
+          const despesas = Array(12).fill(0);
+
+          transacoesResponse.data.data.forEach(transacao => {
+            const data = new Date(transacao.data);
+            const mes = data.getMonth();
+            if (transacao.tipo === 'receita') {
+              receitas[mes] += Number(transacao.valor) || 0;
+            } else {
+              despesas[mes] += Number(transacao.valor) || 0;
+            }
+          });
+
+          setBarChartData({
+            labels: meses,
+            datasets: [
+              {
+                label: 'Receitas',
+                data: receitas,
+                backgroundColor: 'rgba(34, 197, 94, 0.5)',
+                borderColor: 'rgb(34, 197, 94)',
+                borderWidth: 1
+              },
+              {
+                label: 'Despesas',
+                data: despesas,
+                backgroundColor: 'rgba(239, 68, 68, 0.5)',
+                borderColor: 'rgb(239, 68, 68)',
+                borderWidth: 1
+              }
+            ]
+          });
         }
 
         if (transacoesResponse.data.success) {
@@ -227,6 +282,45 @@ export default function Financeiro() {
           <h3 className="text-lg font-semibold text-gray-200 mb-4">Fluxo de Caixa</h3>
           <div className="h-64">
             <Bar data={dadosGraficoBarras} options={{
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: {
+                  position: 'bottom',
+                  labels: {
+                    color: '#e5e7eb'
+                  }
+                }
+              },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  grid: {
+                    color: 'rgba(255, 255, 255, 0.1)'
+                  },
+                  ticks: {
+                    color: '#e5e7eb'
+                  }
+                },
+                x: {
+                  grid: {
+                    color: 'rgba(255, 255, 255, 0.1)'
+                  },
+                  ticks: {
+                    color: '#e5e7eb'
+                  }
+                }
+              }
+            }} />
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 mb-8">
+        <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
+          <h3 className="text-lg font-semibold text-gray-200 mb-4">Fluxo Anual</h3>
+          <div className="h-64">
+            <Bar data={barChartData} options={{
               responsive: true,
               maintainAspectRatio: false,
               plugins: {
