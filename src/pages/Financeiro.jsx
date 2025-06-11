@@ -280,37 +280,32 @@ const [isento, setIsento] = useState(false);
         return updatedJogadores;
       });
 
-      // Prepara o payload para a API
+      // Prepara o payload para a API - versão simplificada
       const payload = {
-        nome: jogadorAtual.nome,
-        email: jogadorAtual.email,
-        statusFinanceiro: jogadorAtual.statusFinanceiro,
-        pagamentos: updatedPagamentos.map((pago, index) => ({
-          mes: index + 1, // Mês começa em 1
-          status: pago ? 'pago' : 'pendente'
-        }))
+        pagamentos: updatedPagamentos
       };
 
-      console.log('Enviando para API:', {
-        url: `/jogadores/${jogadorId}`,
-        payload
-      });
+      console.log('Dados do jogador:', jogadorAtual);
+      console.log('Payload sendo enviado:', payload);
+      console.log('URL da requisição:', `/jogadores/${jogadorId}`);
 
       // Atualiza no banco de dados
       const response = await api.put(`/jogadores/${jogadorId}`, payload);
+
+      console.log('Resposta completa:', response);
 
       if (!response.data) {
         throw new Error('Resposta inválida do servidor');
       }
 
-      console.log('Resposta da API:', response.data);
-
     } catch (error) {
-      console.error("Erro detalhado:", {
+      console.error("Erro completo:", error);
+      console.error("Detalhes do erro:", {
         message: error.message,
         response: error.response?.data,
         status: error.response?.status,
-        payload: error.config?.data
+        payload: error.config?.data,
+        headers: error.config?.headers
       });
       
       toast.error('Erro ao atualizar pagamento');
@@ -372,37 +367,32 @@ const [isento, setIsento] = useState(false);
         return updatedJogadores;
       });
 
-      // Prepara o payload para a API
+      // Prepara o payload para a API - versão simplificada
       const payload = {
-        nome: jogadorAtual.nome,
-        email: jogadorAtual.email,
-        statusFinanceiro: newStatus,
-        pagamentos: jogadorAtual.pagamentos.map((pago, index) => ({
-          mes: index + 1, // Mês começa em 1
-          status: pago ? 'pago' : 'pendente'
-        }))
+        statusFinanceiro: newStatus
       };
 
-      console.log('Enviando para API:', {
-        url: `/jogadores/${jogadorId}`,
-        payload
-      });
+      console.log('Dados do jogador:', jogadorAtual);
+      console.log('Payload sendo enviado:', payload);
+      console.log('URL da requisição:', `/jogadores/${jogadorId}`);
 
       // Atualiza no banco de dados
       const response = await api.put(`/jogadores/${jogadorId}`, payload);
+
+      console.log('Resposta completa:', response);
 
       if (!response.data) {
         throw new Error('Resposta inválida do servidor');
       }
 
-      console.log('Resposta da API:', response.data);
-
     } catch (error) {
-      console.error("Erro detalhado:", {
+      console.error("Erro completo:", error);
+      console.error("Detalhes do erro:", {
         message: error.message,
         response: error.response?.data,
         status: error.response?.status,
-        payload: error.config?.data
+        payload: error.config?.data,
+        headers: error.config?.headers
       });
       
       toast.error('Erro ao atualizar status');
