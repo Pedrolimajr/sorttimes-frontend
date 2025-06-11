@@ -1254,15 +1254,28 @@ const toggleStatusFinanceiro = async (jogadorId) => {
               >
                 <div className="flex justify-between items-center mb-3 sm:mb-4">
                   <h2 className="text-lg sm:text-xl font-semibold text-white">Controle de Mensalidades</h2>
-                  <motion.button
-                    onClick={() => compartilharControle('tabela-mensalidades')}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    className="bg-blue-600 p-2 rounded-lg text-white hover:bg-blue-700 transition-colors"
-                    title="Compartilhar controle de mensalidades"
-                  >
-                    <FaShare className="text-sm sm:text-base" />
-                  </motion.button>
+                  <div className="flex items-center gap-3">
+                    {/* Campo de pesquisa */}
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Pesquisar jogador..."
+                        value={filtroJogador}
+                        onChange={(e) => setFiltroJogador(e.target.value)}
+                        className="w-48 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-sm"
+                      />
+                      <FaSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
+                    </div>
+                    <motion.button
+                      onClick={() => compartilharControle('tabela-mensalidades')}
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      className="bg-blue-600 p-2 rounded-lg text-white hover:bg-blue-700 transition-colors"
+                      title="Compartilhar controle de mensalidades"
+                    >
+                      <FaShare className="text-sm sm:text-base" />
+                    </motion.button>
+                  </div>
                 </div>
 
                 {carregando ? (
