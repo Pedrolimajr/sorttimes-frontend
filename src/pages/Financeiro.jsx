@@ -280,17 +280,19 @@ const [isento, setIsento] = useState(false);
         return updatedJogadores;
       });
 
-      // Prepara o payload para a API - versão simplificada
+      // Prepara o payload para a API no formato correto
       const payload = {
-        pagamentos: updatedPagamentos
+        mes: mesIndex,
+        pago: updatedPagamentos[mesIndex],
+        isento: false
       };
 
       console.log('Dados do jogador:', jogadorAtual);
       console.log('Payload sendo enviado:', payload);
-      console.log('URL da requisição:', `/jogadores/${jogadorId}`);
+      console.log('URL da requisição:', `/jogadores/${jogadorId}/pagamentos`);
 
-      // Atualiza no banco de dados
-      const response = await api.put(`/jogadores/${jogadorId}`, payload);
+      // Atualiza no banco de dados usando a rota correta
+      const response = await api.post(`/jogadores/${jogadorId}/pagamentos`, payload);
 
       console.log('Resposta completa:', response);
 
@@ -367,17 +369,17 @@ const [isento, setIsento] = useState(false);
         return updatedJogadores;
       });
 
-      // Prepara o payload para a API - versão simplificada
+      // Prepara o payload para a API no formato correto
       const payload = {
-        statusFinanceiro: newStatus
+        status: newStatus
       };
 
       console.log('Dados do jogador:', jogadorAtual);
       console.log('Payload sendo enviado:', payload);
-      console.log('URL da requisição:', `/jogadores/${jogadorId}`);
+      console.log('URL da requisição:', `/jogadores/${jogadorId}/status`);
 
-      // Atualiza no banco de dados
-      const response = await api.put(`/jogadores/${jogadorId}`, payload);
+      // Atualiza no banco de dados usando a rota correta
+      const response = await api.patch(`/jogadores/${jogadorId}/status`, payload);
 
       console.log('Resposta completa:', response);
 
