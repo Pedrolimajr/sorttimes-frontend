@@ -68,9 +68,6 @@ export default function Financeiro() {
     totalJogadores: 0
   });
 
-  const [showPagamentoModal, setShowPagamentoModal] = useState(false);
-  const [pagamentoSelecionado, setPagamentoSelecionado] = useState(null);
-
   const STORAGE_KEY = 'dadosFinanceiros';
  useEffect(() => {
   const carregarDados = async () => {
@@ -256,22 +253,19 @@ export default function Financeiro() {
   }
 };
 
-const handleTipoPagamento = async (tipo) => {
-  if (!pagamentoSelecionado) return;
-
-  const { jogadorId, mesIndex } = pagamentoSelecionado;
-  const jogador = jogadores.find(j => j._id === jogadorId);
-  if (!jogador) return;
-
-  const isento = tipo === 'isento';
-  const pago = tipo === 'normal';
-
+const togglePagamento = async (jogadorId, mesIndex) => {
   try {
+    const jogador = jogadores.find(j => j._id === jogadorId);
+    if (!jogador) return;
+
+    const pagamentoAtual = jogador.pagamentos[mesIndex];
+    const novoEstado = !pagamentoAtual.pago && !pagamentoAtual.isento;
+
     const response = await api.post(`/jogadores/${jogadorId}/pagamentos`, {
       mes: mesIndex,
-      pago: pago,
-      isento: isento,
-      valorMensalidade: jogador.valorMensalidade || 0
+      pago: novoEstado,
+      isento: false,
+      valorMensalidade: novoEstado ? jogador.valorMensalidade || 0 : 0
     });
 
     if (response.data.success) {
@@ -279,9 +273,9 @@ const handleTipoPagamento = async (tipo) => {
         if (j._id === jogadorId) {
           const pagamentosAtualizados = [...j.pagamentos];
           pagamentosAtualizados[mesIndex] = {
-            pago: pago,
-            isento: isento,
-            dataPagamento: pago ? new Date() : null,
+            pago: novoEstado,
+            isento: false,
+            dataPagamento: novoEstado ? new Date() : null,
             dataLimite: new Date(new Date().getFullYear(), mesIndex, 20)
           };
           return {
@@ -295,69 +289,18 @@ const handleTipoPagamento = async (tipo) => {
 
       setJogadores(jogadoresAtualizados);
 
-      if (response.data.data.transacao) {
-        setTransacoes(prev => {
-          const transacoesFiltradas = prev.filter(t => 
-            t.jogadorId !== jogadorId || 
-            t.descricao !== response.data.data.transacao.descricao
-          );
-          return [response.data.data.transacao, ...transacoesFiltradas];
-        });
-      }
+      // Atualiza as estatísticas
+      const pagamentosPendentes = jogadoresAtualizados.reduce((total, jogador) => {
+        return total + (jogador.pagamentos || []).filter(p => !p.pago && !p.isento).length;
+      }, 0);
 
-      toast.success(response.data.message);
-    }
-  } catch (error) {
-    console.error('Erro ao atualizar pagamento:', error);
-    toast.error('Erro ao atualizar pagamento');
-  } finally {
-    setShowPagamentoModal(false);
-    setPagamentoSelecionado(null);
-  }
-};
+      setEstatisticas(prev => ({
+        ...prev,
+        pagamentosPendentes,
+        totalJogadores: jogadoresAtualizados.length
+      }));
 
-const togglePagamento = async (jogadorId, mesIndex) => {
-  try {
-    const jogador = jogadores.find(j => j._id === jogadorId);
-    if (!jogador) return;
-
-    const pagamentoAtual = jogador.pagamentos[mesIndex];
-    
-    // Se estiver desmarcado, mostra o modal de opções
-    if (!pagamentoAtual.pago && !pagamentoAtual.isento) {
-      setPagamentoSelecionado({ jogadorId, mesIndex });
-      setShowPagamentoModal(true);
-    } else {
-      // Se estiver marcado (pago ou isento), apenas desmarca
-      const response = await api.post(`/jogadores/${jogadorId}/pagamentos`, {
-        mes: mesIndex,
-        pago: false,
-        isento: false,
-        valorMensalidade: 0
-      });
-
-      if (response.data.success) {
-        const jogadoresAtualizados = jogadores.map(j => {
-          if (j._id === jogadorId) {
-            const pagamentosAtualizados = [...j.pagamentos];
-            pagamentosAtualizados[mesIndex] = {
-              pago: false,
-              isento: false,
-              dataPagamento: null,
-              dataLimite: new Date(new Date().getFullYear(), mesIndex, 20)
-            };
-            return {
-              ...j,
-              pagamentos: pagamentosAtualizados,
-              statusFinanceiro: response.data.data.jogador.statusFinanceiro
-            };
-          }
-          return j;
-        });
-
-        setJogadores(jogadoresAtualizados);
-        toast.success('Pagamento removido');
-      }
+      toast.success(novoEstado ? 'Mês marcado como pago' : 'Mês desmarcado');
     }
   } catch (error) {
     console.error('Erro ao atualizar pagamento:', error);
@@ -698,36 +641,6 @@ const toggleStatusFinanceiro = async (jogadorId) => {
       toast.error('Erro ao gerar imagem. Tente novamente.');
     }
   };
-
-  // const compartilharRelatorio = async () => {
-  //   try {
-  //     if (navigator.share) {
-  //       const element = document.getElementById('relatorio-content');
-  //       const canvas = await html2canvas(element, {
-  //         scale: 2,
-  //         logging: false,
-  //         useCORS: true,
-  //         backgroundColor: '#1f2937'
-  //       });
-        
-  //       const blob = await (await fetch(canvas.toDataURL('image/png'))).blob();
-  //       const file = new File([blob], 'relatorio-financeiro.png', { type: blob.type });
-        
-  //       await navigator.share({
-  //         title: `Relatório Financeiro - ${filtroMes}`,
-  //         text: `Status financeiro do time: ${estatisticas.saldo >= 0 ? 'Positivo' : 'Negativo'}`,
-  //         files: [file]
-  //       });
-  //     } else {
-  //       toast.info('Compartilhamento não suportado neste navegador');
-  //     }
-  //   } catch (error) {
-  //     console.error('Erro ao compartilhar:', error);
-  //     if (error.name !== 'AbortError') {
-  //       toast.error('Erro ao compartilhar relatório');
-  //     }
-  //   }
-  // };
 
   const compartilharControle = async (elementId) => {
     try {
@@ -1334,18 +1247,13 @@ const toggleStatusFinanceiro = async (jogadorId) => {
                                       e.stopPropagation();
                                       toggleStatusFinanceiro(jogador._id);
                                     }}
-                                    className={`px-2 py-1 rounded text-sm cursor-pointer transition-colors w-full flex items-center justify-center gap-2 ${
+                                    className={`px-3 py-1.5 rounded-full text-sm font-medium cursor-pointer transition-all duration-300 w-full ${
                                       jogador.statusFinanceiro === 'Adimplente' 
-                                        ? 'bg-green-500 text-white hover:bg-green-600' 
-                                        : 'bg-red-500 text-white hover:bg-red-600'
+                                        ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30 border border-green-500/30' 
+                                        : 'bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30'
                                     }`}
                                     title="Clique para alterar o status"
                                   >
-                                    {jogador.statusFinanceiro === 'Adimplente' ? (
-                                      <FaCheck className="text-xs" />
-                                    ) : (
-                                      <FaTimes className="text-xs" />
-                                    )}
                                     {jogador.statusFinanceiro}
                                   </button>
                                 </div>
