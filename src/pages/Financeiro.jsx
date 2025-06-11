@@ -1358,11 +1358,11 @@ const toggleStatusFinanceiro = async (jogadorId) => {
                                   whileTap={{ scale: 0.9 }}
                                   className={`
                                     w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center
-                                    ${pagamento.pago ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}
+                                    ${pagamento.pago || pagamento.isento ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}
                                   `}
                                   title={pagamento.isento ? "Mensalidade isenta" : pagamento.pago ? "Mensalidade paga" : "Mensalidade pendente"}
                                 >
-                                  {pagamento.pago ? <FaCheck size={10} className="sm:text-xs" /> : <FaTimes size={10} className="sm:text-xs" />}
+                                  {(pagamento.pago || pagamento.isento) ? <FaCheck size={10} className="sm:text-xs" /> : <FaTimes size={10} className="sm:text-xs" />}
                                 </motion.button>
                               </td>
                             ))}
