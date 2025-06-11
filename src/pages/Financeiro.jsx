@@ -130,15 +130,14 @@ export default function Financeiro() {
           return total + (jogador.pagamentos || []).filter(p => !p.pago && !p.isento).length;
         }, 0);
 
+        const pagamentosEmDia = jogadoresFormatados.reduce((total, jogador) => {
+          return total + (jogador.pagamentos || []).filter(p => p.pago || p.isento).length;
+        }, 0);
+
         setDadosGraficoPizza({
           labels: ['Pagamentos em dia', 'Pagamentos pendentes'],
           datasets: [{
-            data: [
-              jogadoresFormatados.reduce((total, jogador) => 
-                total + jogador.pagamentos.filter(p => p.pago || p.isento).length, 0
-              ),
-              pagamentosPendentes
-            ],
+            data: [pagamentosEmDia, pagamentosPendentes],
             backgroundColor: ['#4ade80', '#f87171'],
             hoverOffset: 4,
             borderWidth: 0
@@ -146,34 +145,38 @@ export default function Financeiro() {
         });
 
         // Atualizar dados do gráfico de barras
+        const receitasPorMes = Array(12).fill(0).map((_, i) => {
+          return jogadoresFormatados.reduce((total, jogador) => {
+            const pagamento = jogador.pagamentos[i];
+            return total + (pagamento && pagamento.pago ? (jogador.valorMensalidade || 0) : 0);
+          }, 0);
+        });
+
+        const despesasPorMes = Array(12).fill(0).map((_, i) => {
+          return transacoesResponse.data.data
+            .filter(t => {
+              try {
+                const dataStr = typeof t.data === 'string' ? t.data : new Date(t.data).toISOString();
+                return dataStr.startsWith(`${filtroMes.slice(0, 4)}-${(i + 1).toString().padStart(2, '0')}`) && t.tipo === "despesa";
+              } catch {
+                return false;
+              }
+            })
+            .reduce((acc, t) => acc + (t.valor || 0), 0);
+        });
+
         setDadosGraficoBarras({
           labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
           datasets: [
             {
               label: 'Receitas',
-              data: Array(12).fill(0).map((_, i) => {
-                return jogadoresFormatados.reduce((total, jogador) => {
-                  const pagamento = jogador.pagamentos[i];
-                  return total + (pagamento && pagamento.pago ? (jogador.valorMensalidade || 0) : 0);
-                }, 0);
-              }),
+              data: receitasPorMes,
               backgroundColor: '#4ade80',
               borderRadius: 6
             },
             {
               label: 'Despesas',
-              data: Array(12).fill(0).map((_, i) => {
-                return transacoesResponse.data.data
-                  .filter(t => {
-                    try {
-                      const dataStr = typeof t.data === 'string' ? t.data : new Date(t.data).toISOString();
-                      return dataStr.startsWith(`${filtroMes.slice(0, 4)}-${(i + 1).toString().padStart(2, '0')}`) && t.tipo === "despesa";
-                    } catch {
-                      return false;
-                    }
-                  })
-                  .reduce((acc, t) => acc + (t.valor || 0), 0);
-              }),
+              data: despesasPorMes,
               backgroundColor: '#f87171',
               borderRadius: 6
             }
@@ -783,42 +786,6 @@ const toggleStatusFinanceiro = async (jogadorId) => {
     jogador.nome.toLowerCase().includes(filtroJogador.toLowerCase())
   );
 
-  const migrarPagamentos = async () => {
-    try {
-      const response = await api.post('/jogadores/migrar-pagamentos');
-      if (response.data.success) {
-        // Recarrega os dados após a migração
-        const [jogadoresResponse, transacoesResponse] = await Promise.all([
-          api.get('/jogadores'),
-          api.get('/financeiro/transacoes')
-        ]);
-
-        if (jogadoresResponse.data.success) {
-          // Garante que os pagamentos sejam objetos válidos e desmarcados por padrão
-          const jogadoresFormatados = jogadoresResponse.data.data.map(jogador => ({
-            ...jogador,
-            pagamentos: Array(12).fill().map((_, index) => ({
-              pago: false,
-              isento: false,
-              dataPagamento: null,
-              dataLimite: new Date(new Date().getFullYear(), index, 20)
-            }))
-          }));
-          setJogadores(jogadoresFormatados);
-        }
-
-        if (transacoesResponse.data.success) {
-          setTransacoes(transacoesResponse.data.data);
-        }
-
-        toast.success('Migração concluída com sucesso!');
-      }
-    } catch (error) {
-      console.error('Erro na migração:', error);
-      toast.error('Erro ao migrar pagamentos');
-    }
-  };
-
   return (
     <>
       <div className="min-h-screen bg-gray-900 p-4 sm:p-6">
@@ -1097,7 +1064,7 @@ const toggleStatusFinanceiro = async (jogadorId) => {
                           <div key={jogador._id} className="p-4 border border-gray-200 rounded-lg">
                             <h3 className="text-lg font-semibold mb-2">{jogador.nome}</h3>
                             <p className="text-sm text-gray-500">Status: {jogador.statusFinanceiro}</p>
-                            <div className="mt-2">
+                            <div className="mt-2 flex flex-wrap gap-1">
                               {jogador.pagamentos.map((pagamento, i) => (
                                 <button
                                   key={i}
@@ -1601,17 +1568,6 @@ const toggleStatusFinanceiro = async (jogadorId) => {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <div className="flex space-x-2">
-        <motion.button
-          onClick={migrarPagamentos}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-        >
-          Migrar Pagamentos
-        </motion.button>
-      </div>
 
       <ToastContainer 
         position="bottom-right"
