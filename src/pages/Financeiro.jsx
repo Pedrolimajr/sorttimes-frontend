@@ -271,24 +271,52 @@ const [isento, setIsento] = useState(false);
         return updatedJogadores;
       });
 
-      // Atualiza no banco de dados
-      await api.put(`/jogadores/${jogadorId}/pagamentos`, {
-        mes: mesIndex,
-        pago: !jogadores.find(j => j._id === jogadorId)?.pagamentos[mesIndex]
+      // Atualiza no banco de dados usando a rota correta
+      await api.put(`/api/jogadores/${jogadorId}`, {
+        pagamentos: jogadores.find(j => j._id === jogadorId)?.pagamentos.map((pago, index) => ({
+          mes: index,
+          pago: index === mesIndex ? !pago : pago
+        }))
       });
 
     } catch (error) {
       console.error("Erro ao atualizar pagamento:", error);
       toast.error('Erro ao atualizar pagamento');
+      
+      // Reverte a mudança em caso de erro
+      setJogadores(prevJogadores => {
+        const revertedJogadores = prevJogadores.map(j => {
+          if (j._id === jogadorId) {
+            const updatedPagamentos = [...j.pagamentos];
+            updatedPagamentos[mesIndex] = !updatedPagamentos[mesIndex];
+            return {
+              ...j,
+              pagamentos: updatedPagamentos
+            };
+          }
+          return j;
+        });
+
+        // Atualiza o localStorage com os dados revertidos
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          jogadoresCache: revertedJogadores,
+          transacoesCache: transacoes,
+          lastUpdate: new Date().toISOString()
+        }));
+
+        return revertedJogadores;
+      });
     }
   };
 
   const toggleStatus = async (jogadorId) => {
     try {
+      const newStatus = jogadores.find(j => j._id === jogadorId)?.statusFinanceiro === 'Adimplente' ? 'Inadimplente' : 'Adimplente';
+
+      // Atualiza o estado local primeiro
       setJogadores(prevJogadores => {
         const updatedJogadores = prevJogadores.map(j => {
           if (j._id === jogadorId) {
-            const newStatus = j.statusFinanceiro === 'Adimplente' ? 'Inadimplente' : 'Adimplente';
             return {
               ...j,
               statusFinanceiro: newStatus
@@ -307,14 +335,36 @@ const [isento, setIsento] = useState(false);
         return updatedJogadores;
       });
 
-      // Atualiza no banco de dados
-      await api.put(`/jogadores/${jogadorId}/status`, {
-        status: jogadores.find(j => j._id === jogadorId)?.statusFinanceiro === 'Adimplente' ? 'Inadimplente' : 'Adimplente'
+      // Atualiza no banco de dados usando a rota correta
+      await api.put(`/api/jogadores/${jogadorId}`, {
+        statusFinanceiro: newStatus
       });
 
     } catch (error) {
       console.error("Erro ao atualizar status:", error);
       toast.error('Erro ao atualizar status');
+      
+      // Reverte a mudança em caso de erro
+      setJogadores(prevJogadores => {
+        const revertedJogadores = prevJogadores.map(j => {
+          if (j._id === jogadorId) {
+            return {
+              ...j,
+              statusFinanceiro: jogadores.find(j => j._id === jogadorId)?.statusFinanceiro
+            };
+          }
+          return j;
+        });
+
+        // Atualiza o localStorage com os dados revertidos
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          jogadoresCache: revertedJogadores,
+          transacoesCache: transacoes,
+          lastUpdate: new Date().toISOString()
+        }));
+
+        return revertedJogadores;
+      });
     }
   };
 
