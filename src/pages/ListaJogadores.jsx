@@ -10,6 +10,7 @@ import { RiArrowLeftDoubleLine } from 'react-icons/ri';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useJogadores } from '../context/JogadoresContext';
 
 const posicoes = [
   'Goleiro', 'Defensor', 'Lateral-Esquerdo', 'Lateral-Direito', 
@@ -26,12 +27,11 @@ export default function ListaJogadores({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [jogadores, setJogadores] = useState([]);
+  const { jogadores, carregando, atualizarStatusFinanceiro } = useJogadores();
   const [filtro, setFiltro] = useState('');
   const [filtroPosicao, setFiltroPosicao] = useState('');
   const [filtroStatus, setFiltroStatus] = useState('');
   const [editando, setEditando] = useState(null);
-  const [carregando, setCarregando] = useState(true);
   const [mensagemSucesso, setMensagemSucesso] = useState(null);
   const [fotoAmpliada, setFotoAmpliada] = useState({
     aberto: false,
@@ -70,38 +70,10 @@ export default function ListaJogadores({
   };
 
   useEffect(() => {
-    const carregarJogadores = async () => {
-      try {
-        setCarregando(true);
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/jogadores`);
-  
-        if (!response.ok) {
-          throw new Error('Erro ao carregar jogadores');
-        }
-  
-        const result = await response.json();
-        const jogadoresArray = Array.isArray(result.data) ? result.data : [];
-  
-        if (location.state?.novoJogador) {
-          const jogadorExiste = jogadoresArray.some(j => j._id === location.state.novoJogador._id);
-          if (!jogadorExiste) {
-            jogadoresArray.unshift(location.state.novoJogador);
-          }
-          setMensagemSucesso(location.state.mensagem);
-          navigate(location.pathname, { replace: true, state: {} });
-        }
-  
-        setJogadores(jogadoresArray);
-      } catch (error) {
-        console.error("Erro ao carregar jogadores:", error);
-        toast.error(error.message || 'Erro ao carregar jogadores');
-        setJogadores([]);
-      } finally {
-        setCarregando(false);
-      }
-    };
-  
-    carregarJogadores();
+    if (location.state?.novoJogador) {
+      setMensagemSucesso(location.state.mensagem);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
   }, [location.state, navigate, location.pathname]);
 
   useEffect(() => {
@@ -244,30 +216,15 @@ export default function ListaJogadores({
 
   const atualizarStatus = async (id, status) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/jogadores/${id}/status`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status })
-      });
-        
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Erro ao atualizar status');
+      const sucesso = await atualizarStatusFinanceiro(id, status);
+      if (sucesso) {
+        toast.success(`Status atualizado para ${status}`);
+      } else {
+        toast.error('Erro ao atualizar status');
       }
-      
-      const data = await response.json();
-      toast.success(`Status atualizado para ${status}`);
-      
-      setJogadores(prev => 
-        prev.map(j => 
-          j._id === id ? { ...j, statusFinanceiro: status } : j
-        )
-      );
     } catch (error) {
       console.error("Erro ao atualizar status:", error);
-      toast.error(error.message || 'Erro ao atualizar status');
+      toast.error('Erro ao atualizar status');
     }
   };
 

@@ -7,6 +7,7 @@ import AppRoutes from "./routes/AppRoutes";
 import Footer from "./components/Footer";
 import { usePageLayout } from "./hooks/usePageLayout";
 import { AuthProvider } from './context/AuthContext';
+import { JogadoresProvider } from './context/JogadoresContext';
 
 function AppContent() {
   const { containerClass, mainClass } = usePageLayout();
@@ -24,10 +25,12 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <AppContent />
-        <ToastContainer position="top-right" autoClose={3000} />
-      </Router>
+      <JogadoresProvider>
+        <Router>
+          <AppContent />
+          <ToastContainer position="top-right" autoClose={3000} />
+        </Router>
+      </JogadoresProvider>
     </AuthProvider>
   );
 }

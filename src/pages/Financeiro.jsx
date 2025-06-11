@@ -30,13 +30,14 @@ import ListaJogadores from './ListaJogadores';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import api from '../services/api';
+import { useJogadores } from '../context/JogadoresContext';
 
 Chart.register(...registerables);
 
 export default function Financeiro() {
   const navigate = useNavigate();
+  const { jogadores, atualizarStatusFinanceiro } = useJogadores();
   const [transacoes, setTransacoes] = useState([]);
-  const [jogadores, setJogadores] = useState([]);
   const [filtroMes, setFiltroMes] = useState(new Date().toISOString().slice(0, 7));
   const [carregando, setCarregando] = useState(true);
   const [relatorioModal, setRelatorioModal] = useState(false);
@@ -98,25 +99,7 @@ export default function Financeiro() {
   });
 
   // Adicionar estado para o gráfico de fluxo
-  const [barChartData, setBarChartData] = useState({
-    labels: [],
-    datasets: [
-      {
-        label: 'Receitas',
-        data: [],
-        backgroundColor: 'rgba(34, 197, 94, 0.5)',
-        borderColor: 'rgb(34, 197, 94)',
-        borderWidth: 1
-      },
-      {
-        label: 'Despesas',
-        data: [],
-        backgroundColor: 'rgba(239, 68, 68, 0.5)',
-        borderColor: 'rgb(239, 68, 68)',
-        borderWidth: 1
-      }
-    ]
-  });
+  // const [barChartData, setBarChartData] = useState({...});
 
   // Adicionar estado para filtro de jogadores no modal
   const [filtroJogadorModal, setFiltroJogadorModal] = useState('');
@@ -477,20 +460,12 @@ const toggleStatusFinanceiro = async (jogadorId) => {
     if (!jogador) return;
 
     const novoStatus = jogador.statusFinanceiro === 'Adimplente' ? 'Inadimplente' : 'Adimplente';
+    const sucesso = await atualizarStatusFinanceiro(jogadorId, novoStatus);
 
-    const response = await api.patch(`/jogadores/${jogadorId}/status`, {
-      status: novoStatus
-    });
-
-    if (response.data.success) {
-      setJogadores(prevJogadores => 
-        prevJogadores.map(j => 
-          j._id === jogadorId 
-            ? { ...j, statusFinanceiro: novoStatus }
-            : j
-        )
-      );
+    if (sucesso) {
       toast.success(`Status atualizado para ${novoStatus}`);
+    } else {
+      toast.error('Erro ao atualizar status');
     }
   } catch (error) {
     console.error('Erro ao atualizar status:', error);
