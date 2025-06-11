@@ -68,8 +68,8 @@ export default function Financeiro() {
     totalJogadores: 0
   });
 
-// No início do componente, adicione:
-const [isento, setIsento] = useState(false);
+  const [showPagamentoModal, setShowPagamentoModal] = useState(false);
+  const [pagamentoSelecionado, setPagamentoSelecionado] = useState(null);
 
   const STORAGE_KEY = 'dadosFinanceiros';
  useEffect(() => {
@@ -253,6 +253,66 @@ const [isento, setIsento] = useState(false);
   }
 };
 
+const handleTipoPagamento = async (tipo) => {
+  if (!pagamentoSelecionado) return;
+
+  const { jogadorId, mesIndex } = pagamentoSelecionado;
+  const jogador = jogadores.find(j => j._id === jogadorId);
+  if (!jogador) return;
+
+  const isento = tipo === 'isento';
+  const pago = tipo === 'normal';
+
+  try {
+    const response = await api.post(`/jogadores/${jogadorId}/pagamentos`, {
+      mes: mesIndex,
+      pago: pago,
+      isento: isento,
+      valorMensalidade: jogador.valorMensalidade || 0
+    });
+
+    if (response.data.success) {
+      const jogadoresAtualizados = jogadores.map(j => {
+        if (j._id === jogadorId) {
+          const pagamentosAtualizados = [...j.pagamentos];
+          pagamentosAtualizados[mesIndex] = {
+            pago: pago,
+            isento: isento,
+            dataPagamento: pago ? new Date() : null,
+            dataLimite: new Date(new Date().getFullYear(), mesIndex, 20)
+          };
+          return {
+            ...j,
+            pagamentos: pagamentosAtualizados,
+            statusFinanceiro: response.data.data.jogador.statusFinanceiro
+          };
+        }
+        return j;
+      });
+
+      setJogadores(jogadoresAtualizados);
+
+      if (response.data.data.transacao) {
+        setTransacoes(prev => {
+          const transacoesFiltradas = prev.filter(t => 
+            t.jogadorId !== jogadorId || 
+            t.descricao !== response.data.data.transacao.descricao
+          );
+          return [response.data.data.transacao, ...transacoesFiltradas];
+        });
+      }
+
+      toast.success(response.data.message);
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar pagamento:', error);
+    toast.error('Erro ao atualizar pagamento');
+  } finally {
+    setShowPagamentoModal(false);
+    setPagamentoSelecionado(null);
+  }
+};
+
 const togglePagamento = async (jogadorId, mesIndex) => {
   try {
     const jogador = jogadores.find(j => j._id === jogadorId);
@@ -260,65 +320,10 @@ const togglePagamento = async (jogadorId, mesIndex) => {
 
     const pagamentoAtual = jogador.pagamentos[mesIndex];
     
-    // Se estiver desmarcado, mostra as opções
+    // Se estiver desmarcado, mostra o modal de opções
     if (!pagamentoAtual.pago) {
-      const opcoes = ['Pagamento Normal', 'Isento', 'Cancelar'];
-      const resposta = window.confirm(
-        'Escolha o tipo de pagamento:\n\n' +
-        '1. Pagamento Normal - Contabiliza o valor\n' +
-        '2. Isento - Não contabiliza o valor\n' +
-        '3. Cancelar - Não faz nada'
-      );
-
-      if (!resposta) return; // Se clicou em Cancelar
-
-      const isento = resposta === 'Isento';
-      const pago = resposta === 'Pagamento Normal';
-
-      if (!pago && !isento) return; // Se não escolheu nenhuma opção
-
-      const response = await api.post(`/jogadores/${jogadorId}/pagamentos`, {
-        mes: mesIndex,
-        pago: pago,
-        isento: isento,
-        valorMensalidade: jogador.valorMensalidade || 0
-      });
-
-      if (response.data.success) {
-        // Atualiza o estado local imediatamente
-        const jogadoresAtualizados = jogadores.map(j => {
-          if (j._id === jogadorId) {
-            const pagamentosAtualizados = [...j.pagamentos];
-            pagamentosAtualizados[mesIndex] = {
-              pago: pago,
-              isento: isento,
-              dataPagamento: pago ? new Date() : null,
-              dataLimite: new Date(new Date().getFullYear(), mesIndex, 20)
-            };
-            return {
-              ...j,
-              pagamentos: pagamentosAtualizados,
-              statusFinanceiro: response.data.data.jogador.statusFinanceiro
-            };
-          }
-          return j;
-        });
-
-        setJogadores(jogadoresAtualizados);
-
-        // Atualiza as transações se houver uma nova
-        if (response.data.data.transacao) {
-          setTransacoes(prev => {
-            const transacoesFiltradas = prev.filter(t => 
-              t.jogadorId !== jogadorId || 
-              t.descricao !== response.data.data.transacao.descricao
-            );
-            return [response.data.data.transacao, ...transacoesFiltradas];
-          });
-        }
-
-        toast.success(response.data.message);
-      }
+      setPagamentoSelecionado({ jogadorId, mesIndex });
+      setShowPagamentoModal(true);
     } else {
       // Se estiver marcado, apenas desmarca
       const response = await api.post(`/jogadores/${jogadorId}/pagamentos`, {
@@ -800,408 +805,409 @@ const toggleStatusFinanceiro = async (jogadorId) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 p-4 sm:p-6">
-      <div className="fixed inset-0 overflow-hidden -z-10 opacity-20">
-        {[...Array(15)].map((_, i) => (
-          <motion.div
-            key={i}
-            initial={{ x: Math.random() * 100, y: Math.random() * 100, opacity: 0.3 }}
-            animate={{ y: [null, (Math.random() - 0.5) * 50], x: [null, (Math.random() - 0.5) * 50] }}
-            transition={{ duration: 15 + Math.random() * 20, repeat: Infinity, repeatType: "reverse" }}
-            className="absolute w-1 h-1 bg-white rounded-full"
-            style={{ left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%` }}
-          />
-        ))}
-      </div>
-
-      <div className="max-w-7xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-12 sm:mb-16 relative"
-        >
-          {/* Novo botão voltar */}
-          <motion.button 
-            onClick={() => navigate('/dashboard')}
-            whileHover={{ 
-              scale: 1.05,
-              x: -5,
-              backgroundColor: "rgba(37, 99, 235, 0.1)"
-            }}
-            whileTap={{ scale: 0.95 }}
-            className="absolute left-2 -top-8 sm:-top-0 w-11 h-11 flex items-center justify-center bg-gray-800/40 hover:bg-gray-700/40 text-gray-200 rounded-full transition-all duration-300 backdrop-blur-sm border border-gray-700/50 shadow-lg hover:shadow-blue-500/20"
-            title="Voltar para o Dashboard"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <RiArrowLeftDoubleLine className="text-blue-400 text-2xl transform transition-transform group-hover:translate-x-1" />
-            <div className="absolute inset-0 rounded-full bg-blue-400/10 animate-pulse" style={{ animationDuration: '3s' }} />
-          </motion.button>
-
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-14 sm:mt-0">
-            <div className="flex-grow flex justify-center items-center">
-              <div className="flex flex-col items-center gap-2">
-                <div className="flex items-center justify-center gap-3">
-                  <FaMoneyBillWave className="text-blue-400 text-2xl sm:text-3xl" />
-                  <motion.h1
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.1 }}
-                    className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300"
-                  >
-                    Financeiro
-                  </motion.h1>
-                </div>
-
-                {/* Novo subtítulo */}
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 0.8 }}
-                  transition={{ delay: 0.2 }}
-                  className="text-gray-400 text-sm sm:text-base"
-                >
-                  Gerencie as finanças e mensalidades do time
-                </motion.p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 sm:gap-4 mt-4 md:mt-0">
-              <div className="flex items-center gap-2 bg-gray-800 bg-opacity-50 px-3 py-2 rounded-lg">
-                <FaCalendarAlt className="text-blue-400 text-sm sm:text-base" />
-                <input
-                  type="month"
-                  value={filtroMes}
-                  onChange={(e) => setFiltroMes(e.target.value)}
-                  className="bg-transparent text-white focus:outline-none text-xs sm:text-sm"
-                />
-              </div>
-              <motion.button
-                onClick={() => setRelatorioModal(true)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg text-xs sm:text-sm"
-              >
-                <FaPrint className="text-xs sm:text-sm" />
-                <span>Relatório</span>
-              </motion.button>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Cards de Estatísticas */}
-        <div className="grid grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          <motion.div
-            whileHover={{ y: -5 }}
-            className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
-          >
-            <h3 className="text-sm font-medium text-gray-300 mb-1 flex items-center gap-1 sm:gap-2">
-              <FaArrowUp className="text-green-400 text-sm" /> Receitas
-            </h3>
-            <p className="text-lg sm:text-xl font-bold text-white">
-              R$ {(estatisticas.totalReceitas || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </p>
-          </motion.div>
-
-          <motion.div
-            whileHover={{ y: -5 }}
-            className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
-          >
-            <h3 className="text-sm font-medium text-gray-300 mb-1 flex items-center gap-1 sm:gap-2">
-              <FaArrowDown className="text-red-400 text-sm" /> Despesas
-            </h3>
-            <p className="text-lg sm:text-xl font-bold text-white">
-              R$ {(estatisticas.totalDespesas || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </p>
-          </motion.div>
-
-          <motion.div
-            whileHover={{ y: -5 }}
-            className={`bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border ${(estatisticas.saldo || 0) >= 0 ? 'border-green-500/30' : 'border-red-500/30'}`}
-          >
-            <h3 className="text-sm font-medium text-gray-300 mb-1">Saldo</h3>
-            <p className={`text-lg sm:text-xl font-bold ${(estatisticas.saldo || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-              R$ {(estatisticas.saldo || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </p>
-          </motion.div>
+    <>
+      <div className="min-h-screen bg-gray-900 p-4 sm:p-6">
+        <div className="fixed inset-0 overflow-hidden -z-10 opacity-20">
+          {[...Array(15)].map((_, i) => (
+            <motion.div
+              key={i}
+              initial={{ x: Math.random() * 100, y: Math.random() * 100, opacity: 0.3 }}
+              animate={{ y: [null, (Math.random() - 0.5) * 50], x: [null, (Math.random() - 0.5) * 50] }}
+              transition={{ duration: 15 + Math.random() * 20, repeat: Infinity, repeatType: "reverse" }}
+              className="absolute w-1 h-1 bg-white rounded-full"
+              style={{ left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%` }}
+            />
+          ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-          <div className="lg:col-span-1">
-            <motion.div
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-12 sm:mb-16 relative"
+          >
+            {/* Novo botão voltar */}
+            <motion.button 
+              onClick={() => navigate('/dashboard')}
+              whileHover={{ 
+                scale: 1.05,
+                x: -5,
+                backgroundColor: "rgba(37, 99, 235, 0.1)"
+              }}
+              whileTap={{ scale: 0.95 }}
+              className="absolute left-2 -top-8 sm:-top-0 w-11 h-11 flex items-center justify-center bg-gray-800/40 hover:bg-gray-700/40 text-gray-200 rounded-full transition-all duration-300 backdrop-blur-sm border border-gray-700/50 shadow-lg hover:shadow-blue-500/20"
+              title="Voltar para o Dashboard"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <RiArrowLeftDoubleLine className="text-blue-400 text-2xl transform transition-transform group-hover:translate-x-1" />
+              <div className="absolute inset-0 rounded-full bg-blue-400/10 animate-pulse" style={{ animationDuration: '3s' }} />
+            </motion.button>
+
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-14 sm:mt-0">
+              <div className="flex-grow flex justify-center items-center">
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex items-center justify-center gap-3">
+                    <FaMoneyBillWave className="text-blue-400 text-2xl sm:text-3xl" />
+                    <motion.h1
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.1 }}
+                      className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300"
+                    >
+                      Financeiro
+                    </motion.h1>
+                  </div>
+
+                  {/* Novo subtítulo */}
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 0.8 }}
+                    transition={{ delay: 0.2 }}
+                    className="text-gray-400 text-sm sm:text-base"
+                  >
+                    Gerencie as finanças e mensalidades do time
+                  </motion.p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 sm:gap-4 mt-4 md:mt-0">
+                <div className="flex items-center gap-2 bg-gray-800 bg-opacity-50 px-3 py-2 rounded-lg">
+                  <FaCalendarAlt className="text-blue-400 text-sm sm:text-base" />
+                  <input
+                    type="month"
+                    value={filtroMes}
+                    onChange={(e) => setFiltroMes(e.target.value)}
+                    className="bg-transparent text-white focus:outline-none text-xs sm:text-sm"
+                  />
+                </div>
+                <motion.button
+                  onClick={() => setRelatorioModal(true)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg text-xs sm:text-sm"
+                >
+                  <FaPrint className="text-xs sm:text-sm" />
+                  <span>Relatório</span>
+                </motion.button>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Cards de Estatísticas */}
+          <div className="grid grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+            <motion.div
+              whileHover={{ y: -5 }}
               className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
             >
-              <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Novo Lançamento</h2>
-
-              <form onSubmit={adicionarTransacao} className="space-y-3 sm:space-y-4">
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Data</label>
-                  <input
-                    type="date"
-                    name="data"
-                    value={novaTransacao.data}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Descrição</label>
-                  <input
-                    type="text"
-                    name="descricao"
-                    value={novaTransacao.descricao}
-                    onChange={handleInputChange}
-                    placeholder="Ex: Mensalidade João"
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Valor</label>
-                  <input
-                    type="number"
-                    name="valor"
-                    min="0.01"
-                    step="0.01"
-                    value={novaTransacao.valor}
-                    onChange={handleInputChange}
-                    placeholder="0,00"
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Tipo</label>
-                  <select
-                    name="tipo"
-                    value={novaTransacao.tipo}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
-                  >
-                    <option value="receita">Receita</option>
-                    <option value="despesa">Despesa</option>
-                    
-                  </select>
-                </div>
-
-                {novaTransacao.tipo === "receita" && (
-  <div className="relative">
-    <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Jogador (opcional)</label>
-    <div className="relative">
-      <input
-        type="text"
-        value={novaTransacao.jogadorNome}
-        onClick={() => setMostrarListaJogadores(true)}
-        readOnly
-        placeholder="Selecione um jogador (opcional)"
-        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm cursor-pointer"
-      />
-      <FaUser className="absolute right-3 top-2.5 text-gray-400 text-xs sm:text-sm" />
-      {novaTransacao.jogadorNome && (
-        <button
-          type="button"
-          onClick={() => {
-            setNovaTransacao(prev => ({
-              ...prev,
-              jogadorId: "",
-              jogadorNome: ""
-            }));
-          }}
-          className="absolute right-8 top-2.5 text-gray-400 hover:text-white text-xs sm:text-sm"
-        >
-          <FaTimes />
-        </button>
-      )}
-    </div>
-  </div>
-)}
-
-                <motion.button
-                  type="submit"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg text-xs sm:text-sm"
-                >
-                  <FaPlus className="text-xs sm:text-sm" /> Adicionar
-                </motion.button>
-              </form>
+              <h3 className="text-sm font-medium text-gray-300 mb-1 flex items-center gap-1 sm:gap-2">
+                <FaArrowUp className="text-green-400 text-sm" /> Receitas
+              </h3>
+              <p className="text-lg sm:text-xl font-bold text-white">
+                R$ {(estatisticas.totalReceitas || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
             </motion.div>
 
-            {/* Modal de seleção de jogadores */}
-            <AnimatePresence>
-              {mostrarListaJogadores && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
-                >
-                  <motion.div
-                    initial={{ scale: 0.95, y: 20 }}
-                    animate={{ scale: 1, y: 0 }}
-                    exit={{ scale: 0.95, y: 20 }}
-                    className="bg-gray-800 rounded-xl shadow-2xl border border-gray-700 w-full max-w-4xl max-h-[90vh] flex flex-col"
-                  >
-                    <div className="p-4 border-b border-gray-700 flex justify-between items-center">
-                      <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                        <FaUsers className="text-blue-400" />
-                        Selecionar Jogador
-                      </h3>
-                      <button
-                        onClick={() => setMostrarListaJogadores(false)}
-                        className="text-gray-400 hover:text-white"
-                      >
-                        <FaTimesCircle />
-                      </button>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto p-4">
-                      <ListaJogadores
-                        modoSelecao={true}
-                        onJogadorSelecionado={(jogador) => {
-                          setNovaTransacao(prev => ({
-                            ...prev,
-                            jogadorId: jogador.id || jogador._id,
-                            jogadorNome: jogador.nome
-                          }));
-                          setMostrarListaJogadores(false);
-                        }}
-                        closeModal={() => setMostrarListaJogadores(false)}
-                      />
-                    </div>
-
-                    <div className="p-4 border-t border-gray-700 flex justify-end">
-                      <motion.button
-                        onClick={() => setMostrarListaJogadores(false)}
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.97 }}
-                        className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-white"
-                      >
-                        Cancelar
-                      </motion.button>
-                    </div>
-                  </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <motion.div
+              whileHover={{ y: -5 }}
+              className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
+            >
+              <h3 className="text-sm font-medium text-gray-300 mb-1 flex items-center gap-1 sm:gap-2">
+                <FaArrowDown className="text-red-400 text-sm" /> Despesas
+              </h3>
+              <p className="text-lg sm:text-xl font-bold text-white">
+                R$ {(estatisticas.totalDespesas || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+            </motion.div>
 
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700 mt-4 sm:mt-6"
+              whileHover={{ y: -5 }}
+              className={`bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border ${(estatisticas.saldo || 0) >= 0 ? 'border-green-500/30' : 'border-red-500/30'}`}
             >
-              <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Status de Pagamentos</h2>
-              <div className="h-48 sm:h-64">
-                <Pie
-                  data={dadosGraficoPizza}
-                  options={{
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: {
-                        position: 'bottom',
-                        labels: {
-                          color: '#e5e7eb',
-                          font: {
-                            size: window.innerWidth < 640 ? 10 : 12
+              <h3 className="text-sm font-medium text-gray-300 mb-1">Saldo</h3>
+              <p className={`text-lg sm:text-xl font-bold ${(estatisticas.saldo || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                R$ {(estatisticas.saldo || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+            </motion.div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="lg:col-span-1">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
+              >
+                <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Novo Lançamento</h2>
+
+                <form onSubmit={adicionarTransacao} className="space-y-3 sm:space-y-4">
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Data</label>
+                    <input
+                      type="date"
+                      name="data"
+                      value={novaTransacao.data}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Descrição</label>
+                    <input
+                      type="text"
+                      name="descricao"
+                      value={novaTransacao.descricao}
+                      onChange={handleInputChange}
+                      placeholder="Ex: Mensalidade João"
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Valor</label>
+                    <input
+                      type="number"
+                      name="valor"
+                      min="0.01"
+                      step="0.01"
+                      value={novaTransacao.valor}
+                      onChange={handleInputChange}
+                      placeholder="0,00"
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Tipo</label>
+                    <select
+                      name="tipo"
+                      value={novaTransacao.tipo}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                    >
+                      <option value="receita">Receita</option>
+                      <option value="despesa">Despesa</option>
+                      
+                    </select>
+                  </div>
+
+                  {novaTransacao.tipo === "receita" && (
+    <div className="relative">
+      <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Jogador (opcional)</label>
+      <div className="relative">
+        <input
+          type="text"
+          value={novaTransacao.jogadorNome}
+          onClick={() => setMostrarListaJogadores(true)}
+          readOnly
+          placeholder="Selecione um jogador (opcional)"
+          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm cursor-pointer"
+        />
+        <FaUser className="absolute right-3 top-2.5 text-gray-400 text-xs sm:text-sm" />
+        {novaTransacao.jogadorNome && (
+          <button
+            type="button"
+            onClick={() => {
+              setNovaTransacao(prev => ({
+                ...prev,
+                jogadorId: "",
+                jogadorNome: ""
+              }));
+            }}
+            className="absolute right-8 top-2.5 text-gray-400 hover:text-white text-xs sm:text-sm"
+          >
+            <FaTimes />
+          </button>
+        )}
+      </div>
+    </div>
+  )}
+
+                  <motion.button
+                    type="submit"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg text-xs sm:text-sm"
+                  >
+                    <FaPlus className="text-xs sm:text-sm" /> Adicionar
+                  </motion.button>
+                </form>
+              </motion.div>
+
+              {/* Modal de seleção de jogadores */}
+              <AnimatePresence>
+                {mostrarListaJogadores && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+                  >
+                    <motion.div
+                      initial={{ scale: 0.95, y: 20 }}
+                      animate={{ scale: 1, y: 0 }}
+                      exit={{ scale: 0.95, y: 20 }}
+                      className="bg-gray-800 rounded-xl shadow-2xl border border-gray-700 w-full max-w-4xl max-h-[90vh] flex flex-col"
+                    >
+                      <div className="p-4 border-b border-gray-700 flex justify-between items-center">
+                        <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                          <FaUsers className="text-blue-400" />
+                          Selecionar Jogador
+                        </h3>
+                        <button
+                          onClick={() => setMostrarListaJogadores(false)}
+                          className="text-gray-400 hover:text-white"
+                        >
+                          <FaTimesCircle />
+                        </button>
+                      </div>
+
+                      <div className="flex-1 overflow-y-auto p-4">
+                        <ListaJogadores
+                          modoSelecao={true}
+                          onJogadorSelecionado={(jogador) => {
+                            setNovaTransacao(prev => ({
+                              ...prev,
+                              jogadorId: jogador.id || jogador._id,
+                              jogadorNome: jogador.nome
+                            }));
+                            setMostrarListaJogadores(false);
+                          }}
+                          closeModal={() => setMostrarListaJogadores(false)}
+                        />
+                      </div>
+
+                      <div className="p-4 border-t border-gray-700 flex justify-end">
+                        <motion.button
+                          onClick={() => setMostrarListaJogadores(false)}
+                          whileHover={{ scale: 1.03 }}
+                          whileTap={{ scale: 0.97 }}
+                          className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-white"
+                        >
+                          Cancelar
+                        </motion.button>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700 mt-4 sm:mt-6"
+              >
+                <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Status de Pagamentos</h2>
+                <div className="h-48 sm:h-64">
+                  <Pie
+                    data={dadosGraficoPizza}
+                    options={{
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          position: 'bottom',
+                          labels: {
+                            color: '#e5e7eb',
+                            font: {
+                              size: window.innerWidth < 640 ? 10 : 12
+                            }
                           }
                         }
                       }
-                    }
-                  }}
-                />
-              </div>
-              <div className="mt-3 sm:mt-4 text-center text-xs sm:text-sm text-gray-400">
-                {estatisticas.pagamentosPendentes} Pagamentos pendentes este ano
-              </div>
-            </motion.div>
-          </div>
-
-          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
-            >
-              <div className="flex justify-between items-center mb-3 sm:mb-4">
-                <div className="flex items-center justify-between w-full">
-                  <h2 className="text-lg sm:text-xl font-semibold text-white">Histórico de Transações</h2>
-                  <motion.button
-                    onClick={() => compartilharHistorico('tabela-historico')}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    className="bg-blue-600 p-2 rounded-lg text-white hover:bg-blue-600 transition-colors"
-                    title="Compartilhar histórico de transações"
-                  >
-                    <FaShare className="text-sm sm:text-base" />
-                  </motion.button>
+                    }}
+                  />
                 </div>
-              </div>
+                <div className="mt-3 sm:mt-4 text-center text-xs sm:text-sm text-gray-400">
+                  {estatisticas.pagamentosPendentes} Pagamentos pendentes este ano
+                </div>
+              </motion.div>
+            </div>
 
-              {/* Filtros do histórico */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Filtrar por jogador"
-                    value={filtroHistorico.jogador}
-                    onChange={(e) => setFiltroHistorico({...filtroHistorico, jogador: e.target.value})}
+            <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
+              >
+                <div className="flex justify-between items-center mb-3 sm:mb-4">
+                  <div className="flex items-center justify-between w-full">
+                    <h2 className="text-lg sm:text-xl font-semibold text-white">Histórico de Transações</h2>
+                    <motion.button
+                      onClick={() => compartilharHistorico('tabela-historico')}
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      className="bg-blue-600 p-2 rounded-lg text-white hover:bg-blue-600 transition-colors"
+                      title="Compartilhar histórico de transações"
+                    >
+                      <FaShare className="text-sm sm:text-base" />
+                    </motion.button>
+                  </div>
+                </div>
+
+                {/* Filtros do histórico */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Filtrar por jogador"
+                      value={filtroHistorico.jogador}
+                      onChange={(e) => setFiltroHistorico({...filtroHistorico, jogador: e.target.value})}
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                    />
+                    <FaSearch className="absolute right-3 top-2.5 text-gray-400 text-xs sm:text-sm" />
+                  </div>
+                  
+                  <select
+                    value={filtroHistorico.tipo}
+                    onChange={(e) => setFiltroHistorico({...filtroHistorico, tipo: e.target.value})}
                     className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
-                  />
-                  <FaSearch className="absolute right-3 top-2.5 text-gray-400 text-xs sm:text-sm" />
+                  >
+                    <option value="todos">Todos os tipos</option>
+                    <option value="receita">Receitas</option>
+                    <option value="despesa">Despesas</option>
+                  </select>
+                  
+                  <button
+                    onClick={() => setFiltroHistorico({ jogador: '', tipo: 'todos', categoria: '' })}
+                    className="w-full bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-xs sm:text-sm"
+                  >
+                    Limpar filtros
+                  </button>
                 </div>
-                
-                <select
-                  value={filtroHistorico.tipo}
-                  onChange={(e) => setFiltroHistorico({...filtroHistorico, tipo: e.target.value})}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
-                >
-                  <option value="todos">Todos os tipos</option>
-                  <option value="receita">Receitas</option>
-                  <option value="despesa">Despesas</option>
-                </select>
-                
-                <button
-                  onClick={() => setFiltroHistorico({ jogador: '', tipo: 'todos', categoria: '' })}
-                  className="w-full bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-xs sm:text-sm"
-                >
-                  Limpar filtros
-                </button>
-              </div>
 
-              {carregando ? (
-                <div className="flex justify-center py-6 sm:py-8">
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    className="h-6 w-6 sm:h-8 sm:w-8 border-4 border-blue-500 border-t-transparent rounded-full"
-                  />
-                </div>
-              ) : transacoes.length === 0 ? (
-                <div className="text-center py-6 sm:py-8 text-gray-400 text-xs sm:text-sm">
-                  Nenhuma transação encontrada
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <div className="max-h-[400px] overflow-y-auto" id="tabela-historico">
-                    <table className="min-w-full divide-y divide-gray-700">
-                      <thead className="bg-gray-700 sticky top-0">
-                        <tr>
-                          <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Data</th>
-                          <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Descrição</th>
-                          <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Valor</th>
-                          <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Ações</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-700">
-                      {transacoesFiltradas.map((t) => (
+                {carregando ? (
+                  <div className="flex justify-center py-6 sm:py-8">
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      className="h-6 w-6 sm:h-8 sm:w-8 border-4 border-blue-500 border-t-transparent rounded-full"
+                    />
+                  </div>
+                ) : transacoes.length === 0 ? (
+                  <div className="text-center py-6 sm:py-8 text-gray-400 text-xs sm:text-sm">
+                    Nenhuma transação encontrada
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <div className="max-h-[400px] overflow-y-auto" id="tabela-historico">
+                      <table className="min-w-full divide-y divide-gray-700">
+                        <thead className="bg-gray-700 sticky top-0">
+                          <tr>
+                            <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Data</th>
+                            <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Descrição</th>
+                            <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Valor</th>
+                            <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-700">
+                        {transacoesFiltradas.map((t) => (
  <tr className={`${t.isento ? "bg-yellow-100/10 border-l-4 border-yellow-400/50" : ""}`}>
     <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-gray-300">
       {new Date(t.data).toLocaleDateString('pt-BR')}
@@ -1221,100 +1227,105 @@ const toggleStatusFinanceiro = async (jogadorId) => {
       {t.tipo === "receita" ? "+" : "-"} R$ {t.valor.toFixed(2)}
       {t.isento && " (Isento)"}
     </td>
-                            <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-gray-400">
-                              <motion.button
-                                onClick={() => deletarTransacao(t._id)}
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
-                                className="text-red-400 hover:text-red-500 mr-2"
-                              >
-                                <FaTrash className="text-xs sm:text-sm" />
-                              </motion.button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  <div className="text-xs text-gray-500 mt-2">
-                    Mostrando {transacoesFiltradas.length} de {transacoes.length} transações
-                  </div>
-                </div>
-              )}
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
-            >
-              <div className="flex justify-between items-center mb-3 sm:mb-4">
-                <h2 className="text-lg sm:text-xl font-semibold text-white">Controle de Mensalidades</h2>
-                <motion.button
-                  onClick={() => compartilharControle('tabela-mensalidades')}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="bg-blue-600 p-2 rounded-lg text-white hover:bg-blue-700 transition-colors"
-                  title="Compartilhar controle de mensalidades"
-                >
-                  <FaShare className="text-sm sm:text-base" />
-                </motion.button>
-              </div>
-
-              {carregando ? (
-                <div className="flex justify-center py-6 sm:py-8">
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    className="h-6 w-6 sm:h-8 sm:w-8 border-4 border-blue-500 border-t-transparent rounded-full"
-                  />
-                </div>
-              ) : jogadores.length === 0 ? (
-                <div className="text-center py-6 sm:py-8 text-gray-400 text-xs sm:text-sm">
-                  Nenhum jogador cadastrado
-                </div>
-              ) : (
-                <div className="overflow-x-auto max-h-[80vh]">
-                  <div id="tabela-mensalidades">
-                    <table className="min-w-full divide-y divide-gray-700">
-                      <thead className="bg-gray-700">
-                        <tr>
-                          <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Jogador</th>
-                          <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
-                          {dadosGraficoBarras.labels.map((mes, i) => (
-                            <th key={i} className="px-1 sm:px-2 py-2 sm:py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">
-                              {mes}
-                            </th>
-                          ))}
+                          <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-gray-400">
+                            <motion.button
+                              onClick={() => deletarTransacao(t._id)}
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              className="text-red-400 hover:text-red-500 mr-2"
+                            >
+                              <FaTrash className="text-xs sm:text-sm" />
+                            </motion.button>
+                          </td>
                         </tr>
-                        
-                      </thead>
-                      <tbody className="divide-y divide-gray-700">
-                        {jogadores.map((jogador) => (
-                          <tr key={jogador._id} className="hover:bg-gray-700/50">
-                            <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium text-white">
-                              {jogador.nome}
-                            </td>
-                            <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap">
-                              <div className="flex items-center space-x-2">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    toggleStatusFinanceiro(jogador._id);
-                                  }}
-                                  className={`px-2 py-1 rounded text-sm cursor-pointer transition-colors ${
-                                    jogador.statusFinanceiro === 'Adimplente' 
-                                      ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-                                      : 'bg-red-100 text-red-800 hover:bg-red-200'
-                                  }`}
-                                  title="Clique para alterar o status"
-                                >
-                                  {jogador.statusFinanceiro}
-                                </button>
-                              </div>
-                            </td>
-                          {jogador.pagamentos.map((pago, i) => {
+                      ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-2">
+                      Mostrando {transacoesFiltradas.length} de {transacoes.length} transações
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
+              >
+                <div className="flex justify-between items-center mb-3 sm:mb-4">
+                  <h2 className="text-lg sm:text-xl font-semibold text-white">Controle de Mensalidades</h2>
+                  <motion.button
+                    onClick={() => compartilharControle('tabela-mensalidades')}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    className="bg-blue-600 p-2 rounded-lg text-white hover:bg-blue-700 transition-colors"
+                    title="Compartilhar controle de mensalidades"
+                  >
+                    <FaShare className="text-sm sm:text-base" />
+                  </motion.button>
+                </div>
+
+                {carregando ? (
+                  <div className="flex justify-center py-6 sm:py-8">
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      className="h-6 w-6 sm:h-8 sm:w-8 border-4 border-blue-500 border-t-transparent rounded-full"
+                    />
+                  </div>
+                ) : jogadores.length === 0 ? (
+                  <div className="text-center py-6 sm:py-8 text-gray-400 text-xs sm:text-sm">
+                    Nenhum jogador cadastrado
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto max-h-[80vh]">
+                    <div id="tabela-mensalidades">
+                      <table className="min-w-full divide-y divide-gray-700">
+                        <thead className="bg-gray-700">
+                          <tr>
+                            <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Jogador</th>
+                            <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
+                            {dadosGraficoBarras.labels.map((mes, i) => (
+                              <th key={i} className="px-1 sm:px-2 py-2 sm:py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                {mes}
+                              </th>
+                            ))}
+                          </tr>
+                          
+                        </thead>
+                        <tbody className="divide-y divide-gray-700">
+                          {jogadores.map((jogador) => (
+                            <tr key={jogador._id} className="hover:bg-gray-700/50">
+                              <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium text-white">
+                                {jogador.nome}
+                              </td>
+                              <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap">
+                                <div className="flex items-center space-x-2">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleStatusFinanceiro(jogador._id);
+                                    }}
+                                    className={`px-2 py-1 rounded text-sm cursor-pointer transition-colors w-full flex items-center justify-center gap-2 ${
+                                      jogador.statusFinanceiro === 'Adimplente' 
+                                        ? 'bg-green-500 text-white hover:bg-green-600' 
+                                        : 'bg-red-500 text-white hover:bg-red-600'
+                                    }`}
+                                    title="Clique para alterar o status"
+                                  >
+                                    {jogador.statusFinanceiro === 'Adimplente' ? (
+                                      <FaCheck className="text-xs" />
+                                    ) : (
+                                      <FaTimes className="text-xs" />
+                                    )}
+                                    {jogador.statusFinanceiro}
+                                  </button>
+                                </div>
+                              </td>
+                            {jogador.pagamentos.map((pago, i) => {
   const transacao = transacoes.find(t => 
     t.jogadorId === jogador._id && 
     t.categoria === 'mensalidade' && 
@@ -1339,67 +1350,68 @@ const toggleStatusFinanceiro = async (jogadorId) => {
     </td>
   );
 })}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
-                </div>
-              )}
-            </motion.div>
+                )}
+              </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
-            >
-              <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Fluxo Anual</h2>
-              <div className="h-48 sm:h-64">
-                <Bar
-                  data={dadosGraficoBarras}
-                  options={{
-                    maintainAspectRatio: false,
-                    scales: {
-                      y: {
-                        beginAtZero: true,
-                        grid: {
-                          color: 'rgba(229, 231, 235, 0.1)'
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
+              >
+                <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Fluxo Anual</h2>
+                <div className="h-48 sm:h-64">
+                  <Bar
+                    data={dadosGraficoBarras}
+                    options={{
+                      maintainAspectRatio: false,
+                      scales: {
+                        y: {
+                          beginAtZero: true,
+                          grid: {
+                            color: 'rgba(229, 231, 235, 0.1)'
+                          },
+                          ticks: {
+                            color: '#e5e7eb',
+                            font: {
+                              size: window.innerWidth < 640 ? 10 : 12
+                            }
+                          }
                         },
-                        ticks: {
-                          color: '#e5e7eb',
-                          font: {
-                            size: window.innerWidth < 640 ? 10 : 12
+                        x: {
+                          grid: {
+                            color: 'rgba(229, 231, 235, 0.1)'
+                          },
+                          ticks: {
+                            color: '#e5e7eb',
+                            font: {
+                              size: window.innerWidth < 640 ? 10 : 12
+                            }
                           }
                         }
                       },
-                      x: {
-                        grid: {
-                          color: 'rgba(229, 231, 235, 0.1)'
-                        },
-                        ticks: {
-                          color: '#e5e7eb',
-                          font: {
-                            size: window.innerWidth < 640 ? 10 : 12
+                      plugins: {
+                        legend: {
+                          position: 'bottom',
+                          labels: {
+                            color: '#e5e7eb',
+                            font: {
+                              size: window.innerWidth < 640 ? 10 : 12
+                            }
                           }
                         }
                       }
-                    },
-                    plugins: {
-                      legend: {
-                        position: 'bottom',
-                        labels: {
-                          color: '#e5e7eb',
-                          font: {
-                            size: window.innerWidth < 640 ? 10 : 12
-                          }
-                        }
-                      }
-                    }
-                  }}
-                />
-              </div>
-            </motion.div>
+                    }}
+                  />
+                </div>
+              </motion.div>
+            </div>
           </div>
         </div>
       </div>
@@ -1604,7 +1616,56 @@ const toggleStatusFinanceiro = async (jogadorId) => {
         draggable
         pauseOnHover
       />
-    </div>
+
+      {/* Modal de Opções de Pagamento */}
+      <AnimatePresence>
+        {showPagamentoModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            onClick={() => {
+              setShowPagamentoModal(false);
+              setPagamentoSelecionado(null);
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-lg p-6 max-w-sm w-full mx-4"
+              onClick={e => e.stopPropagation()}
+            >
+              <h3 className="text-lg font-semibold mb-4">Escolha o tipo de pagamento</h3>
+              <div className="space-y-3">
+                <button
+                  onClick={() => handleTipoPagamento('normal')}
+                  className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors"
+                >
+                  Pagamento Normal (Contabiliza o valor)
+                </button>
+                <button
+                  onClick={() => handleTipoPagamento('isento')}
+                  className="w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition-colors"
+                >
+                  Isento (Não contabiliza o valor)
+                </button>
+                <button
+                  onClick={() => {
+                    setShowPagamentoModal(false);
+                    setPagamentoSelecionado(null);
+                  }}
+                  className="w-full bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600 transition-colors"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
