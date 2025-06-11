@@ -246,15 +246,16 @@ const [isento, setIsento] = useState(false);
   };
 
   const togglePagamento = async (jogadorId, mesIndex) => {
-    try {
-      // Encontra o jogador atual
-      const jogador = jogadores.find(j => j._id === jogadorId);
-      if (!jogador) {
-        throw new Error('Jogador não encontrado');
-      }
+    // Encontra o jogador atual antes de qualquer operação
+    const jogadorAtual = jogadores.find(j => j._id === jogadorId);
+    if (!jogadorAtual) {
+      toast.error('Jogador não encontrado');
+      return;
+    }
 
+    try {
       // Cria uma cópia do array de pagamentos
-      const updatedPagamentos = [...jogador.pagamentos];
+      const updatedPagamentos = [...jogadorAtual.pagamentos];
       updatedPagamentos[mesIndex] = !updatedPagamentos[mesIndex];
 
       // Atualiza o estado local primeiro
@@ -312,7 +313,7 @@ const [isento, setIsento] = useState(false);
           if (j._id === jogadorId) {
             return {
               ...j,
-              pagamentos: jogador.pagamentos
+              pagamentos: jogadorAtual.pagamentos
             };
           }
           return j;
@@ -331,14 +332,15 @@ const [isento, setIsento] = useState(false);
   };
 
   const toggleStatus = async (jogadorId) => {
-    try {
-      // Encontra o jogador atual
-      const jogador = jogadores.find(j => j._id === jogadorId);
-      if (!jogador) {
-        throw new Error('Jogador não encontrado');
-      }
+    // Encontra o jogador atual antes de qualquer operação
+    const jogadorAtual = jogadores.find(j => j._id === jogadorId);
+    if (!jogadorAtual) {
+      toast.error('Jogador não encontrado');
+      return;
+    }
 
-      const newStatus = jogador.statusFinanceiro === 'Adimplente' ? 'Inadimplente' : 'Adimplente';
+    try {
+      const newStatus = jogadorAtual.statusFinanceiro === 'Adimplente' ? 'Inadimplente' : 'Adimplente';
 
       // Atualiza o estado local primeiro
       setJogadores(prevJogadores => {
@@ -392,7 +394,7 @@ const [isento, setIsento] = useState(false);
           if (j._id === jogadorId) {
             return {
               ...j,
-              statusFinanceiro: jogador.statusFinanceiro
+              statusFinanceiro: jogadorAtual.statusFinanceiro
             };
           }
           return j;
