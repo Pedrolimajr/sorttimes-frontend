@@ -1309,7 +1309,7 @@ const [isento, setIsento] = useState(false);
                       placeholder="Buscar jogador..."
                       value={filtroJogador}
                       onChange={(e) => setFiltroJogador(e.target.value)}
-                      className="w-full sm:w-40 px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                      className="w-full sm:w-40 px-2 sm:px-3 py-1 sm:py-1.5 bg-gray-700 border border-gray-600 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
                     />
                     <FaSearch className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs sm:text-sm" />
                   </div>
