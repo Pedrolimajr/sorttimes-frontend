@@ -247,12 +247,20 @@ const [isento, setIsento] = useState(false);
 
   const togglePagamento = async (jogadorId, mesIndex) => {
     try {
+      // Encontra o jogador atual
+      const jogador = jogadores.find(j => j._id === jogadorId);
+      if (!jogador) {
+        throw new Error('Jogador não encontrado');
+      }
+
+      // Cria uma cópia do array de pagamentos
+      const updatedPagamentos = [...jogador.pagamentos];
+      updatedPagamentos[mesIndex] = !updatedPagamentos[mesIndex];
+
       // Atualiza o estado local primeiro
       setJogadores(prevJogadores => {
         const updatedJogadores = prevJogadores.map(j => {
           if (j._id === jogadorId) {
-            const updatedPagamentos = [...j.pagamentos];
-            updatedPagamentos[mesIndex] = !j.pagamentos[mesIndex];
             return {
               ...j,
               pagamentos: updatedPagamentos
@@ -271,36 +279,40 @@ const [isento, setIsento] = useState(false);
         return updatedJogadores;
       });
 
-      // Prepara os dados para a API
-      const jogador = jogadores.find(j => j._id === jogadorId);
-      const updatedPagamentos = jogador.pagamentos.map((pago, index) => ({
-        mes: index,
-        pago: index === mesIndex ? !pago : pago
-      }));
+      // Prepara o payload para a API
+      const payload = {
+        pagamentos: updatedPagamentos.map((pago, index) => ({
+          mes: index,
+          pago: pago
+        }))
+      };
 
-      // Atualiza no banco de dados
-      const response = await api.put(`/jogadores/${jogadorId}`, {
-        pagamentos: updatedPagamentos,
-        statusFinanceiro: jogador.statusFinanceiro
+      console.log('Enviando para API:', {
+        url: `/jogadores/${jogadorId}`,
+        payload
       });
 
-      if (!response.data) {
-        throw new Error('Resposta inválida do servidor');
-      }
+      // Atualiza no banco de dados
+      const response = await api.put(`/jogadores/${jogadorId}`, payload);
+
+      console.log('Resposta da API:', response.data);
 
     } catch (error) {
-      console.error("Erro ao atualizar pagamento:", error);
+      console.error("Erro detalhado:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      
       toast.error('Erro ao atualizar pagamento');
       
       // Reverte a mudança em caso de erro
       setJogadores(prevJogadores => {
         const revertedJogadores = prevJogadores.map(j => {
           if (j._id === jogadorId) {
-            const updatedPagamentos = [...j.pagamentos];
-            updatedPagamentos[mesIndex] = !updatedPagamentos[mesIndex];
             return {
               ...j,
-              pagamentos: updatedPagamentos
+              pagamentos: jogador.pagamentos
             };
           }
           return j;
@@ -320,7 +332,12 @@ const [isento, setIsento] = useState(false);
 
   const toggleStatus = async (jogadorId) => {
     try {
+      // Encontra o jogador atual
       const jogador = jogadores.find(j => j._id === jogadorId);
+      if (!jogador) {
+        throw new Error('Jogador não encontrado');
+      }
+
       const newStatus = jogador.statusFinanceiro === 'Adimplente' ? 'Inadimplente' : 'Adimplente';
 
       // Atualiza o estado local primeiro
@@ -345,18 +362,28 @@ const [isento, setIsento] = useState(false);
         return updatedJogadores;
       });
 
-      // Atualiza no banco de dados
-      const response = await api.put(`/jogadores/${jogadorId}`, {
-        statusFinanceiro: newStatus,
-        pagamentos: jogador.pagamentos
+      // Prepara o payload para a API
+      const payload = {
+        statusFinanceiro: newStatus
+      };
+
+      console.log('Enviando para API:', {
+        url: `/jogadores/${jogadorId}`,
+        payload
       });
 
-      if (!response.data) {
-        throw new Error('Resposta inválida do servidor');
-      }
+      // Atualiza no banco de dados
+      const response = await api.put(`/jogadores/${jogadorId}`, payload);
+
+      console.log('Resposta da API:', response.data);
 
     } catch (error) {
-      console.error("Erro ao atualizar status:", error);
+      console.error("Erro detalhado:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      
       toast.error('Erro ao atualizar status');
       
       // Reverte a mudança em caso de erro
@@ -365,7 +392,7 @@ const [isento, setIsento] = useState(false);
           if (j._id === jogadorId) {
             return {
               ...j,
-              statusFinanceiro: jogadores.find(j => j._id === jogadorId)?.statusFinanceiro
+              statusFinanceiro: jogador.statusFinanceiro
             };
           }
           return j;
