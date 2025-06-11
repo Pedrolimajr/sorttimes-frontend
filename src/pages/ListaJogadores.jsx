@@ -27,7 +27,7 @@ export default function ListaJogadores({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { jogadores, carregando, atualizarStatusFinanceiro } = useJogadores();
+  const { jogadores, carregando, atualizarStatusFinanceiro, atualizarJogador } = useJogadores();
   const [filtro, setFiltro] = useState('');
   const [filtroPosicao, setFiltroPosicao] = useState('');
   const [filtroStatus, setFiltroStatus] = useState('');
@@ -84,6 +84,39 @@ export default function ListaJogadores({
       return () => clearTimeout(timer);
     }
   }, [mensagemSucesso]);
+
+  const atualizarEstadoJogadores = (novosJogadores) => {
+    novosJogadores.forEach(jogador => {
+      atualizarJogador(jogador);
+    });
+  };
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const dadosFinanceiros = JSON.parse(localStorage.getItem('dadosFinanceiros'));
+      if (dadosFinanceiros && dadosFinanceiros.jogadoresCache) {
+        const jogadoresAtualizados = jogadores.map(jogador => {
+          const jogadorAtualizado = dadosFinanceiros.jogadoresCache.find(j => j._id === jogador._id);
+          if (jogadorAtualizado) {
+            return {
+              ...jogador,
+              statusFinanceiro: jogadorAtualizado.statusFinanceiro,
+              pagamentos: jogadorAtualizado.pagamentos
+            };
+          }
+          return jogador;
+        });
+        
+        atualizarEstadoJogadores(jogadoresAtualizados);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [jogadores, atualizarJogador]);
 
   const jogadoresFiltrados = jogadores.filter(jogador => {
     const matchesNome = jogador.nome?.toLowerCase().includes(filtro.toLowerCase());
