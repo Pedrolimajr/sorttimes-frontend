@@ -34,62 +34,23 @@ export const pagamentosAPI = {
   }
 };
 
-// Interceptadores
-api.interceptors.request.use(
-  (config) => {
-    config.url = config.url.replace(/\/\//g, '/'); // Apenas normaliza barra dupla
-    console.log('📡 Request:', {
-      method: config.method?.toUpperCase(),
-      url: config.baseURL + config.url,
-      data: config.data
-    });
-    return config;
-  },
-  (error) => {
-    console.error('❌ Request Error:', error);
-    return Promise.reject(error);
-  }
-);
-
+// Interceptor para tratamento de erros
 api.interceptors.response.use(
-  (response) => {
-    console.log('✅ Response:', {
-      status: response.status,
-      url: response.config.url,
-      data: response.data
-    });
-    return response;
-  },
+  (response) => response,
   (error) => {
-    console.error('❌ Response Error:', {
-      status: error.response?.status,
-      url: error.config?.url,
-      message: error.message,
-      data: error.response?.data
-    });
-
-    let mensagemErro = 'Erro ao processar requisição';
-
-    switch (error.response?.status) {
-      case 405:
-        mensagemErro = 'Operação não permitida. Por favor, contate o suporte.';
-        break;
-      case 404:
-        mensagemErro = 'Recurso não encontrado';
-        break;
-      case 401:
-        mensagemErro = 'Não autorizado. Faça login novamente';
-        break;
-      case 403:
-        mensagemErro = 'Acesso negado';
-        break;
-      case 500:
-        mensagemErro = 'Erro interno do servidor';
-        break;
+    if (error.response) {
+      // O servidor respondeu com um status de erro
+      console.error('Erro na resposta:', error.response.data);
+      return Promise.reject(error.response.data);
+    } else if (error.request) {
+      // A requisição foi feita mas não houve resposta
+      console.error('Erro na requisição:', error.request);
+      return Promise.reject({ message: 'Erro de conexão com o servidor' });
+    } else {
+      // Algo aconteceu na configuração da requisição
+      console.error('Erro:', error.message);
+      return Promise.reject({ message: 'Erro ao processar a requisição' });
     }
-
-    toast.error(mensagemErro);
-    return Promise.reject(error);
   }
 );
 

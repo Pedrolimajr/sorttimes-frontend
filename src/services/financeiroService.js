@@ -1,79 +1,72 @@
 import api from './api';
 
 export const financeiroService = {
-  async listarTransacoes() {
+  // Buscar todas as transações
+  getTransacoes: async () => {
     try {
-      console.log('Buscando transações...');
-      const response = await api.get('/api/financeiro/transacoes');
-      console.log('Transações recebidas:', response.data);
+      const response = await api.get('/financeiro/transacoes');
       return response.data;
     } catch (error) {
-      console.error('Erro ao listar transações:', error);
       throw error;
     }
   },
 
-  async adicionarTransacao(dados) {
+  // Adicionar nova transação
+  adicionarTransacao: async (transacao) => {
     try {
-      console.log('Adicionando transação:', dados);
-      const response = await api.post('/api/financeiro/transacoes', dados);
-      console.log('Resposta do servidor:', response.data);
-      
-      // Emitir evento de atualização via socket
-      if (window.socket) {
-        window.socket.emit('nova-transacao', response.data);
-      }
-      
+      const response = await api.post('/financeiro/transacoes', transacao);
       return response.data;
     } catch (error) {
-      console.error('Erro ao adicionar transação:', error);
       throw error;
     }
   },
 
-  async atualizarTransacao(id, dados) {
+  // Deletar transação
+  deletarTransacao: async (id) => {
     try {
-      console.log('Atualizando transação:', id, dados);
-      const response = await api.put(`/api/financeiro/transacoes/${id}`, dados);
-      console.log('Transação atualizada:', response.data);
+      const response = await api.delete(`/financeiro/transacoes/${id}`);
       return response.data;
     } catch (error) {
-      console.error('Erro ao atualizar transação:', error);
       throw error;
     }
   },
 
-  async excluirTransacao(id) {
+  // Atualizar status de pagamento do jogador
+  atualizarPagamento: async (jogadorId, mesIndex, dados) => {
     try {
-      console.log('Excluindo transação:', id);
-      const response = await api.delete(`/api/financeiro/transacoes/${id}`);
-      console.log('Transação excluída:', response.data);
+      const response = await api.put(`/jogadores/${jogadorId}/pagamentos/${mesIndex}`, dados);
       return response.data;
     } catch (error) {
-      console.error('Erro ao excluir transação:', error);
       throw error;
     }
   },
 
-  // Novo método para atualizar pagamento do jogador
-  async registrarPagamentoJogador(jogadorId, mes) {
+  // Buscar jogadores
+  getJogadores: async () => {
     try {
-      console.log('Registrando pagamento:', { jogadorId, mes });
-      const response = await api.post(`/api/jogadores/${jogadorId}/pagamentos/${mes}`);
-      console.log('Pagamento registrado:', response.data);
-      
-      // Emitir evento de atualização via socket
-      if (window.socket) {
-        window.socket.emit('pagamento-atualizado', {
-          jogadorId,
-          mes,
-          status: 'pago'
-        });
-      }
-      
+      const response = await api.get('/jogadores');
       return response.data;
     } catch (error) {
-      console.error('Erro ao registrar pagamento:', error);
+      throw error;
+    }
+  },
+
+  // Atualizar jogador
+  atualizarJogador: async (jogadorId, dados) => {
+    try {
+      const response = await api.put(`/jogadores/${jogadorId}`, dados);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Deletar jogador
+  deletarJogador: async (jogadorId) => {
+    try {
+      const response = await api.delete(`/jogadores/${jogadorId}`);
+      return response.data;
+    } catch (error) {
       throw error;
     }
   }
