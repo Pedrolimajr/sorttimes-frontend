@@ -1044,18 +1044,23 @@ const toggleStatusFinanceiro = async (jogadorId) => {
                         </button>
                       </div>
 
-                      {/* Campo de pesquisa */}
-                      <div className="mb-4">
+                      {/* Campo de pesquisa melhorado */}
+                      <div className="mb-6">
                         <div className="relative">
                           <input
                             type="text"
-                            placeholder="Pesquisar jogador..."
+                            placeholder="Digite o nome do jogador para pesquisar..."
                             value={filtroJogadorModal}
                             onChange={(e) => setFiltroJogadorModal(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 placeholder-gray-400"
                           />
-                          <FaSearch className="absolute right-3 top-3 text-gray-400" />
+                          <FaSearch className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
                         </div>
+                        <p className="mt-2 text-sm text-gray-500">
+                          {jogadores.filter(jogador => 
+                            jogador.nome.toLowerCase().includes(filtroJogadorModal.toLowerCase())
+                          ).length} jogadores encontrados
+                        </p>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1064,25 +1069,25 @@ const toggleStatusFinanceiro = async (jogadorId) => {
                             jogador.nome.toLowerCase().includes(filtroJogadorModal.toLowerCase())
                           )
                           .map(jogador => (
-                          <div key={jogador._id} className="p-4 border border-gray-200 rounded-lg">
-                            <h3 className="text-lg font-semibold mb-2">{jogador.nome}</h3>
-                            <p className="text-sm text-gray-500">Status: {jogador.statusFinanceiro}</p>
-                            <div className="mt-2 flex flex-wrap gap-1">
-                              {jogador.pagamentos.map((pagamento, i) => (
-                                <button
-                                  key={i}
-                                  onClick={() => togglePagamento(jogador._id, i)}
-                                  className={`px-2 py-1 rounded-full text-sm ${
-                                    pagamento.pago || pagamento.isento ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-                                  }`}
-                                  title={pagamento.isento ? "Mensalidade isenta" : pagamento.pago ? "Mensalidade paga" : "Mensalidade pendente"}
-                                >
-                                  {(pagamento.pago || pagamento.isento) ? <FaCheck size={12} /> : <FaTimes size={12} />}
-                                </button>
-                              ))}
+                            <div key={jogador._id} className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+                              <h3 className="text-lg font-semibold mb-2 text-gray-800">{jogador.nome}</h3>
+                              <p className="text-sm text-gray-500 mb-3">Status: {jogador.statusFinanceiro}</p>
+                              <div className="mt-2 flex flex-wrap gap-1">
+                                {jogador.pagamentos.map((pagamento, i) => (
+                                  <button
+                                    key={i}
+                                    onClick={() => togglePagamento(jogador._id, i)}
+                                    className={`px-2 py-1 rounded-full text-sm ${
+                                      pagamento.pago || pagamento.isento ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+                                    }`}
+                                    title={pagamento.isento ? "Mensalidade isenta" : pagamento.pago ? "Mensalidade paga" : "Mensalidade pendente"}
+                                  >
+                                    {(pagamento.pago || pagamento.isento) ? <FaCheck size={12} /> : <FaTimes size={12} />}
+                                  </button>
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
                       </div>
                     </div>
                   </motion.div>
