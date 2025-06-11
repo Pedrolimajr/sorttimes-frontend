@@ -1311,11 +1311,11 @@ const toggleStatusFinanceiro = async (jogadorId) => {
                 transition={{ delay: 0.3 }}
                 className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
               >
-                <div className="flex justify-between items-center mb-3 sm:mb-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3 sm:mb-4">
                   <h2 className="text-lg sm:text-xl font-semibold text-white">Controle de Mensalidades</h2>
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
                     {/* Campo de pesquisa */}
-                    <div className="relative">
+                    <div className="relative w-full sm:w-48">
                       <input
                         type="text"
                         placeholder="Pesquisar jogador..."

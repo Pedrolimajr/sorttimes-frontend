@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { 
   FaRandom, FaUser, FaTshirt, FaBalanceScale, FaCheck, FaTimes, 
   FaSync, FaArrowLeft, FaHistory, FaEdit, FaShare, FaSave, 
-  FaTrash, FaUserCheck, FaUserTimes, FaLink, FaRegCalendarAlt 
+  FaTrash, FaUserCheck, FaUserTimes, FaLink, FaRegCalendarAlt, FaSearch 
 } from "react-icons/fa";
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { GiSoccerKick } from "react-icons/gi";
@@ -72,6 +72,7 @@ export default function SorteioTimes() {
   const [modoEdicao, setModoEdicao] = useState(false);
   const [filtroPosicao, setFiltroPosicao] = useState('');
   const [dataJogo, setDataJogo] = useState('');
+  const [filtroJogadoresSelecionados, setFiltroJogadoresSelecionados] = useState('');
 
   // Carrega dados do localStorage ao montar o componente
   useEffect(() => {
