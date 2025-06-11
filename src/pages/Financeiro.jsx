@@ -1174,24 +1174,24 @@ const toggleStatus = (jogadorId) => {
               transition={{ delay: 0.3 }}
               className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
             >
-              <div className="flex justify-between items-center mb-3 sm:mb-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3 sm:mb-4">
                 <h2 className="text-lg sm:text-xl font-semibold text-white">Controle de Mensalidades</h2>
-                <div className="flex items-center gap-2">
-                  <div className="relative">
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <div className="relative flex-1 sm:flex-none">
                     <input
                       type="text"
                       placeholder="Buscar jogador..."
                       value={filtroJogador}
                       onChange={(e) => setFiltroJogador(e.target.value)}
-                      className="w-48 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                      className="w-full sm:w-40 px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
                     />
-                    <FaSearch className="absolute right-3 top-2.5 text-gray-400 text-xs sm:text-sm" />
+                    <FaSearch className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs sm:text-sm" />
                   </div>
                   <motion.button
                     onClick={() => compartilharControle('tabela-mensalidades')}
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
-                    className="bg-blue-600 p-2 rounded-lg text-white hover:bg-blue-700 transition-colors"
+                    className="bg-blue-600 p-1.5 sm:p-2 rounded-lg text-white hover:bg-blue-700 transition-colors flex-shrink-0"
                     title="Compartilhar controle de mensalidades"
                   >
                     <FaShare className="text-sm sm:text-base" />
@@ -1212,30 +1212,29 @@ const toggleStatus = (jogadorId) => {
                   Nenhum jogador cadastrado
                 </div>
               ) : (
-                <div className="overflow-x-auto max-h-[80vh]">
-                  <div id="tabela-mensalidades">
-                    <table className="min-w-full divide-y divide-gray-700">
-                      <thead className="bg-gray-700">
+                <div className="overflow-x-auto max-h-[60vh] sm:max-h-[70vh] md:max-h-[80vh]">
+                  <div id="tabela-mensalidades" className="min-w-[800px]">
+                    <table className="w-full divide-y divide-gray-700">
+                      <thead className="bg-gray-700 sticky top-0">
                         <tr>
-                          <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Jogador</th>
-                          <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
+                          <th className="px-2 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Jogador</th>
+                          <th className="px-2 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
                           {dadosGraficoBarras.labels.map((mes, i) => (
                             <th key={i} className="px-1 sm:px-2 py-2 sm:py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">
                               {mes}
                             </th>
                           ))}
                         </tr>
-                        
                       </thead>
                       <tbody className="divide-y divide-gray-700">
                         {jogadores.filter(jogador =>
                           jogador.nome.toLowerCase().includes(filtroJogador.toLowerCase())
                         ).map((jogador) => (
                           <tr key={jogador._id} className="hover:bg-gray-700/50">
-                            <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium text-white">
+                            <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium text-white">
                               {jogador.nome}
                             </td>
-                            <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap">
+                            <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap">
                               <motion.button
                                 onClick={() => toggleStatus(jogador._id)}
                                 whileHover={{ scale: 1.05 }}
@@ -1256,12 +1255,12 @@ const toggleStatus = (jogadorId) => {
                                   whileHover={{ scale: 1.1 }}
                                   whileTap={{ scale: 0.9 }}
                                   className={`
-                                    w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center
+                                    w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center
                                     ${pago ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}
                                   `}
                                   title={pago ? "Mensalidade paga" : "Mensalidade pendente"}
                                 >
-                                  {pago ? <FaCheck size={10} className="sm:text-xs" /> : <FaTimes size={10} className="sm:text-xs" />}
+                                  {pago ? <FaCheck size={8} className="sm:text-xs" /> : <FaTimes size={8} className="sm:text-xs" />}
                                 </motion.button>
                               </td>
                             ))}
