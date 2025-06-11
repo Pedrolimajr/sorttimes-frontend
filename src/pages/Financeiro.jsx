@@ -1,6 +1,4 @@
 import { useState, useEffect } from "react";
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import {
   FaMoneyBillWave,
   FaArrowUp,
@@ -19,9 +17,7 @@ import {
   FaUsers,
   FaTimesCircle,
   FaShare,
-  FaSearch,
-  FaFileAlt,
-  FaImage
+  FaSearch
 } from "react-icons/fa";
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { motion, AnimatePresence } from "framer-motion";
@@ -31,8 +27,8 @@ import { useNavigate } from 'react-router-dom';
 import ListaJogadores from './ListaJogadores';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import api from '../services/api';
-import { useJogadores } from '../context/JogadoresContext';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 Chart.register(...registerables);
 
@@ -40,8 +36,8 @@ const API_URL = 'http://localhost:5000/api';
 
 export default function Financeiro() {
   const navigate = useNavigate();
-  const { jogadores, atualizarStatusFinanceiro } = useJogadores();
   const [transacoes, setTransacoes] = useState([]);
+  const [jogadores, setJogadores] = useState([]);
   const [filtroMes, setFiltroMes] = useState(new Date().toISOString().slice(0, 7));
   const [carregando, setCarregando] = useState(true);
   const [relatorioModal, setRelatorioModal] = useState(false);
@@ -71,30 +67,6 @@ export default function Financeiro() {
     pagamentosPendentes: 0,
     totalJogadores: 0
   });
-
-  const [barChartData, setBarChartData] = useState({
-    labels: [],
-    datasets: [
-      {
-        label: 'Receitas',
-        data: [],
-        backgroundColor: 'rgba(34, 197, 94, 0.5)',
-        borderColor: 'rgb(34, 197, 94)',
-        borderWidth: 1
-      },
-      {
-        label: 'Despesas',
-        data: [],
-        backgroundColor: 'rgba(239, 68, 68, 0.5)',
-        borderColor: 'rgb(239, 68, 68)',
-        borderWidth: 1
-      }
-    ]
-  });
-
-  const [filtroJogadorModal, setFiltroJogadorModal] = useState('');
-
-  const STORAGE_KEY = 'dadosFinanceiros';
 
   // Carregar dados iniciais
   useEffect(() => {
@@ -298,115 +270,6 @@ export default function Financeiro() {
       console.error("Erro ao adicionar transação:", error);
       toast.error(error.message || 'Erro ao adicionar transação');
     }
-  };
-
-  const handleEditarTransacao = async (id, dados) => {
-    try {
-      const response = await api.put(`/financeiro/transacoes/${id}`, dados);
-      if (response.data.success) {
-        toast.success('Transação atualizada com sucesso!');
-        setTransacoes(transacoes.map(t => t.id === id ? response.data.data : t));
-      }
-    } catch (error) {
-      console.error('Erro ao atualizar transação:', error);
-      toast.error('Erro ao atualizar transação');
-    }
-  };
-
-  const handleExcluirTransacao = async (id) => {
-    try {
-      const response = await api.delete(`/financeiro/transacoes/${id}`);
-      if (response.data.success) {
-        toast.success('Transação excluída com sucesso!');
-        setTransacoes(transacoes.filter(t => t.id !== id));
-      }
-    } catch (error) {
-      console.error('Erro ao excluir transação:', error);
-      toast.error('Erro ao excluir transação');
-    }
-  };
-
-  const handleGerarRelatorio = async () => {
-    try {
-      const response = await api.get('/financeiro/relatorio', {
-        params: {
-          mes: filtroMes
-        }
-      });
-      if (response.data.success) {
-        // Implementar lógica de download do relatório
-        toast.success('Relatório gerado com sucesso!');
-      }
-    } catch (error) {
-      console.error('Erro ao gerar relatório:', error);
-      toast.error('Erro ao gerar relatório');
-    }
-  };
-
-  const handleExportarPDF = async () => {
-    try {
-      const element = document.getElementById('relatorio');
-      const canvas = await html2canvas(element);
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-      const imgX = (pdfWidth - imgWidth * ratio) / 2;
-      const imgY = 30;
-      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
-      pdf.save('relatorio-financeiro.pdf');
-      toast.success('PDF gerado com sucesso!');
-    } catch (error) {
-      console.error('Erro ao gerar PDF:', error);
-      toast.error('Erro ao gerar PDF');
-    }
-  };
-
-  const handleCompartilharRelatorio = async () => {
-    try {
-      const response = await api.post('/financeiro/compartilhar', {
-        mes: filtroMes
-      });
-      if (response.data.success) {
-        toast.success('Relatório compartilhado com sucesso!');
-      }
-    } catch (error) {
-      console.error('Erro ao compartilhar relatório:', error);
-      toast.error('Erro ao compartilhar relatório');
-    }
-  };
-
-  const handleImprimirRelatorio = () => {
-    window.print();
-  };
-
-  const handleSelecionarJogador = (jogador) => {
-    setJogadorSelecionado(jogador);
-    setNovaTransacao(prev => ({
-      ...prev,
-      jogadorId: jogador.id,
-      jogadorNome: jogador.nome
-    }));
-    setMostrarListaJogadores(false);
-  };
-
-  const handleFiltrarTransacoes = () => {
-    // Implementar lógica de filtro
-  };
-
-  const handleLimparFiltros = () => {
-    setFiltroHistorico({
-      jogador: '',
-      tipo: 'todos',
-      categoria: ''
-    });
-  };
-
-  const handleVoltar = () => {
-    navigate('/');
   };
 
   const togglePagamento = async (jogadorId, mesIndex) => {
@@ -944,456 +807,747 @@ export default function Financeiro() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-4">
+    <div className="min-h-screen bg-gray-900 p-4 sm:p-6">
+      <div className="fixed inset-0 overflow-hidden -z-10 opacity-20">
+        {[...Array(15)].map((_, i) => (
+          <motion.div
+            key={i}
+            initial={{ x: Math.random() * 100, y: Math.random() * 100, opacity: 0.3 }}
+            animate={{ y: [null, (Math.random() - 0.5) * 50], x: [null, (Math.random() - 0.5) * 50] }}
+            transition={{ duration: 15 + Math.random() * 20, repeat: Infinity, repeatType: "reverse" }}
+            className="absolute w-1 h-1 bg-white rounded-full"
+            style={{ left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%` }}
+          />
+        ))}
+      </div>
+
       <div className="max-w-7xl mx-auto">
-        {/* Cabeçalho */}
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Financeiro</h1>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setRelatorioModal(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-            >
-              <FaFileAlt />
-              Relatório
-            </button>
-            <button
-              onClick={() => setEditarModal(true)}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-            >
-              <FaPlus />
-              Nova Transação
-            </button>
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-12 sm:mb-16 relative"
+        >
+          {/* Novo botão voltar */}
+          <motion.button 
+            onClick={() => navigate('/dashboard')}
+            whileHover={{ 
+              scale: 1.05,
+              x: -5,
+              backgroundColor: "rgba(37, 99, 235, 0.1)"
+            }}
+            whileTap={{ scale: 0.95 }}
+            className="absolute left-2 -top-8 sm:-top-0 w-11 h-11 flex items-center justify-center bg-gray-800/40 hover:bg-gray-700/40 text-gray-200 rounded-full transition-all duration-300 backdrop-blur-sm border border-gray-700/50 shadow-lg hover:shadow-blue-500/20"
+            title="Voltar para o Dashboard"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <RiArrowLeftDoubleLine className="text-blue-400 text-2xl transform transition-transform group-hover:translate-x-1" />
+            <div className="absolute inset-0 rounded-full bg-blue-400/10 animate-pulse" style={{ animationDuration: '3s' }} />
+          </motion.button>
+
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-14 sm:mt-0">
+            <div className="flex-grow flex justify-center items-center">
+              <div className="flex flex-col items-center gap-2">
+                <div className="flex items-center justify-center gap-3">
+                  <FaMoneyBillWave className="text-blue-400 text-2xl sm:text-3xl" />
+                  <motion.h1
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.1 }}
+                    className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300"
+                  >
+                    Financeiro
+                  </motion.h1>
+                </div>
+
+                {/* Novo subtítulo */}
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.8 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-gray-400 text-sm sm:text-base"
+                >
+                  Gerencie as finanças e mensalidades do time
+                </motion.p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 sm:gap-4 mt-4 md:mt-0">
+              <div className="flex items-center gap-2 bg-gray-800 bg-opacity-50 px-3 py-2 rounded-lg">
+                <FaCalendarAlt className="text-blue-400 text-sm sm:text-base" />
+                <input
+                  type="month"
+                  value={filtroMes}
+                  onChange={(e) => setFiltroMes(e.target.value)}
+                  className="bg-transparent text-white focus:outline-none text-xs sm:text-sm"
+                />
+              </div>
+              <motion.button
+                onClick={() => setRelatorioModal(true)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg text-xs sm:text-sm"
+              >
+                <FaPrint className="text-xs sm:text-sm" />
+                <span>Relatório</span>
+              </motion.button>
+            </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Cards de Estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="bg-gray-800 p-4 rounded-lg">
-            <h3 className="text-gray-400 text-sm">Total de Receitas</h3>
-            <p className="text-2xl font-bold text-green-500">
-              R$ {estatisticas.totalReceitas.toFixed(2)}
+        <div className="grid grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <motion.div
+            whileHover={{ y: -5 }}
+            className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
+          >
+            <h3 className="text-sm font-medium text-gray-300 mb-1 flex items-center gap-1 sm:gap-2">
+              <FaArrowUp className="text-green-400 text-sm" /> Receitas
+            </h3>
+            <p className="text-lg sm:text-xl font-bold text-white">
+              R$ {(estatisticas.totalReceitas || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </p>
-          </div>
-          <div className="bg-gray-800 p-4 rounded-lg">
-            <h3 className="text-gray-400 text-sm">Total de Despesas</h3>
-            <p className="text-2xl font-bold text-red-500">
-              R$ {estatisticas.totalDespesas.toFixed(2)}
+          </motion.div>
+
+          <motion.div
+            whileHover={{ y: -5 }}
+            className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
+          >
+            <h3 className="text-sm font-medium text-gray-300 mb-1 flex items-center gap-1 sm:gap-2">
+              <FaArrowDown className="text-red-400 text-sm" /> Despesas
+            </h3>
+            <p className="text-lg sm:text-xl font-bold text-white">
+              R$ {(estatisticas.totalDespesas || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </p>
-          </div>
-          <div className="bg-gray-800 p-4 rounded-lg">
-            <h3 className="text-gray-400 text-sm">Saldo</h3>
-            <p className={`text-2xl font-bold ${estatisticas.saldo >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-              R$ {estatisticas.saldo.toFixed(2)}
+          </motion.div>
+
+          <motion.div
+            whileHover={{ y: -5 }}
+            className={`bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border ${(estatisticas.saldo || 0) >= 0 ? 'border-green-500/30' : 'border-red-500/30'}`}
+          >
+            <h3 className="text-sm font-medium text-gray-300 mb-1">Saldo</h3>
+            <p className={`text-lg sm:text-xl font-bold ${(estatisticas.saldo || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              R$ {(estatisticas.saldo || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </p>
-          </div>
-          <div className="bg-gray-800 p-4 rounded-lg">
-            <h3 className="text-gray-400 text-sm">Pagamentos Pendentes</h3>
-            <p className="text-2xl font-bold text-yellow-500">
-              {estatisticas.pagamentosPendentes}
-            </p>
-          </div>
+          </motion.div>
         </div>
 
-        {/* Gráficos */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Gráfico de Pizza - Status de Pagamento */}
-          <div className="bg-gray-800 p-4 rounded-lg">
-            <h3 className="text-lg font-semibold mb-4">Status de Pagamento</h3>
-            <div className="h-64">
-              <Pie data={dadosGraficoPizza} options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                  legend: {
-                    position: 'bottom',
-                    labels: {
-                      color: 'white'
-                    }
-                  }
-                }
-              }} />
-            </div>
-          </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="lg:col-span-1">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
+            >
+              <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Novo Lançamento</h2>
 
-          {/* Gráfico de Barras - Fluxo de Caixa */}
-          <div className="bg-gray-800 p-4 rounded-lg">
-            <h3 className="text-lg font-semibold mb-4">Fluxo de Caixa</h3>
-            <div className="h-64">
-              <Bar data={dadosGraficoBarras} options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                  legend: {
-                    position: 'bottom',
-                    labels: {
-                      color: 'white'
-                    }
-                  }
-                },
-                scales: {
-                  y: {
-                    beginAtZero: true,
-                    grid: {
-                      color: 'rgba(255, 255, 255, 0.1)'
-                    },
-                    ticks: {
-                      color: 'white'
-                    }
-                  },
-                  x: {
-                    grid: {
-                      color: 'rgba(255, 255, 255, 0.1)'
-                    },
-                    ticks: {
-                      color: 'white'
-                    }
-                  }
-                }
-              }} />
-            </div>
-          </div>
-        </div>
+              <form onSubmit={adicionarTransacao} className="space-y-3 sm:space-y-4">
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Data</label>
+                  <input
+                    type="date"
+                    name="data"
+                    value={novaTransacao.data}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                    required
+                  />
+                </div>
 
-        {/* Lista de Transações */}
-        <div className="bg-gray-800 rounded-lg p-4">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Histórico de Transações</h2>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Filtrar por jogador..."
-                value={filtroHistorico.jogador}
-                onChange={(e) => setFiltroHistorico(prev => ({ ...prev, jogador: e.target.value }))}
-                className="bg-gray-700 text-white px-3 py-2 rounded-lg"
-              />
-              <select
-                value={filtroHistorico.tipo}
-                onChange={(e) => setFiltroHistorico(prev => ({ ...prev, tipo: e.target.value }))}
-                className="bg-gray-700 text-white px-3 py-2 rounded-lg"
-              >
-                <option value="todos">Todos os tipos</option>
-                <option value="receita">Receitas</option>
-                <option value="despesa">Despesas</option>
-              </select>
-            </div>
-          </div>
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Descrição</label>
+                  <input
+                    type="text"
+                    name="descricao"
+                    value={novaTransacao.descricao}
+                    onChange={handleInputChange}
+                    placeholder="Ex: Mensalidade João"
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                    required
+                  />
+                </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="text-left border-b border-gray-700">
-                  <th className="pb-2">Data</th>
-                  <th className="pb-2">Descrição</th>
-                  <th className="pb-2">Jogador</th>
-                  <th className="pb-2">Tipo</th>
-                  <th className="pb-2">Valor</th>
-                  <th className="pb-2">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {transacoesFiltradas.map((transacao) => (
-                  <tr key={transacao._id} className="border-b border-gray-700">
-                    <td className="py-2">
-                      {new Date(transacao.data).toLocaleDateString('pt-BR')}
-                    </td>
-                    <td className="py-2">{transacao.descricao}</td>
-                    <td className="py-2">
-                      {jogadores.find(j => j._id === transacao.jogadorId)?.nome || 'N/A'}
-                    </td>
-                    <td className="py-2">
-                      <span className={`px-2 py-1 rounded-full text-sm ${
-                        transacao.tipo === 'receita' ? 'bg-green-500' : 'bg-red-500'
-                      }`}>
-                        {transacao.tipo === 'receita' ? 'Receita' : 'Despesa'}
-                      </span>
-                    </td>
-                    <td className="py-2">
-                      R$ {transacao.valor.toFixed(2)}
-                    </td>
-                    <td className="py-2">
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Valor</label>
+                  <input
+                    type="number"
+                    name="valor"
+                    min="0.01"
+                    step="0.01"
+                    value={novaTransacao.valor}
+                    onChange={handleInputChange}
+                    placeholder="0,00"
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Tipo</label>
+                  <select
+                    name="tipo"
+                    value={novaTransacao.tipo}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                  >
+                    <option value="receita">Receita</option>
+                    <option value="despesa">Despesa</option>
+                  </select>
+                </div>
+
+                {novaTransacao.tipo === "receita" && (
+                  <div className="relative">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Jogador</label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={novaTransacao.jogadorNome}
+                        onClick={() => setMostrarListaJogadores(true)}
+                        readOnly
+                        placeholder="Selecione um jogador"
+                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm cursor-pointer"
+                      />
+                      <FaUser className="absolute right-3 top-2.5 text-gray-400 text-xs sm:text-sm" />
+                    </div>
+                  </div>
+                )}
+
+                <motion.button
+                  type="submit"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg text-xs sm:text-sm"
+                >
+                  <FaPlus className="text-xs sm:text-sm" /> Adicionar
+                </motion.button>
+              </form>
+            </motion.div>
+
+            {/* Modal de seleção de jogadores */}
+            <AnimatePresence>
+              {mostrarListaJogadores && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+                >
+                  <motion.div
+                    initial={{ scale: 0.95, y: 20 }}
+                    animate={{ scale: 1, y: 0 }}
+                    exit={{ scale: 0.95, y: 20 }}
+                    className="bg-gray-800 rounded-xl shadow-2xl border border-gray-700 w-full max-w-4xl max-h-[90vh] flex flex-col"
+                  >
+                    <div className="p-4 border-b border-gray-700 flex justify-between items-center">
+                      <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                        <FaUsers className="text-blue-400" />
+                        Selecionar Jogador
+                      </h3>
                       <button
-                        onClick={() => handleEditarTransacao(transacao._id, transacao)}
-                        className="text-blue-500 hover:text-blue-400 mr-2"
+                        onClick={() => setMostrarListaJogadores(false)}
+                        className="text-gray-400 hover:text-white"
                       >
-                        <FaEdit />
+                        <FaTimesCircle />
                       </button>
-                      <button
-                        onClick={() => handleExcluirTransacao(transacao._id)}
-                        className="text-red-500 hover:text-red-400"
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-4">
+                      <ListaJogadores
+                        modoSelecao={true}
+                        onJogadorSelecionado={(jogador) => {
+                          setNovaTransacao(prev => ({
+                            ...prev,
+                            jogadorId: jogador.id || jogador._id,
+                            jogadorNome: jogador.nome
+                          }));
+                          setMostrarListaJogadores(false);
+                        }}
+                        closeModal={() => setMostrarListaJogadores(false)}
+                      />
+                    </div>
+
+                    <div className="p-4 border-t border-gray-700 flex justify-end">
+                      <motion.button
+                        onClick={() => setMostrarListaJogadores(false)}
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.97 }}
+                        className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-white"
                       >
-                        <FaTrash />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                        Cancelar
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700 mt-4 sm:mt-6"
+            >
+              <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Status de Pagamentos</h2>
+              <div className="h-48 sm:h-64">
+                <Pie
+                  data={dadosGraficoPizza}
+                  options={{
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        position: 'bottom',
+                        labels: {
+                          color: '#e5e7eb',
+                          font: {
+                            size: window.innerWidth < 640 ? 10 : 12
+                          }
+                        }
+                      }
+                    }
+                  }}
+                />
+              </div>
+              <div className="mt-3 sm:mt-4 text-center text-xs sm:text-sm text-gray-400">
+                {estatisticas.pagamentosPendentes} Pagamentos pendentes este ano
+              </div>
+            </motion.div>
+          </div>
+
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
+            >
+              <div className="flex justify-between items-center mb-3 sm:mb-4">
+                <div className="flex items-center justify-between w-full">
+                  <h2 className="text-lg sm:text-xl font-semibold text-white">Histórico de Transações</h2>
+                  <motion.button
+                    onClick={() => compartilharHistorico('tabela-historico')}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    className="bg-blue-600 p-2 rounded-lg text-white hover:bg-blue-600 transition-colors"
+                    title="Compartilhar histórico de transações"
+                  >
+                    <FaShare className="text-sm sm:text-base" />
+                  </motion.button>
+                </div>
+              </div>
+
+              {/* Filtros do histórico */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Filtrar por jogador"
+                    value={filtroHistorico.jogador}
+                    onChange={(e) => setFiltroHistorico({...filtroHistorico, jogador: e.target.value})}
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                  />
+                  <FaSearch className="absolute right-3 top-2.5 text-gray-400 text-xs sm:text-sm" />
+                </div>
+                
+                <select
+                  value={filtroHistorico.tipo}
+                  onChange={(e) => setFiltroHistorico({...filtroHistorico, tipo: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                >
+                  <option value="todos">Todos os tipos</option>
+                  <option value="receita">Receitas</option>
+                  <option value="despesa">Despesas</option>
+                </select>
+                
+                <button
+                  onClick={() => setFiltroHistorico({ jogador: '', tipo: 'todos', categoria: '' })}
+                  className="w-full bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-xs sm:text-sm"
+                >
+                  Limpar filtros
+                </button>
+              </div>
+
+              {carregando ? (
+                <div className="flex justify-center py-6 sm:py-8">
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    className="h-6 w-6 sm:h-8 sm:w-8 border-4 border-blue-500 border-t-transparent rounded-full"
+                  />
+                </div>
+              ) : transacoes.length === 0 ? (
+                <div className="text-center py-6 sm:py-8 text-gray-400 text-xs sm:text-sm">
+                  Nenhuma transação encontrada
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <div className="max-h-[400px] overflow-y-auto" id="tabela-historico">
+                    <table className="min-w-full divide-y divide-gray-700">
+                      <thead className="bg-gray-700 sticky top-0">
+                        <tr>
+                          <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Data</th>
+                          <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Descrição</th>
+                          <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Valor</th>
+                          <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-700">
+                        {transacoesFiltradas.map((t) => (
+                          <tr key={t._id} className="hover:bg-gray-700/50">
+                            <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-gray-300">
+                              {new Date(t.data).toLocaleDateString('pt-BR')}
+                            </td>
+                            <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium text-white">
+                              {t.descricao}
+                              {t.jogadorId && (
+                                <span className="block text-xs text-gray-400">
+                                  {jogadores.find(j => j._id === t.jogadorId)?.nome || ''}
+                                </span>
+                              )}
+                            </td>
+                            <td className={`px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium ${
+                              t.tipo === "receita" ? "text-green-400" : "text-red-400"
+                            }`}>
+                              {t.tipo === "receita" ? "+" : "-"} R$ {t.valor.toFixed(2)}
+                            </td>
+                            <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-gray-400">
+                              <motion.button
+                                onClick={() => deletarTransacao(t._id)}
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                className="text-red-400 hover:text-red-500 mr-2"
+                              >
+                                <FaTrash className="text-xs sm:text-sm" />
+                              </motion.button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="text-xs text-gray-500 mt-2">
+                    Mostrando {transacoesFiltradas.length} de {transacoes.length} transações
+                  </div>
+                </div>
+              )}
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
+            >
+              <div className="flex justify-between items-center mb-3 sm:mb-4">
+                <h2 className="text-lg sm:text-xl font-semibold text-white">Controle de Mensalidades</h2>
+                <motion.button
+                  onClick={() => compartilharControle('tabela-mensalidades')}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="bg-blue-600 p-2 rounded-lg text-white hover:bg-blue-700 transition-colors"
+                  title="Compartilhar controle de mensalidades"
+                >
+                  <FaShare className="text-sm sm:text-base" />
+                </motion.button>
+              </div>
+
+              {carregando ? (
+                <div className="flex justify-center py-6 sm:py-8">
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    className="h-6 w-6 sm:h-8 sm:w-8 border-4 border-blue-500 border-t-transparent rounded-full"
+                  />
+                </div>
+              ) : jogadores.length === 0 ? (
+                <div className="text-center py-6 sm:py-8 text-gray-400 text-xs sm:text-sm">
+                  Nenhum jogador cadastrado
+                </div>
+              ) : (
+                <div className="overflow-x-auto max-h-[80vh]">
+                  <div id="tabela-mensalidades">
+                    <table className="min-w-full divide-y divide-gray-700">
+                      <thead className="bg-gray-700">
+                        <tr>
+                          <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Jogador</th>
+                          <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
+                          {dadosGraficoBarras.labels.map((mes, i) => (
+                            <th key={i} className="px-1 sm:px-2 py-2 sm:py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">
+                              {mes}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-700">
+                        {jogadores.map((jogador) => (
+                          <tr key={jogador._id} className="hover:bg-gray-700/50">
+                            <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium text-white">
+                              {jogador.nome}
+                            </td>
+                            <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap">
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${jogador.statusFinanceiro === 'Adimplente' ?
+                                  'bg-green-500/20 text-green-400' :
+                                  'bg-red-500/20 text-red-400'
+                                }`}>
+                                {jogador.statusFinanceiro || 'Inadimplente'}
+                              </span>
+                            </td>
+                            {jogador.pagamentos.map((pago, i) => (
+                              <td key={i} className="px-1 sm:px-2 py-2 sm:py-3 whitespace-nowrap text-center">
+                                <motion.button
+                                  onClick={() => togglePagamento(jogador._id, i)}
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
+                                  className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center ${pago ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}
+                                >
+                                  {pago ? <FaCheck size={10} className="sm:text-xs" /> : <FaTimes size={10} className="sm:text-xs" />}
+                                </motion.button>
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
+            >
+              <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Fluxo Anual</h2>
+              <div className="h-48 sm:h-64">
+                <Bar
+                  data={dadosGraficoBarras}
+                  options={{
+                    maintainAspectRatio: false,
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        grid: {
+                          color: 'rgba(229, 231, 235, 0.1)'
+                        },
+                        ticks: {
+                          color: '#e5e7eb',
+                          font: {
+                            size: window.innerWidth < 640 ? 10 : 12
+                          }
+                        }
+                      },
+                      x: {
+                        grid: {
+                          color: 'rgba(229, 231, 235, 0.1)'
+                        },
+                        ticks: {
+                          color: '#e5e7eb',
+                          font: {
+                            size: window.innerWidth < 640 ? 10 : 12
+                          }
+                        }
+                      }
+                    },
+                    plugins: {
+                      legend: {
+                        position: 'bottom',
+                        labels: {
+                          color: '#e5e7eb',
+                          font: {
+                            size: window.innerWidth < 640 ? 10 : 12
+                          }
+                        }
+                      }
+                    }
+                  }}
+                />
+              </div>
+            </motion.div>
           </div>
         </div>
       </div>
 
-      {/* Modal de Nova Transação */}
-      {editarModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-4">Nova Transação</h2>
-            <form onSubmit={adicionarTransacao} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
-                  Tipo
-                </label>
-                <select
-                  value={novaTransacao.tipo}
-                  onChange={handleInputChange}
-                  name="tipo"
-                  className="w-full bg-gray-700 text-white px-3 py-2 rounded-lg"
-                  required
-                >
-                  <option value="receita">Receita</option>
-                  <option value="despesa">Despesa</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
-                  Descrição
-                </label>
-                <input
-                  type="text"
-                  name="descricao"
-                  value={novaTransacao.descricao}
-                  onChange={handleInputChange}
-                  className="w-full bg-gray-700 text-white px-3 py-2 rounded-lg"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
-                  Valor
-                </label>
-                <input
-                  type="number"
-                  name="valor"
-                  value={novaTransacao.valor}
-                  onChange={handleInputChange}
-                  className="w-full bg-gray-700 text-white px-3 py-2 rounded-lg"
-                  required
-                  min="0"
-                  step="0.01"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
-                  Data
-                </label>
-                <input
-                  type="date"
-                  name="data"
-                  value={novaTransacao.data}
-                  onChange={handleInputChange}
-                  className="w-full bg-gray-700 text-white px-3 py-2 rounded-lg"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
-                  Jogador
-                </label>
-                <select
-                  name="jogadorId"
-                  value={novaTransacao.jogadorId}
-                  onChange={handleInputChange}
-                  className="w-full bg-gray-700 text-white px-3 py-2 rounded-lg"
-                  required
-                >
-                  <option value="">Selecione um jogador</option>
-                  {jogadores.map((jogador) => (
-                    <option key={jogador._id} value={jogador._id}>
-                      {jogador.nome}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setEditarModal(false)}
-                  className="px-4 py-2 text-gray-400 hover:text-white"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
-                >
-                  Salvar
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Modal de Seleção de Jogador */}
-      {mostrarListaJogadores && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-2xl">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Selecionar Jogador</h2>
-              <input
-                type="text"
-                placeholder="Buscar jogador..."
-                value={filtroJogador}
-                onChange={(e) => setFiltroJogador(e.target.value)}
-                className="bg-gray-700 text-white px-3 py-2 rounded-lg"
-              />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
-              {jogadoresFiltrados.map((jogador) => (
-                <div
-                  key={jogador._id}
-                  className={`p-4 rounded-lg cursor-pointer transition-colors ${
-                    jogadorSelecionado?._id === jogador._id
-                      ? 'bg-blue-600'
-                      : 'bg-gray-700 hover:bg-gray-600'
-                  }`}
-                  onClick={() => handleSelecionarJogador(jogador)}
-                >
-                  <h3 className="font-semibold">{jogador.nome}</h3>
-                  <p className="text-sm text-gray-400">
-                    Status: {jogador.pagamentos[parseInt(filtroMes.slice(5, 7)) - 1] ? 'Pago' : 'Pendente'}
-                  </p>
-                </div>
-              ))}
-            </div>
-            <div className="flex justify-end mt-4">
-              <button
-                onClick={() => setMostrarListaJogadores(false)}
-                className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg"
-              >
-                Fechar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Modal de Relatório */}
-      {relatorioModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-2xl">
-            <div id="relatorio-content">
-              <h2 className="text-xl font-semibold mb-4">
-                Relatório Financeiro - {new Date(filtroMes).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
-              </h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div className="bg-gray-700 p-4 rounded-lg">
-                  <h3 className="text-lg font-semibold mb-2">Resumo Financeiro</h3>
-                  <p className="text-green-500">Receitas: R$ {estatisticas.totalReceitas.toFixed(2)}</p>
-                  <p className="text-red-500">Despesas: R$ {estatisticas.totalDespesas.toFixed(2)}</p>
-                  <p className={`font-bold ${estatisticas.saldo >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                    Saldo: R$ {estatisticas.saldo.toFixed(2)}
+      <AnimatePresence>
+        {relatorioModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 backdrop-blur-sm"
+            onClick={() => setRelatorioModal(false)}
+          >
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 20, opacity: 0 }}
+              className="bg-gray-800 rounded-xl shadow-2xl p-4 sm:p-6 w-full max-w-md sm:max-w-2xl border border-gray-700"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center mb-3 sm:mb-4">
+                <h3 className="text-lg sm:text-xl font-bold text-white">Relatório Financeiro</h3>
+                <motion.button
+                  onClick={() => setRelatorioModal(false)}
+                  whileHover={{ rotate: 90 }}
+                  className="text-gray-400 hover:text-white text-sm sm:text-base"
+                >
+                  <FaTimes />
+                </motion.button>
+              </div>
+
+              <div id="relatorio-content" className="space-y-3 sm:space-y-4">
+                {/* Conteúdo existente do modal */}
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                  <div className="bg-gray-700/50 p-3 sm:p-4 rounded-lg">
+                    <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">Receitas</h4>
+                    <p className="text-xl sm:text-2xl font-bold text-green-400">
+                      R$ {estatisticas.totalReceitas.toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="bg-gray-700/50 p-3 sm:p-4 rounded-lg">
+                    <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">Despesas</h4>
+                    <p className="text-xl sm:text-2xl font-bold text-red-400">
+                      R$ {estatisticas.totalDespesas.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+                {/* Resto do conteúdo do modal */}
+                <div className="bg-gray-700/50 p-3 sm:p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">Saldo</h4>
+                  <p className={`text-xl sm:text-2xl font-bold ${estatisticas.saldo >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    R$ {estatisticas.saldo.toFixed(2)}
                   </p>
                 </div>
-                
-                <div className="bg-gray-700 p-4 rounded-lg">
-                  <h3 className="text-lg font-semibold mb-2">Informações Adicionais</h3>
-                  <p>Total de Jogadores: {estatisticas.totalJogadores}</p>
-                  <p className="text-yellow-500">Pagamentos Pendentes: {estatisticas.pagamentosPendentes}</p>
+
+                <div className="bg-gray-700/50 p-3 sm:p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">Pagamentos Pendentes</h4>
+                  <p className="text-lg sm:text-xl font-bold text-white">
+                    {estatisticas.pagamentosPendentes} mensalidades
+                  </p>
+                </div>
+
+                <div className="bg-gray-700/50 p-3 sm:p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">Total de Jogadores</h4>
+                  <p className="text-lg sm:text-xl font-bold text-white">
+                    {estatisticas.totalJogadores} jogadores
+                  </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div className="bg-gray-700 p-4 rounded-lg">
-                  <h3 className="text-lg font-semibold mb-2">Status de Pagamento</h3>
-                  <div className="h-48">
-                    <Pie data={dadosGraficoPizza} options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: {
-                          position: 'bottom',
-                          labels: {
-                            color: 'white'
-                          }
-                        }
-                      }
-                    }} />
-                  </div>
+              <div className="mt-4 sm:mt-6 flex justify-end gap-2 sm:gap-3">
+                <motion.button
+                  onClick={exportarPDF}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 transition-all text-xs sm:text-sm"
+                >
+                  <FaFilePdf className="text-xs sm:text-sm" /> Exportar PDF
+                </motion.button>
+                <motion.button
+                  onClick={exportarImagem}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 transition-all text-xs sm:text-sm"
+                >
+                  <FaFileImage className="text-xs sm:text-sm" /> Exportar Imagem
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal de Editar Jogador */}
+      <AnimatePresence>
+        {editarModal && jogadorSelecionado && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 backdrop-blur-sm"
+            onClick={() => setEditarModal(false)}
+          >
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 20, opacity: 0 }}
+              className="bg-gray-800 rounded-xl shadow-2xl p-4 sm:p-6 w-full max-w-md border border-gray-700"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center mb-3 sm:mb-4">
+                <h3 className="text-lg sm:text-xl font-bold text-white">Editar Jogador</h3>
+                <motion.button
+                  onClick={() => setEditarModal(false)}
+                  whileHover={{ rotate: 90 }}
+                  className="text-gray-400 hover:text-white text-sm sm:text-base"
+                >
+                  <FaTimes />
+                </motion.button>
+              </div>
+
+              <div className="space-y-3 sm:space-y-4">
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Nome</label>
+                  <input
+                    type="text"
+                    value={jogadorSelecionado.nome}
+                    onChange={(e) => setJogadorSelecionado({ ...jogadorSelecionado, nome: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                    required
+                  />
                 </div>
-                
-                <div className="bg-gray-700 p-4 rounded-lg">
-                  <h3 className="text-lg font-semibold mb-2">Fluxo de Caixa</h3>
-                  <div className="h-48">
-                    <Bar data={dadosGraficoBarras} options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: {
-                          position: 'bottom',
-                          labels: {
-                            color: 'white'
-                          }
-                        }
-                      },
-                      scales: {
-                        y: {
-                          beginAtZero: true,
-                          grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
-                          },
-                          ticks: {
-                            color: 'white'
-                          }
-                        },
-                        x: {
-                          grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
-                          },
-                          ticks: {
-                            color: 'white'
-                          }
-                        }
-                      }
-                    }} />
-                  </div>
+
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Email</label>
+                  <input
+                    type="email"
+                    value={jogadorSelecionado.email}
+                    onChange={(e) => setJogadorSelecionado({ ...jogadorSelecionado, email: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Status de Pagamento</label>
+                  <select
+                    value={jogadorSelecionado.statusFinanceiro || 'Inadimplente'}
+                    onChange={(e) => setJogadorSelecionado({ ...jogadorSelecionado, statusFinanceiro: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                  >
+                    <option value="Adimplente">Adimplente</option>
+                    <option value="Inadimplente">Inadimplente</option>
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 pt-2">
+                  <motion.button
+                    type="button"
+                    onClick={() => deletarJogador(jogadorSelecionado._id)}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 sm:py-2 rounded-lg flex items-center justify-center gap-2 transition-all text-xs sm:text-sm"
+                  >
+                    <FaTrash className="text-xs sm:text-sm" /> Excluir
+                  </motion.button>
+                  <motion.button
+                    type="button"
+                    onClick={editarJogador}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-3 py-2 sm:py-2 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg text-xs sm:text-sm"
+                  >
+                    <FaEdit className="text-xs sm:text-sm" /> Salvar Alterações
+                  </motion.button>
                 </div>
               </div>
-            </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-            <div className="flex justify-end gap-2 mt-4">
-              <button
-                onClick={exportarPDF}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-              >
-                <FaFilePdf />
-                Exportar PDF
-              </button>
-              <button
-                onClick={exportarImagem}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-              >
-                <FaImage />
-                Exportar Imagem
-              </button>
-              <button
-                onClick={compartilharRelatorio}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-              >
-                <FaShare />
-                Compartilhar
-              </button>
-              <button
-                onClick={() => setRelatorioModal(false)}
-                className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg"
-              >
-                Fechar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ToastContainer position="bottom-right" autoClose={5000} />
     </div>
   );
 }
