@@ -82,15 +82,18 @@ export default function Financeiro() {
       ]);
 
       if (jogadoresResponse.data.success) {
-        // Garante que os pagamentos sejam objetos válidos e desmarcados por padrão
+        // Mantém os pagamentos existentes, apenas garante que sejam objetos válidos
         const jogadoresFormatados = jogadoresResponse.data.data.map(jogador => ({
           ...jogador,
-          pagamentos: Array(12).fill().map((_, index) => ({
-            pago: false,
-            isento: false,
-            dataPagamento: null,
-            dataLimite: new Date(new Date().getFullYear(), index, 20)
-          }))
+          pagamentos: Array(12).fill().map((_, index) => {
+            const pagamentoExistente = jogador.pagamentos?.[index];
+            return {
+              pago: pagamentoExistente?.pago || false,
+              isento: pagamentoExistente?.isento || false,
+              dataPagamento: pagamentoExistente?.dataPagamento || null,
+              dataLimite: pagamentoExistente?.dataLimite || new Date(new Date().getFullYear(), index, 20)
+            };
+          })
         }));
         setJogadores(jogadoresFormatados);
       }
