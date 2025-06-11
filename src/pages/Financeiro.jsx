@@ -280,12 +280,12 @@ const [isento, setIsento] = useState(false);
         return updatedJogadores;
       });
 
-      // Prepara o payload para a API
+      // Prepara o payload para a API com todos os dados do jogador
       const payload = {
-        pagamentos: updatedPagamentos.map((pago, index) => ({
-          mes: index,
-          pago: pago
-        }))
+        nome: jogadorAtual.nome,
+        email: jogadorAtual.email,
+        statusFinanceiro: jogadorAtual.statusFinanceiro,
+        pagamentos: updatedPagamentos
       };
 
       console.log('Enviando para API:', {
@@ -296,13 +296,18 @@ const [isento, setIsento] = useState(false);
       // Atualiza no banco de dados
       const response = await api.put(`/jogadores/${jogadorId}`, payload);
 
+      if (!response.data) {
+        throw new Error('Resposta inválida do servidor');
+      }
+
       console.log('Resposta da API:', response.data);
 
     } catch (error) {
       console.error("Erro detalhado:", {
         message: error.message,
         response: error.response?.data,
-        status: error.response?.status
+        status: error.response?.status,
+        payload: error.config?.data
       });
       
       toast.error('Erro ao atualizar pagamento');
@@ -364,9 +369,12 @@ const [isento, setIsento] = useState(false);
         return updatedJogadores;
       });
 
-      // Prepara o payload para a API
+      // Prepara o payload para a API com todos os dados do jogador
       const payload = {
-        statusFinanceiro: newStatus
+        nome: jogadorAtual.nome,
+        email: jogadorAtual.email,
+        statusFinanceiro: newStatus,
+        pagamentos: jogadorAtual.pagamentos
       };
 
       console.log('Enviando para API:', {
@@ -377,13 +385,18 @@ const [isento, setIsento] = useState(false);
       // Atualiza no banco de dados
       const response = await api.put(`/jogadores/${jogadorId}`, payload);
 
+      if (!response.data) {
+        throw new Error('Resposta inválida do servidor');
+      }
+
       console.log('Resposta da API:', response.data);
 
     } catch (error) {
       console.error("Erro detalhado:", {
         message: error.message,
         response: error.response?.data,
-        status: error.response?.status
+        status: error.response?.status,
+        payload: error.config?.data
       });
       
       toast.error('Erro ao atualizar status');
