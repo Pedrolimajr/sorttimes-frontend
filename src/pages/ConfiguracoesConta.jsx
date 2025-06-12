@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import { FaKey, FaEnvelope } from "react-icons/fa";
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { useNavigate } from "react-router-dom";
+import { authService } from "../services/authService";
+import { toast } from "react-toastify";
 
 export default function ConfiguracoesConta() {
   const [novoEmail, setNovoEmail] = useState("");
@@ -18,23 +20,15 @@ export default function ConfiguracoesConta() {
     setCarregando(true);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/usuarios/email`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email: novoEmail }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Erro ao atualizar email");
-      }
-
-      navigate("/dashboard");
+      console.log('Enviando dados:', { novoEmail, senha });
+      
+      await authService.atualizarEmail(novoEmail, senha);
+      toast.success('Email atualizado com sucesso!');
+      setNovoEmail('');
+      setSenha('');
     } catch (error) {
-      console.error("Erro ao atualizar email:", error);
+      console.error('Erro completo:', error);
+      toast.error(error.response?.data?.message || 'Erro ao atualizar email');
     } finally {
       setCarregando(false);
     }
@@ -42,31 +36,22 @@ export default function ConfiguracoesConta() {
 
   const atualizarSenha = async (e) => {
     e.preventDefault();
-    setCarregando(true);
-
+    
     if (novaSenha !== confirmarNovaSenha) {
-      console.error("As senhas não coincidem");
+      toast.error("As senhas não coincidem");
       return;
     }
 
+    setCarregando(true);
+
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/usuarios/senha`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ senhaAtual: senha, novaSenha }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Erro ao atualizar senha");
-      }
-
-      navigate("/dashboard");
+      await authService.atualizarSenha(senhaAtual, novaSenha);
+      toast.success("Senha atualizada com sucesso!");
+      setSenhaAtual("");
+      setNovaSenha("");
+      setConfirmarNovaSenha("");
     } catch (error) {
-      console.error("Erro ao atualizar senha:", error);
+      toast.error(error.message);
     } finally {
       setCarregando(false);
     }
