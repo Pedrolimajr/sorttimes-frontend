@@ -1,8 +1,6 @@
 // src/App.jsx
 import React from "react";
 import { BrowserRouter as Router } from "react-router-dom";
-import { ToastContainer } from "react-toastify";
-import 'react-toastify/dist/ReactToastify.css';
 import AppRoutes from "./routes/AppRoutes";
 import Footer from "./components/Footer";
 import { usePageLayout } from "./hooks/usePageLayout";
@@ -28,7 +26,6 @@ function App() {
       <JogadoresProvider>
         <Router>
           <AppContent />
-          <ToastContainer position="top-right" autoClose={3000} />
         </Router>
       </JogadoresProvider>
     </AuthProvider>

@@ -2,8 +2,7 @@ import { useState } from "react";
 import { FaEye, FaEyeSlash, FaSignInAlt, FaKey } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
-import { authService } from "../services/authService";
-import { toast } from "react-toastify";
+import { FaGoogle, FaGithub } from "react-icons/fa";
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 
 export default function Login() {
@@ -14,19 +13,29 @@ export default function Login() {
   const [erro, setErro] = useState("");
   const navigate = useNavigate();
 
-  const fazerLogin = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setCarregando(true);
 
     try {
-      // Limpa dados anteriores
-      localStorage.clear();
-      
-      const response = await authService.login(email, senha);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, senha }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Erro ao fazer login");
+      }
+
+      localStorage.setItem("token", data.token);
       navigate("/dashboard");
     } catch (error) {
-      console.error('Erro ao fazer login:', error);
-      toast.error(error.response?.data?.message || 'Erro ao fazer login');
+      console.error("Erro ao fazer login:", error);
     } finally {
       setCarregando(false);
     }
@@ -94,7 +103,7 @@ export default function Login() {
           transition={{ duration: 0.5 }}
         >
           <form 
-            onSubmit={fazerLogin} 
+            onSubmit={handleLogin} 
             className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 xs:p-5 sm:p-6 md:p-8 rounded-xl shadow-xl border border-gray-700 space-y-4 xs:space-y-5 sm:space-y-6"
           >
             {/* Cabeçalho dentro do formulário */}
