@@ -838,18 +838,28 @@ export default function ListaJogadores({
                               </td>
                               
                               <td className="px-4 py-4 whitespace-nowrap sm:px-6">
-                                <select
-                                  value={jogador.statusFinanceiro || 'Adimplente'}
-                                  onChange={(e) => atualizarStatus(jogador._id, e.target.value)}
-                                  className={`px-2 py-1 sm:px-3 sm:py-2 text-xs sm:text-sm rounded ${
-                                    jogador.statusFinanceiro === 'Adimplente' ? 
-                                    'bg-green-900/70 text-green-100' : 
-                                    'bg-red-900/70 text-red-100'
+                                <motion.button
+                                  onClick={() => toggleStatus(jogador._id)}
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  className={`px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all duration-300 ${
+                                    jogador.statusFinanceiro === 'Adimplente' ?
+                                      'bg-green-500/20 text-green-400 hover:bg-green-500/30' :
+                                      'bg-red-500/20 text-red-400 hover:bg-red-500/30'
                                   }`}
                                 >
-                                  <option value="Adimplente">Adimplente</option>
-                                  <option value="Inadimplente">Inadimplente</option>
-                                </select>
+                                  {jogador.statusFinanceiro === 'Adimplente' ? (
+                                    <>
+                                      <FaCheck className="text-xs" />
+                                      <span>Adimplente</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <FaTimes className="text-xs" />
+                                      <span>Inadimplente</span>
+                                    </>
+                                  )}
+                                </motion.button>
                               </td>
                               
                               <td className="px-4 py-4 whitespace-nowrap text-sm font-medium sm:px-6">
