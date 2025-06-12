@@ -1,7 +1,26 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaPlus, FaTrash, FaEdit } from "react-icons/fa";
+import { 
+  FaArrowLeft, 
+  FaPlus, 
+  FaTrash, 
+  FaEdit,
+  FaCalendarAlt,
+  FaMoneyBillWave,
+  FaArrowUp,
+  FaArrowDown,
+  FaCheck,
+  FaTimes,
+  FaFilePdf,
+  FaFileImage,
+  FaPrint,
+  FaUser,
+  FaUsers,
+  FaTimesCircle,
+  FaShare,
+  FaSearch
+} from "react-icons/fa";
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { Bar, Pie } from "react-chartjs-2";
 import { Chart, registerables } from 'chart.js';
