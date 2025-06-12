@@ -322,30 +322,30 @@ const deletarPlanilha = async (id) => {
       </div>
 
       <div className="max-w-7xl mx-auto">
+        {/* Botão Voltar */}
+        <motion.button 
+          onClick={voltarParaDashboard}
+          whileHover={{ 
+            scale: 1.05,
+            x: -5,
+            backgroundColor: "rgba(37, 99, 235, 0.1)"
+          }}
+          whileTap={{ scale: 0.95 }}
+          className="fixed left-4 top-4 sm:left-6 sm:top-6 w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center bg-gray-800/40 hover:bg-gray-700/40 text-gray-200 rounded-full transition-all duration-300 backdrop-blur-sm border border-gray-700/50 shadow-lg hover:shadow-blue-500/20 z-50"
+          title="Voltar para o Dashboard"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <RiArrowLeftDoubleLine className="text-blue-400 text-xl sm:text-2xl transform transition-transform group-hover:translate-x-1" />
+          <div className="absolute inset-0 rounded-full bg-blue-400/10 animate-pulse" style={{ animationDuration: '3s' }} />
+        </motion.button>
+
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-4 sm:mb-6 md:mb-8 relative pt-12 sm:pt-16 md:pt-0"
+          className="mb-4 sm:mb-6 md:mb-8 relative pt-16 sm:pt-20"
         >
-          {/* Botão Voltar */}
-          <motion.button 
-            onClick={voltarParaDashboard}
-            whileHover={{ 
-              scale: 1.05,
-              x: -5,
-              backgroundColor: "rgba(37, 99, 235, 0.1)"
-            }}
-            whileTap={{ scale: 0.95 }}
-            className="absolute left-2 sm:left-4 md:left-8 top-4 sm:top-8 w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center bg-gray-800/40 hover:bg-gray-700/40 text-gray-200 rounded-full transition-all duration-300 backdrop-blur-sm border border-gray-700/50 shadow-lg hover:shadow-blue-500/20"
-            title="Voltar para o Dashboard"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <RiArrowLeftDoubleLine className="text-blue-400 text-xl sm:text-2xl transform transition-transform group-hover:translate-x-1" />
-            <div className="absolute inset-0 rounded-full bg-blue-400/10 animate-pulse" style={{ animationDuration: '3s' }} />
-          </motion.button>
-
           {/* Cabeçalho com título e botões */}
           <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4 mb-4 sm:mb-6 md:mb-8">
             <div className="flex flex-col items-center flex-grow">
@@ -509,7 +509,7 @@ const deletarPlanilha = async (id) => {
                       {tabela[0].map((cabecalho, colIndex) => (
                         <th 
                           key={colIndex} 
-                          className="p-2 sm:p-3 border border-gray-600/50 sticky top-0 bg-gray-700/50 min-w-[120px] sm:min-w-[150px] text-center backdrop-blur-sm"
+                          className="p-2 sm:p-3 border border-gray-600/50 sticky top-0 bg-gray-700/50 min-w-[120px] sm:min-w-[150px] text-center backdrop-blur-sm group"
                         >
                           <div className="flex flex-col items-center">
                             <input
@@ -521,12 +521,12 @@ const deletarPlanilha = async (id) => {
                             <div className="mt-1">
                               <motion.button
                                 onClick={() => removerColuna(colIndex)}
-                                whileHover={{ scale: 1.2, rotate: 90 }}
+                                whileHover={{ scale: 1.2 }}
                                 whileTap={{ scale: 0.9 }}
-                                className="text-red-400 hover:text-red-300 text-xs opacity-60 hover:opacity-100 transition-all duration-300 hover:bg-red-500/10 p-1 rounded-full"
+                                className="text-red-400 hover:text-red-300 text-xs opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-red-500/10 p-1.5 rounded-full"
                                 title="Remover coluna"
                               >
-                                <FaTimesCircle />
+                                <FaTimesCircle className="text-base" />
                               </motion.button>
                             </div>
                           </div>
