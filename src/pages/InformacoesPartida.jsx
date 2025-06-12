@@ -322,39 +322,81 @@ const deletarPlanilha = async (id) => {
       </div>
 
       <div className="max-w-7xl mx-auto">
-        {/* Header com navegação */}
-        <div className="flex items-center justify-between mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8 relative pt-16 sm:pt-0"
+        >
+          {/* Botão Voltar */}
           <motion.button 
             onClick={voltarParaDashboard}
-            whileHover={{ scale: 1.05 }}
+            whileHover={{ 
+              scale: 1.05,
+              x: -5,
+              backgroundColor: "rgba(37, 99, 235, 0.1)"
+            }}
             whileTap={{ scale: 0.95 }}
-            className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
+            className="absolute left-4 top-0 sm:top-8 w-11 h-11 flex items-center justify-center bg-gray-800/40 hover:bg-gray-700/40 text-gray-200 rounded-full transition-all duration-300 backdrop-blur-sm border border-gray-700/50 shadow-lg hover:shadow-blue-500/20"
+            title="Voltar para o Dashboard"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3 }}
           >
-            <RiArrowLeftDoubleLine className="text-2xl" />
-            <span className="hidden sm:inline">Voltar</span>
+            <RiArrowLeftDoubleLine className="text-blue-400 text-2xl transform transition-transform group-hover:translate-x-1" />
+            <div className="absolute inset-0 rounded-full bg-blue-400/10 animate-pulse" style={{ animationDuration: '3s' }} />
           </motion.button>
 
-          <div className="flex items-center gap-4">
-            <motion.button
-              onClick={criarNovaPlanilha}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg"
+          {/* Cabeçalho com título e botões */}
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
+            <div className="flex flex-col items-center flex-grow">
+              <div className="flex items-center justify-center gap-3">
+                <FaTable className="text-blue-400 text-2xl sm:text-3xl" />
+                <motion.h1 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.1 }}
+                  className="text-2xl sm:text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300"
+                >
+                  Informações das Partidas
+                </motion.h1>
+              </div>
+            </div>
+
+            <motion.div 
+              className="flex gap-3 sm:flex-shrink-0"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
             >
-              <FaPlus /> Nova Planilha
-            </motion.button>
-            
-            <motion.button
-              onClick={salvarPlanilha}
-              disabled={carregando}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <FaSave /> {carregando ? 'Salvando...' : 'Salvar'}
-            </motion.button>
+              <motion.button
+                onClick={criarNovaPlanilha}
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                className="relative bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-6 py-2.5 rounded-lg flex items-center gap-2 transition-all shadow-lg group overflow-hidden"
+              >
+                <span className="relative z-10 flex items-center gap-2">
+                  <FaPlus className="text-lg" /> Nova Planilha
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-0 bg-white/10 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+              </motion.button>
+              
+              <motion.button
+                onClick={salvarPlanilha}
+                disabled={carregando}
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                className="relative bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-6 py-2.5 rounded-lg flex items-center gap-2 transition-all shadow-lg group overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span className="relative z-10 flex items-center gap-2">
+                  <FaSave className="text-lg" /> {carregando ? 'Salvando...' : 'Salvar'}
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-0 bg-white/10 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+              </motion.button>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Grid principal */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -420,27 +462,43 @@ const deletarPlanilha = async (id) => {
               {/* Barra de ferramentas */}
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <button
+                  <motion.button
                     onClick={adicionarLinha}
-                    className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-2 transition-all text-sm"
+                    whileHover={{ scale: 1.05, y: -1 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="relative bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all group overflow-hidden"
                   >
-                    <FaPlus size={12} /> Linha
-                  </button>
+                    <span className="relative z-10 flex items-center gap-2">
+                      <FaPlus size={14} /> Linha
+                    </span>
+                    <div className="absolute inset-0 bg-white/10 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                  </motion.button>
                   
-                  <button
+                  <motion.button
                     onClick={adicionarColuna}
-                    className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-2 transition-all text-sm"
+                    whileHover={{ scale: 1.05, y: -1 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="relative bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all group overflow-hidden"
                   >
-                    <FaPlus size={12} /> Coluna
-                  </button>
+                    <span className="relative z-10 flex items-center gap-2">
+                      <FaPlus size={14} /> Coluna
+                    </span>
+                    <div className="absolute inset-0 bg-white/10 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                  </motion.button>
                 </div>
 
-                <button
+                <motion.button
                   onClick={exportarPDF}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg flex items-center gap-2 transition-all text-sm"
+                  whileHover={{ scale: 1.05, y: -1 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="relative bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-5 py-2 rounded-lg flex items-center gap-2 transition-all group overflow-hidden"
                 >
-                  <FaFilePdf /> Exportar
-                </button>
+                  <span className="relative z-10 flex items-center gap-2">
+                    <FaFilePdf className="text-lg" /> Exportar
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute inset-0 bg-white/10 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                </motion.button>
               </div>
 
               {/* Tabela editável com scroll */}
