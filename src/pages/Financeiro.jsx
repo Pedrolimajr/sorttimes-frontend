@@ -1,12 +1,7 @@
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from 'react-router-dom';
-import { 
-  FaArrowLeft, 
-  FaPlus, 
-  FaTrash, 
-  FaEdit,
-  FaCalendarAlt,
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import {
   FaMoneyBillWave,
   FaArrowUp,
   FaArrowDown,
@@ -15,15 +10,22 @@ import {
   FaFilePdf,
   FaFileImage,
   FaPrint,
+  FaCalendarAlt,
   FaUser,
+  FaPlus,
+  FaArrowLeft,
+  FaEdit,
+  FaTrash,
   FaUsers,
   FaTimesCircle,
   FaShare,
   FaSearch
 } from "react-icons/fa";
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
+import { motion, AnimatePresence } from "framer-motion";
 import { Bar, Pie } from "react-chartjs-2";
 import { Chart, registerables } from 'chart.js';
+import { useNavigate } from 'react-router-dom';
 import ListaJogadores from './ListaJogadores';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -32,6 +34,7 @@ import api from '../services/api';
 Chart.register(...registerables);
 
 export default function Financeiro() {
+  const navigate = useNavigate();
   const [transacoes, setTransacoes] = useState([]);
   const [jogadores, setJogadores] = useState([]);
   const [filtroMes, setFiltroMes] = useState(new Date().toISOString().slice(0, 7));
@@ -65,77 +68,78 @@ export default function Financeiro() {
     totalJogadores: 0
   });
 
-  const navigate = useNavigate();
+// No início do componente, adicione:
+const [isento, setIsento] = useState(false);
 
   const STORAGE_KEY = 'dadosFinanceiros';
+ useEffect(() => {
+  const carregarDados = async () => {
+    try {
+      setCarregando(true);
 
-  useEffect(() => {
-    const carregarDados = async () => {
-      try {
-        setCarregando(true);
+      // Tenta carregar do cache primeiro
+      const cachedData = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      if (cachedData) {
+        setJogadores(cachedData.jogadoresCache || []);
+        setTransacoes(cachedData.transacoesCache || []);
+      }
 
-        // Tenta carregar do cache primeiro
-        const cachedData = JSON.parse(localStorage.getItem(STORAGE_KEY));
-        if (cachedData) {
-          setJogadores(cachedData.jogadoresCache || []);
-          setTransacoes(cachedData.transacoesCache || []);
+      // Busca dados da API
+      const [jogadoresRes, transacoesRes] = await Promise.all([
+        api.get('/jogadores'),
+        api.get('/financeiro/transacoes')
+      ]);
+
+      const jogadoresData = jogadoresRes.data?.data || jogadoresRes.data || [];
+      const transacoesData = transacoesRes.data?.data || transacoesRes.data || [];
+
+      // Processa os jogadores
+      const jogadoresProcessados = jogadoresData.map(jogador => {
+        // Converte os pagamentos do formato do backend para o formato do frontend
+        const pagamentos = Array(12).fill(false);
+        if (jogador.pagamentos && Array.isArray(jogador.pagamentos)) {
+          jogador.pagamentos.forEach((pagamento, index) => {
+            if (typeof pagamento === 'object' && pagamento !== null) {
+              pagamentos[index] = pagamento.pago || false;
+            } else {
+              pagamentos[index] = pagamento || false;
+            }
+          });
         }
 
-        // Busca dados da API
-        const [jogadoresRes, transacoesRes] = await Promise.all([
-          api.get('/jogadores'),
-          api.get('/financeiro/transacoes')
-        ]);
+        // Verifica status - Nova lógica considerando o mês anterior
+        const mesAtual = new Date().getMonth();
+        const mesAnterior = mesAtual === 0 ? 11 : mesAtual - 1;
+        const todosMesesPagos = pagamentos[mesAnterior];
 
-        const jogadoresData = jogadoresRes.data?.data || jogadoresRes.data || [];
-        const transacoesData = transacoesRes.data?.data || transacoesRes.data || [];
+        return {
+          ...jogador,
+          pagamentos: pagamentos,
+          statusFinanceiro: todosMesesPagos ? 'Adimplente' : 'Inadimplente'
+        };
+      });
 
-        // Processa os jogadores
-        const jogadoresProcessados = jogadoresData.map(jogador => {
-          // Converte os pagamentos do formato do backend para o formato do frontend
-          const pagamentos = Array(12).fill(false);
-          if (jogador.pagamentos && Array.isArray(jogador.pagamentos)) {
-            jogador.pagamentos.forEach((pagamento, index) => {
-              if (typeof pagamento === 'object' && pagamento !== null) {
-                pagamentos[index] = pagamento.pago || false;
-              } else {
-                pagamentos[index] = pagamento || false;
-              }
-            });
-          }
+      // Atualiza estados
+      setJogadores(jogadoresProcessados);
+      setTransacoes(transacoesData);
 
-          // Verifica status - Nova lógica considerando o mês anterior
-          const mesAtual = new Date().getMonth();
-          const mesAnterior = mesAtual === 0 ? 11 : mesAtual - 1;
-          const todosMesesPagos = pagamentos[mesAnterior];
+      // Atualiza cache
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        jogadoresCache: jogadoresProcessados,
+        transacoesCache: transacoesData,
+        lastUpdate: new Date().toISOString()
+      }));
 
-          return {
-            ...jogador,
-            pagamentos: pagamentos,
-            statusFinanceiro: todosMesesPagos ? 'Adimplente' : 'Inadimplente'
-          };
-        });
+    } catch (error) {
+      console.error("Erro ao carregar dados:", error);
+      toast.error('Erro ao carregar dados. Usando cache local se disponível.');
+    } finally {
+      setCarregando(false);
+    }
+  };
 
-        // Atualiza estados
-        setJogadores(jogadoresProcessados);
-        setTransacoes(transacoesData);
-
-        // Atualiza cache
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-          jogadoresCache: jogadoresProcessados,
-          transacoesCache: transacoesData,
-          lastUpdate: new Date().toISOString()
-        }));
-
-      } catch (error) {
-        console.error("Erro ao carregar dados:", error);
-      } finally {
-        setCarregando(false);
-      }
-    };
-
-    carregarDados();
-  }, []);
+  carregarDados();
+}, []);
 
   // Atualizar estatísticas
   useEffect(() => {
@@ -168,6 +172,7 @@ export default function Financeiro() {
 
       } catch (error) {
         console.error("Erro ao calcular estatísticas:", error);
+        toast.error('Erro ao calcular estatísticas');
       }
     };
 
@@ -179,6 +184,7 @@ export default function Financeiro() {
     setNovaTransacao(prev => ({ ...prev, [name]: value }));
   };
 
+  // Adicionando transação
   const adicionarTransacao = async (e) => {
     e.preventDefault();
 
@@ -220,6 +226,7 @@ export default function Financeiro() {
       }));
 
       // Reset do formulário
+      toast.success('Transação registrada com sucesso!');
       setNovaTransacao({
         descricao: "",
         valor: "",
@@ -234,10 +241,188 @@ export default function Financeiro() {
       console.error("Erro ao adicionar transação:", error);
       // Remove a transação temporária em caso de erro
       setTransacoes(prev => prev.filter(t => t._id !== transacaoTemporaria?._id));
+      toast.error(error.message || 'Erro ao adicionar transação');
     }
   };
 
-  const excluirTransacao = async (id) => {
+  const togglePagamento = async (jogadorId, mesIndex) => {
+    const jogadorAtual = jogadores.find(j => j._id === jogadorId);
+    if (!jogadorAtual) {
+      toast.error('Jogador não encontrado');
+      return;
+    }
+
+    try {
+      // Atualização otimista - atualiza o estado imediatamente
+      const updatedPagamentos = [...jogadorAtual.pagamentos];
+      updatedPagamentos[mesIndex] = !updatedPagamentos[mesIndex];
+
+      // Atualiza o estado local primeiro
+      setJogadores(prevJogadores => {
+        const updatedJogadores = prevJogadores.map(j => {
+          if (j._id === jogadorId) {
+            return {
+              ...j,
+              pagamentos: updatedPagamentos
+            };
+          }
+          return j;
+        });
+
+        // Atualiza o localStorage em batch
+        requestAnimationFrame(() => {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            jogadoresCache: updatedJogadores,
+            transacoesCache: transacoes,
+            lastUpdate: new Date().toISOString()
+          }));
+        });
+
+        return updatedJogadores;
+      });
+
+      // Prepara o payload para a API
+      const payload = {
+        mes: mesIndex,
+        pago: updatedPagamentos[mesIndex],
+        isento: false,
+        dataPagamento: updatedPagamentos[mesIndex] ? new Date() : null,
+        dataLimite: new Date(new Date().getFullYear(), mesIndex, 20)
+      };
+
+      // Atualiza no banco de dados
+      const response = await api.post(`/jogadores/${jogadorId}/pagamentos`, payload);
+
+      if (!response.data) {
+        throw new Error('Resposta inválida do servidor');
+      }
+
+      // Atualiza o cache com os dados mais recentes
+      const updatedJogador = response.data.data.jogador;
+      if (updatedJogador) {
+        setJogadores(prevJogadores => {
+          const newJogadores = prevJogadores.map(j => 
+            j._id === jogadorId ? {
+              ...j,
+              pagamentos: updatedJogador.pagamentos.map(p => p.pago)
+            } : j
+          );
+
+          // Atualiza o localStorage em batch
+          requestAnimationFrame(() => {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+              jogadoresCache: newJogadores,
+              transacoesCache: transacoes,
+              lastUpdate: new Date().toISOString()
+            }));
+          });
+
+          return newJogadores;
+        });
+      }
+
+    } catch (error) {
+      console.error("Erro ao atualizar pagamento:", error);
+      toast.error('Erro ao atualizar pagamento');
+      
+      // Reverte a mudança em caso de erro
+      setJogadores(prevJogadores => {
+        const revertedJogadores = prevJogadores.map(j => {
+          if (j._id === jogadorId) {
+            return {
+              ...j,
+              pagamentos: jogadorAtual.pagamentos
+            };
+          }
+          return j;
+        });
+
+        // Atualiza o localStorage em batch
+        requestAnimationFrame(() => {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            jogadoresCache: revertedJogadores,
+            transacoesCache: transacoes,
+            lastUpdate: new Date().toISOString()
+          }));
+        });
+
+        return revertedJogadores;
+      });
+    }
+  };
+
+  const toggleStatus = async (jogadorId) => {
+    const jogadorAtual = jogadores.find(j => j._id === jogadorId);
+    if (!jogadorAtual) {
+      toast.error('Jogador não encontrado');
+      return;
+    }
+
+    try {
+      const newStatus = jogadorAtual.statusFinanceiro === 'Adimplente' ? 'Inadimplente' : 'Adimplente';
+
+      // Atualização otimista - atualiza o estado imediatamente
+      setJogadores(prevJogadores => {
+        const updatedJogadores = prevJogadores.map(j => {
+          if (j._id === jogadorId) {
+            return {
+              ...j,
+              statusFinanceiro: newStatus
+            };
+          }
+          return j;
+        });
+
+        // Atualiza o localStorage em batch
+        requestAnimationFrame(() => {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            jogadoresCache: updatedJogadores,
+            transacoesCache: transacoes,
+            lastUpdate: new Date().toISOString()
+          }));
+        });
+
+        return updatedJogadores;
+      });
+
+      // Atualiza no banco de dados
+      const response = await api.patch(`/jogadores/${jogadorId}/status`, { status: newStatus });
+
+      if (!response.data) {
+        throw new Error('Resposta inválida do servidor');
+      }
+
+    } catch (error) {
+      console.error("Erro ao atualizar status:", error);
+      toast.error('Erro ao atualizar status');
+      
+      // Reverte a mudança em caso de erro
+      setJogadores(prevJogadores => {
+        const revertedJogadores = prevJogadores.map(j => {
+          if (j._id === jogadorId) {
+            return {
+              ...j,
+              statusFinanceiro: jogadorAtual.statusFinanceiro
+            };
+          }
+          return j;
+        });
+
+        // Atualiza o localStorage em batch
+        requestAnimationFrame(() => {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            jogadoresCache: revertedJogadores,
+            transacoesCache: transacoes,
+            lastUpdate: new Date().toISOString()
+          }));
+        });
+
+        return revertedJogadores;
+      });
+    }
+  };
+
+  const deletarTransacao = async (id) => {
     try {
       // Encontra a transação que será deletada
       const transacaoParaDeletar = transacoes.find(t => t._id === id);
@@ -285,11 +470,13 @@ export default function Financeiro() {
         lastUpdate: new Date().toISOString()
       }));
 
+      toast.success('Transação removida com sucesso!');
     } catch (error) {
       console.error("Erro ao deletar transação:", error);
       // Reverte as mudanças em caso de erro
       setTransacoes(transacoes);
       setJogadores(jogadores);
+      toast.error(error.message || 'Erro ao deletar transação');
     }
   };
 
@@ -300,8 +487,10 @@ export default function Financeiro() {
 
       setJogadores(jogadores.filter(j => j._id !== id));
       setEditarModal(false);
+      toast.success('Jogador removido com sucesso!');
     } catch (error) {
       console.error("Erro ao deletar jogador:", error);
+      toast.error('Erro ao deletar jogador');
     }
   };
 
@@ -463,8 +652,10 @@ export default function Financeiro() {
         pdf.save(`relatorio-financeiro-${filtroMes}.pdf`);
       }
       
+      toast.success('Relatório PDF gerado com sucesso!');
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
+      toast.error('Erro ao gerar PDF. Tente novamente.');
     }
   };
 
@@ -531,10 +722,42 @@ export default function Financeiro() {
         link.click();
       }
       
+      toast.success('Imagem gerada com sucesso!');
     } catch (error) {
       console.error('Erro ao gerar imagem:', error);
+      toast.error('Erro ao gerar imagem. Tente novamente.');
     }
   };
+
+  // const compartilharRelatorio = async () => {
+  //   try {
+  //     if (navigator.share) {
+  //       const element = document.getElementById('relatorio-content');
+  //       const canvas = await html2canvas(element, {
+  //         scale: 2,
+  //         logging: false,
+  //         useCORS: true,
+  //         backgroundColor: '#1f2937'
+  //       });
+        
+  //       const blob = await (await fetch(canvas.toDataURL('image/png'))).blob();
+  //       const file = new File([blob], 'relatorio-financeiro.png', { type: blob.type });
+        
+  //       await navigator.share({
+  //         title: `Relatório Financeiro - ${filtroMes}`,
+  //         text: `Status financeiro do time: ${estatisticas.saldo >= 0 ? 'Positivo' : 'Negativo'}`,
+  //         files: [file]
+  //       });
+  //     } else {
+  //       toast.info('Compartilhamento não suportado neste navegador');
+  //     }
+  //   } catch (error) {
+  //     console.error('Erro ao compartilhar:', error);
+  //     if (error.name !== 'AbortError') {
+  //       toast.error('Erro ao compartilhar relatório');
+  //     }
+  //   }
+  // };
 
   const compartilharControle = async (elementId) => {
     try {
@@ -556,12 +779,12 @@ export default function Financeiro() {
           files: [file]
         });
       } else {
-        console.info('Compartilhamento não suportado neste navegador');
+        toast.info('Compartilhamento não suportado neste navegador');
       }
     } catch (error) {
       console.error('Erro ao compartilhar:', error);
       if (error.name !== 'AbortError') {
-        console.error('Erro ao compartilhar controle');
+        toast.error('Erro ao compartilhar controle');
       }
     }
   };
@@ -586,12 +809,12 @@ export default function Financeiro() {
           files: [file]
         });
       } else {
-        console.info('Compartilhamento não suportado neste navegador');
+        toast.info('Compartilhamento não suportado neste navegador');
       }
     } catch (error) {
       console.error('Erro ao compartilhar:', error);
       if (error.name !== 'AbortError') {
-        console.error('Erro ao compartilhar histórico');
+        toast.error('Erro ao compartilhar histórico');
       }
     }
   };
@@ -644,6 +867,7 @@ export default function Financeiro() {
             <div className="flex-grow flex justify-center items-center">
               <div className="flex flex-col items-center gap-2">
                 <div className="flex items-center justify-center gap-3">
+                  <FaMoneyBillWave className="text-blue-400 text-2xl sm:text-3xl" />
                   <motion.h1
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -786,6 +1010,7 @@ export default function Financeiro() {
                   >
                     <option value="receita">Receita</option>
                     <option value="despesa">Despesa</option>
+                    
                   </select>
                 </div>
 
@@ -1024,7 +1249,7 @@ export default function Financeiro() {
     </td>
                             <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-gray-400">
                               <motion.button
-                                onClick={() => excluirTransacao(t._id)}
+                                onClick={() => deletarTransacao(t._id)}
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.9 }}
                                 className="text-red-400 hover:text-red-500 mr-2"
@@ -1382,6 +1607,18 @@ export default function Financeiro() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ToastContainer 
+        position="bottom-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
     </div>
   );
 }
