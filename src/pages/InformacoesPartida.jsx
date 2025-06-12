@@ -15,8 +15,6 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { motion } from 'framer-motion';
-import { db } from "../services/firebase";
-import { collection, addDoc, getDocs, deleteDoc, doc } from "firebase/firestore";
 
 export default function InformacoesPartida() {
   const navigate = useNavigate();
@@ -82,19 +80,58 @@ export default function InformacoesPartida() {
   // Função para salvar planilha
   const salvarPlanilha = async () => {
     try {
-      const planilhaRef = await addDoc(collection(db, "planilhas"), {
-        nome: titulo,
-        dados: tabela,
-        dataCriacao: new Date()
-      });
+      setCarregando(true);
       
-      setPlanilhas([...planilhas, { id: planilhaRef.id, nome: titulo }]);
-      setTitulo('Nova Planilha');
-      setSubtitulo('');
-      setTabela([['Cabeçalho', 'Valor'], ['', '']]);
-      setPlanilhaAtiva(null);
+      // Validação básica
+      if (!titulo.trim()) {
+        console.error('Título é obrigatório');
+        return setCarregando(false);
+      }
+
+      const planilhaData = {
+        titulo: titulo.trim(),
+        subtitulo: subtitulo.trim(),
+        tabela,
+        dataAtualizacao: new Date().toISOString()
+      };
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+
+      const url = planilhaAtiva?._id 
+        ? `${import.meta.env.VITE_API_URL}/api/planilhas/${planilhaAtiva._id}`
+        : `${import.meta.env.VITE_API_URL}/api/planilhas`;
+
+      const response = await fetch(url, {
+        method: planilhaAtiva?._id ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(planilhaData),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeout);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao salvar');
+      }
+
+      const { data } = await response.json();
+
+      setPlanilhas(prev => 
+        planilhaAtiva?._id 
+          ? prev.map(p => p._id === data._id ? data : p)
+          : [data, ...prev]
+      );
+      
+      setPlanilhaAtiva(data);
+      console.log('Salvo com sucesso!');
     } catch (error) {
-      console.error("Erro ao salvar planilha:", error);
+      console.error('Erro:', error);
+    } finally {
+      setCarregando(false);
     }
   };
 
@@ -127,9 +164,23 @@ export default function InformacoesPartida() {
     try {
       setCarregando(true);
       
-      await deleteDoc(doc(db, "planilhas", id));
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/planilhas/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Erro ${response.status} ao excluir`);
+      }
 
-      setPlanilhas(prev => prev.filter(p => p.id !== id));
+      const data = await response.json();
+
+      setPlanilhas(prev => prev.filter(p => p._id !== id));
       
       if (planilhaAtiva?._id === id) {
         setTitulo('Nova Planilha');
@@ -138,18 +189,9 @@ export default function InformacoesPartida() {
         setPlanilhaAtiva(null);
       }
 
-      toast.success('Excluído!', {
-        position: "bottom-right",
-        autoClose: 1500,
-        hideProgressBar: true
-      });
+      console.log('Excluído com sucesso!');
     } catch (error) {
       console.error('Erro:', error);
-      toast.error(`Falha ao excluir: ${error.message}`, {
-        position: "bottom-right",
-        autoClose: 2000,
-        hideProgressBar: true
-      });
     } finally {
       setCarregando(false);
     }
@@ -163,9 +205,9 @@ export default function InformacoesPartida() {
   };
 
   const selecionarPlanilha = (planilha) => {
-    setTitulo(planilha.nome);
+    setTitulo(planilha.titulo);
     setSubtitulo(planilha.subtitulo || '');
-    setTabela(planilha.dados);
+    setTabela(planilha.tabela);
     setPlanilhaAtiva(planilha);
   };
 
@@ -412,10 +454,10 @@ export default function InformacoesPartida() {
               <div className="overflow-y-auto max-h-[60vh] space-y-3">
                 {planilhas.map((planilha) => (
                   <div 
-                    key={planilha.id}
+                    key={planilha._id}
                     onClick={() => selecionarPlanilha(planilha)}
                     className={`p-3 border rounded-lg cursor-pointer transition-colors relative ${
-                      planilhaAtiva?._id === planilha.id 
+                      planilhaAtiva?._id === planilha._id 
                         ? 'bg-blue-900/30 border-blue-500' 
                         : 'border-gray-600 hover:bg-gray-700'
                     }`}
@@ -423,7 +465,7 @@ export default function InformacoesPartida() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        deletarPlanilha(planilha.id);
+                        deletarPlanilha(planilha._id);
                       }}
                       className="absolute top-2 right-2 text-red-400 hover:text-red-300"
                       title="Excluir planilha"
@@ -431,10 +473,10 @@ export default function InformacoesPartida() {
                       <FaTrash />
                     </button>
                     
-                    <h3 className="font-bold">{planilha.nome}</h3>
+                    <h3 className="font-bold">{planilha.titulo}</h3>
                     {planilha.subtitulo && <p className="text-sm text-gray-300 mt-1">{planilha.subtitulo}</p>}
                     <p className="text-xs text-gray-400 mt-2">
-                      Criada em: {new Date(planilha.dataCriacao).toLocaleDateString()}
+                      Criada em: {new Date(planilha.dataAtualizacao).toLocaleDateString()}
                     </p>
                   </div>
                 ))}
