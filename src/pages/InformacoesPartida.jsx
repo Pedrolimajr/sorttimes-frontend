@@ -336,7 +336,7 @@ const deletarPlanilha = async (id) => {
               backgroundColor: "rgba(37, 99, 235, 0.1)"
             }}
             whileTap={{ scale: 0.95 }}
-            className="absolute left-2 sm:left-4 md:left-8 top-4 sm:top-8 w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center bg-gray-800/40 hover:bg-gray-700/40 text-gray-200 rounded-full transition-all duration-300 backdrop-blur-sm border border-gray-700/50 shadow-lg hover:shadow-blue-500/20"
+            className="absolute -top-12 left-0 w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center bg-gray-800/40 hover:bg-gray-700/40 text-gray-200 rounded-full transition-all duration-300 backdrop-blur-sm border border-gray-700/50 shadow-lg hover:shadow-blue-500/20"
             title="Voltar para o Dashboard"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -402,7 +402,26 @@ const deletarPlanilha = async (id) => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
           {/* Lista de planilhas (1 coluna em desktop) */}
           <div className="lg:col-span-1">
-            <div className="bg-gray-800/50 backdrop-blur-sm p-3 sm:p-4 rounded-xl shadow-2xl border border-gray-700/50 h-[calc(100vh-12rem)]">
+            <div className="bg-gray-800/50 backdrop-blur-sm p-3 sm:p-4 rounded-xl shadow-2xl border border-gray-700/50 h-[calc(100vh-12rem)] relative">
+              {/* Botão Voltar */}
+              <motion.button 
+                onClick={voltarParaDashboard}
+                whileHover={{ 
+                  scale: 1.05,
+                  x: -5,
+                  backgroundColor: "rgba(37, 99, 235, 0.1)"
+                }}
+                whileTap={{ scale: 0.95 }}
+                className="absolute -top-12 left-0 w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center bg-gray-800/40 hover:bg-gray-700/40 text-gray-200 rounded-full transition-all duration-300 backdrop-blur-sm border border-gray-700/50 shadow-lg hover:shadow-blue-500/20"
+                title="Voltar para o Dashboard"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <RiArrowLeftDoubleLine className="text-blue-400 text-xl sm:text-2xl transform transition-transform group-hover:translate-x-1" />
+                <div className="absolute inset-0 rounded-full bg-blue-400/10 animate-pulse" style={{ animationDuration: '3s' }} />
+              </motion.button>
+
               <h2 className="text-base sm:text-lg font-bold mb-3 sm:mb-4 flex items-center gap-2 text-blue-400">
                 <FaTable /> Planilhas
               </h2>
@@ -413,7 +432,7 @@ const deletarPlanilha = async (id) => {
                   <p className="text-gray-400 text-sm sm:text-base">Nenhuma planilha cadastrada</p>
                 </div>
               ) : (
-                <div className="overflow-y-auto h-[calc(100%-3rem)] space-y-2 sm:space-y-3 pr-2">
+                <div className="overflow-y-auto h-[calc(100%-3rem)] space-y-2 sm:space-y-3 pr-2 custom-scrollbar">
                   {planilhas.map((planilha) => (
                     <motion.div 
                       key={planilha._id}
@@ -434,7 +453,7 @@ const deletarPlanilha = async (id) => {
                         className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 text-red-400 hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity"
                         title="Excluir planilha"
                       >
-                        <FaTrash />
+                        <FaTrash className="text-xs" />
                       </button>
                       
                       <div className="flex items-start gap-2 sm:gap-3">
@@ -518,15 +537,20 @@ const deletarPlanilha = async (id) => {
                               className="w-full bg-transparent font-bold text-white text-center text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 px-2 py-1.5 rounded"
                               style={{ minWidth: '80px' }}
                             />
-                            <div className="mt-1">
+                            <div className="mt-1 flex items-center gap-2">
+                              <input
+                                type="text"
+                                placeholder="Descrição..."
+                                className="w-full bg-transparent text-white text-center text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 px-2 py-1 rounded"
+                              />
                               <motion.button
                                 onClick={() => removerColuna(colIndex)}
-                                whileHover={{ scale: 1.2, rotate: 90 }}
+                                whileHover={{ scale: 1.2 }}
                                 whileTap={{ scale: 0.9 }}
-                                className="text-red-400 hover:text-red-300 text-xs opacity-60 hover:opacity-100 transition-all duration-300 hover:bg-red-500/10 p-1 rounded-full"
+                                className="text-red-400 hover:text-red-300 text-xs transition-all duration-300 hover:bg-red-500/10 p-1.5 rounded-full"
                                 title="Remover coluna"
                               >
-                                <FaTimesCircle />
+                                <FaTrash className="text-base" />
                               </motion.button>
                             </div>
                           </div>
@@ -572,6 +596,23 @@ const deletarPlanilha = async (id) => {
             </div>
           </div>
         </div>
+
+        <style jsx>{`
+          .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(31, 41, 55, 0.5);
+            border-radius: 3px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(59, 130, 246, 0.5);
+            border-radius: 3px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(59, 130, 246, 0.7);
+          }
+        `}</style>
       </div>
     </div>
   );
