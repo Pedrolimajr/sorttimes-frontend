@@ -291,7 +291,7 @@ const deletarPlanilha = async (id) => {
   }
 };
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 px-4 py-8 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#111827] px-4 py-8 sm:px-6 lg:px-8">
       {/* Efeito de partículas */}
       <div className="fixed inset-0 overflow-hidden -z-10 opacity-20">
         {[...Array(15)].map((_, i) => (
@@ -322,108 +322,129 @@ const deletarPlanilha = async (id) => {
       </div>
 
       <div className="max-w-7xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8 relative pt-16 sm:pt-0"
-        >
-          {/* Botão Voltar */}
+        {/* Header com navegação */}
+        <div className="flex items-center justify-between mb-8">
           <motion.button 
             onClick={voltarParaDashboard}
-            whileHover={{ 
-              scale: 1.05,
-              x: -5,
-              backgroundColor: "rgba(37, 99, 235, 0.1)"
-            }}
+            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="absolute left-4 top-0 sm:top-8 w-11 h-11 flex items-center justify-center bg-gray-800/40 hover:bg-gray-700/40 text-gray-200 rounded-full transition-all duration-300 backdrop-blur-sm border border-gray-700/50 shadow-lg hover:shadow-blue-500/20"
-            title="Voltar para o Dashboard"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3 }}
+            className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
           >
-            <RiArrowLeftDoubleLine className="text-blue-400 text-2xl transform transition-transform group-hover:translate-x-1" />
-            <div className="absolute inset-0 rounded-full bg-blue-400/10 animate-pulse" style={{ animationDuration: '3s' }} />
+            <RiArrowLeftDoubleLine className="text-2xl" />
+            <span className="hidden sm:inline">Voltar</span>
           </motion.button>
 
-          {/* Cabeçalho com título e botões */}
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
-            <div className="flex flex-col items-center flex-grow">
-              <div className="flex items-center justify-center gap-3">
-                <FaTable className="text-blue-400 text-2xl sm:text-3xl" />
-                <motion.h1 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.1 }}
-                  className="text-2xl sm:text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300"
-                >
-                  Informações das Partidas
-                </motion.h1>
-              </div>
-
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 0.8 }}
-                transition={{ delay: 0.2 }}
-                className="text-gray-400 text-sm sm:text-base mt-1"
-              >
-                Gerencie as informações e detalhes das partidas
-              </motion.p>
-            </div>
-
-            <motion.div 
-              className="flex gap-3 sm:flex-shrink-0"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
+          <div className="flex items-center gap-4">
+            <motion.button
+              onClick={criarNovaPlanilha}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg"
             >
-              <button
-                onClick={criarNovaPlanilha}
-                className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg text-sm hover:shadow-blue-500/20"
-              >
-                <FaPlus /> Nova Planilha
-              </button>
-              
-              <button
-                onClick={salvarPlanilha}
-                disabled={carregando}
-                className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg text-sm hover:shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <FaSave /> {carregando ? 'Salvando...' : 'Salvar'}
-              </button>
-            </motion.div>
+              <FaPlus /> Nova Planilha
+            </motion.button>
+            
+            <motion.button
+              onClick={salvarPlanilha}
+              disabled={carregando}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <FaSave /> {carregando ? 'Salvando...' : 'Salvar'}
+            </motion.button>
           </div>
-        </motion.div>
+        </div>
 
         {/* Grid principal */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Seção de edição (ocupa 2 colunas em desktop) */}
-          <div className="lg:col-span-2">
-            <div className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-xl shadow-2xl border border-gray-700/50 mb-6">
-              <div className="mb-6 space-y-4">
-                <div className="relative">
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Título</label>
-                  <input
-                    value={titulo}
-                    onChange={(e) => setTitulo(e.target.value)}
-                    className="w-full p-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    placeholder="Título da Planilha"
-                  />
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Lista de planilhas (1 coluna em desktop) */}
+          <div className="lg:col-span-1">
+            <div className="bg-gray-800/50 backdrop-blur-sm p-4 rounded-xl shadow-2xl border border-gray-700/50 h-[calc(100vh-12rem)]">
+              <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-blue-400">
+                <FaTable /> Planilhas
+              </h2>
+              
+              {planilhas.length === 0 ? (
+                <div className="text-center py-8">
+                  <FaTable className="mx-auto text-gray-600 text-4xl mb-3" />
+                  <p className="text-gray-400">Nenhuma planilha cadastrada</p>
                 </div>
-                
-                <div className="relative">
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Subtítulo</label>
-                  <input
-                    value={subtitulo}
-                    onChange={(e) => setSubtitulo(e.target.value)}
-                    className="w-full p-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    placeholder="Subtítulo"
-                  />
+              ) : (
+                <div className="overflow-y-auto h-[calc(100%-3rem)] space-y-3 pr-2">
+                  {planilhas.map((planilha) => (
+                    <motion.div 
+                      key={planilha._id}
+                      onClick={() => selecionarPlanilha(planilha)}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className={`p-3 border rounded-lg cursor-pointer transition-all relative group ${
+                        planilhaAtiva?._id === planilha._id 
+                          ? 'bg-blue-900/30 border-blue-500 shadow-lg shadow-blue-500/20' 
+                          : 'border-gray-600/50 hover:bg-gray-700/30 hover:border-gray-500'
+                      }`}
+                    >
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deletarPlanilha(planilha._id);
+                        }}
+                        className="absolute top-2 right-2 text-red-400 hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Excluir planilha"
+                      >
+                        <FaTrash />
+                      </button>
+                      
+                      <div className="flex items-start gap-3">
+                        <div className="bg-gray-700/50 p-2 rounded-lg">
+                          <FaTable className="text-blue-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-bold text-white truncate">{planilha.titulo}</h3>
+                          <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                            <span className="inline-block w-2 h-2 rounded-full bg-blue-400"></span>
+                            {new Date(planilha.dataAtualizacao).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
                 </div>
+              )}
+            </div>
+          </div>
+
+          {/* Área da planilha (3 colunas em desktop) */}
+          <div className="lg:col-span-3">
+            <div className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-xl shadow-2xl border border-gray-700/50 h-[calc(100vh-12rem)] flex flex-col">
+              {/* Barra de ferramentas */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={adicionarLinha}
+                    className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-2 transition-all text-sm"
+                  >
+                    <FaPlus size={12} /> Linha
+                  </button>
+                  
+                  <button
+                    onClick={adicionarColuna}
+                    className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-2 transition-all text-sm"
+                  >
+                    <FaPlus size={12} /> Coluna
+                  </button>
+                </div>
+
+                <button
+                  onClick={exportarPDF}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg flex items-center gap-2 transition-all text-sm"
+                >
+                  <FaFilePdf /> Exportar
+                </button>
               </div>
 
               {/* Tabela editável com scroll */}
-              <div className="overflow-auto max-h-[60vh] rounded-lg border border-gray-700/50 shadow-xl bg-gray-900/50 backdrop-blur-sm">
+              <div className="flex-1 overflow-auto rounded-lg border border-gray-700/50 bg-gray-900/50 backdrop-blur-sm">
                 <table className="min-w-full border-collapse table-fixed">
                   <thead>
                     <tr className="bg-gray-700/50">
@@ -451,15 +472,6 @@ const deletarPlanilha = async (id) => {
                           </div>
                         </th>
                       ))}
-                      <th className="w-12 p-3 border border-gray-600/50 sticky top-0 bg-gray-700/50 text-center backdrop-blur-sm">
-                        <button
-                          onClick={adicionarColuna}
-                          className="mx-auto flex justify-center text-white hover:text-green-300 transition-colors"
-                          title="Adicionar coluna"
-                        >
-                          <FaPlus />
-                        </button>
-                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -495,80 +507,7 @@ const deletarPlanilha = async (id) => {
                   </tbody>
                 </table>
               </div>
-
-              <div className="mt-6 flex flex-wrap gap-3 border-t border-gray-700/50 pt-4">
-                <button
-                  onClick={adicionarLinha}
-                  className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg text-sm hover:shadow-blue-500/20"
-                >
-                  <FaPlus /> Adicionar Linha
-                </button>
-                
-                <button
-                  onClick={exportarPDF}
-                  className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg text-sm hover:shadow-blue-500/20"
-                >
-                  <FaFilePdf /> Exportar PDF
-                </button>
-              </div>
             </div>
-          </div>
-
-          {/* Lista de planilhas (1 coluna em desktop) com scroll */}
-          <div className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-xl shadow-2xl border border-gray-700/50">
-            <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-blue-400">
-              <FaTable /> Planilhas Salvas
-            </h2>
-            
-            {planilhas.length === 0 ? (
-              <div className="text-center py-8">
-                <FaTable className="mx-auto text-gray-600 text-4xl mb-3" />
-                <p className="text-gray-400">Nenhuma planilha cadastrada</p>
-              </div>
-            ) : (
-              <div className="overflow-y-auto max-h-[60vh] space-y-3 pr-2">
-                {planilhas.map((planilha) => (
-                  <motion.div 
-                    key={planilha._id}
-                    onClick={() => selecionarPlanilha(planilha)}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className={`p-4 border rounded-lg cursor-pointer transition-all relative group ${
-                      planilhaAtiva?._id === planilha._id 
-                        ? 'bg-blue-900/30 border-blue-500 shadow-lg shadow-blue-500/20' 
-                        : 'border-gray-600/50 hover:bg-gray-700/30 hover:border-gray-500'
-                    }`}
-                  >
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deletarPlanilha(planilha._id);
-                      }}
-                      className="absolute top-3 right-3 text-red-400 hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity"
-                      title="Excluir planilha"
-                    >
-                      <FaTrash />
-                    </button>
-                    
-                    <div className="flex items-start gap-3">
-                      <div className="bg-gray-700/50 p-2 rounded-lg">
-                        <FaTable className="text-blue-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-white truncate">{planilha.titulo}</h3>
-                        {planilha.subtitulo && (
-                          <p className="text-sm text-gray-300 mt-1 truncate">{planilha.subtitulo}</p>
-                        )}
-                        <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
-                          <span className="inline-block w-2 h-2 rounded-full bg-blue-400"></span>
-                          Criada em: {new Date(planilha.dataAtualizacao).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
           </div>
         </div>
       </div>
