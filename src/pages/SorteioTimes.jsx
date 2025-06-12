@@ -9,6 +9,8 @@ import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { GiSoccerKick } from "react-icons/gi";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import socket from '../services/socket';
 import usePersistedState from '../hooks/usePersistedState';
 // Constantes para organizar os valores fixos
@@ -179,6 +181,7 @@ export default function SorteioTimes() {
    */
   const gerarLinkPresenca = async () => {
     if (!dataJogo) {
+      toast.warning('Por favor, selecione a data do jogo!');
       return;
     }
 
@@ -204,13 +207,14 @@ export default function SorteioTimes() {
       const linkCompleto = `${window.location.origin}/confirmar-presenca/${linkId}`;
       
       const dataFormatada = new Date(dataJogo).toLocaleString('pt-BR', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  hour: '2-digit',
+  minute: '2-digit'
+});
 
+      
       const mensagem = `*⚽ Confirmação de Presença - Fut de ${dataFormatada}!*\n\n` +
         `Fala galera! Chegou a hora de confirmar presença para o nosso fut!\n\n` +
         `🗓️ Data: ${dataFormatada}\n\n` +
@@ -225,9 +229,11 @@ export default function SorteioTimes() {
         });
       } else {
         await navigator.clipboard.writeText(mensagem);
+        toast.success('Link copiado para área de transferência!');
       }
     } catch (error) {
       console.error('Erro ao gerar link:', error);
+      toast.error('Erro ao gerar link de presença');
     }
   };
 
@@ -235,6 +241,7 @@ export default function SorteioTimes() {
   const jogadoresPresentes = jogadoresSelecionados.filter(j => j.presente);
 
   if (jogadoresPresentes.length === 0) {
+    toast.info("Nenhum jogador marcado como presente.");
     return;
   }
 
@@ -251,6 +258,7 @@ export default function SorteioTimes() {
     }).catch(err => console.error('Erro ao compartilhar:', err));
   } else {
     navigator.clipboard.writeText(texto);
+    toast.success("Lista copiada para área de transferência!");
   }
 };
 
@@ -291,6 +299,7 @@ export default function SorteioTimes() {
       });
     } catch (error) {
       console.error("Erro ao carregar jogadores:", error);
+      toast.error("Erro ao carregar jogadores");
     } finally {
       setCarregandoJogadores(false);
     }
@@ -371,8 +380,10 @@ const alternarPresenca = async (jogadorId) => {
       throw new Error(result.message || "Erro ao confirmar presença");
     }
 
+    toast.success(novoEstado ? '✅ Presença confirmada!' : '❌ Presença desmarcada!');
   } catch (error) {
     console.error("Erro ao atualizar presença:", error);
+    toast.error("Erro ao comunicar com o servidor.");
   }
 };
 
@@ -416,6 +427,7 @@ const aplicarFiltroPosicao = () => {
       // NÃO altera posicaoOriginal aqui
     }))
   );
+  toast.info(`Todos os jogadores definidos como ${filtroPosicao || 'posição original'}`);
 };
 
   
@@ -427,6 +439,7 @@ const aplicarFiltroPosicao = () => {
   const jogadoresPresentes = jogadoresSelecionados.filter(j => j.presente);
   
   if (jogadoresPresentes.length < 2) {
+    toast.error("Mínimo de 2 jogadores necessários");
     return;
   }
 
@@ -478,9 +491,14 @@ const aplicarFiltroPosicao = () => {
       };
       
       setHistorico([novoSorteio, ...historico.slice(0, 4)]);
+      toast.success(`Times sorteados com sucesso! ${data.times.length} times formados`);
 
-   } catch (error) {
+      // Limpa os dados de presença do localStorage após o sorteio
+      // localStorage.removeItem(LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS);
+  
+ } catch (error) {
     console.error("Erro ao sortear times:", error);
+    toast.error(error.message || 'Erro ao sortear times');
   } finally {
     setCarregando(false);
   }
@@ -510,8 +528,10 @@ const aplicarFiltroPosicao = () => {
       };
     }));
     
+    toast.success('Jogadores atualizados com sucesso');
   } catch (error) {
     console.error("Erro:", error);
+    toast.error(error.message || 'Erro ao atualizar jogadores');
   } finally {
     setCarregandoJogadores(false);
   }
@@ -546,6 +566,7 @@ const aplicarFiltroPosicao = () => {
   const restaurarSorteio = (sorteio) => {
     setTimes(sorteio.times);
     setBalanceamento(sorteio.balanceamento);
+    toast.success('Sorteio restaurado!');
   };
 
   /**
@@ -554,6 +575,7 @@ const aplicarFiltroPosicao = () => {
    */
   const excluirDoHistorico = (index) => {
     setHistorico(prev => prev.filter((_, i) => i !== index));
+    toast.success('Sorteio removido do histórico');
   };
 
   /**
@@ -571,6 +593,7 @@ const aplicarFiltroPosicao = () => {
       }).catch(err => console.log('Erro ao compartilhar:', err));
     } else {
       navigator.clipboard.writeText(texto);
+      toast.success('Times copiados para área de transferência!');
     }
   };
 
@@ -931,20 +954,21 @@ const TimeSorteado = ({ time, index }) => {
     </motion.button>
 
     <motion.button
-      onClick={() => {
-        const todosPresentes = jogadoresSelecionados.every(j => j.presente);
-        setJogadoresSelecionados(jogadoresSelecionados.map(j => ({
-          ...j,
-          presente: !todosPresentes
-        })));
-      }}
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      className="w-1/2 sm:flex-1 flex items-center justify-center gap-1 text-xs sm:text-sm bg-gray-700 hover:bg-gray-600 text-gray-200 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg transition-all"
-    >
-      <FaCheck className="w-3 h-3 sm:w-4 sm:h-4" />
-      <span>{jogadoresSelecionados.every(j => j.presente) ? 'Desmarcar Todos' : 'Marcar Todos'}</span>
-    </motion.button>
+  onClick={() => {
+    const todosPresentes = jogadoresSelecionados.every(j => j.presente);
+    setJogadoresSelecionados(jogadoresSelecionados.map(j => ({
+      ...j,
+      presente: !todosPresentes
+    })));
+    toast.info(todosPresentes ? 'Todos os jogadores desmarcados' : 'Todos os jogadores marcados');
+  }}
+  whileHover={{ scale: 1.02 }}
+  whileTap={{ scale: 0.98 }}
+  className="w-1/2 sm:flex-1 flex items-center justify-center gap-1 text-xs sm:text-sm bg-gray-700 hover:bg-gray-600 text-gray-200 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg transition-all"
+>
+  <FaCheck className="w-3 h-3 sm:w-4 sm:h-4" />
+  <span>{jogadoresSelecionados.every(j => j.presente) ? 'Desmarcar Todos' : 'Marcar Todos'}</span>
+</motion.button>
   </div>
 </div>
 
