@@ -772,15 +772,45 @@ const [isento, setIsento] = useState(false);
       `;
 
       // Criar e adicionar título
-      const titulo = document.createElement('div');
-      titulo.style.cssText = `
-        text-align: center;
-        margin-bottom: 30px;
-        font-size: 20px;
-        font-weight: bold;
-      `;
-      titulo.textContent = '💰 MENSALIDADE VALOR 20,00R$';
-      containerTemp.appendChild(titulo);
+      const tituloContainer = document.createElement('div');
+tituloContainer.style.cssText = `
+  text-align: center;
+  margin-bottom: 30px;
+`;
+
+const tituloZoom = document.createElement('div');
+tituloZoom.style.cssText = `
+  font-size: 24px;
+  font-weight: bold;
+  color: #ffd700;
+  margin-bottom: 15px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+`;
+tituloZoom.textContent = '⚠️ FAVOR DAR ZOOM ⚠️';
+
+const tituloControle = document.createElement('div');
+tituloControle.style.cssText = `
+  font-size: 20px;
+  font-weight: bold;
+  color: white;
+  margin-bottom: 10px;
+`;
+tituloControle.textContent = 'Controle de mensalidades dos jogadores';
+
+const tituloValor = document.createElement('div');
+tituloValor.style.cssText = `
+  font-size: 20px;
+  font-weight: bold;
+  color: white;
+`;
+tituloValor.textContent = '💰 MENSALIDADE VALOR 20,00R$';
+
+tituloContainer.appendChild(tituloZoom);
+tituloContainer.appendChild(tituloControle);
+tituloContainer.appendChild(tituloValor);
+containerTemp.appendChild(tituloContainer);
 
       // Container para as tabelas
       const tabelasContainer = document.createElement('div');
@@ -900,37 +930,41 @@ const [isento, setIsento] = useState(false);
       // Adicionar ao documento temporariamente
       document.body.appendChild(containerTemp);
 
-      const canvas = await html2canvas(containerTemp, {
-      scale: 3,
+      try {
+        const canvas = await html2canvas(containerTemp, {
+      scale: 3, // Aumentar a escala para melhor qualidade
       useCORS: true,
       backgroundColor: '#1f2937',
       logging: false,
       width: containerTemp.offsetWidth,
       height: containerTemp.offsetHeight,
       imageTimeout: 0,
-      pixelRatio: 2,
+      pixelRatio: 2, // Forçar pixel ratio mais alto
       windowWidth: containerTemp.offsetWidth * 2,
       windowHeight: containerTemp.offsetHeight * 2,
-      optimizeSpeed: false
+      optimizeSpeed: false, // Priorizar qualidade sobre velocidade
     });
 
-    canvas.toBlob(async (blob) => {
-      try {
-        const file = new File([blob], 'controle-mensalidades.png', { 
-          type: 'image/png'
-        });
-
-        await navigator.share({
-          files: [file],
-          title: 'Controle de Mensalidades',
-        });
-        toast.success('Compartilhamento realizado com sucesso!');
-      } catch (error) {
-        console.error('Erro ao compartilhar:', error);
-        toast.error('Erro ao compartilhar');
+       canvas.toBlob(async (blob) => {
+      const file = new File([blob], 'controle-mensalidades.png', { 
+        type: 'image/png',
+        quality: 1.0 // Máxima qualidade
+      });
+          try {
+            await navigator.share({
+              files: [file],
+              title: 'Controle de Mensalidades',
+            });
+            toast.success('Compartilhamento realizado com sucesso!');
+          } catch (error) {
+            console.error('Erro ao compartilhar:', error);
+            toast.error('Erro ao compartilhar');
+          }
+        }, 'image/png', 1.0);
+      } finally {
+        document.body.removeChild(containerTemp);
       }
-    }, 'image/png', 1.0);
-   
+
     } catch (error) {
       console.error('Erro:', error);
       toast.error('Erro ao gerar imagem');
