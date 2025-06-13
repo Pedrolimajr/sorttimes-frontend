@@ -759,7 +759,7 @@ const [isento, setIsento] = useState(false);
   //   }
   // };
 
-  
+
   const compartilharControle = async () => {
     try {
       // Container principal
@@ -801,34 +801,37 @@ const [isento, setIsento] = useState(false);
       const metade = Math.ceil(linhasConteudo.length / 2);
 
       // Função para criar tabela
-      const criarTabela = (linhas) => {
-        const tabela = document.createElement('table');
-        tabela.style.cssText = `
-          border-spacing: 0;
-          border-collapse: separate;
-          width: 550px;
-        `;
+     const criarTabela = (linhas) => {
+  const tabela = document.createElement('table');
+  tabela.style.cssText = `
+    border-spacing: 0;
+    border-collapse: separate;
+    width: 550px;
+  `;
 
-        // Adicionar cabeçalho
-        const headerClone = header.cloneNode(true);
-        Array.from(headerClone.children).forEach(th => {
-          th.style.padding = '8px';
-          th.style.textAlign = 'center';
-        });
-        tabela.appendChild(headerClone);
+  // Adicionar cabeçalho
+  const headerClone = header.cloneNode(true);
+  Array.from(headerClone.children).forEach(th => {
+    th.style.padding = '8px';
+    th.style.textAlign = 'center';
+  });
+  tabela.appendChild(headerClone);
 
-        // Adicionar linhas
-        linhas.forEach(linha => {
-          const linhaClone = linha.cloneNode(true);
-          Array.from(linhaClone.children).forEach(td => {
-            td.style.padding = '8px';
-            td.style.textAlign = 'center';
-          });
-          tabela.appendChild(linhaClone);
-        });
+  // Adicionar linhas com separador horizontal
+  linhas.forEach(linha => {
+    const linhaClone = linha.cloneNode(true);
+    Array.from(linhaClone.children).forEach(td => {
+      td.style.cssText = `
+        padding: 8px;
+        text-align: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      `;
+    });
+    tabela.appendChild(linhaClone);
+  });
 
-        return tabela;
-      };
+  return tabela;
+};
 
       // Criar e adicionar primeira tabela
       tabelasContainer.appendChild(criarTabela(linhasConteudo.slice(0, metade)));
