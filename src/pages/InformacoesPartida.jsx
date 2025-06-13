@@ -12,7 +12,7 @@ import {
 } from 'react-icons/fa';
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { motion } from 'framer-motion';
 
@@ -27,29 +27,6 @@ export default function InformacoesPartida() {
   const [erro, setErro] = useState(null);
 
   const refPlanilha = useRef(null);
-
-  // Configuração do toast
-  useEffect(() => {
-    toast.configure({
-      position: "bottom-right",
-      autoClose: 2000,
-      hideProgressBar: true,
-      closeOnClick: true,
-      pauseOnHover: false,
-      draggable: false,
-      closeButton: false,
-      style: {
-        background: '#1F2937',
-        color: '#fff',
-        fontSize: '0.875rem',
-        padding: '0.5rem 1rem',
-        borderRadius: '0.5rem',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-        maxWidth: '300px',
-        margin: '0.5rem'
-      }
-    });
-  }, []);
 
   // Carrega planilhas ao iniciar
   useEffect(() => {
@@ -595,6 +572,26 @@ export default function InformacoesPartida() {
           </div>
         </div>
       </div>
+
+      <ToastContainer 
+        position="bottom-right"
+        autoClose={2000}
+        hideProgressBar={true}
+        closeOnClick={true}
+        pauseOnHover={false}
+        draggable={false}
+        closeButton={false}
+        style={{
+          background: '#1F2937',
+          color: '#fff',
+          fontSize: '0.875rem',
+          padding: '0.5rem 1rem',
+          borderRadius: '0.5rem',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+          maxWidth: '300px',
+          margin: '0.5rem'
+        }}
+      />
     </div>
   );
 }
