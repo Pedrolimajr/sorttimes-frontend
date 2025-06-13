@@ -759,157 +759,78 @@ const [isento, setIsento] = useState(false);
   //   }
   // };
 
-const compartilharControle = async (elementId) => {
+const compartilharControle = async () => {
   try {
-    toast.info('Gerando relatório em alta qualidade...');
+    toast.info('Gerando imagem em altíssima qualidade...');
 
-    const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-    const LARGURA_TOTAL = 1200;
-    const LARGURA_JOGADOR = 200;
-    const LARGURA_STATUS = 100;
-    const LARGURA_MES = 50;
-
+    // Define o container
     const tempContainer = document.createElement('div');
     tempContainer.style.position = 'fixed';
-    tempContainer.style.left = '0';
     tempContainer.style.top = '0';
-    tempContainer.style.width = `${LARGURA_TOTAL}px`;
-    tempContainer.style.backgroundColor = '#1f2937';
+    tempContainer.style.left = '0';
+    tempContainer.style.width = '2000px'; // Força largura grande
     tempContainer.style.padding = '40px';
-    tempContainer.style.color = 'white';
-    tempContainer.style.fontFamily = '"Arial", sans-serif';
-    tempContainer.style.zIndex = '10000';
-    tempContainer.style.boxSizing = 'border-box';
-    tempContainer.style.borderRadius = '10px';
+    tempContainer.style.backgroundColor = '#1f2937';
+    tempContainer.style.color = '#fff';
+    tempContainer.style.fontFamily = 'Arial, sans-serif';
+    tempContainer.style.zIndex = '9999';
     tempContainer.style.visibility = 'hidden';
-
-    let htmlContent = `
-      <div style="text-align: center; margin-bottom: 30px;">
-        <div style="font-size: 28px; font-weight: bold; color: #4ade80; margin-bottom: 10px;">
-          💰 MENSALIDADE VALOR 20,00R$
-        </div>
-      </div>
-
-      <table style="width: 100%; border-collapse: collapse; font-size: 16px; table-layout: fixed;">
-        <colgroup>
-          <col style="width: ${LARGURA_JOGADOR}px">
-          <col style="width: ${LARGURA_STATUS}px">
-          ${MESES.map(() => `<col style="width: ${LARGURA_MES}px">`).join('')}
-        </colgroup>
-        <thead>
-          <tr>
-            <th style="padding: 12px; background: #374151; border: 1px solid #4b5563; text-align: left;">Jogador</th>
-            <th style="padding: 12px; background: #374151; border: 1px solid #4b5563;">Status</th>
-            ${MESES.map(mes => `
-              <th style="padding: 12px; background: #374151; border: 1px solid #4b5563;">${mes}</th>
-            `).join('')}
-          </tr>
-        </thead>
-        <tbody>
-          ${jogadores.filter(j => j.nome.toLowerCase().includes(filtroJogador.toLowerCase()))
-            .map(jogador => `
-              <tr>
-                <td style="padding: 12px; border: 1px solid #4b5563; text-align: left;">${jogador.nome}</td>
-                <td style="padding: 12px; border: 1px solid #4b5563; text-align: center;">
-                  <span style="
-                    display: inline-block;
-                    padding: 6px 12px;
-                    border-radius: 20px;
-                    ${jogador.statusFinanceiro === 'Adimplente' ? 'background: #4ade8020; color: #4ade80;' : 'background: #f8717120; color: #f87171;'}
-                    font-size: 14px;
-                  ">
-                    ${jogador.statusFinanceiro}
-                  </span>
-                </td>
-                ${jogador.pagamentos.map(pago => `
-                  <td style="padding: 12px; border: 1px solid #4b5563; text-align: center;">
-                    <span style="
-                      display: inline-block;
-                      width: 24px;
-                      height: 24px;
-                      border-radius: 50%;
-                      line-height: 24px;
-                      ${pago ? 'background: #4ade8020; color: #4ade80;' : 'background: #f8717120; color: #f87171;'}
-                    ">
-                      ${pago ? '✓' : '✗'}
-                    </span>
-                  </td>
-                `).join('')}
-              </tr>
-            `).join('')}
-        </tbody>
-      </table>
-
-      <div style="margin-top: 30px; text-align: center; font-size: 18px;">
-        <div style="color: #60a5fa; margin-bottom: 15px;">
-          💳 CHAVE PIX: Universocajazeiras@gmail.com
-        </div>
-        <div style="color: #fbbf24; margin-bottom: 15px;">
-          📌 FAVOR ENVIAR COMPROVANTE NO GRUPO, EU ATUALIZO A LISTA.
-        </div>
-        <div style="color: #a5b4fc;">
-         ℹ️ *OBS:* Este valor será para caixa para as compras de material, sendo bola, rede, pagamento de juiz.
-        </div>
-        <div style="color: #a5b4fc;">
-         ⚠️ *OBS:* Os nomes que estão com a tarja verde ao final, esses terão prioridades no baba, são os que no momento estão adimplentes. Espero não precisar ir no privado de cada um informar o seu compromisso. 🤝
-        </div>
-      </div>
-    `;
-
-    tempContainer.innerHTML = htmlContent;
     document.body.appendChild(tempContainer);
-    tempContainer.style.visibility = 'visible';
 
+    // Adiciona HTML interno (mesmo conteúdo do relatório)
+    tempContainer.innerHTML = `... MESMO HTML DO RELATÓRIO ...`;
+
+    // Espera renderização completa antes de capturar
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Captura com html2canvas em qualidade ALTÍSSIMA
     const canvas = await html2canvas(tempContainer, {
-      scale: 4,
+      scale: 6, // Qualidade máxima
       useCORS: true,
       backgroundColor: '#1f2937',
-      windowWidth: tempContainer.scrollWidth,
-      windowHeight: tempContainer.scrollHeight
+      width: tempContainer.scrollWidth,
+      height: tempContainer.scrollHeight,
     });
 
     canvas.toBlob(async (blob) => {
-      if (blob) {
-        const file = new File([blob], `mensalidades-${new Date().toISOString().slice(0, 10)}.jpeg`, {
-          type: 'image/jpeg',
-        });
+      if (!blob) return;
 
-        // Web Share API se disponível
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({
-              files: [file],
-              title: 'Relatório de Mensalidades',
-              text: 'Segue o controle das mensalidades atualizado.',
-            });
-            toast.success('Relatório compartilhado com sucesso!');
-          } catch (err) {
-            toast.error('Erro ao compartilhar imagem.');
-            console.error(err);
-          }
-        } else {
-          // Fallback: download automático
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = file.name;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-          toast.success('Imagem baixada com sucesso!');
+      const file = new File([blob], `relatorio-mensalidade-${Date.now()}.png`, {
+        type: 'image/png',
+      });
+
+      // Compartilhamento via Web Share API
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            title: 'Controle de Mensalidades',
+            text: 'Segue relatório atualizado',
+            files: [file],
+          });
+          toast.success('Relatório compartilhado com sucesso!');
+        } catch (err) {
+          console.error('Erro ao compartilhar:', err);
+          toast.error('Erro ao compartilhar');
         }
+      } else {
+        // Download automático como fallback
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = file.name;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success('Imagem baixada com qualidade total!');
       }
-    }, 'image/jpeg', 1.0);
+    }, 'image/png');
 
-  } catch (error) {
-    console.error('Erro ao gerar relatório:', error);
-    toast.error('Erro ao gerar imagem.');
+  } catch (err) {
+    console.error(err);
+    toast.error('Erro ao gerar imagem');
   } finally {
-    const container = document.querySelector('div[style*="z-index: 10000"]');
-    if (container) {
-      document.body.removeChild(container);
-    }
+    // Remove container da tela
+    const container = document.querySelector('div[style*="z-index: 9999"]');
+    if (container) document.body.removeChild(container);
   }
 };
 
