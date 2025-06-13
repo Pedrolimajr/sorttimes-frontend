@@ -759,7 +759,7 @@ const [isento, setIsento] = useState(false);
   //   }
   // };
 
-
+  
   const compartilharControle = async () => {
     try {
       // Container principal
@@ -807,25 +807,50 @@ const [isento, setIsento] = useState(false);
     border-spacing: 0;
     border-collapse: separate;
     width: 550px;
+    background-color: #1f2937;
   `;
 
   // Adicionar cabeçalho
   const headerClone = header.cloneNode(true);
   Array.from(headerClone.children).forEach(th => {
-    th.style.padding = '8px';
-    th.style.textAlign = 'center';
+    th.style.cssText = `
+      padding: 8px;
+      text-align: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      border-right: 1px solid rgba(255, 255, 255, 0.2);
+      background-color: rgba(0, 0, 0, 0.2);
+      color: white;
+    `;
   });
   tabela.appendChild(headerClone);
 
-  // Adicionar linhas com separador horizontal
+  // Adicionar linhas
   linhas.forEach(linha => {
     const linhaClone = linha.cloneNode(true);
-    Array.from(linhaClone.children).forEach(td => {
+    Array.from(linhaClone.children).forEach((td, index) => {
       td.style.cssText = `
         padding: 8px;
-        text-align: center;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        text-align: ${index === 0 ? 'left' : 'center'};
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        border-right: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
       `;
+
+      // Estilo especial para a coluna de status
+      if (index === 1) {
+        td.style.backgroundColor = td.textContent.trim().toLowerCase() === 'adimplente' 
+          ? 'rgba(16, 185, 129, 0.2)' 
+          : 'rgba(239, 68, 68, 0.2)';
+      }
+
+      // Estilo para os checkmarks e X
+      if (index > 1) {
+        if (td.textContent.includes('✓')) {
+          td.style.color = '#10b981'; // Verde para check
+        } else if (td.textContent.includes('❌')) {
+          td.style.color = '#ef4444'; // Vermelho para X
+        }
+      }
     });
     tabela.appendChild(linhaClone);
   });
