@@ -761,19 +761,12 @@ const [isento, setIsento] = useState(false);
 
   const compartilharControle = async () => {
     try {
-      const element = document.getElementById('tabela-mensalidades');
-      if (!element) {
-        toast.error('Elemento não encontrado');
-        return;
-      }
-
-      // Criar um container principal
-      const mainContainer = document.createElement('div');
-      mainContainer.style.backgroundColor = '#1f2937';
-      mainContainer.style.padding = '20px';
-      mainContainer.style.display = 'flex';
-      mainContainer.style.flexDirection = 'column';
-      mainContainer.style.gap = '20px';
+      const containerTemp = document.createElement('div');
+      containerTemp.style.backgroundColor = '#1f2937';
+      containerTemp.style.padding = '20px';
+      containerTemp.style.display = 'flex';
+      containerTemp.style.flexDirection = 'column';
+      containerTemp.style.gap = '20px';
 
       // Adicionar título
       const titulo = document.createElement('div');
@@ -783,80 +776,81 @@ const [isento, setIsento] = useState(false);
       titulo.style.fontSize = '18px';
       titulo.style.fontWeight = 'bold';
       titulo.style.marginBottom = '20px';
-      mainContainer.appendChild(titulo);
+      containerTemp.appendChild(titulo);
 
-      // Container para as tabelas
+      // Criar contêiner para as tabelas com divisor
       const tabelasContainer = document.createElement('div');
-      tabelasContainer.style.display = 'flex';
-      tabelasContainer.style.gap = '20px';
-      tabelasContainer.style.justifyContent = 'space-between';
-
-      // Pegar todas as linhas da tabela
-      const linhas = Array.from(element.getElementsByTagName('tr'));
-      const header = linhas[0];
-      const todasLinhas = linhas.slice(1);
-      const metade = Math.ceil(todasLinhas.length / 2);
+      tabelasContainer.style.cssText = `
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        margin-bottom: 20px;
+        align-items: start;
+        position: relative;
+      `;
 
       // Criar as duas tabelas
       const tabela1 = document.createElement('table');
       const tabela2 = document.createElement('table');
-
-      // Aplicar estilos às tabelas
       [tabela1, tabela2].forEach(tabela => {
-        tabela.style.flex = '1';
-        tabela.style.borderCollapse = 'collapse';
-        tabela.style.width = '48%';
+        tabela.style.cssText = `
+          width: 45%;
+          border-collapse: collapse;
+        `;
+        // Clonar cabeçalho completo para ambas as tabelas
+        const headerCompleto = cabecalho.cloneNode(true);
+        tabela.appendChild(headerCompleto);
       });
 
-      // Adicionar cabeçalho e linhas às tabelas
-      tabela1.appendChild(header.cloneNode(true));
-      tabela2.appendChild(header.cloneNode(true));
-
-      todasLinhas.slice(0, metade).forEach(linha => tabela1.appendChild(linha.cloneNode(true)));
-      todasLinhas.slice(metade).forEach(linha => tabela2.appendChild(linha.cloneNode(true)));
+      // Distribuir as linhas
+      linhasConteudo.slice(0, metade).forEach(linha => tabela1.appendChild(linha.cloneNode(true)));
+      linhasConteudo.slice(metade).forEach(linha => {
+        const linhaClone = linha.cloneNode(true);
+        // Garantir que todos os meses até dezembro estejam presentes
+        const cells = linhaClone.getElementsByTagName('td');
+        if (cells.length > 0) {
+          for (let i = 1; i <= 12; i++) {
+            if (!cells[i]) {
+              const newCell = document.createElement('td');
+              newCell.innerHTML = '❌';
+              linhaClone.appendChild(newCell);
+            }
+          }
+        }
+        tabela2.appendChild(linhaClone);
+      });
 
       // Adicionar divisor vertical
       const divisor = document.createElement('div');
-      divisor.style.width = '2px';
-      divisor.style.backgroundColor = '#ffffff50';
-      divisor.style.margin = '0 10px';
+      divisor.style.cssText = `
+        width: 2px;
+        background-color: #ffffff50;
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        top: 0;
+        bottom: 0;
+      `;
 
-      // Adicionar elementos ao container de tabelas
       tabelasContainer.appendChild(tabela1);
       tabelasContainer.appendChild(divisor);
       tabelasContainer.appendChild(tabela2);
-      mainContainer.appendChild(tabelasContainer);
+      containerTemp.appendChild(tabelasContainer);
 
-      // Adicionar rodapé
-      const rodape = document.createElement('div');
-      rodape.style.color = 'white';
-      rodape.style.textAlign = 'center';
-      rodape.style.marginTop = '20px';
-      rodape.innerHTML = `
-      <p>💳 CHAVE PIX: Universocajazeiras@gmail.com</p>
-      <p>📌 FAVOR ENVIAR COMPROVANTE NO GRUPO, EU ATUALIZO A LISTA.</p>
-      <p>⚠️ <strong>OBS:</strong> Os nomes que estão com a tarja verde ao final, esses terão prioridades no baba, 
-      são os que no momento estão adimplentes. Espero não precisar ir no privado de cada um informar o seu compromisso. 🤝</p>
-    `;
-      mainContainer.appendChild(rodape);
+      document.body.appendChild(containerTemp);
 
-      // Adicionar container temporariamente ao documento
-      document.body.appendChild(mainContainer);
-
-      // Gerar imagem
-      const canvas = await html2canvas(mainContainer, {
+      const canvas = await html2canvas(containerTemp, {
         scale: 2,
         logging: false,
         useCORS: true,
         backgroundColor: '#1f2937',
-        width: mainContainer.offsetWidth,
-        height: mainContainer.offsetHeight,
+        width: containerTemp.offsetWidth,
+        height: containerTemp.offsetHeight,
         imageTimeout: 0,
         pixelRatio: window.devicePixelRatio
       });
 
-      // Remover container temporário
-      document.body.removeChild(mainContainer);
+      document.body.removeChild(containerTemp);
 
       canvas.toBlob(async (blob) => {
         const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
@@ -875,7 +869,7 @@ const [isento, setIsento] = useState(false);
       }, 'image/png');
 
     } catch (error) {
-      console.error('Erro ao gerar imagem:', error);
+      console.error('Erro:', error);
       toast.error('Erro ao gerar imagem');
     }
   };
@@ -1367,7 +1361,7 @@ const [isento, setIsento] = useState(false);
               className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
             >
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3 sm:mb-4">
-                <h2 className="text-lg sm:text-xl font-semibold text-white">Controle de Mensalidades</h2>
+                <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Controle de Mensalidades</h2>
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                   <div className="relative flex-1 sm:flex-none">
                     <input
