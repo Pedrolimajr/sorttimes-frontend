@@ -68,8 +68,6 @@ export default function Financeiro() {
     totalJogadores: 0
   });
 
-  const [showOpcoes, setShowOpcoes] = useState(false);
-
 // No início do componente, adicione:
 const [isento, setIsento] = useState(false);
 
@@ -761,20 +759,16 @@ const [isento, setIsento] = useState(false);
   //   }
   // };
 
-
-
-const compartilharControle = async (opcao = 'png') => {
+const compartilharControle = async (tipo) => {
   try {
-    toast.info('Gerando relatório, aguarde...');
+    toast.info('Gerando relatório em alta qualidade...');
 
-    // Constantes de layout
     const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-    const LARGURA_TOTAL = 1600;
+    const LARGURA_TOTAL = 1200;
     const LARGURA_JOGADOR = 200;
     const LARGURA_STATUS = 100;
     const LARGURA_MES = 50;
 
-    // Criar container temporário para renderizar o HTML
     const tempContainer = document.createElement('div');
     tempContainer.style.position = 'fixed';
     tempContainer.style.left = '0';
@@ -789,20 +783,14 @@ const compartilharControle = async (opcao = 'png') => {
     tempContainer.style.borderRadius = '10px';
     tempContainer.style.visibility = 'hidden';
 
-    // Gera o HTML com os dados reais
-    let htmlContent = `
+    const htmlContent = `
       <div style="text-align: center; margin-bottom: 30px;">
         <div style="font-size: 28px; font-weight: bold; color: #4ade80; margin-bottom: 10px;">
           💰 MENSALIDADE VALOR 20,00R$
         </div>
       </div>
 
-      <table style="
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 16px;
-        table-layout: fixed;
-      ">
+      <table style="width: 100%; border-collapse: collapse; font-size: 16px; table-layout: fixed;">
         <colgroup>
           <col style="width: ${LARGURA_JOGADOR}px">
           <col style="width: ${LARGURA_STATUS}px">
@@ -813,38 +801,23 @@ const compartilharControle = async (opcao = 'png') => {
           <tr>
             <th style="padding: 12px; background: #374151; border: 1px solid #4b5563; text-align: left;">Jogador</th>
             <th style="padding: 12px; background: #374151; border: 1px solid #4b5563;">Status</th>
-            ${MESES.map(mes => `<th style="padding: 12px; background: #374151; border: 1px solid #4b5563;">${mes}</th>`).join('')}
+            ${MESES.map(mes => `
+              <th style="padding: 12px; background: #374151; border: 1px solid #4b5563;">${mes}</th>
+            `).join('')}
           </tr>
         </thead>
         <tbody>
-          ${jogadores.filter(j => 
-            j.nome.toLowerCase().includes(filtroJogador.toLowerCase())
-          ).map(jogador => `
+          ${jogadores.filter(j => j.nome.toLowerCase().includes(filtroJogador.toLowerCase())).map(jogador => `
             <tr>
-              <td style="padding: 12px; border: 1px solid #4b5563; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                ${jogador.nome}
-              </td>
+              <td style="padding: 12px; border: 1px solid #4b5563; text-align: left; overflow: hidden;">${jogador.nome}</td>
               <td style="padding: 12px; border: 1px solid #4b5563; text-align: center;">
-                <span style="
-                  display: inline-block;
-                  padding: 6px 12px;
-                  border-radius: 20px;
-                  ${jogador.statusFinanceiro === 'Adimplente' ? 'background: #4ade8020; color: #4ade80;' : 'background: #f8717120; color: #f87171;'}
-                  font-size: 14px;
-                ">
+                <span style="display: inline-block; padding: 6px 12px; border-radius: 20px; ${jogador.statusFinanceiro === 'Adimplente' ? 'background: #4ade8020; color: #4ade80;' : 'background: #f8717120; color: #f87171;'} font-size: 14px;">
                   ${jogador.statusFinanceiro}
                 </span>
               </td>
               ${jogador.pagamentos.map(pago => `
                 <td style="padding: 12px; border: 1px solid #4b5563; text-align: center;">
-                  <span style="
-                    display: inline-block;
-                    width: 24px;
-                    height: 24px;
-                    border-radius: 50%;
-                    line-height: 24px;
-                    ${pago ? 'background: #4ade8020; color: #4ade80;' : 'background: #f8717120; color: #f87171;'}
-                  ">
+                  <span style="display: inline-block; width: 24px; height: 24px; border-radius: 50%; line-height: 24px; ${pago ? 'background: #4ade8020; color: #4ade80;' : 'background: #f8717120; color: #f87171;'}">
                     ${pago ? '✓' : '✗'}
                   </span>
                 </td>
@@ -855,14 +828,10 @@ const compartilharControle = async (opcao = 'png') => {
       </table>
 
       <div style="margin-top: 30px; text-align: center; font-size: 18px; line-height: 1.6;">
-        <div style="color: #60a5fa; margin-bottom: 15px;">
-          💳 CHAVE PIX: Universocajazeiras@gmail.com
-        </div>
-        <div style="color: #fbbf24; margin-bottom: 15px;">
-          📌 FAVOR ENVIAR COMPROVANTE NO GRUPO, EU ATUALIZO A LISTA.
-        </div>
+        <div style="color: #60a5fa; margin-bottom: 15px;">💳 CHAVE PIX: Universocajazeiras@gmail.com</div>
+        <div style="color: #fbbf24; margin-bottom: 15px;">📌 FAVOR ENVIAR COMPROVANTE NO GRUPO, EU ATUALIZO A LISTA.</div>
         <div style="color: #a5b4fc;">ℹ️ *OBS:* Este valor será para caixa para as compras de material, sendo bola, rede, pagamento de juiz.</div>
-        <div style="color: #a5b4fc;">⚠️ *OBS:* Os nomes que estão com a tarja verde ao final, esses terão prioridades no baba, são os que no momento estão adimplentes. Espero não precisar ir no privado de cada um informar o seu compromisso. 🤝</div>
+        <div style="color: #a5b4fc;">⚠️ *OBS:* Os nomes que estão com a tarja verde ao final, esses terão prioridades no baba.</div>
       </div>
     `;
 
@@ -870,73 +839,52 @@ const compartilharControle = async (opcao = 'png') => {
     document.body.appendChild(tempContainer);
     tempContainer.style.visibility = 'visible';
 
-    // Esperar renderizar antes do html2canvas
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Gerar imagem
     const canvas = await html2canvas(tempContainer, {
-      scale: 5,
+      scale: 4,
       useCORS: true,
-      allowTaint: true,
-      backgroundColor: '#1f2937',
-      letterRendering: true,
+      backgroundColor: null,
       windowWidth: tempContainer.scrollWidth,
       windowHeight: tempContainer.scrollHeight
     });
 
-    if (opcao === 'png') {
-      const link = document.createElement('a');
-      link.download = `mensalidades-${new Date().toISOString().slice(0, 10)}.png`;
-      link.href = canvas.toDataURL('image/png', 1.0);
-      link.click();
-      toast.success('Imagem PNG gerada com sucesso!');
+    if (tipo === 'png') {
+      canvas.toBlob(blob => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = `mensalidades-${new Date().toISOString().slice(0, 10)}.png`;
+        link.href = url;
+        link.click();
+        URL.revokeObjectURL(url);
+        toast.success('Imagem PNG gerada com sucesso!');
+      }, 'image/png', 1.0);
     }
 
-    if (opcao === 'share') {
-      canvas.toBlob(async (blob) => {
-        const file = new File([blob], 'controle-mensalidade.png', { type: 'image/png' });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            title: 'Controle de Mensalidade',
-            text: 'Relatório atualizado',
-            files: [file],
-          });
-          toast.success('Relatório compartilhado com sucesso!');
-        } else {
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = file.name;
-          a.click();
-          URL.revokeObjectURL(url);
-          toast.info('Imagem baixada. Compartilhamento não suportado.');
-        }
-      }, 'image/png');
-    }
+    if (tipo === 'pdf') {
+      const { jsPDF } = await import('jspdf');
 
-    if (opcao === 'pdf') {
-      const pdf = new jsPDF({
-        orientation: 'landscape',
-        unit: 'px',
-        format: [canvas.width, canvas.height],
-      });
       const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('l', 'px', [canvas.width, canvas.height]);
       pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-      pdf.save('controle-mensalidade.pdf');
+      pdf.save('controle-mensalidades.pdf');
       toast.success('PDF gerado com sucesso!');
+    }
+
+    if (tipo === 'share' && navigator.canShare) {
+      canvas.toBlob(async (blob) => {
+        const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
+        await navigator.share({ files: [file], title: 'Controle de Mensalidades' });
+        toast.success('Imagem compartilhada com sucesso!');
+      }, 'image/png');
     }
 
   } catch (error) {
     console.error('Erro ao gerar relatório:', error);
-    toast.error('Erro ao gerar relatório!');
+    toast.error('Falha ao gerar arquivo.');
   } finally {
     const container = document.querySelector('div[style*="z-index: 10000"]');
-    if (container) {
-      document.body.removeChild(container);
-    }
+    if (container) document.body.removeChild(container);
   }
 };
-
 
   const compartilharHistorico = async (elementId) => {
     try {
@@ -1437,49 +1385,15 @@ const compartilharControle = async (opcao = 'png') => {
                 />
                 <FaSearch className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs sm:text-sm" />
               </div>
-             <div className="relative inline-block">
-  <motion.button
-    onClick={() => setShowOpcoes(!showOpcoes)}
-    whileHover={{ scale: 1.1 }}
-    whileTap={{ scale: 0.9 }}
-    className="bg-blue-600 p-1.5 sm:p-2 rounded-lg text-white hover:bg-blue-700 transition-colors flex-shrink-0"
-    title="Compartilhar controle de mensalidades"
-  >
-    <FaShare className="text-sm sm:text-base" />
-  </motion.button>
-
-  {showOpcoes && (
-    <div className="absolute z-50 mt-2 right-0 bg-white border border-gray-200 rounded shadow-lg text-sm">
-      <button
-        onClick={() => {
-          compartilharControle('png');
-          setShowOpcoes(false);
-        }}
-        className="block px-4 py-2 text-gray-800 hover:bg-gray-100 w-full text-left"
-      >
-        📸 Gerar PNG
-      </button>
-      <button
-        onClick={() => {
-          compartilharControle('pdf');
-          setShowOpcoes(false);
-        }}
-        className="block px-4 py-2 text-gray-800 hover:bg-gray-100 w-full text-left"
-      >
-        📄 Gerar PDF
-      </button>
-      <button
-        onClick={() => {
-          compartilharControle('share');
-          setShowOpcoes(false);
-        }}
-        className="block px-4 py-2 text-gray-800 hover:bg-gray-100 w-full text-left"
-      >
-        📤 Compartilhar
-      </button>
-    </div>
-  )}
-</div>
+              <motion.button
+                onClick={() => compartilharControle('tabela-mensalidades')}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                className="bg-blue-600 p-1.5 sm:p-2 rounded-lg text-white hover:bg-blue-700 transition-colors flex-shrink-0"
+                title="Compartilhar controle de mensalidades"
+              >
+                <FaShare className="text-sm sm:text-base" />
+              </motion.button>
             </div>
           </div>
 
