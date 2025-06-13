@@ -901,7 +901,7 @@ const [isento, setIsento] = useState(false);
       document.body.appendChild(containerTemp);
 
       try {
-      const canvas = await html2canvas(containerTemp, {
+        const canvas = await html2canvas(containerTemp, {
       scale: 3, // Aumentar a escala para melhor qualidade
       useCORS: true,
       backgroundColor: '#1f2937',
@@ -915,36 +915,33 @@ const [isento, setIsento] = useState(false);
       optimizeSpeed: false, // Priorizar qualidade sobre velocidade
     });
 
-    // Otimizar a qualidade do blob
-    canvas.toBlob(async (blob) => {
+       canvas.toBlob(async (blob) => {
       const file = new File([blob], 'controle-mensalidades.png', { 
         type: 'image/png',
         quality: 1.0 // Máxima qualidade
       });
-
-      try {
-        // Compressão otimizada para manter qualidade
+          try {
+            // Compressão otimizada para manter qualidade
         const compressedBlob = await imageCompression(file, {
           maxSizeMB: 2,
           maxWidthOrHeight: 2048,
           useWebWorker: true,
           preserveExif: true,
           quality: 0.9
-        });
-
-        await navigator.share({
+            });
+await navigator.share({
           files: [new File([compressedBlob], 'controle-mensalidades.png', {
             type: 'image/png'
           })],
           title: 'Controle de Mensalidades',
         });
-        toast.success('Compartilhamento realizado com sucesso!');
+
+          toast.success('Compartilhamento realizado com sucesso!');
       } catch (error) {
         console.error('Erro ao compartilhar:', error);
         toast.error('Erro ao compartilhar');
       }
-    }, 'image/png', 1.0);
-
+        }, 'image/png', 1.0);
       } finally {
         document.body.removeChild(containerTemp);
       }
