@@ -761,104 +761,148 @@ const [isento, setIsento] = useState(false);
 
   const compartilharControle = async (elementId) => {
   try {
-    const element = document.getElementById(elementId);
+    toast.info('Gerando imagem em alta qualidade...');
+
+    // 1. Criar um container temporário com estilos otimizados
+    const originalElement = document.getElementById(elementId);
+    const tempContainer = document.createElement('div');
+    tempContainer.style.position = 'absolute';
+    tempContainer.style.left = '-9999px';
+    tempContainer.style.width = '800px';
+    tempContainer.style.backgroundColor = '#1f2937';
+    tempContainer.style.padding = '25px';
+    tempContainer.style.color = 'white';
+    tempContainer.style.fontFamily = 'Arial, sans-serif';
+    tempContainer.style.borderRadius = '10px';
     
-    // Cria um elemento temporário para a imagem de compartilhamento
-    const tempElement = document.createElement('div');
-    tempElement.style.padding = '20px';
-    tempElement.style.backgroundColor = '#1f2937';
-    tempElement.style.color = 'white';
-    tempElement.style.maxWidth = '800px';
-    tempElement.style.fontFamily = 'Arial, sans-serif';
+    // 2. Adicionar cabeçalho com mensagem
+    const header = document.createElement('div');
+    header.style.marginBottom = '20px';
+    header.style.textAlign = 'center';
+    header.style.fontSize = '22px';
+    header.style.fontWeight = 'bold';
+    header.innerHTML = '💰 <span style="color: #4ade80">MENSALIDADE VALOR R$</span>';
+    tempContainer.appendChild(header);
+
+    // 3. Clonar e estilizar a tabela original
+    const tableClone = originalElement.cloneNode(true);
     
-    // Adiciona a mensagem no topo
-    const topMessage = document.createElement('div');
-    topMessage.style.marginBottom = '20px';
-    topMessage.style.fontSize = '24px';
-    topMessage.style.fontWeight = 'bold';
-    topMessage.style.textAlign = 'center';
-    topMessage.style.color = '#ffffff';
-    topMessage.innerHTML = '💰 <span style="color: #4ade80">*MENSALIDADE VALOR R$*</span>';
-    tempElement.appendChild(topMessage);
-    
-    // Adiciona a tabela original com estilos melhorados
-    const tableClone = element.cloneNode(true);
-    
-    // Aumenta o tamanho da fonte da tabela
-    tableClone.style.fontSize = '16px';
+    // Aplicar estilos de alta qualidade
     tableClone.style.width = '100%';
+    tableClone.style.borderCollapse = 'collapse';
+    tableClone.style.fontSize = '18px';
+    tableClone.style.margin = '15px 0';
     
-    // Melhora a legibilidade das células
-    const cells = tableClone.querySelectorAll('td, th');
-    cells.forEach(cell => {
-      cell.style.padding = '10px';
+    // Melhorar células e cabeçalhos
+    const allCells = tableClone.querySelectorAll('th, td');
+    allCells.forEach(cell => {
+      cell.style.padding = '12px 8px';
       cell.style.border = '1px solid #374151';
+      cell.style.textAlign = 'center';
     });
-    
-    // Aumenta o tamanho dos ícones de check/x
+
+    // Melhorar cabeçalhos especificamente
+    const headers = tableClone.querySelectorAll('th');
+    headers.forEach(header => {
+      header.style.backgroundColor = '#374151';
+      header.style.fontWeight = 'bold';
+    });
+
+    // Aumentar ícones de status
     const icons = tableClone.querySelectorAll('svg');
     icons.forEach(icon => {
-      icon.style.width = '12px';
-      icon.style.height = '12px';
+      icon.style.width = '16px';
+      icon.style.height = '16px';
     });
-    
-    tempElement.appendChild(tableClone);
-    
-    // Adiciona as mensagens no rodapé
-    const bottomMessages = document.createElement('div');
-    bottomMessages.style.marginTop = '20px';
-    bottomMessages.style.fontSize = '16px';
-    bottomMessages.style.lineHeight = '1.5';
-    bottomMessages.style.textAlign = 'center';
-    bottomMessages.style.color = '#e5e7eb';
-    bottomMessages.innerHTML = `
-      <p>💳 <span style="color: #60a5fa">*CHAVE PIX:* Universocajazeiras@gmail.com</span></p>
-      <p>📌 <span style="color: #fbbf24">*FAVOR ENVIAR COMPROVANTE NO GRUPO, EU ATUALIZO A LISTA*</span></p>
-      <p>ℹ️ <span style="color: #a5b4fc">*OBS:* Este valor será para caixa para as compras de material, sendo bola, rede, pagamento de juiz.</span></p>
-      <p>⚠️ <span style="color: #f87171">*OBS:* Os nomes que estão com a tarja verde ao final, esses terão prioridades no baba, são os que no momento estão adimplentes. Espero não precisar ir no privado de cada um informar o seu compromisso. 🤝</span></p>
+
+    // Centralizar texto dos status
+    const statusButtons = tableClone.querySelectorAll('button');
+    statusButtons.forEach(button => {
+      button.style.display = 'flex';
+      button.style.alignItems = 'center';
+      button.style.justifyContent = 'center';
+      button.style.margin = '0 auto';
+      button.style.padding = '8px 12px';
+    });
+
+    tempContainer.appendChild(tableClone);
+
+    // 4. Adicionar rodapé com mensagens
+    const footer = document.createElement('div');
+    footer.style.marginTop = '20px';
+    footer.style.fontSize = '16px';
+    footer.style.lineHeight = '1.6';
+    footer.innerHTML = `
+      <div style="text-align: center; margin-bottom: 10px;">
+        💳 <span style="color: #60a5fa">CHAVE PIX: Universocajazeiras@gmail.com</span>
+      </div>
+      <div style="text-align: center; margin-bottom: 10px;">
+        📌 <span style="color: #fbbf24">FAVOR ENVIAR COMPROVANTE NO GRUPO, EU ATUALIZO A LISTA</span>
+      </div>
+      <div style="margin-bottom: 8px; text-align: center;">
+        ℹ️ <span style="color: #a5b4fc">OBS: Este valor será para caixa para as compras de material, sendo bola, rede, pagamento de juiz.</span>
+      </div>
+      <div style="text-align: center;">
+        ⚠️ <span style="color: #f87171">OBS: Os nomes que estão com a tarja verde ao final, esses terão prioridades no baba, são os que no momento estão adimplentes. Espero não precisar ir no privado de cada um informar o seu compromisso. 🤝</span>
+      </div>
     `;
-    tempElement.appendChild(bottomMessages);
-    
-    document.body.appendChild(tempElement);
-    
-    // Configurações para melhor qualidade
-    const canvas = await html2canvas(tempElement, {
-      scale: 3, // Aumenta a escala para melhor qualidade
+    tempContainer.appendChild(footer);
+
+    // 5. Adicionar ao DOM para renderização
+    document.body.appendChild(tempContainer);
+
+    // 6. Gerar a imagem com qualidade máxima
+    const canvas = await html2canvas(tempContainer, {
+      scale: 4, // Fator de escala aumentado
       logging: false,
       useCORS: true,
-      backgroundColor: '#1f2937',
-      quality: 1, // Máxima qualidade
+      backgroundColor: null, // Fundo transparente
+      quality: 1, // Qualidade máxima
       allowTaint: true,
-      letterRendering: true, // Melhora a renderização de texto
-      windowWidth: tempElement.scrollWidth,
-      windowHeight: tempElement.scrollHeight
+      letterRendering: true, // Renderização de texto otimizada
+      removeContainer: true, // Remove o container após a renderização
+      windowWidth: tempContainer.scrollWidth,
+      windowHeight: tempContainer.scrollHeight
     });
+
+    // 7. Remover o elemento temporário
+    document.body.removeChild(tempContainer);
+
+    // 8. Criar imagem final com bordas arredondadas
+    const finalCanvas = document.createElement('canvas');
+    finalCanvas.width = canvas.width;
+    finalCanvas.height = canvas.height;
+    const ctx = finalCanvas.getContext('2d');
     
-    document.body.removeChild(tempElement);
+    // Adicionar fundo e bordas arredondadas
+    ctx.fillStyle = '#1f2937';
+    ctx.beginPath();
+    ctx.roundRect(0, 0, finalCanvas.width, finalCanvas.height, 20);
+    ctx.fill();
     
+    // Desenhar o conteúdo
+    ctx.drawImage(canvas, 0, 0);
+
+    // 9. Compartilhar ou fazer download
     if (navigator.share) {
-      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1));
-      const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
-      
-      await navigator.share({
-        title: `Controle de Mensalidades - ${new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`,
-        text: `Controle de mensalidades dos jogadores`,
-        files: [file]
-      });
+      finalCanvas.toBlob(async (blob) => {
+        const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
+        await navigator.share({
+          title: 'Controle de Mensalidades',
+          files: [file]
+        });
+      }, 'image/png', 1);
     } else {
-      // Cria um link temporário para download da imagem em alta qualidade
       const link = document.createElement('a');
-      link.download = `controle-mensalidades-${filtroMes}.png`;
-      link.href = canvas.toDataURL('image/png', 1.0); // 1.0 = máxima qualidade
+      link.download = `controle-mensalidades-${new Date().toISOString().slice(0, 10)}.png`;
+      link.href = finalCanvas.toDataURL('image/png', 1.0);
       link.click();
     }
-    
-    toast.success('Imagem gerada com sucesso!');
+
+    toast.success('Imagem em alta qualidade gerada com sucesso!');
   } catch (error) {
-    console.error('Erro ao compartilhar:', error);
-    if (error.name !== 'AbortError') {
-      toast.error('Erro ao compartilhar controle');
-    }
+    console.error('Erro ao gerar imagem:', error);
+    toast.error('Erro ao gerar imagem. Tente novamente.');
   }
 };
   const compartilharHistorico = async (elementId) => {
