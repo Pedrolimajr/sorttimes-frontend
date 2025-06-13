@@ -764,23 +764,15 @@ const [isento, setIsento] = useState(false);
       if (navigator.share) {
         const element = document.getElementById(elementId);
         
-        // Aguarda um momento para garantir que o elemento está renderizado
-        await new Promise(resolve => setTimeout(resolve, 100));
-
         const canvas = await html2canvas(element, {
-          scale: 2,
-          logging: true, // Ativando logs para debug
+          scale: 4, // Aumentando a escala para melhor qualidade
+          logging: false,
           useCORS: true,
           backgroundColor: '#1f2937',
-          onclone: (clonedDoc) => {
-            // Garante que o elemento clonado está visível
-            const clonedElement = clonedDoc.getElementById(elementId);
-            if (clonedElement) {
-              clonedElement.style.display = 'block';
-              clonedElement.style.visibility = 'visible';
-              clonedElement.style.opacity = '1';
-            }
-          }
+          allowTaint: true,
+          foreignObjectRendering: true,
+          width: element.offsetWidth,
+          height: element.offsetHeight
         });
         
         const blob = await (await fetch(canvas.toDataURL('image/png', 1.0))).blob();
@@ -795,7 +787,7 @@ const [isento, setIsento] = useState(false);
           `⚠️ *OBS:* Os nomes que estão com a tarja verde ao final, esses terão prioridades no baba, são os que no momento estão adimplentes. Espero não precisar ir no privado de cada um informar o seu compromisso. 🤝`;
         
         await navigator.share({
-          title: 'Controle de Mensalidades',
+          title: `Controle de Mensalidades - ${new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`,
           text: mensagem,
           files: [file]
         });
