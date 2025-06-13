@@ -761,126 +761,63 @@ const [isento, setIsento] = useState(false);
 
 const compartilharControle = async (elementId) => {
   try {
-    toast.info('Gerando relatório em alta qualidade...');
+    // 1. Configurações otimizadas para WhatsApp
+    const OPTIONS = {
+      width: 800, // Largura ideal para WhatsApp
+      padding: 20,
+      fontSize: 14,
+      quality: 0.95 // Qualidade balanceada
+    };
 
-    // Configurações de layout
-    const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-    const LARGURA_TOTAL = 1200;
-    const LARGURA_JOGADOR = 200;
-    const LARGURA_STATUS = 100;
-    const LARGURA_MES = 50;
+    // 2. Criar container com dimensões WhatsApp-friendly
+    const container = document.createElement('div');
+    container.style.width = `${OPTIONS.width}px`;
+    container.style.padding = `${OPTIONS.padding}px`;
+    container.style.backgroundColor = '#1f2937';
+    container.style.color = 'white';
+    container.style.fontFamily = 'Arial, sans-serif';
+    container.style.lineHeight = '1.4';
 
-    // Criar container
-    const tempContainer = document.createElement('div');
-    tempContainer.style.position = 'fixed';
-    tempContainer.style.left = '0';
-    tempContainer.style.top = '0';
-    tempContainer.style.width = `${LARGURA_TOTAL}px`;
-    tempContainer.style.backgroundColor = '#1f2937';
-    tempContainer.style.padding = '40px';
-    tempContainer.style.color = 'white';
-    tempContainer.style.fontFamily = '"Arial", sans-serif';
-    tempContainer.style.zIndex = '10000';
-    tempContainer.style.boxSizing = 'border-box';
-    tempContainer.style.borderRadius = '10px';
-    tempContainer.style.visibility = 'hidden';
-
-    // Construir tabela com centralização ajustada
-    let htmlContent = `
-      <div style="text-align: center; margin-bottom: 30px;">
-        <div style="font-size: 28px; font-weight: bold; color: #4ade80; margin-bottom: 10px;">
-          💰 MENSALIDADE VALOR R$
+    // 3. Gerar conteúdo otimizado
+    const meses = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']; // Abreviado
+    
+    container.innerHTML = `
+      <div style="text-align: center; margin-bottom: 15px;">
+        <div style="font-size: ${OPTIONS.fontSize + 4}px; font-weight: bold; color: #4ade80;">
+          💰 MENSALIDADE
         </div>
       </div>
 
-      <table style="
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 16px;
-        table-layout: fixed;
-      ">
-        <colgroup>
-          <col style="width: ${LARGURA_JOGADOR}px">
-          <col style="width: ${LARGURA_STATUS}px">
-          ${MESES.map(() => `<col style="width: ${LARGURA_MES}px">`).join('')}
-        </colgroup>
-
+      <table style="width: 100%; border-collapse: collapse; font-size: ${OPTIONS.fontSize}px;">
         <thead>
           <tr>
-            <th style="padding: 12px; background: #374151; border: 1px solid #4b5563; text-align: left;">Jogador</th>
-            <th style="padding: 12px; background: #374151; border: 1px solid #4b5563;">Status</th>
-            ${MESES.map(mes => `
-              <th style="padding: 12px; background: #374151; border: 1px solid #4b5563;">${mes}</th>
-            `).join('')}
+            <th style="padding: 8px; text-align: left; width: 120px;">Jogador</th>
+            <th style="padding: 8px; width: 60px;">Status</th>
+            ${meses.map(m => `<th style="padding: 8px; width: 30px;">${m}</th>`).join('')}
           </tr>
         </thead>
         <tbody>
-          ${jogadores.filter(j => 
-            j.nome.toLowerCase().includes(filtroJogador.toLowerCase())
-          ).map(jogador => `
+          ${jogadores.map(j => `
             <tr>
-              <td style="
-                padding: 12px;
-                border: 1px solid #4b5563;
-                text-align: left;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-              ">${jogador.nome}</td>
-              <td style="
-                padding: 12px;
-                border: 1px solid #4b5563;
-                text-align: center;
-                vertical-align: middle; /* Centraliza verticalmente */
-              ">
-                <div style="
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  height: 100%;
-                ">
-                  <span style="
-                    display: inline-flex;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 6px 12px;
-                    border-radius: 20px;
-                    ${jogador.statusFinanceiro === 'Adimplente' ? 
-                      'background: #4ade8020; color: #4ade80;' : 
-                      'background: #f8717120; color: #f87171;'}
-                    font-size: 14px;
-                    height: 100%;
-                  ">
-                    ${jogador.statusFinanceiro}
-                  </span>
-                </div>
+              <td style="padding: 8px; border-top: 1px solid #374151; text-align: left;">
+                ${j.nome.length > 15 ? j.nome.substring(0, 12) + '...' : j.nome}
               </td>
-              ${jogador.pagamentos.map((pago, i) => `
-                <td style="
-                  padding: 12px;
-                  border: 1px solid #4b5563;
+              <td style="padding: 8px; border-top: 1px solid #374151; text-align: center;">
+                <span style="
+                  display: inline-block;
+                  width: 100%;
                   text-align: center;
-                  vertical-align: middle; /* Centraliza verticalmente */
-                ">
-                  <div style="
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    height: 100%;
-                  ">
-                    <span style="
-                      display: inline-flex;
-                      align-items: center;
-                      justify-content: center;
-                      width: 24px;
-                      height: 24px;
-                      border-radius: 50%;
-                      ${pago ? 'background: #4ade8020; color: #4ade80;' : 'background: #f8717120; color: #f87171;'}
-                      font-size: 14px;
-                    ">
-                      ${pago ? '✓' : '✗'}
-                    </span>
-                  </div>
+                  color: ${j.statusFinanceiro === 'Adimplente' ? '#4ade80' : '#f87171'};
+                ">${j.statusFinanceiro === 'Adimplente' ? '✓' : '✗'}</span>
+              </td>
+              ${j.pagamentos.map(p => `
+                <td style="padding: 8px; border-top: 1px solid #374151; text-align: center;">
+                  <span style="
+                    display: inline-block;
+                    width: 100%;
+                    text-align: center;
+                    color: ${p ? '#4ade80' : '#f87171'};
+                  ">${p ? '✓' : '✗'}</span>
                 </td>
               `).join('')}
             </tr>
@@ -888,74 +825,52 @@ const compartilharControle = async (elementId) => {
         </tbody>
       </table>
 
-      <div style="margin-top: 30px; text-align: center; font-size: 18px; line-height: 1.6;">
-        <div style="color: #60a5fa; margin-bottom: 15px;">
-          💳 CHAVE PIX: Universocajazeiras@gmail.com
-        </div>
-        <div style="color: #fbbf24; margin-bottom: 15px;">
-          📌 FAVOR ENVIAR COMPROVANTE NO GRUPO
-        </div>
-        <div style="color: #a5b4fc;">
-          ℹ️ Valor para caixa (materiais, bola, rede, juiz)
-        </div>
+      <div style="margin-top: 20px; font-size: ${OPTIONS.fontSize}px; text-align: center;">
+        <div style="color: #60a5fa;">💳 PIX: Universocajazeiras@gmail.com</div>
+        <div style="color: #fbbf24;">📌 Envie comprovante no grupo</div>
       </div>
     `;
 
-    tempContainer.innerHTML = htmlContent;
-    document.body.appendChild(tempContainer);
-    tempContainer.style.visibility = 'visible';
-
-    // Restante do código (geração de imagem/PDF) permanece igual
-    const canvas = await html2canvas(tempContainer, {
-      scale: 3,
-      logging: true,
+    // 4. Gerar imagem otimizada
+    const canvas = await html2canvas(container, {
+      scale: 2,
+      width: OPTIONS.width,
+      windowWidth: OPTIONS.width,
+      logging: false,
       useCORS: true,
-      backgroundColor: null,
-      quality: 1,
-      allowTaint: true,
-      letterRendering: true,
-      windowWidth: tempContainer.scrollWidth,
-      windowHeight: tempContainer.scrollHeight
+      backgroundColor: '#1f2937',
+      quality: OPTIONS.quality
     });
 
-    const link = document.createElement('a');
-    link.download = `mensalidades-${new Date().toISOString().slice(0, 10)}.png`;
-    link.href = canvas.toDataURL('image/png', 1.0);
-    link.click();
-    toast.success('Relatório gerado com sucesso!');
+    // 5. Processamento adicional para WhatsApp
+    const finalCanvas = document.createElement('canvas');
+    finalCanvas.width = canvas.width;
+    finalCanvas.height = canvas.height;
+    const ctx = finalCanvas.getContext('2d');
+    
+    // Aplicar fundo sólido para evitar artefatos
+    ctx.fillStyle = '#1f2937';
+    ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+    ctx.drawImage(canvas, 0, 0);
+    
+    // 6. Criar imagem JPEG com qualidade controlada (melhor para WhatsApp)
+    const imageData = finalCanvas.toDataURL('image/jpeg', OPTIONS.quality);
+    
+    // 7. Compartilhar
+    if (navigator.share) {
+      const blob = await (await fetch(imageData)).blob();
+      const file = new File([blob], 'mensalidades.jpg', { type: 'image/jpeg' });
+      await navigator.share({ files: [file] });
+    } else {
+      const link = document.createElement('a');
+      link.download = 'mensalidades-whatsapp.jpg';
+      link.href = imageData;
+      link.click();
+    }
 
   } catch (error) {
-    console.error('Erro ao gerar relatório:', error);
-    toast.error('Erro ao gerar imagem. Tentando PDF...');
-    
-    try {
-      const { jsPDF } = await import('jspdf');
-      const pdf = new jsPDF({
-        orientation: 'landscape',
-        unit: 'pt',
-        format: [tempContainer.scrollWidth * 0.75, tempContainer.scrollHeight * 0.75]
-      });
-
-      await pdf.html(tempContainer, {
-        width: tempContainer.scrollWidth * 0.75,
-        windowWidth: tempContainer.scrollWidth,
-        html2canvas: {
-          scale: 0.75,
-          letterRendering: true
-        }
-      });
-
-      pdf.save('controle-mensalidades.pdf');
-      toast.success('PDF gerado como alternativa!');
-    } catch (pdfError) {
-      console.error('Erro no PDF:', pdfError);
-      toast.error('Falha ao gerar PDF. Entre em contato com o suporte.');
-    }
-  } finally {
-    const container = document.querySelector('div[style*="z-index: 10000"]');
-    if (container) {
-      document.body.removeChild(container);
-    }
+    console.error('Erro:', error);
+    toast.error('Erro ao gerar imagem. Tente novamente.');
   }
 };
 
