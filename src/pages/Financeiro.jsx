@@ -760,80 +760,107 @@ const [isento, setIsento] = useState(false);
   // };
 
   const compartilharControle = async (elementId) => {
-    try {
-      const element = document.getElementById(elementId);
+  try {
+    const element = document.getElementById(elementId);
+    
+    // Cria um elemento temporário para a imagem de compartilhamento
+    const tempElement = document.createElement('div');
+    tempElement.style.padding = '20px';
+    tempElement.style.backgroundColor = '#1f2937';
+    tempElement.style.color = 'white';
+    tempElement.style.maxWidth = '800px';
+    tempElement.style.fontFamily = 'Arial, sans-serif';
+    
+    // Adiciona a mensagem no topo
+    const topMessage = document.createElement('div');
+    topMessage.style.marginBottom = '20px';
+    topMessage.style.fontSize = '24px';
+    topMessage.style.fontWeight = 'bold';
+    topMessage.style.textAlign = 'center';
+    topMessage.style.color = '#ffffff';
+    topMessage.innerHTML = '💰 <span style="color: #4ade80">*MENSALIDADE VALOR R$*</span>';
+    tempElement.appendChild(topMessage);
+    
+    // Adiciona a tabela original com estilos melhorados
+    const tableClone = element.cloneNode(true);
+    
+    // Aumenta o tamanho da fonte da tabela
+    tableClone.style.fontSize = '16px';
+    tableClone.style.width = '100%';
+    
+    // Melhora a legibilidade das células
+    const cells = tableClone.querySelectorAll('td, th');
+    cells.forEach(cell => {
+      cell.style.padding = '10px';
+      cell.style.border = '1px solid #374151';
+    });
+    
+    // Aumenta o tamanho dos ícones de check/x
+    const icons = tableClone.querySelectorAll('svg');
+    icons.forEach(icon => {
+      icon.style.width = '12px';
+      icon.style.height = '12px';
+    });
+    
+    tempElement.appendChild(tableClone);
+    
+    // Adiciona as mensagens no rodapé
+    const bottomMessages = document.createElement('div');
+    bottomMessages.style.marginTop = '20px';
+    bottomMessages.style.fontSize = '16px';
+    bottomMessages.style.lineHeight = '1.5';
+    bottomMessages.style.textAlign = 'center';
+    bottomMessages.style.color = '#e5e7eb';
+    bottomMessages.innerHTML = `
+      <p>💳 <span style="color: #60a5fa">*CHAVE PIX:* Universocajazeiras@gmail.com</span></p>
+      <p>📌 <span style="color: #fbbf24">*FAVOR ENVIAR COMPROVANTE NO GRUPO, EU ATUALIZO A LISTA*</span></p>
+      <p>ℹ️ <span style="color: #a5b4fc">*OBS:* Este valor será para caixa para as compras de material, sendo bola, rede, pagamento de juiz.</span></p>
+      <p>⚠️ <span style="color: #f87171">*OBS:* Os nomes que estão com a tarja verde ao final, esses terão prioridades no baba, são os que no momento estão adimplentes. Espero não precisar ir no privado de cada um informar o seu compromisso. 🤝</span></p>
+    `;
+    tempElement.appendChild(bottomMessages);
+    
+    document.body.appendChild(tempElement);
+    
+    // Configurações para melhor qualidade
+    const canvas = await html2canvas(tempElement, {
+      scale: 3, // Aumenta a escala para melhor qualidade
+      logging: false,
+      useCORS: true,
+      backgroundColor: '#1f2937',
+      quality: 1, // Máxima qualidade
+      allowTaint: true,
+      letterRendering: true, // Melhora a renderização de texto
+      windowWidth: tempElement.scrollWidth,
+      windowHeight: tempElement.scrollHeight
+    });
+    
+    document.body.removeChild(tempElement);
+    
+    if (navigator.share) {
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1));
+      const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
       
-      // Cria um elemento temporário para a imagem de compartilhamento
-      const tempElement = document.createElement('div');
-      tempElement.style.padding = '20px';
-      tempElement.style.backgroundColor = '#1f2937';
-      tempElement.style.color = 'white';
-      tempElement.style.maxWidth = '600px';
-      
-      // Adiciona a mensagem no topo
-      const topMessage = document.createElement('div');
-      topMessage.style.marginBottom = '15px';
-      topMessage.style.fontSize = '18px';
-      topMessage.style.fontWeight = 'bold';
-      topMessage.style.textAlign = 'center';
-      topMessage.innerHTML = '💰 *MENSALIDADE VALOR R$*';
-      tempElement.appendChild(topMessage);
-      
-      // Adiciona a tabela original
-      const tableClone = element.cloneNode(true);
-      tempElement.appendChild(tableClone);
-      
-      // Adiciona as mensagens no rodapé
-      const bottomMessages = document.createElement('div');
-      bottomMessages.style.marginTop = '15px';
-      bottomMessages.style.fontSize = '14px';
-      bottomMessages.style.textAlign = 'center';
-      bottomMessages.innerHTML = `
-        <p>💳 *CHAVE PIX:* Universocajazeiras@gmail.com</p>
-        <p>📌 *FAVOR ENVIAR COMPROVANTE NO GRUPO, EU ATUALIZO A LISTA*</p>
-        <p>ℹ️ *OBS:* Este valor será para caixa para as compras de material, sendo bola, rede, pagamento de juiz.</p>
-        <p>⚠️ *OBS:* Os nomes que estão com a tarja verde ao final, esses terão prioridades no baba, são os que no momento estão adimplentes. Espero não precisar ir no privado de cada um informar o seu compromisso. 🤝</p>
-      `;
-      tempElement.appendChild(bottomMessages);
-      
-      document.body.appendChild(tempElement);
-      
-      const canvas = await html2canvas(tempElement, {
-        scale: 2,
-        logging: false,
-        useCORS: true,
-        backgroundColor: '#1f2937',
-        quality: 1 // Melhora a qualidade da imagem
+      await navigator.share({
+        title: `Controle de Mensalidades - ${new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`,
+        text: `Controle de mensalidades dos jogadores`,
+        files: [file]
       });
-      
-      document.body.removeChild(tempElement);
-      
-      if (navigator.share) {
-        const blob = await (await fetch(canvas.toDataURL('image/png'))).blob();
-        const file = new File([blob], 'controle-mensalidades.png', { type: blob.type });
-        
-        await navigator.share({
-          title: `Controle de Mensalidades - ${new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`,
-          text: `Controle de mensalidades dos jogadores`,
-          files: [file]
-        });
-      } else {
-        // Se o navegador não suportar compartilhamento, faz download da imagem
-        const link = document.createElement('a');
-        link.download = `controle-mensalidades-${filtroMes}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-      }
-      
-      toast.success('Imagem gerada com sucesso!');
-    } catch (error) {
-      console.error('Erro ao compartilhar:', error);
-      if (error.name !== 'AbortError') {
-        toast.error('Erro ao compartilhar controle');
-      }
+    } else {
+      // Cria um link temporário para download da imagem em alta qualidade
+      const link = document.createElement('a');
+      link.download = `controle-mensalidades-${filtroMes}.png`;
+      link.href = canvas.toDataURL('image/png', 1.0); // 1.0 = máxima qualidade
+      link.click();
     }
-  };
-
+    
+    toast.success('Imagem gerada com sucesso!');
+  } catch (error) {
+    console.error('Erro ao compartilhar:', error);
+    if (error.name !== 'AbortError') {
+      toast.error('Erro ao compartilhar controle');
+    }
+  }
+};
   const compartilharHistorico = async (elementId) => {
     try {
       if (navigator.share) {
