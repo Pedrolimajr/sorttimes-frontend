@@ -761,6 +761,7 @@ const [isento, setIsento] = useState(false);
 
   const compartilharControle = async () => {
     try {
+      // Container principal
       const containerTemp = document.createElement('div');
       containerTemp.style.cssText = `
         background-color: #1f2937;
@@ -776,6 +777,14 @@ const [isento, setIsento] = useState(false);
         </div>
       `;
 
+      // Obter a tabela original e suas linhas
+      const tabelaOriginal = document.getElementById('tabela-mensalidades');
+      const todasLinhas = Array.from(tabelaOriginal.getElementsByTagName('tr'));
+      const header = todasLinhas[0];
+      const linhasConteudo = todasLinhas.slice(1);
+      const metade = Math.ceil(linhasConteudo.length / 2);
+
+      // Container para as tabelas
       const tabelasContainer = document.createElement('div');
       tabelasContainer.style.cssText = `
         display: flex;
@@ -783,6 +792,7 @@ const [isento, setIsento] = useState(false);
         justify-content: center;
       `;
 
+      // Função para criar cada tabela
       const criarTabela = (linhas) => {
         const tabela = document.createElement('table');
         tabela.style.cssText = `
@@ -791,45 +801,23 @@ const [isento, setIsento] = useState(false);
           width: 550px;
         `;
 
+        // Adicionar cabeçalho
         const headerClone = header.cloneNode(true);
         tabela.appendChild(headerClone);
 
+        // Adicionar linhas de conteúdo
         linhas.forEach(linha => {
-          const novaLinha = linha.cloneNode(true);
-          const cells = Array.from(novaLinha.children);
-          
-          cells[0].style.cssText = `
-            padding: 8px;
-            text-align: left;
-            width: 200px;
-          `;
-
-          for (let i = 1; i < cells.length; i++) {
-            cells[i].style.cssText = `
-              padding: 8px;
-              text-align: center;
-              width: 40px;
-            `;
-          }
-
-          while (cells.length < 13) {
-            const newCell = document.createElement('td');
-            newCell.innerHTML = '❌';
-            newCell.style.cssText = `
-              padding: 8px;
-              text-align: center;
-              width: 40px;
-            `;
-            novaLinha.appendChild(newCell);
-          }
-
-          tabela.appendChild(novaLinha);
+          const linhaClone = linha.cloneNode(true);
+          tabela.appendChild(linhaClone);
         });
 
         return tabela;
       };
 
-      // Divisor vertical
+      // Criar primeira tabela
+      const tabela1 = criarTabela(linhasConteudo.slice(0, metade));
+      
+      // Criar divisor
       const divisor = document.createElement('div');
       divisor.style.cssText = `
         width: 1px;
@@ -837,14 +825,16 @@ const [isento, setIsento] = useState(false);
         margin: 0 10px;
       `;
 
-      // Criar e adicionar as tabelas
-      const metade = Math.ceil(linhasConteudo.length / 2);
-      tabelasContainer.appendChild(criarTabela(linhasConteudo.slice(0, metade)));
+      // Criar segunda tabela
+      const tabela2 = criarTabela(linhasConteudo.slice(metade));
+
+      // Montar o layout
+      tabelasContainer.appendChild(tabela1);
       tabelasContainer.appendChild(divisor);
-      tabelasContainer.appendChild(criarTabela(linhasConteudo.slice(metade)));
+      tabelasContainer.appendChild(tabela2);
       containerTemp.appendChild(tabelasContainer);
 
-      // Rodapé
+      // Adicionar rodapé
       containerTemp.innerHTML += `
         <div style="text-align: center; margin-top: 30px; font-size: 14px;">
           <p>💳 CHAVE PIX: Universocajazeiras@gmail.com</p>
@@ -855,8 +845,10 @@ const [isento, setIsento] = useState(false);
         </div>
       `;
 
+      // Adicionar ao documento temporariamente
       document.body.appendChild(containerTemp);
 
+      // Gerar imagem
       const canvas = await html2canvas(containerTemp, {
         scale: 2,
         useCORS: true,
@@ -864,6 +856,7 @@ const [isento, setIsento] = useState(false);
         logging: false
       });
 
+      // Compartilhar
       canvas.toBlob(async (blob) => {
         const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
         try {
@@ -878,6 +871,7 @@ const [isento, setIsento] = useState(false);
         }
       }, 'image/png');
 
+      // Limpar
       document.body.removeChild(containerTemp);
 
     } catch (error) {
@@ -1555,6 +1549,12 @@ const [isento, setIsento] = useState(false);
                 </motion.button>
               </div>
 
+              <div id="relatorio-content" className="space-y-3 sm:space-y-4">
+                {/* Conteúdo existente do modal */}
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                  <div className="bg-gray-700/50 p-3 sm:p-4 rounded-lg">
+                    <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">Receitas</h4>
+                    <p className="text-xl sm:text-2xl font-bold text-green-400">
               <div id="relatorio-content" className="space-y-3 sm:space-y-4">
                 {/* Conteúdo existente do modal */}
                 <div className="grid grid-cols-2 gap-3 sm:gap-4">
