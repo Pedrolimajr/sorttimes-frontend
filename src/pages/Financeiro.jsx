@@ -764,89 +764,61 @@ const [isento, setIsento] = useState(false);
       const containerTemp = document.createElement('div');
       containerTemp.style.cssText = `
         background-color: #1f2937;
-        padding: 20px;
+        padding: 40px;
         color: white;
         font-family: Arial, sans-serif;
-        width: fit-content;
-        margin: 0 auto;
       `;
 
       // Título
       containerTemp.innerHTML = `
-        <div style="text-align: center; margin-bottom: 20px; font-size: 18px; font-weight: bold;">
+        <div style="text-align: center; margin-bottom: 30px; font-size: 20px; font-weight: bold;">
           💰 MENSALIDADE VALOR 20,00R$
         </div>
       `;
 
-      const tabelaOriginal = document.getElementById('tabela-mensalidades');
-      const todasLinhas = Array.from(tabelaOriginal.getElementsByTagName('tr'));
-      const header = todasLinhas[0];
-      const linhasConteudo = todasLinhas.slice(1);
-      const metade = Math.ceil(linhasConteudo.length / 2);
-
-      // Container das tabelas com largura fixa
       const tabelasContainer = document.createElement('div');
       tabelasContainer.style.cssText = `
         display: flex;
-        justify-content: space-between;
-        gap: 40px; // Aumentado o espaçamento entre as tabelas
-        margin-bottom: 20px;
-        position: relative;
-        width: 1400px; // Aumentada a largura total
-        padding: 0 20px;
+        gap: 30px;
+        justify-content: center;
       `;
 
-      // Função para criar tabela com estrutura completa
       const criarTabela = (linhas) => {
         const tabela = document.createElement('table');
         tabela.style.cssText = `
-          width: 48%;
-          border-collapse: collapse;
-          table-layout: fixed;
-          border-spacing: 0 4px; // Adiciona espaçamento vertical entre as linhas
+          border-spacing: 0;
+          border-collapse: separate;
+          width: 550px;
         `;
 
-        // Adicionar cabeçalho
         const headerClone = header.cloneNode(true);
-        Array.from(headerClone.children).forEach(th => {
-          th.style.cssText = `
-            padding: 12px 8px;
-            text-align: center;
-            font-size: 14px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-          `;
-        });
         tabela.appendChild(headerClone);
 
-        // Adicionar linhas com todos os meses
         linhas.forEach(linha => {
           const novaLinha = linha.cloneNode(true);
           const cells = Array.from(novaLinha.children);
           
-          // Garantir que todas as células tenham o mesmo estilo
-          cells.forEach((cell, index) => {
-            cell.style.cssText = `
-              padding: 12px 8px;
-              text-align: center;
-              font-size: 13px;
-              white-space: nowrap;
-              overflow: hidden;
-              text-overflow: ellipsis;
-              border-bottom: 1px solid rgba(255,255,255,0.1);
-              ${index === 0 ? 'min-width: 180px; text-align: left;' : ''} // Células de nome mais largas
-            `;
-          });
+          cells[0].style.cssText = `
+            padding: 8px;
+            text-align: left;
+            width: 200px;
+          `;
 
-          // Completar meses faltantes
+          for (let i = 1; i < cells.length; i++) {
+            cells[i].style.cssText = `
+              padding: 8px;
+              text-align: center;
+              width: 40px;
+            `;
+          }
+
           while (cells.length < 13) {
             const newCell = document.createElement('td');
             newCell.innerHTML = '❌';
             newCell.style.cssText = `
-              padding: 12px 8px;
+              padding: 8px;
               text-align: center;
-              font-size: 13px;
+              width: 40px;
             `;
             novaLinha.appendChild(newCell);
           }
@@ -857,29 +829,24 @@ const [isento, setIsento] = useState(false);
         return tabela;
       };
 
-      // Criar as duas tabelas
-      const tabela1 = criarTabela(linhasConteudo.slice(0, metade));
-      const tabela2 = criarTabela(linhasConteudo.slice(metade));
-
       // Divisor vertical
       const divisor = document.createElement('div');
       divisor.style.cssText = `
-        width: 2px;
-        background-color: #ffffff50;
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-        height: 100%;
+        width: 1px;
+        background-color: #ffffff40;
+        margin: 0 10px;
       `;
 
-      tabelasContainer.appendChild(tabela1);
+      // Criar e adicionar as tabelas
+      const metade = Math.ceil(linhasConteudo.length / 2);
+      tabelasContainer.appendChild(criarTabela(linhasConteudo.slice(0, metade)));
       tabelasContainer.appendChild(divisor);
-      tabelasContainer.appendChild(tabela2);
+      tabelasContainer.appendChild(criarTabela(linhasConteudo.slice(metade)));
       containerTemp.appendChild(tabelasContainer);
 
       // Rodapé
       containerTemp.innerHTML += `
-        <div style="text-align: center; margin-top: 20px;">
+        <div style="text-align: center; margin-top: 30px; font-size: 14px;">
           <p>💳 CHAVE PIX: Universocajazeiras@gmail.com</p>
           <p>📌 FAVOR ENVIAR COMPROVANTE NO GRUPO, EU ATUALIZO A LISTA.</p>
           <p>⚠️ <strong>OBS:</strong> Os nomes que estão com a tarja verde ao final, 
@@ -890,34 +857,28 @@ const [isento, setIsento] = useState(false);
 
       document.body.appendChild(containerTemp);
 
-      try {
-        const canvas = await html2canvas(containerTemp, {
-          scale: 2,
-          useCORS: true,
-          backgroundColor: '#1f2937',
-          logging: true,
-          width: containerTemp.offsetWidth,
-          height: containerTemp.offsetHeight
-        });
+      const canvas = await html2canvas(containerTemp, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#1f2937',
+        logging: false
+      });
 
-        canvas.toBlob(async (blob) => {
-          const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
-          
-          try {
-            await navigator.share({
-              files: [file],
-              title: 'Controle de Mensalidades',
-              text: 'Controle de Mensalidades dos Jogadores'
-            });
-            toast.success('Compartilhamento realizado com sucesso!');
-          } catch (shareError) {
-            console.error('Erro no compartilhamento:', shareError);
-            toast.error('Erro ao compartilhar');
-          }
-        }, 'image/png', 1.0);
-      } finally {
-        document.body.removeChild(containerTemp);
-      }
+      canvas.toBlob(async (blob) => {
+        const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
+        try {
+          await navigator.share({
+            files: [file],
+            title: 'Controle de Mensalidades',
+          });
+          toast.success('Compartilhamento realizado com sucesso!');
+        } catch (error) {
+          console.error('Erro ao compartilhar:', error);
+          toast.error('Erro ao compartilhar');
+        }
+      }, 'image/png');
+
+      document.body.removeChild(containerTemp);
 
     } catch (error) {
       console.error('Erro:', error);
@@ -1721,34 +1682,21 @@ const [isento, setIsento] = useState(false);
                 <div className="grid grid-cols-2 gap-3 sm:gap-4 pt-2">
                   <motion.button
                     type="button"
-                    onClick={async () => {
-                      try {
-                        // Atualiza o jogador na API
-                        const response = await api.put(`/api/jogadores/${jogadorSelecionado._id}`, jogadorSelecionado);
-                        const jogadorAtualizado = response.data.data;
-
-                        // Atualiza o estado local
-                        setJogadores(prev => prev.map(j => j._id === jogadorAtualizado._id ? jogadorAtualizado : j));
-                        setEditarModal(false);
-                        toast.success('Jogador atualizado com sucesso!');
-                      } catch (error) {
-                        console.error("Erro ao atualizar jogador:", error);
-                        toast.error('Erro ao atualizar jogador');
-                      }
-                    }}
+                    onClick={() => deletarJogador(jogadorSelecionado._id)}
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
-                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 transition-all text-xs sm:text-sm"
+                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 sm:py-2 rounded-lg flex items-center justify-center gap-2 transition-all text-xs sm:text-sm"
                   >
-                    <FaCheck className="text-xs sm:text-sm" /> Salvar
+                    <FaTrash className="text-xs sm:text-sm" /> Excluir
                   </motion.button>
                   <motion.button
-                    onClick={() => setEditarModal(false)}
+                    type="button"
+                    onClick={editarJogador}
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
-                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 transition-all text-xs sm:text-sm"
+                    className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-3 py-2 sm:py-2 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg text-xs sm:text-sm"
                   >
-                    <FaTimes className="text-xs sm:text-sm" /> Cancelar
+                    <FaEdit className="text-xs sm:text-sm" /> Salvar Alterações
                   </motion.button>
                 </div>
               </div>
@@ -1757,7 +1705,17 @@ const [isento, setIsento] = useState(false);
         )}
       </AnimatePresence>
 
-      <ToastContainer />
+      <ToastContainer 
+        position="bottom-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
     </div>
   );
 }
