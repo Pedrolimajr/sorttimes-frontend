@@ -761,75 +761,88 @@ const [isento, setIsento] = useState(false);
 
   const compartilharControle = async () => {
     try {
-      // Criar container temporário
       const containerTemp = document.createElement('div');
       containerTemp.style.cssText = `
         background-color: #1f2937;
         padding: 20px;
         color: white;
         font-family: Arial, sans-serif;
+        width: fit-content;
+        margin: 0 auto;
       `;
 
-      // Adicionar título
+      // Título
       containerTemp.innerHTML = `
         <div style="text-align: center; margin-bottom: 20px; font-size: 18px; font-weight: bold;">
           💰 MENSALIDADE VALOR 20,00R$
         </div>
       `;
 
-      // Clonar a tabela original
       const tabelaOriginal = document.getElementById('tabela-mensalidades');
-      const tabelaClone = tabelaOriginal.cloneNode(true);
-      
-      // Dividir as linhas - Corrigido para definir o cabeçalho
-      const todasLinhas = Array.from(tabelaClone.getElementsByTagName('tr'));
-      const header = todasLinhas[0]; // Definindo o cabeçalho corretamente
+      const todasLinhas = Array.from(tabelaOriginal.getElementsByTagName('tr'));
+      const header = todasLinhas[0];
       const linhasConteudo = todasLinhas.slice(1);
       const metade = Math.ceil(linhasConteudo.length / 2);
 
-      // Criar contêiner para as tabelas
+      // Container das tabelas com largura fixa
       const tabelasContainer = document.createElement('div');
       tabelasContainer.style.cssText = `
         display: flex;
+        justify-content: space-between;
         gap: 20px;
-        justify-content: center;
         margin-bottom: 20px;
-        align-items: start;
         position: relative;
+        width: 1200px;
       `;
 
-      // Criar as duas tabelas
-      const tabela1 = document.createElement('table');
-      const tabela2 = document.createElement('table');
-      [tabela1, tabela2].forEach(tabela => {
+      // Função para criar tabela com estrutura completa
+      const criarTabela = (linhas) => {
+        const tabela = document.createElement('table');
         tabela.style.cssText = `
-          width: 45%;
+          width: 48%;
           border-collapse: collapse;
+          table-layout: fixed;
         `;
-        // Usando header ao invés de cabecalho
-        const headerCompleto = header.cloneNode(true);
-        tabela.appendChild(headerCompleto);
-      });
 
-      // Distribuir as linhas
-      linhasConteudo.slice(0, metade).forEach(linha => tabela1.appendChild(linha.cloneNode(true)));
-      linhasConteudo.slice(metade).forEach(linha => {
-        const linhaClone = linha.cloneNode(true);
-        // Garantir que todos os meses até dezembro estejam presentes
-        const cells = linhaClone.getElementsByTagName('td');
-        if (cells.length > 0) {
-          for (let i = 1; i <= 12; i++) {
-            if (!cells[i]) {
-              const newCell = document.createElement('td');
-              newCell.innerHTML = '❌';
-              linhaClone.appendChild(newCell);
-            }
+        // Adicionar cabeçalho
+        const headerClone = header.cloneNode(true);
+        Array.from(headerClone.children).forEach(th => {
+          th.style.padding = '8px';
+          th.style.textAlign = 'center';
+        });
+        tabela.appendChild(headerClone);
+
+        // Adicionar linhas com todos os meses
+        linhas.forEach(linha => {
+          const novaLinha = linha.cloneNode(true);
+          const cells = Array.from(novaLinha.children);
+          
+          // Garantir que todas as células tenham o mesmo estilo
+          cells.forEach(cell => {
+            cell.style.padding = '8px';
+            cell.style.textAlign = 'center';
+          });
+
+          // Completar meses faltantes
+          while (cells.length < 13) { // Nome + 12 meses
+            const newCell = document.createElement('td');
+            newCell.innerHTML = '❌';
+            newCell.style.padding = '8px';
+            newCell.style.textAlign = 'center';
+            novaLinha.appendChild(newCell);
           }
-        }
-        tabela2.appendChild(linhaClone);
-      });
 
-      // Adicionar divisor vertical
+          tabela.appendChild(novaLinha);
+        });
+
+        return tabela;
+      };
+
+      // Criar as duas tabelas
+      const tabela1 = criarTabela(linhasConteudo.slice(0, metade));
+      const tabela2 = criarTabela(linhasConteudo.slice(metade));
+
+      // Divisor vertical
       const divisor = document.createElement('div');
       divisor.style.cssText = `
         width: 2px;
@@ -837,8 +850,7 @@ const [isento, setIsento] = useState(false);
         position: absolute;
         left: 50%;
         transform: translateX(-50%);
-        top: 0;
-        bottom: 0;
+        height: 100%;
       `;
 
       tabelasContainer.appendChild(tabela1);
@@ -846,7 +858,7 @@ const [isento, setIsento] = useState(false);
       tabelasContainer.appendChild(tabela2);
       containerTemp.appendChild(tabelasContainer);
 
-      // Adicionar rodapé
+      // Rodapé
       containerTemp.innerHTML += `
         <div style="text-align: center; margin-top: 20px;">
           <p>💳 CHAVE PIX: Universocajazeiras@gmail.com</p>
@@ -857,7 +869,6 @@ const [isento, setIsento] = useState(false);
         </div>
       `;
 
-      // Adicionar ao documento temporariamente
       document.body.appendChild(containerTemp);
 
       try {
@@ -865,7 +876,9 @@ const [isento, setIsento] = useState(false);
           scale: 2,
           useCORS: true,
           backgroundColor: '#1f2937',
-          logging: true
+          logging: true,
+          width: containerTemp.offsetWidth,
+          height: containerTemp.offsetHeight
         });
 
         canvas.toBlob(async (blob) => {
@@ -884,7 +897,6 @@ const [isento, setIsento] = useState(false);
           }
         }, 'image/png', 1.0);
       } finally {
-        // Garantir que o container temporário seja removido
         document.body.removeChild(containerTemp);
       }
 
@@ -1713,17 +1725,7 @@ const [isento, setIsento] = useState(false);
         )}
       </AnimatePresence>
 
-      <ToastContainer 
-        position="bottom-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
+      <ToastContainer />
     </div>
   );
 }
