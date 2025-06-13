@@ -759,99 +759,154 @@ const [isento, setIsento] = useState(false);
   //   }
   // };
 
- const compartilharControle = async (elementId) => {
+const compartilharControle = async (elementId) => {
   try {
-    toast.info('Preparando relatório para compartilhamento...');
+    toast.info('Gerando relatório em alta qualidade...');
 
-    // 1. Criar container temporário diretamente no body
+    const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const LARGURA_TOTAL = 1200;
+    const LARGURA_JOGADOR = 200;
+    const LARGURA_STATUS = 100;
+    const LARGURA_MES = 50;
+
     const tempContainer = document.createElement('div');
-    tempContainer.id = 'temp-print-container';
     tempContainer.style.position = 'fixed';
     tempContainer.style.left = '0';
     tempContainer.style.top = '0';
-    tempContainer.style.width = '800px';
-    tempContainer.style.padding = '20px';
+    tempContainer.style.width = `${LARGURA_TOTAL}px`;
     tempContainer.style.backgroundColor = '#1f2937';
+    tempContainer.style.padding = '40px';
     tempContainer.style.color = 'white';
-    tempContainer.style.zIndex = '9999';
+    tempContainer.style.fontFamily = '"Arial", sans-serif';
+    tempContainer.style.zIndex = '10000';
+    tempContainer.style.boxSizing = 'border-box';
+    tempContainer.style.borderRadius = '10px';
     tempContainer.style.visibility = 'hidden';
+
+    let htmlContent = `
+      <div style="text-align: center; margin-bottom: 30px;">
+        <div style="font-size: 28px; font-weight: bold; color: #4ade80; margin-bottom: 10px;">
+          💰 MENSALIDADE VALOR 20,00R$
+        </div>
+      </div>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 16px; table-layout: fixed;">
+        <colgroup>
+          <col style="width: ${LARGURA_JOGADOR}px">
+          <col style="width: ${LARGURA_STATUS}px">
+          ${MESES.map(() => `<col style="width: ${LARGURA_MES}px">`).join('')}
+        </colgroup>
+        <thead>
+          <tr>
+            <th style="padding: 12px; background: #374151; border: 1px solid #4b5563; text-align: left;">Jogador</th>
+            <th style="padding: 12px; background: #374151; border: 1px solid #4b5563;">Status</th>
+            ${MESES.map(mes => `
+              <th style="padding: 12px; background: #374151; border: 1px solid #4b5563;">${mes}</th>
+            `).join('')}
+          </tr>
+        </thead>
+        <tbody>
+          ${jogadores.filter(j => j.nome.toLowerCase().includes(filtroJogador.toLowerCase()))
+            .map(jogador => `
+              <tr>
+                <td style="padding: 12px; border: 1px solid #4b5563; text-align: left;">${jogador.nome}</td>
+                <td style="padding: 12px; border: 1px solid #4b5563; text-align: center;">
+                  <span style="
+                    display: inline-block;
+                    padding: 6px 12px;
+                    border-radius: 20px;
+                    ${jogador.statusFinanceiro === 'Adimplente' ? 'background: #4ade8020; color: #4ade80;' : 'background: #f8717120; color: #f87171;'}
+                    font-size: 14px;
+                  ">
+                    ${jogador.statusFinanceiro}
+                  </span>
+                </td>
+                ${jogador.pagamentos.map(pago => `
+                  <td style="padding: 12px; border: 1px solid #4b5563; text-align: center;">
+                    <span style="
+                      display: inline-block;
+                      width: 24px;
+                      height: 24px;
+                      border-radius: 50%;
+                      line-height: 24px;
+                      ${pago ? 'background: #4ade8020; color: #4ade80;' : 'background: #f8717120; color: #f87171;'}
+                    ">
+                      ${pago ? '✓' : '✗'}
+                    </span>
+                  </td>
+                `).join('')}
+              </tr>
+            `).join('')}
+        </tbody>
+      </table>
+
+      <div style="margin-top: 30px; text-align: center; font-size: 18px;">
+        <div style="color: #60a5fa; margin-bottom: 15px;">
+          💳 CHAVE PIX: Universocajazeiras@gmail.com
+        </div>
+        <div style="color: #fbbf24; margin-bottom: 15px;">
+          📌 FAVOR ENVIAR COMPROVANTE NO GRUPO, EU ATUALIZO A LISTA.
+        </div>
+        <div style="color: #a5b4fc;">
+         ℹ️ *OBS:* Este valor será para caixa para as compras de material, sendo bola, rede, pagamento de juiz.
+        </div>
+        <div style="color: #a5b4fc;">
+         ⚠️ *OBS:* Os nomes que estão com a tarja verde ao final, esses terão prioridades no baba, são os que no momento estão adimplentes. Espero não precisar ir no privado de cada um informar o seu compromisso. 🤝
+        </div>
+      </div>
+    `;
+
+    tempContainer.innerHTML = htmlContent;
     document.body.appendChild(tempContainer);
-
-    // 2. Clonar o conteúdo original com estilos otimizados
-    const originalElement = document.getElementById(elementId);
-    const clonedElement = originalElement.cloneNode(true);
-    
-    // Aplicar estilos diretamente no clone
-    clonedElement.style.width = '100%';
-    clonedElement.style.fontSize = '14px';
-    
-    // Limpar event listeners e elementos problemáticos
-    const buttons = clonedElement.querySelectorAll('button');
-    buttons.forEach(btn => btn.remove());
-    
-    tempContainer.appendChild(clonedElement);
-
-    // 3. Tornar visível brevemente para renderização
     tempContainer.style.visibility = 'visible';
-    await new Promise(resolve => setTimeout(resolve, 100));
 
-    // 4. Gerar a imagem com html2canvas
     const canvas = await html2canvas(tempContainer, {
-      scale: 2,
-      logging: false,
+      scale: 4,
       useCORS: true,
       backgroundColor: '#1f2937',
-      onclone: (document) => {
-        // Garantir que o container está visível no clone
-        const clone = document.getElementById('temp-print-container');
-        if (clone) {
-          clone.style.visibility = 'visible';
-        }
-      }
+      windowWidth: tempContainer.scrollWidth,
+      windowHeight: tempContainer.scrollHeight
     });
 
-    // 5. Processar a imagem final
-    const imageData = canvas.toDataURL('image/jpeg', 0.9);
+    canvas.toBlob(async (blob) => {
+      if (blob) {
+        const file = new File([blob], `mensalidades-${new Date().toISOString().slice(0, 10)}.jpeg`, {
+          type: 'image/jpeg',
+        });
 
-    // 6. Compartilhar
-    if (navigator.share) {
-      const blob = await (await fetch(imageData)).blob();
-      await navigator.share({
-        title: 'Controle de Mensalidades',
-        files: [new File([blob], 'mensalidades.jpg', { type: 'image/jpeg' })]
-      });
-    } else {
-      const link = document.createElement('a');
-      link.download = 'mensalidades.jpg';
-      link.href = imageData;
-      link.click();
-    }
+        // Web Share API se disponível
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: 'Relatório de Mensalidades',
+              text: 'Segue o controle das mensalidades atualizado.',
+            });
+            toast.success('Relatório compartilhado com sucesso!');
+          } catch (err) {
+            toast.error('Erro ao compartilhar imagem.');
+            console.error(err);
+          }
+        } else {
+          // Fallback: download automático
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = file.name;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          toast.success('Imagem baixada com sucesso!');
+        }
+      }
+    }, 'image/jpeg', 1.0);
 
   } catch (error) {
-    console.error('Erro ao gerar imagem:', error);
-    toast.error('Falha ao gerar imagem. Tente o modo PDF.');
-    
-    // Fallback para PDF
-    try {
-      const { jsPDF } = await import('jspdf');
-      const pdf = new jsPDF({
-        orientation: 'landscape',
-        unit: 'pt',
-        format: 'a4'
-      });
-      
-      await pdf.html(document.getElementById(elementId), {
-        width: 800,
-        windowWidth: 800
-      });
-      
-      pdf.save('mensalidades.pdf');
-    } catch (pdfError) {
-      toast.error('Falha ao gerar PDF também.');
-    }
+    console.error('Erro ao gerar relatório:', error);
+    toast.error('Erro ao gerar imagem.');
   } finally {
-    // Limpeza garantida
-    const container = document.getElementById('temp-print-container');
+    const container = document.querySelector('div[style*="z-index: 10000"]');
     if (container) {
       document.body.removeChild(container);
     }
