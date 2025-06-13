@@ -598,5 +598,3 @@ export default function InformacoesPartida() {
     </div>
   );
 }
-
-
