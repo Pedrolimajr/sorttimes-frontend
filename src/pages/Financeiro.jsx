@@ -789,10 +789,11 @@ const [isento, setIsento] = useState(false);
       tabelasContainer.style.cssText = `
         display: flex;
         justify-content: space-between;
-        gap: 20px;
+        gap: 40px; // Aumentado o espaçamento entre as tabelas
         margin-bottom: 20px;
         position: relative;
-        width: 1200px;
+        width: 1400px; // Aumentada a largura total
+        padding: 0 20px;
       `;
 
       // Função para criar tabela com estrutura completa
@@ -802,13 +803,20 @@ const [isento, setIsento] = useState(false);
           width: 48%;
           border-collapse: collapse;
           table-layout: fixed;
+          border-spacing: 0 4px; // Adiciona espaçamento vertical entre as linhas
         `;
 
         // Adicionar cabeçalho
         const headerClone = header.cloneNode(true);
         Array.from(headerClone.children).forEach(th => {
-          th.style.padding = '8px';
-          th.style.textAlign = 'center';
+          th.style.cssText = `
+            padding: 12px 8px;
+            text-align: center;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          `;
         });
         tabela.appendChild(headerClone);
 
@@ -818,17 +826,28 @@ const [isento, setIsento] = useState(false);
           const cells = Array.from(novaLinha.children);
           
           // Garantir que todas as células tenham o mesmo estilo
-          cells.forEach(cell => {
-            cell.style.padding = '8px';
-            cell.style.textAlign = 'center';
+          cells.forEach((cell, index) => {
+            cell.style.cssText = `
+              padding: 12px 8px;
+              text-align: center;
+              font-size: 13px;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              border-bottom: 1px solid rgba(255,255,255,0.1);
+              ${index === 0 ? 'min-width: 180px; text-align: left;' : ''} // Células de nome mais largas
+            `;
           });
 
           // Completar meses faltantes
-          while (cells.length < 13) { // Nome + 12 meses
+          while (cells.length < 13) {
             const newCell = document.createElement('td');
             newCell.innerHTML = '❌';
-            newCell.style.padding = '8px';
-            newCell.style.textAlign = 'center';
+            newCell.style.cssText = `
+              padding: 12px 8px;
+              text-align: center;
+              font-size: 13px;
+            `;
             novaLinha.appendChild(newCell);
           }
 
@@ -1702,21 +1721,34 @@ const [isento, setIsento] = useState(false);
                 <div className="grid grid-cols-2 gap-3 sm:gap-4 pt-2">
                   <motion.button
                     type="button"
-                    onClick={() => deletarJogador(jogadorSelecionado._id)}
+                    onClick={async () => {
+                      try {
+                        // Atualiza o jogador na API
+                        const response = await api.put(`/api/jogadores/${jogadorSelecionado._id}`, jogadorSelecionado);
+                        const jogadorAtualizado = response.data.data;
+
+                        // Atualiza o estado local
+                        setJogadores(prev => prev.map(j => j._id === jogadorAtualizado._id ? jogadorAtualizado : j));
+                        setEditarModal(false);
+                        toast.success('Jogador atualizado com sucesso!');
+                      } catch (error) {
+                        console.error("Erro ao atualizar jogador:", error);
+                        toast.error('Erro ao atualizar jogador');
+                      }
+                    }}
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
-                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 sm:py-2 rounded-lg flex items-center justify-center gap-2 transition-all text-xs sm:text-sm"
+                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 transition-all text-xs sm:text-sm"
                   >
-                    <FaTrash className="text-xs sm:text-sm" /> Excluir
+                    <FaCheck className="text-xs sm:text-sm" /> Salvar
                   </motion.button>
                   <motion.button
-                    type="button"
-                    onClick={editarJogador}
+                    onClick={() => setEditarModal(false)}
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
-                    className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-3 py-2 sm:py-2 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg text-xs sm:text-sm"
+                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 transition-all text-xs sm:text-sm"
                   >
-                    <FaEdit className="text-xs sm:text-sm" /> Salvar Alterações
+                    <FaTimes className="text-xs sm:text-sm" /> Cancelar
                   </motion.button>
                 </div>
               </div>
