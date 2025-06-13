@@ -759,118 +759,102 @@ const [isento, setIsento] = useState(false);
   //   }
   // };
 
-const compartilharControle = async (elementId) => {
+ const compartilharControle = async (elementId) => {
   try {
-    // 1. Configurações otimizadas para WhatsApp
-    const OPTIONS = {
-      width: 800, // Largura ideal para WhatsApp
-      padding: 20,
-      fontSize: 14,
-      quality: 0.95 // Qualidade balanceada
-    };
+    toast.info('Preparando relatório para compartilhamento...');
 
-    // 2. Criar container com dimensões WhatsApp-friendly
-    const container = document.createElement('div');
-    container.style.width = `${OPTIONS.width}px`;
-    container.style.padding = `${OPTIONS.padding}px`;
-    container.style.backgroundColor = '#1f2937';
-    container.style.color = 'white';
-    container.style.fontFamily = 'Arial, sans-serif';
-    container.style.lineHeight = '1.4';
+    // 1. Criar container temporário diretamente no body
+    const tempContainer = document.createElement('div');
+    tempContainer.id = 'temp-print-container';
+    tempContainer.style.position = 'fixed';
+    tempContainer.style.left = '0';
+    tempContainer.style.top = '0';
+    tempContainer.style.width = '800px';
+    tempContainer.style.padding = '20px';
+    tempContainer.style.backgroundColor = '#1f2937';
+    tempContainer.style.color = 'white';
+    tempContainer.style.zIndex = '9999';
+    tempContainer.style.visibility = 'hidden';
+    document.body.appendChild(tempContainer);
 
-    // 3. Gerar conteúdo otimizado
-    const meses = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']; // Abreviado
+    // 2. Clonar o conteúdo original com estilos otimizados
+    const originalElement = document.getElementById(elementId);
+    const clonedElement = originalElement.cloneNode(true);
     
-    container.innerHTML = `
-      <div style="text-align: center; margin-bottom: 15px;">
-        <div style="font-size: ${OPTIONS.fontSize + 4}px; font-weight: bold; color: #4ade80;">
-          💰 MENSALIDADE
-        </div>
-      </div>
+    // Aplicar estilos diretamente no clone
+    clonedElement.style.width = '100%';
+    clonedElement.style.fontSize = '14px';
+    
+    // Limpar event listeners e elementos problemáticos
+    const buttons = clonedElement.querySelectorAll('button');
+    buttons.forEach(btn => btn.remove());
+    
+    tempContainer.appendChild(clonedElement);
 
-      <table style="width: 100%; border-collapse: collapse; font-size: ${OPTIONS.fontSize}px;">
-        <thead>
-          <tr>
-            <th style="padding: 8px; text-align: left; width: 120px;">Jogador</th>
-            <th style="padding: 8px; width: 60px;">Status</th>
-            ${meses.map(m => `<th style="padding: 8px; width: 30px;">${m}</th>`).join('')}
-          </tr>
-        </thead>
-        <tbody>
-          ${jogadores.map(j => `
-            <tr>
-              <td style="padding: 8px; border-top: 1px solid #374151; text-align: left;">
-                ${j.nome.length > 15 ? j.nome.substring(0, 12) + '...' : j.nome}
-              </td>
-              <td style="padding: 8px; border-top: 1px solid #374151; text-align: center;">
-                <span style="
-                  display: inline-block;
-                  width: 100%;
-                  text-align: center;
-                  color: ${j.statusFinanceiro === 'Adimplente' ? '#4ade80' : '#f87171'};
-                ">${j.statusFinanceiro === 'Adimplente' ? '✓' : '✗'}</span>
-              </td>
-              ${j.pagamentos.map(p => `
-                <td style="padding: 8px; border-top: 1px solid #374151; text-align: center;">
-                  <span style="
-                    display: inline-block;
-                    width: 100%;
-                    text-align: center;
-                    color: ${p ? '#4ade80' : '#f87171'};
-                  ">${p ? '✓' : '✗'}</span>
-                </td>
-              `).join('')}
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
+    // 3. Tornar visível brevemente para renderização
+    tempContainer.style.visibility = 'visible';
+    await new Promise(resolve => setTimeout(resolve, 100));
 
-      <div style="margin-top: 20px; font-size: ${OPTIONS.fontSize}px; text-align: center;">
-        <div style="color: #60a5fa;">💳 PIX: Universocajazeiras@gmail.com</div>
-        <div style="color: #fbbf24;">📌 Envie comprovante no grupo</div>
-      </div>
-    `;
-
-    // 4. Gerar imagem otimizada
-    const canvas = await html2canvas(container, {
+    // 4. Gerar a imagem com html2canvas
+    const canvas = await html2canvas(tempContainer, {
       scale: 2,
-      width: OPTIONS.width,
-      windowWidth: OPTIONS.width,
       logging: false,
       useCORS: true,
       backgroundColor: '#1f2937',
-      quality: OPTIONS.quality
+      onclone: (document) => {
+        // Garantir que o container está visível no clone
+        const clone = document.getElementById('temp-print-container');
+        if (clone) {
+          clone.style.visibility = 'visible';
+        }
+      }
     });
 
-    // 5. Processamento adicional para WhatsApp
-    const finalCanvas = document.createElement('canvas');
-    finalCanvas.width = canvas.width;
-    finalCanvas.height = canvas.height;
-    const ctx = finalCanvas.getContext('2d');
-    
-    // Aplicar fundo sólido para evitar artefatos
-    ctx.fillStyle = '#1f2937';
-    ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
-    ctx.drawImage(canvas, 0, 0);
-    
-    // 6. Criar imagem JPEG com qualidade controlada (melhor para WhatsApp)
-    const imageData = finalCanvas.toDataURL('image/jpeg', OPTIONS.quality);
-    
-    // 7. Compartilhar
+    // 5. Processar a imagem final
+    const imageData = canvas.toDataURL('image/jpeg', 0.9);
+
+    // 6. Compartilhar
     if (navigator.share) {
       const blob = await (await fetch(imageData)).blob();
-      const file = new File([blob], 'mensalidades.jpg', { type: 'image/jpeg' });
-      await navigator.share({ files: [file] });
+      await navigator.share({
+        title: 'Controle de Mensalidades',
+        files: [new File([blob], 'mensalidades.jpg', { type: 'image/jpeg' })]
+      });
     } else {
       const link = document.createElement('a');
-      link.download = 'mensalidades-whatsapp.jpg';
+      link.download = 'mensalidades.jpg';
       link.href = imageData;
       link.click();
     }
 
   } catch (error) {
-    console.error('Erro:', error);
-    toast.error('Erro ao gerar imagem. Tente novamente.');
+    console.error('Erro ao gerar imagem:', error);
+    toast.error('Falha ao gerar imagem. Tente o modo PDF.');
+    
+    // Fallback para PDF
+    try {
+      const { jsPDF } = await import('jspdf');
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'pt',
+        format: 'a4'
+      });
+      
+      await pdf.html(document.getElementById(elementId), {
+        width: 800,
+        windowWidth: 800
+      });
+      
+      pdf.save('mensalidades.pdf');
+    } catch (pdfError) {
+      toast.error('Falha ao gerar PDF também.');
+    }
+  } finally {
+    // Limpeza garantida
+    const container = document.getElementById('temp-print-container');
+    if (container) {
+      document.body.removeChild(container);
+    }
   }
 };
 
