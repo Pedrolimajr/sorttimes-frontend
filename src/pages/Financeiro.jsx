@@ -759,136 +759,118 @@ const [isento, setIsento] = useState(false);
   //   }
   // };
 
-  const compartilharControle = async (elementId) => {
+ const compartilharControle = async (elementId) => {
   try {
-    toast.info('Gerando imagem em alta qualidade...');
+    toast.info('Gerando relatório em alta qualidade...');
 
-    // 1. Criar container temporário com estilos otimizados
-    const originalElement = document.getElementById(elementId);
+    // 1. Criar container temporário com dimensões fixas
     const tempContainer = document.createElement('div');
     tempContainer.style.position = 'fixed';
     tempContainer.style.left = '0';
     tempContainer.style.top = '0';
-    tempContainer.style.width = '800px';
+    tempContainer.style.width = '1000px'; // Largura maior para acomodar todos os meses
     tempContainer.style.backgroundColor = '#1f2937';
-    tempContainer.style.padding = '30px';
-    tempContainer.style.color = 'white';
-    tempContainer.style.fontFamily = 'Arial, sans-serif';
+    tempContainer.style.padding = '40px';
+    tempElement.style.color = 'white';
+    tempContainer.style.fontFamily = '"Arial", sans-serif';
     tempContainer.style.zIndex = '10000';
     tempContainer.style.boxSizing = 'border-box';
-    
-    // 2. Adicionar conteúdo com estilos aprimorados
-    tempContainer.innerHTML = `
-      <div style="text-align: center; margin-bottom: 25px;">
-        <div style="font-size: 24px; font-weight: bold; color: #4ade80;">
+    tempContainer.style.borderRadius = '10px';
+
+    // 2. Criar tabela completa com todos os meses
+    const jogadoresFiltrados = jogadores.filter(jogador =>
+      jogador.nome.toLowerCase().includes(filtroJogador.toLowerCase())
+    );
+
+    let tableHTML = `
+      <div style="text-align: center; margin-bottom: 30px;">
+        <div style="font-size: 28px; font-weight: bold; color: #4ade80; margin-bottom: 10px;">
           💰 MENSALIDADE VALOR R$
         </div>
       </div>
       
-      <div id="table-container" style="margin: 20px 0;">
-        <!-- Tabela será inserida aqui -->
-      </div>
-      
-      <div style="margin-top: 30px; font-size: 18px; line-height: 1.6;">
-        <div style="text-align: center; margin-bottom: 15px; color: #60a5fa;">
+      <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 18px;">
+        <thead>
+          <tr>
+            <th style="padding: 12px 8px; background-color: #374151; border: 1px solid #4b5563; text-align: left;">
+              Jogador
+            </th>
+            <th style="padding: 12px 8px; background-color: #374151; border: 1px solid #4b5563;">
+              Status
+            </th>
+    `;
+
+    // Adicionar todos os meses (Jan a Dez)
+    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    meses.forEach(mes => {
+      tableHTML += `
+        <th style="padding: 12px 8px; background-color: #374151; border: 1px solid #4b5563; min-width: 50px;">
+          ${mes}
+        </th>
+      `;
+    });
+
+    tableHTML += `</tr></thead><tbody>`;
+
+    // Adicionar jogadores
+    jogadoresFiltrados.forEach(jogador => {
+      tableHTML += `
+        <tr style="border-bottom: 1px solid #4b5563;">
+          <td style="padding: 12px 8px; border: 1px solid #4b5563; text-align: left;">
+            ${jogador.nome}
+          </td>
+          <td style="padding: 12px 8px; border: 1px solid #4b5563; text-align: center;">
+            <div style="display: inline-block; padding: 8px 12px; border-radius: 20px; 
+              ${jogador.statusFinanceiro === 'Adimplente' ? 
+                'background-color: #4ade8020; color: #4ade80;' : 
+                'background-color: #f8717120; color: #f87171;'}">
+              ${jogador.statusFinanceiro}
+            </div>
+          </td>
+      `;
+
+      // Adicionar status de pagamento para cada mês
+      jogador.pagamentos.forEach((pago, index) => {
+        tableHTML += `
+          <td style="padding: 12px 8px; border: 1px solid #4b5563; text-align: center;">
+            <div style="display: inline-block; width: 24px; height: 24px; border-radius: 50%;
+              ${pago ? 'background-color: #4ade8020; color: #4ade80;' : 'background-color: #f8717120; color: #f87171;'}
+              display: flex; align-items: center; justify-content: center;">
+              ${pago ? '✓' : '✗'}
+            </div>
+          </td>
+        `;
+      });
+
+      tableHTML += `</tr>`;
+    });
+
+    tableHTML += `</tbody></table>`;
+
+    // 3. Adicionar rodapé
+    tableHTML += `
+      <div style="margin-top: 30px; font-size: 18px; line-height: 1.6; text-align: center;">
+        <div style="margin-bottom: 15px; color: #60a5fa;">
           💳 CHAVE PIX: Universocajazeiras@gmail.com
         </div>
-        <div style="text-align: center; margin-bottom: 15px; color: #fbbf24;">
+        <div style="margin-bottom: 15px; color: #fbbf24;">
           📌 FAVOR ENVIAR COMPROVANTE NO GRUPO, EU ATUALIZO A LISTA
         </div>
-        <div style="text-align: center; margin-bottom: 15px; color: #a5b4fc;">
+        <div style="margin-bottom: 15px; color: #a5b4fc;">
           ℹ️ OBS: Este valor será para caixa para as compras de material, sendo bola, rede, pagamento de juiz.
         </div>
-        <div style="text-align: center; color: #f87171;">
+        <div style="color: #f87171;">
           ⚠️ OBS: Os nomes que estão com a tarja verde ao final, esses terão prioridades no baba, são os que no momento estão adimplentes. Espero não precisar ir no privado de cada um informar o seu compromisso. 🤝
         </div>
       </div>
     `;
 
-    // 3. Clonar e estilizar a tabela
-    const tableClone = originalElement.cloneNode(true);
-    const tableContainer = tempContainer.querySelector('#table-container');
-    
-    // Aplicar estilos de alta qualidade
-    tableClone.style.width = '100%';
-    tableClone.style.borderCollapse = 'collapse';
-    tableClone.style.fontSize = '18px';
-    tableClone.style.margin = '0 auto';
-    
-    // Melhorar células
-    const allCells = tableClone.querySelectorAll('th, td');
-    allCells.forEach(cell => {
-      cell.style.padding = '12px 8px';
-      cell.style.border = '1px solid #4b5563';
-      cell.style.textAlign = 'center';
-      cell.style.verticalAlign = 'middle';
-    });
-
-    // Melhorar cabeçalhos
-    const headers = tableClone.querySelectorAll('th');
-    headers.forEach(header => {
-      header.style.backgroundColor = '#374151';
-      header.style.fontWeight = 'bold';
-      header.style.fontSize = '16px';
-    });
-
-    // Aumentar e melhorar ícones
-    const icons = tableClone.querySelectorAll('svg');
-    icons.forEach(icon => {
-      icon.style.width = '18px';
-      icon.style.height = '18px';
-    });
-
-    // Centralizar botões de status
-    const statusButtons = tableClone.querySelectorAll('button');
-    statusButtons.forEach(button => {
-      button.style.display = 'flex';
-      button.style.alignItems = 'center';
-      button.style.justifyContent = 'center';
-      button.style.margin = '0 auto';
-      button.style.padding = '8px 12px';
-      button.style.minWidth = '100px';
-    });
-
-    tableContainer.appendChild(tableClone);
+    tempContainer.innerHTML = tableHTML;
     document.body.appendChild(tempContainer);
 
-    // 4. Primeiro tentamos com dom-to-image (melhor para texto)
-    try {
-      const domToImage = await import('dom-to-image');
-      const blob = await domToImage.toBlob(tempContainer, {
-        quality: 1,
-        width: tempContainer.clientWidth * 2,
-        height: tempContainer.clientHeight * 2,
-        style: {
-          transform: 'scale(2)',
-          transformOrigin: 'top left'
-        }
-      });
-
-      if (navigator.share) {
-        const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
-        await navigator.share({
-          title: 'Controle de Mensalidades',
-          files: [file]
-        });
-      } else {
-        const link = document.createElement('a');
-        link.download = `controle-mensalidades-${new Date().toISOString().slice(0, 10)}.png`;
-        link.href = URL.createObjectURL(blob);
-        link.click();
-      }
-      
-      toast.success('Imagem em alta qualidade gerada com sucesso!');
-      return;
-    } catch (domToImageError) {
-      console.log('Usando fallback para html2canvas');
-    }
-
-    // 5. Fallback para html2canvas com configurações extremas
-    const html2canvas = await import('html2canvas');
-    const canvas = await html2canvas.default(tempContainer, {
-      scale: 5, // Escala extrema
+    // 4. Gerar imagem usando html2canvas com configurações extremas
+    const canvas = await html2canvas(tempContainer, {
+      scale: 5, // Escala máxima
       logging: true,
       useCORS: true,
       backgroundColor: null,
@@ -896,50 +878,56 @@ const [isento, setIsento] = useState(false);
       allowTaint: true,
       letterRendering: true,
       windowWidth: tempContainer.scrollWidth,
-      windowHeight: tempContainer.scrollHeight
+      windowHeight: tempContainer.scrollHeight,
+      onclone: (clonedDoc) => {
+        // Garantir que todos os estilos sejam aplicados
+        const clone = clonedDoc.querySelector('div[style*="z-index: 10000"]');
+        clone.style.visibility = 'visible';
+      }
     });
 
-    // 6. Fallback final: Gerar PDF se a imagem ainda não estiver boa
-    if (canvas.width > 5000) { // Se a imagem ficou grande demais
-      const pdf = new jsPDF('l', 'px', [tempContainer.scrollWidth, tempContainer.scrollHeight]);
+    // 5. Criar link de download
+    const link = document.createElement('a');
+    link.download = `controle-mensalidades-${new Date().toISOString().slice(0, 10)}.png`;
+    link.href = canvas.toDataURL('image/png', 1.0);
+    link.click();
+
+    // 6. Remover container temporário após um delay
+    setTimeout(() => {
+      document.body.removeChild(tempContainer);
+    }, 1000);
+
+    toast.success('Relatório gerado com sucesso!');
+
+  } catch (error) {
+    console.error('Erro ao gerar relatório:', error);
+    toast.error('Erro ao gerar relatório. Tentando gerar PDF...');
+    
+    // Fallback para PDF
+    try {
+      const { jsPDF } = await import('jspdf');
+      const pdf = new jsPDF('l', 'pt', [1000, tempContainer.scrollHeight * 0.75]);
+      
       await pdf.html(tempContainer, {
-        width: tempContainer.scrollWidth,
-        windowWidth: tempContainer.scrollWidth,
+        x: 10,
+        y: 10,
+        width: 980,
+        windowWidth: 1000,
         html2canvas: {
-          scale: 2,
+          scale: 1,
           letterRendering: true
         }
       });
+      
       pdf.save('controle-mensalidades.pdf');
-      toast.success('PDF gerado com qualidade perfeita!');
-    } else {
-      const link = document.createElement('a');
-      link.download = `controle-mensalidades-${new Date().toISOString().slice(0, 10)}.png`;
-      link.href = canvas.toDataURL('image/png', 1.0);
-      link.click();
-      toast.success('Imagem em alta qualidade gerada!');
-    }
-
-  } catch (error) {
-    console.error('Erro ao gerar imagem:', error);
-    toast.error('Erro ao gerar imagem. Tente o modo PDF.');
-    
-    // Fallback extremo - tentar gerar apenas a tabela
-    try {
-      const pdf = new jsPDF('l', 'pt', 'a4');
-      await pdf.html(document.getElementById(elementId), {
-        width: 800,
-        windowWidth: 800
-      });
-      pdf.save('controle-mensalidades-fallback.pdf');
+      toast.success('PDF gerado como alternativa!');
     } catch (pdfError) {
-      toast.error('Falha ao gerar PDF. Entre em contato com o suporte.');
-    }
-  } finally {
-    // Remover container temporário
-    const tempContainer = document.querySelector('div[style*="z-index: 10000"]');
-    if (tempContainer) {
-      document.body.removeChild(tempContainer);
+      toast.error('Falha ao gerar PDF também. Por favor, tente novamente.');
+    } finally {
+      const tempContainer = document.querySelector('div[style*="z-index: 10000"]');
+      if (tempContainer) {
+        document.body.removeChild(tempContainer);
+      }
     }
   }
 };
