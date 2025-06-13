@@ -789,7 +789,7 @@ const [isento, setIsento] = useState(false);
     let htmlContent = `
       <div style="text-align: center; margin-bottom: 30px;">
         <div style="font-size: 28px; font-weight: bold; color: #4ade80; margin-bottom: 10px;">
-          💰 MENSALIDADE VALOR R$
+          💰 MENSALIDADE VALOR 20,00R$
         </div>
       </div>
 
@@ -896,10 +896,14 @@ const [isento, setIsento] = useState(false);
           💳 CHAVE PIX: Universocajazeiras@gmail.com
         </div>
         <div style="color: #fbbf24; margin-bottom: 15px;">
-          📌 FAVOR ENVIAR COMPROVANTE NO GRUPO
+          📌 FAVOR ENVIAR COMPROVANTE NO GRUPO, EU ATUALIZO A LISTA
         </div>
         <div style="color: #a5b4fc;">
-          ℹ️ Valor para caixa (materiais, bola, rede, juiz)
+         ℹ️ *OBS:* Este valor será para caixa para as compras de material, sendo bola, rede, pagamento de juiz.
+
+        </div>
+         <div style="color: #a5b4fc;">
+         ⚠️ *OBS:* Os nomes que estão com a tarja verde ao final, esses terão prioridades no baba, são os que no momento estão adimplentes. Espero não precisar ir no privado de cada um informar o seu compromisso. 🤝
         </div>
       </div>
     `;
