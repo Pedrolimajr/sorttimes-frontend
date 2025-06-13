@@ -151,7 +151,7 @@ const totalNaoConfirmados = jogadores.filter(j => !j.presente).length;
             className="text-center mb-6 sm:mb-8"
           >
             <p className="text-blue-400 text-base sm:text-lg font-medium">
-              Confirme sua presença para o fut deste Domingo
+              Confirmação de Presença - Fut
             </p>
             <div className="mt-1 sm:mt-2 text-gray-400 text-xs sm:text-sm">
               Clique no botão para confirmar ou desmarcar sua presença

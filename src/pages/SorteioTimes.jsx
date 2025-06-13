@@ -111,70 +111,80 @@ export default function SorteioTimes() {
 
   // Configuração do socket.io para atualizações em tempo real.
   useEffect(() => {
-    let isMounted = true;
+  let isMounted = true; // Flag para evitar atualizações após desmontagem
 
-    const connectToSocket = async () => {
-      try {
-        socket.connect();
+  const connectToSocket = async () => {
+    try {
+      // Conecta ao Socket.IO
+      socket.connect();
 
-        const setupListeners = () => {
-          socket.on('connect', () => {
-            console.log('Conectado ao Socket.IO');
-          });
+      // Configura listeners
+      const setupListeners = () => {
+        socket.on('connect', () => {
+          console.log('Conectado ao Socket.IO');
+          toast.success('Conexão em tempo real ativa');
+        });
 
-          socket.on('times-atualizados', (novosTimes) => {
-            if (isMounted) {
-              setTimes(novosTimes);
-            }
-          });
+        socket.on('times-atualizados', (novosTimes) => {
+          if (isMounted) {
+            setTimes(novosTimes);
+          }
+        });
 
-          socket.on('presencaAtualizada', ({ jogadorId, presente }) => {
-            if (isMounted) {
-              setJogadoresSelecionados(prev => 
-                prev.map(j => j._id === jogadorId ? { ...j, presente } : j)
-              );
-            }
-          });
+        socket.on('presencaAtualizada', ({ jogadorId, presente }) => {
+          if (isMounted) {
+            setJogadoresSelecionados(prev => 
+              prev.map(j => j._id === jogadorId ? { ...j, presente } : j)
+            );
+          }
+        });
 
-          socket.on('connect_error', (err) => {
-            console.error('Erro de conexão Socket.IO:', err);
-            
-            setTimeout(() => {
-              if (isMounted) socket.connect();
-            }, 5000);
-          });
+        socket.on('connect_error', (err) => {
+          console.error('Erro de conexão Socket.IO:', err);
+          toast.warning('Conexão em tempo real interrompida');
+          
+          // Tentar reconectar após 5 segundos
+          setTimeout(() => {
+            if (isMounted) socket.connect();
+          }, 5000);
+        });
 
-          socket.on('disconnect', (reason) => {
-            console.log('Desconectado do Socket.IO:', reason);
-            if (reason === 'io server disconnect') {
-              socket.connect();
-            }
-          });
-        };
+        socket.on('disconnect', (reason) => {
+          console.log('Desconectado do Socket.IO:', reason);
+          if (reason === 'io server disconnect') {
+            // Reconexão manual necessária
+            socket.connect();
+          }
+        });
+      };
 
-        setupListeners();
+      setupListeners();
 
-      } catch (err) {
-        console.error('Erro ao configurar Socket.IO:', err);
-      }
-    };
+    } catch (err) {
+      console.error('Erro ao configurar Socket.IO:', err);
+      toast.error('Recursos em tempo real não disponíveis');
+    }
+  };
 
-    connectToSocket();
+  connectToSocket();
 
-    return () => {
-      isMounted = false;
-      
-      socket.off('connect');
-      socket.off('times-atualizados');
-      socket.off('presencaAtualizada');
-      socket.off('connect_error');
-      socket.off('disconnect');
-      
-      if (socket.connected) {
-        socket.disconnect();
-      }
-    };
-  }, []);
+  // Cleanup quando o componente desmonta
+  return () => {
+    isMounted = false;
+    
+    // Remove todos os listeners específicos
+    socket.off('connect');
+    socket.off('times-atualizados');
+    socket.off('presencaAtualizada');
+    socket.off('connect_error');
+    socket.off('disconnect');
+    
+    // Desconecta apenas se o socket ainda está conectado
+    if (socket.connected) {
+      socket.disconnect();
+    }
+  };
+}, []); // Dependências vazias para executar apenas no mount/unmount
 
   /**
    * Gera um link para confirmação de presença e compartilha via WhatsApp
