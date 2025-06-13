@@ -760,214 +760,34 @@ const [isento, setIsento] = useState(false);
   // };
 
   const compartilharControle = async (elementId) => {
-  try {
-    toast.info('Gerando relatório em alta qualidade...');
-
-    // 1. Configurações de layout
-    const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-    const LARGURA_TOTAL = 1200; // Aumentado para melhor proporção
-    const LARGURA_JOGADOR = 200;
-    const LARGURA_STATUS = 100;
-    const LARGURA_MES = 50;
-
-    // 2. Criar container com proporções adequadas
-    const tempContainer = document.createElement('div');
-    tempContainer.style.position = 'fixed';
-    tempContainer.style.left = '0';
-    tempContainer.style.top = '0';
-    tempContainer.style.width = `${LARGURA_TOTAL}px`;
-    tempContainer.style.backgroundColor = '#1f2937';
-    tempContainer.style.padding = '40px';
-    tempContainer.style.color = 'white';
-    tempContainer.style.fontFamily = '"Arial", sans-serif';
-    tempContainer.style.zIndex = '10000';
-    tempContainer.style.boxSizing = 'border-box';
-    tempContainer.style.borderRadius = '10px';
-    tempContainer.style.visibility = 'hidden';
-
-    // 3. Construir tabela com proporções adequadas
-    let htmlContent = `
-      <div style="text-align: center; margin-bottom: 30px;">
-        <div style="font-size: 28px; font-weight: bold; color: #4ade80; margin-bottom: 10px;">
-          💰 MENSALIDADE VALOR 20,00R$
-        </div>
-      </div>
-
-      <table style="
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 16px;
-        table-layout: fixed; /* Força o respeito às larguras */
-      ">
-        <colgroup>
-          <col style="width: ${LARGURA_JOGADOR}px">
-          <col style="width: ${LARGURA_STATUS}px">
-          ${MESES.map(() => `<col style="width: ${LARGURA_MES}px">`).join('')}
-        </colgroup>
-
-        <thead>
-          <tr>
-            <th style="
-              padding: 12px;
-              background: #374151;
-              border: 1px solid #4b5563;
-              text-align: left;
-              position: sticky;
-              top: 0;
-            ">Jogador</th>
-            <th style="
-              padding: 12px;
-              background: #374151;
-              border: 1px solid #4b5563;
-              position: sticky;
-              top: 0;
-            ">Status</th>
-            ${MESES.map(mes => `
-              <th style="
-                padding: 12px;
-                background: #374151;
-                border: 1px solid #4b5563;
-                position: sticky;
-                top: 0;
-              ">${mes}</th>
-            `).join('')}
-          </tr>
-        </thead>
-        <tbody>
-          ${jogadores.filter(j => 
-            j.nome.toLowerCase().includes(filtroJogador.toLowerCase())
-          ).map(jogador => `
-            <tr>
-              <td style="
-                padding: 12px;
-                border: 1px solid #4b5563;
-                text-align: left;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-              ">${jogador.nome}</td>
-              <td style="
-                padding: 12px;
-                border: 1px solid #4b5563;
-                text-align: center;
-              ">
-                <span style="
-                  display: inline-block;
-                  padding: 6px 12px;
-                  border-radius: 20px;
-                  ${jogador.statusFinanceiro === 'Adimplente' ? 
-                    'background: #4ade8020; color: #4ade80;' : 
-                    'background: #f8717120; color: #f87171;'}
-                  font-size: 14px;
-                ">
-                  ${jogador.statusFinanceiro}
-                </span>
-              </td>
-              ${jogador.pagamentos.map((pago, i) => `
-                <td style="
-                  padding: 12px;
-                  border: 1px solid #4b5563;
-                  text-align: center;
-                ">
-                  <span style="
-                    display: inline-block;
-                    width: 24px;
-                    height: 24px;
-                    border-radius: 50%;
-                    line-height: 24px;
-                    ${pago ? 'background: #4ade8020; color: #4ade80;' : 'background: #f8717120; color: #f87171;'}
-                  ">
-                    ${pago ? '✓' : '✗'}
-                  </span>
-                </td>
-              `).join('')}
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-
-      <div style="
-        margin-top: 30px;
-        text-align: center;
-        font-size: 18px;
-        line-height: 1.6;
-      ">
-        <div style="color: #60a5fa; margin-bottom: 15px;">
-          💳 CHAVE PIX: Universocajazeiras@gmail.com
-        </div>
-        <div style="color: #fbbf24; margin-bottom: 15px;">
-          📌 FAVOR ENVIAR COMPROVANTE NO GRUPO, EU ATUALIZO A LISTA.
-        </div>
-        <div style="color: #a5b4fc;">
-         ℹ️ *OBS:* Este valor será para caixa para as compras de material, sendo bola, rede, pagamento de juiz.
-
-        </div>
-         <div style="color: #a5b4fc;">
-         ⚠️ *OBS:* Os nomes que estão com a tarja verde ao final, esses terão prioridades no baba, são os que no momento estão adimplentes. Espero não precisar ir no privado de cada um informar o seu compromisso. 🤝
-        </div>
-      </div>
-    `;
-
-    tempContainer.innerHTML = htmlContent;
-    document.body.appendChild(tempContainer);
-    tempContainer.style.visibility = 'visible';
-
-    // 4. Gerar imagem com qualidade
-    const canvas = await html2canvas(tempContainer, {
-      scale: 3,
-      logging: true,
-      useCORS: true,
-      backgroundColor: null,
-      quality: 1,
-      allowTaint: true,
-      letterRendering: true,
-      windowWidth: tempContainer.scrollWidth,
-      windowHeight: tempContainer.scrollHeight
-    });
-
-    // 5. Criar link de download
-    const link = document.createElement('a');
-    link.download = `mensalidades-${new Date().toISOString().slice(0, 10)}.png`;
-    link.href = canvas.toDataURL('image/png', 1.0);
-    link.click();
-    toast.success('Relatório gerado com sucesso!');
-
-  } catch (error) {
-    console.error('Erro ao gerar relatório:', error);
-    toast.error('Erro ao gerar imagem. Tentando PDF...');
-    
-    // Fallback para PDF
     try {
-      const { jsPDF } = await import('jspdf');
-      const pdf = new jsPDF({
-        orientation: 'landscape',
-        unit: 'pt',
-        format: [tempContainer.scrollWidth * 0.75, tempContainer.scrollHeight * 0.75]
-      });
-
-      await pdf.html(tempContainer, {
-        width: tempContainer.scrollWidth * 0.75,
-        windowWidth: tempContainer.scrollWidth,
-        html2canvas: {
-          scale: 0.75,
-          letterRendering: true
-        }
-      });
-
-      pdf.save('controle-mensalidades.pdf');
-      toast.success('PDF gerado como alternativa!');
-    } catch (pdfError) {
-      console.error('Erro no PDF:', pdfError);
-      toast.error('Falha ao gerar PDF. Entre em contato com o suporte.');
+      if (navigator.share) {
+        const element = document.getElementById(elementId);
+        const canvas = await html2canvas(element, {
+          scale: 2,
+          logging: false,
+          useCORS: true,
+          backgroundColor: '#1f2937'
+        });
+        
+        const blob = await (await fetch(canvas.toDataURL('image/png'))).blob();
+        const file = new File([blob], 'controle-mensalidades.png', { type: blob.type });
+        
+        await navigator.share({
+          title: `Controle de Mensalidades - ${new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`,
+          text: `Controle de mensalidades dos jogadores`,
+          files: [file]
+        });
+      } else {
+        toast.info('Compartilhamento não suportado neste navegador');
+      }
+    } catch (error) {
+      console.error('Erro ao compartilhar:', error);
+      if (error.name !== 'AbortError') {
+        toast.error('Erro ao compartilhar controle');
+      }
     }
-  } finally {
-    // Limpeza garantida
-    const container = document.querySelector('div[style*="z-index: 10000"]');
-    if (container) {
-      document.body.removeChild(container);
-    }
-  }
-};
+  };
 
   const compartilharHistorico = async (elementId) => {
     try {
@@ -1449,110 +1269,110 @@ const [isento, setIsento] = useState(false);
               )}
             </motion.div>
 
-                 <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
-        >
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3 sm:mb-4">
-            <h2 className="text-lg sm:text-xl font-semibold text-white">Controle de Mensalidades</h2>
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <div className="relative flex-1 sm:flex-none">
-                <input
-                  type="text"
-                  placeholder="Buscar jogador..."
-                  value={filtroJogador}
-                  onChange={(e) => setFiltroJogador(e.target.value)}
-                  className="w-full sm:w-40 px-2 sm:px-3 py-1 sm:py-1.5 bg-gray-700 border border-gray-600 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
-                />
-                <FaSearch className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs sm:text-sm" />
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
+            >
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3 sm:mb-4">
+                <h2 className="text-lg sm:text-xl font-semibold text-white">Controle de Mensalidades</h2>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <div className="relative flex-1 sm:flex-none">
+                    <input
+                      type="text"
+                      placeholder="Buscar jogador..."
+                      value={filtroJogador}
+                      onChange={(e) => setFiltroJogador(e.target.value)}
+                      className="w-full sm:w-40 px-2 sm:px-3 py-1 sm:py-1.5 bg-gray-700 border border-gray-600 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                    />
+                    <FaSearch className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs sm:text-sm" />
+                  </div>
+                  <motion.button
+                    onClick={() => compartilharControle('tabela-mensalidades')}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    className="bg-blue-600 p-1.5 sm:p-2 rounded-lg text-white hover:bg-blue-700 transition-colors flex-shrink-0"
+                    title="Compartilhar controle de mensalidades"
+                  >
+                    <FaShare className="text-sm sm:text-base" />
+                  </motion.button>
+                </div>
               </div>
-              <motion.button
-                onClick={() => compartilharControle('tabela-mensalidades')}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                className="bg-blue-600 p-1.5 sm:p-2 rounded-lg text-white hover:bg-blue-700 transition-colors flex-shrink-0"
-                title="Compartilhar controle de mensalidades"
-              >
-                <FaShare className="text-sm sm:text-base" />
-              </motion.button>
-            </div>
-          </div>
 
-          {carregando ? (
-            <div className="flex justify-center py-6 sm:py-8">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                className="h-6 w-6 sm:h-8 sm:w-8 border-4 border-blue-500 border-t-transparent rounded-full"
-              />
-            </div>
-          ) : jogadores.length === 0 ? (
-            <div className="text-center py-6 sm:py-8 text-gray-400 text-xs sm:text-sm">
-              Nenhum jogador cadastrado
-            </div>
-          ) : (
-            <div className="overflow-x-auto max-h-[60vh] sm:max-h-[70vh] md:max-h-[80vh]">
-              <div id="tabela-mensalidades" className="min-w-[800px]">
-                <table className="w-full divide-y divide-gray-700">
-                  <thead className="bg-gray-700 sticky top-0">
-                    <tr>
-                      <th className="px-2 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Jogador</th>
-                      <th className="px-2 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
-                      {dadosGraficoBarras.labels.map((mes, i) => (
-                        <th key={i} className="px-1 sm:px-2 py-2 sm:py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">
-                          {mes}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-700">
-                    {jogadores.filter(jogador =>
-                      jogador.nome.toLowerCase().includes(filtroJogador.toLowerCase())
-                    ).map((jogador) => (
-                      <tr key={jogador._id} className="hover:bg-gray-700/50">
-                        <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium text-white">
-                          {jogador.nome}
-                        </td>
-                        <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap">
-                          <motion.button
-                            onClick={() => toggleStatus(jogador._id)}
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            className={`px-2 py-1 rounded-full text-xs font-medium w-full text-center ${
-                              jogador.statusFinanceiro === 'Adimplente' ?
-                                'bg-green-500/20 text-green-400' :
-                                'bg-red-500/20 text-red-400'
-                            }`}
-                          >
-                            {jogador.statusFinanceiro || 'Inadimplente'}
-                          </motion.button>
-                        </td>
-                        {jogador.pagamentos.map((pago, i) => (
-                          <td key={i} className="px-1 sm:px-2 py-2 sm:py-3 whitespace-nowrap text-center">
-                            <motion.button
-                              onClick={() => togglePagamento(jogador._id, i)}
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                              className={`
-                                w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center
-                                ${pago ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}
-                              `}
-                              title={pago ? "Mensalidade paga" : "Mensalidade pendente"}
-                            >
-                              {pago ? <FaCheck size={8} className="sm:text-xs" /> : <FaTimes size={8} className="sm:text-xs" />}
-                            </motion.button>
-                          </td>
+              {carregando ? (
+                <div className="flex justify-center py-6 sm:py-8">
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    className="h-6 w-6 sm:h-8 sm:w-8 border-4 border-blue-500 border-t-transparent rounded-full"
+                  />
+                </div>
+              ) : jogadores.length === 0 ? (
+                <div className="text-center py-6 sm:py-8 text-gray-400 text-xs sm:text-sm">
+                  Nenhum jogador cadastrado
+                </div>
+              ) : (
+                <div className="overflow-x-auto max-h-[60vh] sm:max-h-[70vh] md:max-h-[80vh]">
+                  <div id="tabela-mensalidades" className="min-w-[800px]">
+                    <table className="w-full divide-y divide-gray-700">
+                      <thead className="bg-gray-700 sticky top-0">
+                        <tr>
+                          <th className="px-2 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Jogador</th>
+                          <th className="px-2 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
+                          {dadosGraficoBarras.labels.map((mes, i) => (
+                            <th key={i} className="px-1 sm:px-2 py-2 sm:py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">
+                              {mes}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-700">
+                        {jogadores.filter(jogador =>
+                          jogador.nome.toLowerCase().includes(filtroJogador.toLowerCase())
+                        ).map((jogador) => (
+                          <tr key={jogador._id} className="hover:bg-gray-700/50">
+                            <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium text-white">
+                              {jogador.nome}
+                            </td>
+                            <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap">
+                              <motion.button
+                                onClick={() => toggleStatus(jogador._id)}
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  jogador.statusFinanceiro === 'Adimplente' ?
+                                    'bg-green-500/20 text-green-400' :
+                                    'bg-red-500/20 text-red-400'
+                                }`}
+                              >
+                                {jogador.statusFinanceiro || 'Inadimplente'}
+                              </motion.button>
+                            </td>
+                            {jogador.pagamentos.map((pago, i) => (
+                              <td key={i} className="px-1 sm:px-2 py-2 sm:py-3 whitespace-nowrap text-center">
+                                <motion.button
+                                  onClick={() => togglePagamento(jogador._id, i)}
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
+                                  className={`
+                                    w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center
+                                    ${pago ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}
+                                  `}
+                                  title={pago ? "Mensalidade paga" : "Mensalidade pendente"}
+                                >
+                                  {pago ? <FaCheck size={8} className="sm:text-xs" /> : <FaTimes size={8} className="sm:text-xs" />}
+                                </motion.button>
+                              </td>
+                            ))}
+                          </tr>
                         ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </motion.div>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </motion.div>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
