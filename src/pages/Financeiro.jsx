@@ -585,79 +585,63 @@ const [isento, setIsento] = useState(false);
     }]
   };
 
-  const exportarPDF = async () => {
-    try {
-      // Fecha o modal de relatório antes de gerar o PDF
-      setRelatorioModal(false);
-      
-      // Aguarda um pequeno delay para garantir que o modal foi fechado
-      await new Promise(resolve => setTimeout(resolve, 300));
+  // Adicione os estilos no início do componente Financeiro
+const styles = {
+  statusContainer: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: '4px 8px',
+    borderRadius: '4px',
+    width: '120px',
+    margin: '0 auto',
+    fontWeight: 'bold',
+    fontSize: '14px'
+  },
+  adimplente: {
+    backgroundColor: '#4ade80',
+    color: '#fff'
+  },
+  inadimplente: {
+    backgroundColor: '#f87171',
+    color: '#fff'
+  }
+};
 
-      const element = document.getElementById('relatorio-content');
-      if (!element) {
-        // Cria um elemento temporário para o relatório
-        const tempElement = document.createElement('div');
-        tempElement.id = 'relatorio-content';
-        tempElement.innerHTML = `
-          <div style="padding: 20px; background-color: #1f2937; color: white;">
-            <h2 style="margin-bottom: 20px;">Relatório Financeiro - ${new Date(filtroMes).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</h2>
-            
-            <div style="margin-bottom: 20px;">
-              <h3>Resumo Financeiro</h3>
-              <p>Receitas: R$ ${estatisticas.totalReceitas.toFixed(2)}</p>
-              <p>Despesas: R$ ${estatisticas.totalDespesas.toFixed(2)}</p>
-              <p>Saldo: R$ ${estatisticas.saldo.toFixed(2)}</p>
-            </div>
-            
-            <div>
-              <h3>Informações Adicionais</h3>
-              <p>Total de Jogadores: ${estatisticas.totalJogadores}</p>
-              <p>Pagamentos Pendentes: ${estatisticas.pagamentosPendentes}</p>
-            </div>
-          </div>
-        `;
-        document.body.appendChild(tempElement);
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        const canvas = await html2canvas(tempElement, {
-          scale: 2,
-          logging: false,
-          useCORS: true,
-          backgroundColor: '#1f2937'
-        });
-        
-        document.body.removeChild(tempElement);
-        
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save(`relatorio-financeiro-${filtroMes}.pdf`);
-      } else {
-        const canvas = await html2canvas(element, {
-          scale: 3,
-          logging: false,
-          useCORS: true,
-          backgroundColor: '#1f2937'
-        });
-        
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save(`relatorio-financeiro-${filtroMes}.pdf`);
-      }
-      
-      toast.success('Relatório PDF gerado com sucesso!');
-    } catch (error) {
-      console.error('Erro ao gerar PDF:', error);
-      toast.error('Erro ao gerar PDF. Tente novamente.');
+// Modifique a função exportarPDF para incluir as configurações de melhor qualidade
+const exportarPDF = async () => {
+  try {
+    const element = document.getElementById('tabela-mensalidades');
+    if (!element) {
+      toast.error('Elemento não encontrado');
+      return;
     }
-  };
+
+    const canvas = await html2canvas(element, {
+      scale: 4,
+      logging: false,
+      useCORS: true,
+      backgroundColor: '#1f2937',
+      width: element.offsetWidth,
+      height: element.offsetHeight,
+      imageTimeout: 0,
+      pixelRatio: window.devicePixelRatio
+    });
+
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    pdf.save('controle-mensalidades.pdf');
+    
+    toast.success('PDF gerado com sucesso!');
+  } catch (error) {
+    console.error('Erro ao gerar PDF:', error);
+    toast.error('Erro ao gerar PDF');
+  }
+};
 
   const exportarImagem = async () => {
     try {
@@ -1535,6 +1519,26 @@ const canvas = await html2canvas(cloneContainer, {
                   <p className={`text-xl sm:text-2xl font-bold ${estatisticas.saldo >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                     R$ {estatisticas.saldo.toFixed(2)}
                   </p>
+                </div>
+
+                <div className="bg-gray-700/50 p-3 sm:p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">Pagamentos Pendentes</h4>
+                  <p className="text-lg sm:text-xl font-bold text-white">
+                    {estatisticas.pagamentosPendentes} mensalidades
+                  </p>
+                </div>
+
+                <div className="bg-gray-700/50 p-3 sm:p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">Total de Jogadores</h4>
+                  <p className="text-lg sm:text-xl font-bold text-white">
+                    {estatisticas.totalJogadores} jogadores
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 sm:mt-6 flex justify-end gap-2 sm:gap-3">
+                <motion.button
+                  onClick={exportarPDF}
                 </div>
 
                 <div className="bg-gray-700/50 p-3 sm:p-4 rounded-lg">
