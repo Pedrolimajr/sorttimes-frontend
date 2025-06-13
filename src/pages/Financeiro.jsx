@@ -759,6 +759,7 @@ const [isento, setIsento] = useState(false);
   //   }
   // };
 
+  
   const compartilharControle = async () => {
     try {
       // Container principal
