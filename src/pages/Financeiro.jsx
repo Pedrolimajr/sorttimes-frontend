@@ -1595,6 +1595,41 @@ const [isento, setIsento] = useState(false);
                   whileTap={{ scale: 0.97 }}
                   className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 transition-all text-xs sm:text-sm"
                 >
+                  <FaFilePdf className="text-xs sm:text-sm" /> Exportar PDF
+                </motion.button>
+                <motion.button
+                  onClick={exportarImagem}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 transition-all text-xs sm:text-sm"
+                >
+                  <FaFileImage className="text-xs sm:text-sm" /> Exportar Imagem
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal de Editar Jogador */}
+      <AnimatePresence>
+        {editarModal && jogadorSelecionado && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 backdrop-blur-sm"
+            onClick={() => setEditarModal(false)}
+          >
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 20, opacity: 0 }}
+              className="bg-gray-800 rounded-xl shadow-2xl p-4 sm:p-6 w-full max-w-md border border-gray-700"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center mb-3 sm:mb-4">
+                <h3 className="text-lg sm:text-xl font-bold text-white">Editar Jogador</h3>
                 <motion.button
                   onClick={() => setEditarModal(false)}
                   whileHover={{ rotate: 90 }}
