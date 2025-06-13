@@ -767,16 +767,61 @@ const [isento, setIsento] = useState(false);
         return;
       }
 
-      const canvas = await html2canvas(element, {
-        scale: 4,
+      // Criar um container temporário para a nova estrutura
+      const container = document.createElement('div');
+      container.style.display = 'flex';
+      container.style.backgroundColor = '#1f2937';
+      container.style.padding = '20px';
+      container.style.gap = '20px';
+
+      // Pegar todas as linhas da tabela
+      const linhas = Array.from(element.getElementsByTagName('tr'));
+      const header = linhas[0]; // Cabeçalho
+      const todasLinhas = linhas.slice(1); // Removendo o cabeçalho
+      const metade = Math.ceil(todasLinhas.length / 2);
+
+      // Criar as duas tabelas
+      const tabela1 = document.createElement('table');
+      const tabela2 = document.createElement('table');
+
+      // Aplicar estilos às tabelas
+      [tabela1, tabela2].forEach(tabela => {
+        tabela.style.flex = '1';
+        tabela.style.borderCollapse = 'collapse';
+        tabela.style.width = '48%';
+      });
+
+      // Adicionar cabeçalho em ambas as tabelas
+      tabela1.appendChild(header.cloneNode(true));
+      tabela2.appendChild(header.cloneNode(true));
+
+      // Distribuir as linhas entre as tabelas
+      todasLinhas.slice(0, metade).forEach(linha => 
+        tabela1.appendChild(linha.cloneNode(true)));
+      todasLinhas.slice(metade).forEach(linha => 
+        tabela2.appendChild(linha.cloneNode(true)));
+
+      // Adicionar tabelas ao container
+      container.appendChild(tabela1);
+      container.appendChild(tabela2);
+
+      // Adicionar container temporariamente ao documento
+      document.body.appendChild(container);
+
+      // Gerar imagem com as duas tabelas lado a lado
+      const canvas = await html2canvas(container, {
+        scale: 2,
         logging: false,
         useCORS: true,
         backgroundColor: '#1f2937',
-        width: element.offsetWidth,
-        height: element.offsetHeight,
+        width: container.offsetWidth,
+        height: container.offsetHeight,
         imageTimeout: 0,
         pixelRatio: window.devicePixelRatio
       });
+
+      // Remover container temporário
+      document.body.removeChild(container);
 
       canvas.toBlob(async (blob) => {
         const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
