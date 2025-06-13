@@ -729,23 +729,54 @@ const [isento, setIsento] = useState(false);
     }
   };
 
+  // const compartilharRelatorio = async () => {
+  //   try {
+  //     if (navigator.share) {
+  //       const element = document.getElementById('relatorio-content');
+  //       const canvas = await html2canvas(element, {
+  //         scale: 2,
+  //         logging: false,
+  //         useCORS: true,
+  //         backgroundColor: '#1f2937'
+  //       });
+        
+  //       const blob = await (await fetch(canvas.toDataURL('image/png'))).blob();
+  //       const file = new File([blob], 'relatorio-financeiro.png', { type: blob.type });
+        
+  //       await navigator.share({
+  //         title: `Relatório Financeiro - ${filtroMes}`,
+  //         text: `Status financeiro do time: ${estatisticas.saldo >= 0 ? 'Positivo' : 'Negativo'}`,
+  //         files: [file]
+  //       });
+  //     } else {
+  //       toast.info('Compartilhamento não suportado neste navegador');
+  //     }
+  //   } catch (error) {
+  //     console.error('Erro ao compartilhar:', error);
+  //     if (error.name !== 'AbortError') {
+  //       toast.error('Erro ao compartilhar relatório');
+  //     }
+  //   }
+  // };
+
   const compartilharControle = async (elementId) => {
     try {
       if (navigator.share) {
         const element = document.getElementById(elementId);
         const canvas = await html2canvas(element, {
-          scale: 3,
+          scale: 4, // Aumentando ainda mais a escala para melhor qualidade
           logging: false,
           useCORS: true,
           backgroundColor: '#1f2937',
           windowWidth: element.scrollWidth,
-          windowHeight: element.scrollHeight
+          windowHeight: element.scrollHeight,
+          allowTaint: true,
+          foreignObjectRendering: true
         });
         
         const blob = await (await fetch(canvas.toDataURL('image/png', 1.0))).blob();
         const file = new File([blob], 'controle-mensalidades.png', { type: blob.type });
         
-        const dataAtual = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
         const mensagem = `💰 *MENSALIDADE VALOR R$ 20,00*\n\n` +
           `✅ *Adimplentes:* ${jogadores.filter(j => j.statusFinanceiro === 'Adimplente').length}\n` +
           `❌ *Inadimplentes:* ${jogadores.filter(j => j.statusFinanceiro === 'Inadimplente').length}\n\n` +
@@ -755,7 +786,7 @@ const [isento, setIsento] = useState(false);
           `⚠️ *OBS:* Os nomes que estão com a tarja verde ao final, esses terão prioridades no baba, são os que no momento estão adimplentes. Espero não precisar ir no privado de cada um informar o seu compromisso. 🤝`;
         
         await navigator.share({
-          title: `Controle de Mensalidades - ${dataAtual}`,
+          title: 'Controle de Mensalidades',
           text: mensagem,
           files: [file]
         });
