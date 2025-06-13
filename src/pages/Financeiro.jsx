@@ -761,24 +761,33 @@ const [isento, setIsento] = useState(false);
 
   const compartilharControle = async () => {
     try {
+      // Criar container temporário
       const containerTemp = document.createElement('div');
-      containerTemp.style.backgroundColor = '#1f2937';
-      containerTemp.style.padding = '20px';
-      containerTemp.style.display = 'flex';
-      containerTemp.style.flexDirection = 'column';
-      containerTemp.style.gap = '20px';
+      containerTemp.style.cssText = `
+        background-color: #1f2937;
+        padding: 20px;
+        color: white;
+        font-family: Arial, sans-serif;
+      `;
 
       // Adicionar título
-      const titulo = document.createElement('div');
-      titulo.innerHTML = '💰 MENSALIDADE VALOR 20,00R$';
-      titulo.style.color = 'white';
-      titulo.style.textAlign = 'center';
-      titulo.style.fontSize = '18px';
-      titulo.style.fontWeight = 'bold';
-      titulo.style.marginBottom = '20px';
-      containerTemp.appendChild(titulo);
+      containerTemp.innerHTML = `
+        <div style="text-align: center; margin-bottom: 20px; font-size: 18px; font-weight: bold;">
+          💰 MENSALIDADE VALOR 20,00R$
+        </div>
+      `;
 
-      // Criar contêiner para as tabelas com divisor
+      // Clonar a tabela original
+      const tabelaOriginal = document.getElementById('tabela-mensalidades');
+      const tabelaClone = tabelaOriginal.cloneNode(true);
+      
+      // Dividir as linhas - Corrigido para definir o cabeçalho
+      const todasLinhas = Array.from(tabelaClone.getElementsByTagName('tr'));
+      const header = todasLinhas[0]; // Definindo o cabeçalho corretamente
+      const linhasConteudo = todasLinhas.slice(1);
+      const metade = Math.ceil(linhasConteudo.length / 2);
+
+      // Criar contêiner para as tabelas
       const tabelasContainer = document.createElement('div');
       tabelasContainer.style.cssText = `
         display: flex;
@@ -797,8 +806,8 @@ const [isento, setIsento] = useState(false);
           width: 45%;
           border-collapse: collapse;
         `;
-        // Clonar cabeçalho completo para ambas as tabelas
-        const headerCompleto = cabecalho.cloneNode(true);
+        // Usando header ao invés de cabecalho
+        const headerCompleto = header.cloneNode(true);
         tabela.appendChild(headerCompleto);
       });
 
@@ -837,36 +846,47 @@ const [isento, setIsento] = useState(false);
       tabelasContainer.appendChild(tabela2);
       containerTemp.appendChild(tabelasContainer);
 
+      // Adicionar rodapé
+      containerTemp.innerHTML += `
+        <div style="text-align: center; margin-top: 20px;">
+          <p>💳 CHAVE PIX: Universocajazeiras@gmail.com</p>
+          <p>📌 FAVOR ENVIAR COMPROVANTE NO GRUPO, EU ATUALIZO A LISTA.</p>
+          <p>⚠️ <strong>OBS:</strong> Os nomes que estão com a tarja verde ao final, 
+          esses terão prioridades no baba, são os que no momento estão adimplentes. 
+          Espero não precisar ir no privado de cada um informar o seu compromisso. 🤝</p>
+        </div>
+      `;
+
+      // Adicionar ao documento temporariamente
       document.body.appendChild(containerTemp);
 
-      const canvas = await html2canvas(containerTemp, {
-        scale: 2,
-        logging: false,
-        useCORS: true,
-        backgroundColor: '#1f2937',
-        width: containerTemp.offsetWidth,
-        height: containerTemp.offsetHeight,
-        imageTimeout: 0,
-        pixelRatio: window.devicePixelRatio
-      });
+      try {
+        const canvas = await html2canvas(containerTemp, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#1f2937',
+          logging: true
+        });
 
-      document.body.removeChild(containerTemp);
-
-      canvas.toBlob(async (blob) => {
-        const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
-        
-        try {
-          await navigator.share({
-            files: [file],
-            title: 'Controle de Mensalidades',
-            text: 'Controle de Mensalidades dos Jogadores'
-          });
-          toast.success('Compartilhamento realizado com sucesso!');
-        } catch (error) {
-          console.error('Erro ao compartilhar:', error);
-          toast.error('Erro ao compartilhar imagem');
-        }
-      }, 'image/png');
+        canvas.toBlob(async (blob) => {
+          const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
+          
+          try {
+            await navigator.share({
+              files: [file],
+              title: 'Controle de Mensalidades',
+              text: 'Controle de Mensalidades dos Jogadores'
+            });
+            toast.success('Compartilhamento realizado com sucesso!');
+          } catch (shareError) {
+            console.error('Erro no compartilhamento:', shareError);
+            toast.error('Erro ao compartilhar');
+          }
+        }, 'image/png', 1.0);
+      } finally {
+        // Garantir que o container temporário seja removido
+        document.body.removeChild(containerTemp);
+      }
 
     } catch (error) {
       console.error('Erro:', error);
