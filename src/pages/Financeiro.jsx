@@ -637,7 +637,7 @@ const [isento, setIsento] = useState(false);
         pdf.save(`relatorio-financeiro-${filtroMes}.pdf`);
       } else {
         const canvas = await html2canvas(element, {
-          scale: 2,
+          scale: 3,
           logging: false,
           useCORS: true,
           backgroundColor: '#1f2937'
@@ -763,44 +763,19 @@ const [isento, setIsento] = useState(false);
     try {
       if (navigator.share) {
         const element = document.getElementById(elementId);
-        
         const canvas = await html2canvas(element, {
-          scale: 4, // Aumentando a escala para melhor qualidade
-          logging: true, // Ativando logs para debug
+          scale: 2,
+          logging: false,
           useCORS: true,
-          backgroundColor: '#1f2937',
-          allowTaint: true,
-          foreignObjectRendering: true,
-          width: element.offsetWidth,
-          height: element.offsetHeight,
-          onclone: (clonedDoc) => {
-            // Garante que o elemento clonado está visível e não interfere no layout
-            const clonedElement = clonedDoc.getElementById(elementId);
-            if (clonedElement) {
-              clonedElement.style.display = 'block';
-              clonedElement.style.visibility = 'visible';
-              clonedElement.style.opacity = '1';
-              clonedElement.style.position = 'absolute'; // Para não afetar o layout
-              clonedElement.style.left = '-9999px';
-              clonedElement.style.top = '-9999px';
-            }
-          }
+          backgroundColor: '#1f2937'
         });
         
-        const blob = await (await fetch(canvas.toDataURL('image/png', 1.0))).blob();
+        const blob = await (await fetch(canvas.toDataURL('image/png'))).blob();
         const file = new File([blob], 'controle-mensalidades.png', { type: blob.type });
-        
-        const mensagem = `💰 *MENSALIDADE VALOR R$ 20,00*\n\n` +
-          `✅ *Adimplentes:* ${jogadores.filter(j => j.statusFinanceiro === 'Adimplente').length}\n` +
-          `❌ *Inadimplentes:* ${jogadores.filter(j => j.statusFinanceiro === 'Inadimplente').length}\n\n` +
-          `💳 *CHAVE PIX:* Universocajazeiras@gmail.com\n` +
-          `📝 *FAVOR ENVIAR COMPROVANTE NO GRUPO, EU ATUALIZO A LISTA*\n\n` +
-          `ℹ️ *OBS:* Este valor será para caixa para as compras de material, sendo bola, rede, pagamento de juiz.\n\n` +
-          `⚠️ *OBS:* Os nomes que estão com a tarja verde ao final, esses terão prioridades no baba, são os que no momento estão adimplentes. Espero não precisar ir no privado de cada um informar o seu compromisso. 🤝`;
         
         await navigator.share({
           title: `Controle de Mensalidades - ${new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`,
-          text: mensagem,
+          text: `Controle de mensalidades dos jogadores`,
           files: [file]
         });
       } else {
@@ -1314,7 +1289,7 @@ const [isento, setIsento] = useState(false);
                     <FaSearch className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs sm:text-sm" />
                   </div>
                   <motion.button
-                    onClick={() => compartilharControle('controle-mensalidades-conteudo')}
+                    onClick={() => compartilharControle('tabela-mensalidades')}
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     className="bg-blue-600 p-1.5 sm:p-2 rounded-lg text-white hover:bg-blue-700 transition-colors flex-shrink-0"
@@ -1338,14 +1313,13 @@ const [isento, setIsento] = useState(false);
                   Nenhum jogador cadastrado
                 </div>
               ) : (
-                <div id="controle-mensalidades-conteudo" className="overflow-x-auto bg-gray-800 p-4 rounded-lg">
-                  <p className="text-white text-lg font-bold mb-4">💰 MENSALIDADE VALOR R$ 20,00</p>
+                <div className="overflow-x-auto max-h-[60vh] sm:max-h-[70vh] md:max-h-[80vh]">
                   <div id="tabela-mensalidades" className="min-w-[800px]">
                     <table className="w-full divide-y divide-gray-700">
                       <thead className="bg-gray-700 sticky top-0">
                         <tr>
                           <th className="px-2 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Jogador</th>
-                          <th className="px-2 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
+                          <th className="px-2 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
                           {dadosGraficoBarras.labels.map((mes, i) => (
                             <th key={i} className="px-1 sm:px-2 py-2 sm:py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">
                               {mes}
@@ -1361,12 +1335,12 @@ const [isento, setIsento] = useState(false);
                             <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium text-white">
                               {jogador.nome}
                             </td>
-                            <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-center">
+                            <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap">
                               <motion.button
                                 onClick={() => toggleStatus(jogador._id)}
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                className={`px-2 py-1 rounded-full text-xs font-medium inline-flex items-center justify-center ${
+                                className={`px-2 py-1 rounded-full text-xs font-medium ${
                                   jogador.statusFinanceiro === 'Adimplente' ?
                                     'bg-green-500/20 text-green-400' :
                                     'bg-red-500/20 text-red-400'
@@ -1395,12 +1369,6 @@ const [isento, setIsento] = useState(false);
                         ))}
                       </tbody>
                     </table>
-                  </div>
-                  <div className="mt-4 text-white text-sm space-y-2">
-                    <p className="font-bold">💳 CHAVE PIX: Universocajazeiras@gmail.com</p>
-                    <p className="font-bold">📝 FAVOR ENVIAR COMPROVANTE NO GRUPO, EU ATUALIZO A LISTA</p>
-                    <p className="text-xs">ℹ️ OBS: Este valor será para caixa para as compras de material, sendo bola, rede, pagamento de juiz.</p>
-                    <p className="text-xs">⚠️ OBS: Os nomes que estão com a tarja verde ao final, esses terão prioridades no baba, são os que no momento estão adimplentes. Espero não precisar ir no privado de cada um informar o seu compromisso. 🤝</p>
                   </div>
                 </div>
               )}
