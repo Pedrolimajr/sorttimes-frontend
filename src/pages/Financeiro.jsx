@@ -763,61 +763,120 @@ const [isento, setIsento] = useState(false);
   try {
     toast.info('Gerando relatório em alta qualidade...');
 
-    // 1. Criar container temporário
+    // 1. Configurações de layout
+    const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const LARGURA_TOTAL = 1200; // Aumentado para melhor proporção
+    const LARGURA_JOGADOR = 200;
+    const LARGURA_STATUS = 100;
+    const LARGURA_MES = 50;
+
+    // 2. Criar container com proporções adequadas
     const tempContainer = document.createElement('div');
     tempContainer.style.position = 'fixed';
     tempContainer.style.left = '0';
     tempContainer.style.top = '0';
-    tempContainer.style.width = '1000px';
+    tempContainer.style.width = `${LARGURA_TOTAL}px`;
     tempContainer.style.backgroundColor = '#1f2937';
     tempContainer.style.padding = '40px';
-    tempContainer.style.color = 'white'; // Corrigido: estava tempElement
+    tempContainer.style.color = 'white';
     tempContainer.style.fontFamily = '"Arial", sans-serif';
     tempContainer.style.zIndex = '10000';
     tempContainer.style.boxSizing = 'border-box';
     tempContainer.style.borderRadius = '10px';
-    tempContainer.style.visibility = 'hidden'; // Esconder durante a construção
+    tempContainer.style.visibility = 'hidden';
 
-    // 2. Gerar conteúdo completo
-    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-    const jogadoresFiltrados = jogadores.filter(jogador =>
-      jogador.nome.toLowerCase().includes(filtroJogador.toLowerCase())
-    );
-
-    // Construir tabela
-    let tableHTML = `
+    // 3. Construir tabela com proporções adequadas
+    let htmlContent = `
       <div style="text-align: center; margin-bottom: 30px;">
-        <div style="font-size: 28px; font-weight: bold; color: #4ade80;">
+        <div style="font-size: 28px; font-weight: bold; color: #4ade80; margin-bottom: 10px;">
           💰 MENSALIDADE VALOR R$
         </div>
       </div>
-      <table style="width: 100%; border-collapse: collapse; font-size: 18px;">
+
+      <table style="
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 16px;
+        table-layout: fixed; /* Força o respeito às larguras */
+      ">
+        <colgroup>
+          <col style="width: ${LARGURA_JOGADOR}px">
+          <col style="width: ${LARGURA_STATUS}px">
+          ${MESES.map(() => `<col style="width: ${LARGURA_MES}px">`).join('')}
+        </colgroup>
+
         <thead>
           <tr>
-            <th style="padding: 12px; background: #374151; border: 1px solid #4b5563; text-align: left; min-width: 150px;">Jogador</th>
-            <th style="padding: 12px; background: #374151; border: 1px solid #4b5563; min-width: 100px;">Status</th>
-            ${meses.map(mes => `
-              <th style="padding: 12px; background: #374151; border: 1px solid #4b5563; min-width: 50px;">${mes}</th>
+            <th style="
+              padding: 12px;
+              background: #374151;
+              border: 1px solid #4b5563;
+              text-align: left;
+              position: sticky;
+              top: 0;
+            ">Jogador</th>
+            <th style="
+              padding: 12px;
+              background: #374151;
+              border: 1px solid #4b5563;
+              position: sticky;
+              top: 0;
+            ">Status</th>
+            ${MESES.map(mes => `
+              <th style="
+                padding: 12px;
+                background: #374151;
+                border: 1px solid #4b5563;
+                position: sticky;
+                top: 0;
+              ">${mes}</th>
             `).join('')}
           </tr>
         </thead>
         <tbody>
-          ${jogadoresFiltrados.map(jogador => `
+          ${jogadores.filter(j => 
+            j.nome.toLowerCase().includes(filtroJogador.toLowerCase())
+          ).map(jogador => `
             <tr>
-              <td style="padding: 12px; border: 1px solid #4b5563; text-align: left;">${jogador.nome}</td>
-              <td style="padding: 12px; border: 1px solid #4b5563; text-align: center;">
-                <span style="display: inline-block; padding: 6px 12px; border-radius: 20px; 
+              <td style="
+                padding: 12px;
+                border: 1px solid #4b5563;
+                text-align: left;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+              ">${jogador.nome}</td>
+              <td style="
+                padding: 12px;
+                border: 1px solid #4b5563;
+                text-align: center;
+              ">
+                <span style="
+                  display: inline-block;
+                  padding: 6px 12px;
+                  border-radius: 20px;
                   ${jogador.statusFinanceiro === 'Adimplente' ? 
                     'background: #4ade8020; color: #4ade80;' : 
-                    'background: #f8717120; color: #f87171;'}">
+                    'background: #f8717120; color: #f87171;'}
+                  font-size: 14px;
+                ">
                   ${jogador.statusFinanceiro}
                 </span>
               </td>
               ${jogador.pagamentos.map((pago, i) => `
-                <td style="padding: 12px; border: 1px solid #4b5563; text-align: center;">
-                  <span style="display: inline-block; width: 24px; height: 24px; border-radius: 50%;
+                <td style="
+                  padding: 12px;
+                  border: 1px solid #4b5563;
+                  text-align: center;
+                ">
+                  <span style="
+                    display: inline-block;
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 50%;
+                    line-height: 24px;
                     ${pago ? 'background: #4ade8020; color: #4ade80;' : 'background: #f8717120; color: #f87171;'}
-                    line-height: 24px; text-align: center;">
+                  ">
                     ${pago ? '✓' : '✗'}
                   </span>
                 </td>
@@ -826,67 +885,68 @@ const [isento, setIsento] = useState(false);
           `).join('')}
         </tbody>
       </table>
-      <div style="margin-top: 30px; text-align: center; font-size: 18px; line-height: 1.6;">
+
+      <div style="
+        margin-top: 30px;
+        text-align: center;
+        font-size: 18px;
+        line-height: 1.6;
+      ">
         <div style="color: #60a5fa; margin-bottom: 15px;">
           💳 CHAVE PIX: Universocajazeiras@gmail.com
         </div>
         <div style="color: #fbbf24; margin-bottom: 15px;">
-          📌 FAVOR ENVIAR COMPROVANTE NO GRUPO, EU ATUALIZO A LISTA
+          📌 FAVOR ENVIAR COMPROVANTE NO GRUPO
         </div>
-        <div style="color: #a5b4fc; margin-bottom: 15px;">
-          ℹ️ OBS: Valor para caixa (materiais, bola, rede, juiz)
-        </div>
-        <div style="color: #f87171;">
-          ⚠️ Adimplentes terão prioridade no baba
+        <div style="color: #a5b4fc;">
+          ℹ️ Valor para caixa (materiais, bola, rede, juiz)
         </div>
       </div>
     `;
 
-    tempContainer.innerHTML = tableHTML;
+    tempContainer.innerHTML = htmlContent;
     document.body.appendChild(tempContainer);
-    tempContainer.style.visibility = 'visible'; // Mostrar após carregar
+    tempContainer.style.visibility = 'visible';
 
-    // 3. Tentar gerar imagem
-    try {
-      const canvas = await html2canvas(tempContainer, {
-        scale: 3,
-        logging: true,
-        useCORS: true,
-        backgroundColor: null,
-        quality: 1,
-        allowTaint: true,
-        letterRendering: true,
-        windowWidth: tempContainer.scrollWidth,
-        windowHeight: tempContainer.scrollHeight
-      });
+    // 4. Gerar imagem com qualidade
+    const canvas = await html2canvas(tempContainer, {
+      scale: 3,
+      logging: true,
+      useCORS: true,
+      backgroundColor: null,
+      quality: 1,
+      allowTaint: true,
+      letterRendering: true,
+      windowWidth: tempContainer.scrollWidth,
+      windowHeight: tempContainer.scrollHeight
+    });
 
-      const link = document.createElement('a');
-      link.download = `mensalidades-${new Date().toISOString().slice(0, 10)}.png`;
-      link.href = canvas.toDataURL('image/png', 1.0);
-      link.click();
-      toast.success('Relatório gerado com sucesso!');
-    } catch (imageError) {
-      console.error('Erro ao gerar imagem:', imageError);
-      throw new Error('Falha na geração de imagem');
-    }
+    // 5. Criar link de download
+    const link = document.createElement('a');
+    link.download = `mensalidades-${new Date().toISOString().slice(0, 10)}.png`;
+    link.href = canvas.toDataURL('image/png', 1.0);
+    link.click();
+    toast.success('Relatório gerado com sucesso!');
 
   } catch (error) {
-    console.error('Erro principal:', error);
-    toast.error('Erro ao gerar relatório. Tentando PDF...');
+    console.error('Erro ao gerar relatório:', error);
+    toast.error('Erro ao gerar imagem. Tentando PDF...');
     
     // Fallback para PDF
     try {
+      const { jsPDF } = await import('jspdf');
       const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'pt',
-        format: [tempContainer.scrollWidth, tempContainer.scrollHeight]
+        format: [tempContainer.scrollWidth * 0.75, tempContainer.scrollHeight * 0.75]
       });
 
       await pdf.html(tempContainer, {
-        width: tempContainer.scrollWidth,
+        width: tempContainer.scrollWidth * 0.75,
         windowWidth: tempContainer.scrollWidth,
         html2canvas: {
-          scale: 1
+          scale: 0.75,
+          letterRendering: true
         }
       });
 
@@ -894,7 +954,7 @@ const [isento, setIsento] = useState(false);
       toast.success('PDF gerado como alternativa!');
     } catch (pdfError) {
       console.error('Erro no PDF:', pdfError);
-      toast.error('Falha ao gerar PDF. Tente novamente mais tarde.');
+      toast.error('Falha ao gerar PDF. Entre em contato com o suporte.');
     }
   } finally {
     // Limpeza garantida
