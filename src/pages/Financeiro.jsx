@@ -759,65 +759,80 @@ const [isento, setIsento] = useState(false);
   //   }
   // };
 
- const compartilharControle = async (elementId) => {
+const compartilharControle = async (elementId) => {
   try {
     if (navigator.share) {
-      const element = document.getElementById(elementId);
+      const originalElement = document.getElementById(elementId);
 
-      // Cria elementos temporários
-      const header = document.createElement('div');
+      // Cria container invisível fora da tela
+      const cloneContainer = document.createElement("div");
+      cloneContainer.style.position = "absolute";
+      cloneContainer.style.left = "-9999px";
+      cloneContainer.style.top = "0";
+      cloneContainer.style.backgroundColor = "#1f2937";
+      cloneContainer.style.color = "white";
+      cloneContainer.style.padding = "20px";
+      cloneContainer.style.fontSize = "12px";
+      cloneContainer.style.width = `${originalElement.offsetWidth}px`;
+
+      // Cabeçalho personalizado
+      const header = document.createElement("div");
       header.innerHTML = `
-        <div style="color:white; margin-bottom:10px; font-size:14px;">
-          💰 <strong>MENSALIDADE VALOR R$ 20,00</strong><br/>
-          ✅ <strong>Adimplentes:</strong> ${jogadores.filter(j => j.statusFinanceiro === 'Adimplente').length}<br/>
-          ❌ <strong>Inadimplentes:</strong> ${jogadores.filter(j => j.statusFinanceiro === 'Inadimplente').length}
-        </div>
+        💰 <strong>MENSALIDADE VALOR R$ 20,00</strong><br/>
+        ✅ <strong>Adimplentes:</strong> ${jogadores.filter(j => j.statusFinanceiro === 'Adimplente').length}<br/>
+        ❌ <strong>Inadimplentes:</strong> ${jogadores.filter(j => j.statusFinanceiro === 'Inadimplente').length}
+        <hr style="margin: 10px 0; border-color: #444;" />
       `;
 
-      const footer = document.createElement('div');
+      // Rodapé personalizado
+      const footer = document.createElement("div");
       footer.innerHTML = `
-        <div style="color:white; margin-top:10px; font-size:12px;">
-          💳 <strong>CHAVE PIX:</strong> Universocajazeiras@gmail.com<br/>
-          📩 <strong>FAVOR ENVIAR COMPROVANTE NO GRUPO, EU ATUALIZO A LISTA</strong><br/><br/>
-          ℹ️ <strong>OBS:</strong> Este valor será para caixa para as compras de material, sendo bola, rede, pagamento de juiz.<br/>
-          ⚠️ <strong>OBS:</strong> Os nomes que estão com a tarja verde ao final, esses terão prioridades no baba, são os que no momento estão adimplentes. Espero não precisar ir no privado de cada um informar o seu compromisso. 🤝
-        </div>
+        <hr style="margin: 10px 0; border-color: #444;" />
+        💳 <strong>CHAVE PIX:</strong> Universocajazeiras@gmail.com<br/>
+        📩 <strong>FAVOR ENVIAR COMPROVANTE NO GRUPO, EU ATUALIZO A LISTA</strong><br/><br/>
+        ℹ️ <strong>OBS:</strong> Este valor será para caixa para as compras de material, sendo bola, rede, pagamento de juiz.<br/>
+        ⚠️ <strong>OBS:</strong> Os nomes que estão com a tarja verde ao final, esses terão prioridades no baba, são os que no momento estão adimplentes. Espero não precisar ir no privado de cada um informar o seu compromisso. 🤝
       `;
 
-      // Insere no DOM antes e depois do conteúdo
-      element.parentNode.insertBefore(header, element);
-      element.parentNode.insertBefore(footer, element.nextSibling);
+      // Clona o conteúdo da lista
+      const clonedTable = originalElement.cloneNode(true);
 
-      // Captura imagem com alta qualidade
-      const canvas = await html2canvas(element.parentNode, {
+      // Adiciona ao DOM invisível
+      cloneContainer.appendChild(header);
+      cloneContainer.appendChild(clonedTable);
+      cloneContainer.appendChild(footer);
+      document.body.appendChild(cloneContainer);
+
+      // Aguarda o render e captura
+      const canvas = await html2canvas(cloneContainer, {
         scale: 3,
         logging: false,
         useCORS: true,
-        backgroundColor: '#1f2937'
+        backgroundColor: "#1f2937"
       });
 
-      // Remove elementos temporários
-      header.remove();
-      footer.remove();
+      // Remove o clone do DOM
+      document.body.removeChild(cloneContainer);
 
-      const blob = await (await fetch(canvas.toDataURL('image/png'))).blob();
-      const file = new File([blob], 'controle-mensalidades.png', { type: blob.type });
+      const blob = await (await fetch(canvas.toDataURL("image/png"))).blob();
+      const file = new File([blob], "controle-mensalidades.png", { type: blob.type });
 
       await navigator.share({
-        title: `Controle de Mensalidades - ${new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`,
+        title: `Controle de Mensalidades - ${new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}`,
         text: `Controle de mensalidades dos jogadores`,
         files: [file]
       });
     } else {
-      toast.info('Compartilhamento não suportado neste navegador');
+      toast.info("Compartilhamento não suportado neste navegador");
     }
   } catch (error) {
-    console.error('Erro ao compartilhar:', error);
-    if (error.name !== 'AbortError') {
-      toast.error('Erro ao compartilhar controle');
+    console.error("Erro ao compartilhar:", error);
+    if (error.name !== "AbortError") {
+      toast.error("Erro ao compartilhar controle");
     }
   }
 };
+
 
   const compartilharHistorico = async (elementId) => {
     try {
