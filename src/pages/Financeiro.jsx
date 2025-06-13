@@ -767,17 +767,34 @@ const [isento, setIsento] = useState(false);
         return;
       }
 
-      // Criar um container temporário para a nova estrutura
-      const container = document.createElement('div');
-      container.style.display = 'flex';
-      container.style.backgroundColor = '#1f2937';
-      container.style.padding = '20px';
-      container.style.gap = '20px';
+      // Criar um container principal
+      const mainContainer = document.createElement('div');
+      mainContainer.style.backgroundColor = '#1f2937';
+      mainContainer.style.padding = '20px';
+      mainContainer.style.display = 'flex';
+      mainContainer.style.flexDirection = 'column';
+      mainContainer.style.gap = '20px';
+
+      // Adicionar título
+      const titulo = document.createElement('div');
+      titulo.innerHTML = '💰 MENSALIDADE VALOR 20,00R$';
+      titulo.style.color = 'white';
+      titulo.style.textAlign = 'center';
+      titulo.style.fontSize = '18px';
+      titulo.style.fontWeight = 'bold';
+      titulo.style.marginBottom = '20px';
+      mainContainer.appendChild(titulo);
+
+      // Container para as tabelas
+      const tabelasContainer = document.createElement('div');
+      tabelasContainer.style.display = 'flex';
+      tabelasContainer.style.gap = '20px';
+      tabelasContainer.style.justifyContent = 'space-between';
 
       // Pegar todas as linhas da tabela
       const linhas = Array.from(element.getElementsByTagName('tr'));
-      const header = linhas[0]; // Cabeçalho
-      const todasLinhas = linhas.slice(1); // Removendo o cabeçalho
+      const header = linhas[0];
+      const todasLinhas = linhas.slice(1);
       const metade = Math.ceil(todasLinhas.length / 2);
 
       // Criar as duas tabelas
@@ -791,37 +808,55 @@ const [isento, setIsento] = useState(false);
         tabela.style.width = '48%';
       });
 
-      // Adicionar cabeçalho em ambas as tabelas
+      // Adicionar cabeçalho e linhas às tabelas
       tabela1.appendChild(header.cloneNode(true));
       tabela2.appendChild(header.cloneNode(true));
 
-      // Distribuir as linhas entre as tabelas
-      todasLinhas.slice(0, metade).forEach(linha => 
-        tabela1.appendChild(linha.cloneNode(true)));
-      todasLinhas.slice(metade).forEach(linha => 
-        tabela2.appendChild(linha.cloneNode(true)));
+      todasLinhas.slice(0, metade).forEach(linha => tabela1.appendChild(linha.cloneNode(true)));
+      todasLinhas.slice(metade).forEach(linha => tabela2.appendChild(linha.cloneNode(true)));
 
-      // Adicionar tabelas ao container
-      container.appendChild(tabela1);
-      container.appendChild(tabela2);
+      // Adicionar divisor vertical
+      const divisor = document.createElement('div');
+      divisor.style.width = '2px';
+      divisor.style.backgroundColor = '#ffffff50';
+      divisor.style.margin = '0 10px';
+
+      // Adicionar elementos ao container de tabelas
+      tabelasContainer.appendChild(tabela1);
+      tabelasContainer.appendChild(divisor);
+      tabelasContainer.appendChild(tabela2);
+      mainContainer.appendChild(tabelasContainer);
+
+      // Adicionar rodapé
+      const rodape = document.createElement('div');
+      rodape.style.color = 'white';
+      rodape.style.textAlign = 'center';
+      rodape.style.marginTop = '20px';
+      rodape.innerHTML = `
+      <p>💳 CHAVE PIX: Universocajazeiras@gmail.com</p>
+      <p>📌 FAVOR ENVIAR COMPROVANTE NO GRUPO, EU ATUALIZO A LISTA.</p>
+      <p>⚠️ <strong>OBS:</strong> Os nomes que estão com a tarja verde ao final, esses terão prioridades no baba, 
+      são os que no momento estão adimplentes. Espero não precisar ir no privado de cada um informar o seu compromisso. 🤝</p>
+    `;
+      mainContainer.appendChild(rodape);
 
       // Adicionar container temporariamente ao documento
-      document.body.appendChild(container);
+      document.body.appendChild(mainContainer);
 
-      // Gerar imagem com as duas tabelas lado a lado
-      const canvas = await html2canvas(container, {
+      // Gerar imagem
+      const canvas = await html2canvas(mainContainer, {
         scale: 2,
         logging: false,
         useCORS: true,
         backgroundColor: '#1f2937',
-        width: container.offsetWidth,
-        height: container.offsetHeight,
+        width: mainContainer.offsetWidth,
+        height: mainContainer.offsetHeight,
         imageTimeout: 0,
         pixelRatio: window.devicePixelRatio
       });
 
       // Remover container temporário
-      document.body.removeChild(container);
+      document.body.removeChild(mainContainer);
 
       canvas.toBlob(async (blob) => {
         const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
@@ -1560,41 +1595,6 @@ const [isento, setIsento] = useState(false);
                   whileTap={{ scale: 0.97 }}
                   className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 transition-all text-xs sm:text-sm"
                 >
-                  <FaFilePdf className="text-xs sm:text-sm" /> Exportar PDF
-                </motion.button>
-                <motion.button
-                  onClick={exportarImagem}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 transition-all text-xs sm:text-sm"
-                >
-                  <FaFileImage className="text-xs sm:text-sm" /> Exportar Imagem
-                </motion.button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Modal de Editar Jogador */}
-      <AnimatePresence>
-        {editarModal && jogadorSelecionado && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 backdrop-blur-sm"
-            onClick={() => setEditarModal(false)}
-          >
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 20, opacity: 0 }}
-              className="bg-gray-800 rounded-xl shadow-2xl p-4 sm:p-6 w-full max-w-md border border-gray-700"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex justify-between items-center mb-3 sm:mb-4">
-                <h3 className="text-lg sm:text-xl font-bold text-white">Editar Jogador</h3>
                 <motion.button
                   onClick={() => setEditarModal(false)}
                   whileHover={{ rotate: 90 }}
