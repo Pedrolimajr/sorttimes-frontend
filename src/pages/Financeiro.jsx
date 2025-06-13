@@ -770,19 +770,16 @@ const [isento, setIsento] = useState(false);
         font-family: Arial, sans-serif;
       `;
 
-      // Título
-      containerTemp.innerHTML = `
-        <div style="text-align: center; margin-bottom: 30px; font-size: 20px; font-weight: bold;">
-          💰 MENSALIDADE VALOR 20,00R$
-        </div>
+      // Criar e adicionar título
+      const titulo = document.createElement('div');
+      titulo.style.cssText = `
+        text-align: center;
+        margin-bottom: 30px;
+        font-size: 20px;
+        font-weight: bold;
       `;
-
-      // Obter a tabela original e suas linhas
-      const tabelaOriginal = document.getElementById('tabela-mensalidades');
-      const todasLinhas = Array.from(tabelaOriginal.getElementsByTagName('tr'));
-      const header = todasLinhas[0];
-      const linhasConteudo = todasLinhas.slice(1);
-      const metade = Math.ceil(linhasConteudo.length / 2);
+      titulo.textContent = '💰 MENSALIDADE VALOR 20,00R$';
+      containerTemp.appendChild(titulo);
 
       // Container para as tabelas
       const tabelasContainer = document.createElement('div');
@@ -790,9 +787,19 @@ const [isento, setIsento] = useState(false);
         display: flex;
         gap: 30px;
         justify-content: center;
+        align-items: flex-start;
       `;
 
-      // Função para criar cada tabela
+      // Obter e processar a tabela original
+      const tabelaOriginal = document.getElementById('tabela-mensalidades');
+      if (!tabelaOriginal) throw new Error('Tabela não encontrada');
+
+      const todasLinhas = Array.from(tabelaOriginal.getElementsByTagName('tr'));
+      const header = todasLinhas[0];
+      const linhasConteudo = todasLinhas.slice(1);
+      const metade = Math.ceil(linhasConteudo.length / 2);
+
+      // Função para criar tabela
       const criarTabela = (linhas) => {
         const tabela = document.createElement('table');
         tabela.style.cssText = `
@@ -803,76 +810,96 @@ const [isento, setIsento] = useState(false);
 
         // Adicionar cabeçalho
         const headerClone = header.cloneNode(true);
+        Array.from(headerClone.children).forEach(th => {
+          th.style.padding = '8px';
+          th.style.textAlign = 'center';
+        });
         tabela.appendChild(headerClone);
 
-        // Adicionar linhas de conteúdo
+        // Adicionar linhas
         linhas.forEach(linha => {
           const linhaClone = linha.cloneNode(true);
+          Array.from(linhaClone.children).forEach(td => {
+            td.style.padding = '8px';
+            td.style.textAlign = 'center';
+          });
           tabela.appendChild(linhaClone);
         });
 
         return tabela;
       };
 
-      // Criar primeira tabela
-      const tabela1 = criarTabela(linhasConteudo.slice(0, metade));
-      
-      // Criar divisor
+      // Criar e adicionar primeira tabela
+      tabelasContainer.appendChild(criarTabela(linhasConteudo.slice(0, metade)));
+
+      // Criar e adicionar divisor
       const divisor = document.createElement('div');
       divisor.style.cssText = `
-        width: 1px;
+        width: 2px;
         background-color: #ffffff40;
-        margin: 0 10px;
+        align-self: stretch;
       `;
-
-      // Criar segunda tabela
-      const tabela2 = criarTabela(linhasConteudo.slice(metade));
-
-      // Montar o layout
-      tabelasContainer.appendChild(tabela1);
       tabelasContainer.appendChild(divisor);
-      tabelasContainer.appendChild(tabela2);
+
+      // Criar e adicionar segunda tabela
+      tabelasContainer.appendChild(criarTabela(linhasConteudo.slice(metade)));
+
       containerTemp.appendChild(tabelasContainer);
 
-      // Adicionar rodapé
-      containerTemp.innerHTML += `
-        <div style="text-align: center; margin-top: 30px; font-size: 14px;">
-          <p>💳 CHAVE PIX: Universocajazeiras@gmail.com</p>
-          <p>📌 FAVOR ENVIAR COMPROVANTE NO GRUPO, EU ATUALIZO A LISTA.</p>
-          <p>⚠️ <strong>OBS:</strong> Os nomes que estão com a tarja verde ao final, 
-          esses terão prioridades no baba, são os que no momento estão adimplentes. 
-          Espero não precisar ir no privado de cada um informar o seu compromisso. 🤝</p>
-        </div>
+      // Criar e adicionar rodapé
+      const rodape = document.createElement('div');
+      rodape.style.cssText = `
+        text-align: center;
+        margin-top: 30px;
+        font-size: 14px;
       `;
+      
+      const textoRodape = [
+        '💳 CHAVE PIX: Universocajazeiras@gmail.com',
+        '📌 FAVOR ENVIAR COMPROVANTE NO GRUPO, EU ATUALIZO A LISTA.',
+        '⚠️ OBS: Os nomes que estão com a tarja verde ao final, esses terão prioridades no baba, são os que no momento estão adimplentes. Espero não precisar ir no privado de cada um informar o seu compromisso. 🤝'
+      ];
+
+      textoRodape.forEach(texto => {
+        const p = document.createElement('p');
+        p.textContent = texto;
+        rodape.appendChild(p);
+      });
+
+      containerTemp.appendChild(rodape);
 
       // Adicionar ao documento temporariamente
       document.body.appendChild(containerTemp);
 
-      // Gerar imagem
-      const canvas = await html2canvas(containerTemp, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#1f2937',
-        logging: false
-      });
+      try {
+        const canvas = await html2canvas(containerTemp, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#1f2937',
+          logging: false,
+          onclone: (document, element) => {
+            // Garantir que os estilos sejam aplicados no clone
+            element.style.width = 'fit-content';
+            element.style.margin = '0 auto';
+          }
+        });
 
-      // Compartilhar
-      canvas.toBlob(async (blob) => {
-        const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
-        try {
-          await navigator.share({
-            files: [file],
-            title: 'Controle de Mensalidades',
-          });
-          toast.success('Compartilhamento realizado com sucesso!');
-        } catch (error) {
-          console.error('Erro ao compartilhar:', error);
-          toast.error('Erro ao compartilhar');
-        }
-      }, 'image/png');
-
-      // Limpar
-      document.body.removeChild(containerTemp);
+        canvas.toBlob(async (blob) => {
+          const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
+          try {
+            await navigator.share({
+              files: [file],
+              title: 'Controle de Mensalidades',
+            });
+            toast.success('Compartilhamento realizado com sucesso!');
+          } catch (error) {
+            console.error('Erro ao compartilhar:', error);
+            toast.error('Erro ao compartilhar');
+          }
+        }, 'image/png', 1.0);
+      } finally {
+        document.body.removeChild(containerTemp);
+      }
 
     } catch (error) {
       console.error('Erro:', error);
@@ -1555,12 +1582,6 @@ const [isento, setIsento] = useState(false);
                   <div className="bg-gray-700/50 p-3 sm:p-4 rounded-lg">
                     <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">Receitas</h4>
                     <p className="text-xl sm:text-2xl font-bold text-green-400">
-              <div id="relatorio-content" className="space-y-3 sm:space-y-4">
-                {/* Conteúdo existente do modal */}
-                <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                  <div className="bg-gray-700/50 p-3 sm:p-4 rounded-lg">
-                    <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">Receitas</h4>
-                    <p className="text-xl sm:text-2xl font-bold text-green-400">
                       R$ {estatisticas.totalReceitas.toFixed(2)}
                     </p>
                   </div>
@@ -1705,17 +1726,7 @@ const [isento, setIsento] = useState(false);
         )}
       </AnimatePresence>
 
-      <ToastContainer 
-        position="bottom-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
+      <ToastContainer />
     </div>
   );
 }
