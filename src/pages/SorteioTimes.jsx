@@ -216,11 +216,21 @@ export default function SorteioTimes() {
 
       const linkCompleto = `${window.location.origin}/confirmar-presenca/${linkId}`;
       
-      const mensagem = `*⚽ Confirmação de Presença - Fut!*\n\n` +
+      const dataFormatada = new Date(dataJogo).toLocaleString('pt-BR', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  hour: '2-digit',
+  minute: '2-digit'
+});
+
+      
+      const mensagem = `⚽ Confirmação de Presença - Fut de domingo!\n\n` +
         `Fala galera! Chegou a hora de confirmar presença para o nosso fut!\n\n` +
-        `📲 *Confirme sua presença acessando:*\n\n`+
+        `🗓 Data: domingo, 15 de junho às 18:30\n\n` +
+        `📲 Confirme sua presença acessando:\n\n` +
         `${linkCompleto}\n\n` +
-        `_Clique no link acima para confirmar sua participação._`;
+        `Clique no link acima para confirmar sua participação.`;
 
       if (navigator.share) {
         await navigator.share({
