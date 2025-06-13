@@ -812,11 +812,13 @@ cloneContainer.style.zoom = "1";
 
       // Aguarda o render e captura
 const canvas = await html2canvas(cloneContainer, {
-  scale: window.devicePixelRatio * 2, // ou 3 se quiser altíssima definição
-  logging: false,
+  scale: 4, // aumenta ainda mais a densidade de pixels
   useCORS: true,
+  logging: false,
   backgroundColor: "#1f2937",
-  scrollY: -window.scrollY
+  scrollY: -window.scrollY,
+  windowWidth: cloneContainer.scrollWidth,
+  windowHeight: cloneContainer.scrollHeight
 });
 
       // Remove o clone do DOM
@@ -1393,7 +1395,7 @@ const canvas = await html2canvas(cloneContainer, {
                                 onClick={() => toggleStatus(jogador._id)}
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                className={`w-full text-center px-2 py-1 rounded-full text-xs font-medium ${
                                   jogador.statusFinanceiro === 'Adimplente' ?
                                     'bg-green-500/20 text-green-400' :
                                     'bg-red-500/20 text-red-400'
