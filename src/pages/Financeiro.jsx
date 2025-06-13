@@ -763,59 +763,83 @@ const [isento, setIsento] = useState(false);
   try {
     toast.info('Gerando imagem em alta qualidade...');
 
-    // 1. Criar um container temporário com estilos otimizados
+    // 1. Criar container temporário com estilos otimizados
     const originalElement = document.getElementById(elementId);
     const tempContainer = document.createElement('div');
-    tempContainer.style.position = 'absolute';
-    tempContainer.style.left = '-9999px';
+    tempContainer.style.position = 'fixed';
+    tempContainer.style.left = '0';
+    tempContainer.style.top = '0';
     tempContainer.style.width = '800px';
     tempContainer.style.backgroundColor = '#1f2937';
-    tempContainer.style.padding = '25px';
+    tempContainer.style.padding = '30px';
     tempContainer.style.color = 'white';
     tempContainer.style.fontFamily = 'Arial, sans-serif';
-    tempContainer.style.borderRadius = '10px';
+    tempContainer.style.zIndex = '10000';
+    tempContainer.style.boxSizing = 'border-box';
     
-    // 2. Adicionar cabeçalho com mensagem
-    const header = document.createElement('div');
-    header.style.marginBottom = '20px';
-    header.style.textAlign = 'center';
-    header.style.fontSize = '22px';
-    header.style.fontWeight = 'bold';
-    header.innerHTML = '💰 <span style="color: #4ade80">MENSALIDADE VALOR R$</span>';
-    tempContainer.appendChild(header);
+    // 2. Adicionar conteúdo com estilos aprimorados
+    tempContainer.innerHTML = `
+      <div style="text-align: center; margin-bottom: 25px;">
+        <div style="font-size: 24px; font-weight: bold; color: #4ade80;">
+          💰 MENSALIDADE VALOR R$
+        </div>
+      </div>
+      
+      <div id="table-container" style="margin: 20px 0;">
+        <!-- Tabela será inserida aqui -->
+      </div>
+      
+      <div style="margin-top: 30px; font-size: 18px; line-height: 1.6;">
+        <div style="text-align: center; margin-bottom: 15px; color: #60a5fa;">
+          💳 CHAVE PIX: Universocajazeiras@gmail.com
+        </div>
+        <div style="text-align: center; margin-bottom: 15px; color: #fbbf24;">
+          📌 FAVOR ENVIAR COMPROVANTE NO GRUPO, EU ATUALIZO A LISTA
+        </div>
+        <div style="text-align: center; margin-bottom: 15px; color: #a5b4fc;">
+          ℹ️ OBS: Este valor será para caixa para as compras de material, sendo bola, rede, pagamento de juiz.
+        </div>
+        <div style="text-align: center; color: #f87171;">
+          ⚠️ OBS: Os nomes que estão com a tarja verde ao final, esses terão prioridades no baba, são os que no momento estão adimplentes. Espero não precisar ir no privado de cada um informar o seu compromisso. 🤝
+        </div>
+      </div>
+    `;
 
-    // 3. Clonar e estilizar a tabela original
+    // 3. Clonar e estilizar a tabela
     const tableClone = originalElement.cloneNode(true);
+    const tableContainer = tempContainer.querySelector('#table-container');
     
     // Aplicar estilos de alta qualidade
     tableClone.style.width = '100%';
     tableClone.style.borderCollapse = 'collapse';
     tableClone.style.fontSize = '18px';
-    tableClone.style.margin = '15px 0';
+    tableClone.style.margin = '0 auto';
     
-    // Melhorar células e cabeçalhos
+    // Melhorar células
     const allCells = tableClone.querySelectorAll('th, td');
     allCells.forEach(cell => {
       cell.style.padding = '12px 8px';
-      cell.style.border = '1px solid #374151';
+      cell.style.border = '1px solid #4b5563';
       cell.style.textAlign = 'center';
+      cell.style.verticalAlign = 'middle';
     });
 
-    // Melhorar cabeçalhos especificamente
+    // Melhorar cabeçalhos
     const headers = tableClone.querySelectorAll('th');
     headers.forEach(header => {
       header.style.backgroundColor = '#374151';
       header.style.fontWeight = 'bold';
+      header.style.fontSize = '16px';
     });
 
-    // Aumentar ícones de status
+    // Aumentar e melhorar ícones
     const icons = tableClone.querySelectorAll('svg');
     icons.forEach(icon => {
-      icon.style.width = '16px';
-      icon.style.height = '16px';
+      icon.style.width = '18px';
+      icon.style.height = '18px';
     });
 
-    // Centralizar texto dos status
+    // Centralizar botões de status
     const statusButtons = tableClone.querySelectorAll('button');
     statusButtons.forEach(button => {
       button.style.display = 'flex';
@@ -823,86 +847,100 @@ const [isento, setIsento] = useState(false);
       button.style.justifyContent = 'center';
       button.style.margin = '0 auto';
       button.style.padding = '8px 12px';
+      button.style.minWidth = '100px';
     });
 
-    tempContainer.appendChild(tableClone);
-
-    // 4. Adicionar rodapé com mensagens
-    const footer = document.createElement('div');
-    footer.style.marginTop = '20px';
-    footer.style.fontSize = '16px';
-    footer.style.lineHeight = '1.6';
-    footer.innerHTML = `
-      <div style="text-align: center; margin-bottom: 10px;">
-        💳 <span style="color: #60a5fa">CHAVE PIX: Universocajazeiras@gmail.com</span>
-      </div>
-      <div style="text-align: center; margin-bottom: 10px;">
-        📌 <span style="color: #fbbf24">FAVOR ENVIAR COMPROVANTE NO GRUPO, EU ATUALIZO A LISTA</span>
-      </div>
-      <div style="margin-bottom: 8px; text-align: center;">
-        ℹ️ <span style="color: #a5b4fc">OBS: Este valor será para caixa para as compras de material, sendo bola, rede, pagamento de juiz.</span>
-      </div>
-      <div style="text-align: center;">
-        ⚠️ <span style="color: #f87171">OBS: Os nomes que estão com a tarja verde ao final, esses terão prioridades no baba, são os que no momento estão adimplentes. Espero não precisar ir no privado de cada um informar o seu compromisso. 🤝</span>
-      </div>
-    `;
-    tempContainer.appendChild(footer);
-
-    // 5. Adicionar ao DOM para renderização
+    tableContainer.appendChild(tableClone);
     document.body.appendChild(tempContainer);
 
-    // 6. Gerar a imagem com qualidade máxima
-    const canvas = await html2canvas(tempContainer, {
-      scale: 4, // Fator de escala aumentado
-      logging: false,
-      useCORS: true,
-      backgroundColor: null, // Fundo transparente
-      quality: 1, // Qualidade máxima
-      allowTaint: true,
-      letterRendering: true, // Renderização de texto otimizada
-      removeContainer: true, // Remove o container após a renderização
-      windowWidth: tempContainer.scrollWidth,
-      windowHeight: tempContainer.scrollHeight
-    });
+    // 4. Primeiro tentamos com dom-to-image (melhor para texto)
+    try {
+      const domToImage = await import('dom-to-image');
+      const blob = await domToImage.toBlob(tempContainer, {
+        quality: 1,
+        width: tempContainer.clientWidth * 2,
+        height: tempContainer.clientHeight * 2,
+        style: {
+          transform: 'scale(2)',
+          transformOrigin: 'top left'
+        }
+      });
 
-    // 7. Remover o elemento temporário
-    document.body.removeChild(tempContainer);
-
-    // 8. Criar imagem final com bordas arredondadas
-    const finalCanvas = document.createElement('canvas');
-    finalCanvas.width = canvas.width;
-    finalCanvas.height = canvas.height;
-    const ctx = finalCanvas.getContext('2d');
-    
-    // Adicionar fundo e bordas arredondadas
-    ctx.fillStyle = '#1f2937';
-    ctx.beginPath();
-    ctx.roundRect(0, 0, finalCanvas.width, finalCanvas.height, 20);
-    ctx.fill();
-    
-    // Desenhar o conteúdo
-    ctx.drawImage(canvas, 0, 0);
-
-    // 9. Compartilhar ou fazer download
-    if (navigator.share) {
-      finalCanvas.toBlob(async (blob) => {
+      if (navigator.share) {
         const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
         await navigator.share({
           title: 'Controle de Mensalidades',
           files: [file]
         });
-      }, 'image/png', 1);
+      } else {
+        const link = document.createElement('a');
+        link.download = `controle-mensalidades-${new Date().toISOString().slice(0, 10)}.png`;
+        link.href = URL.createObjectURL(blob);
+        link.click();
+      }
+      
+      toast.success('Imagem em alta qualidade gerada com sucesso!');
+      return;
+    } catch (domToImageError) {
+      console.log('Usando fallback para html2canvas');
+    }
+
+    // 5. Fallback para html2canvas com configurações extremas
+    const html2canvas = await import('html2canvas');
+    const canvas = await html2canvas.default(tempContainer, {
+      scale: 5, // Escala extrema
+      logging: true,
+      useCORS: true,
+      backgroundColor: null,
+      quality: 1,
+      allowTaint: true,
+      letterRendering: true,
+      windowWidth: tempContainer.scrollWidth,
+      windowHeight: tempContainer.scrollHeight
+    });
+
+    // 6. Fallback final: Gerar PDF se a imagem ainda não estiver boa
+    if (canvas.width > 5000) { // Se a imagem ficou grande demais
+      const pdf = new jsPDF('l', 'px', [tempContainer.scrollWidth, tempContainer.scrollHeight]);
+      await pdf.html(tempContainer, {
+        width: tempContainer.scrollWidth,
+        windowWidth: tempContainer.scrollWidth,
+        html2canvas: {
+          scale: 2,
+          letterRendering: true
+        }
+      });
+      pdf.save('controle-mensalidades.pdf');
+      toast.success('PDF gerado com qualidade perfeita!');
     } else {
       const link = document.createElement('a');
       link.download = `controle-mensalidades-${new Date().toISOString().slice(0, 10)}.png`;
-      link.href = finalCanvas.toDataURL('image/png', 1.0);
+      link.href = canvas.toDataURL('image/png', 1.0);
       link.click();
+      toast.success('Imagem em alta qualidade gerada!');
     }
 
-    toast.success('Imagem em alta qualidade gerada com sucesso!');
   } catch (error) {
     console.error('Erro ao gerar imagem:', error);
-    toast.error('Erro ao gerar imagem. Tente novamente.');
+    toast.error('Erro ao gerar imagem. Tente o modo PDF.');
+    
+    // Fallback extremo - tentar gerar apenas a tabela
+    try {
+      const pdf = new jsPDF('l', 'pt', 'a4');
+      await pdf.html(document.getElementById(elementId), {
+        width: 800,
+        windowWidth: 800
+      });
+      pdf.save('controle-mensalidades-fallback.pdf');
+    } catch (pdfError) {
+      toast.error('Falha ao gerar PDF. Entre em contato com o suporte.');
+    }
+  } finally {
+    // Remover container temporário
+    const tempContainer = document.querySelector('div[style*="z-index: 10000"]');
+    if (tempContainer) {
+      document.body.removeChild(tempContainer);
+    }
   }
 };
   const compartilharHistorico = async (elementId) => {
