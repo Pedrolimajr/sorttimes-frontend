@@ -763,44 +763,19 @@ const [isento, setIsento] = useState(false);
     try {
       if (navigator.share) {
         const element = document.getElementById(elementId);
-        
-        // Adicionar um pequeno delay para garantir que o elemento esteja completamente renderizado
-        await new Promise(resolve => setTimeout(resolve, 500));
-
         const canvas = await html2canvas(element, {
-          scale: 4, // Aumentando a escala para melhor qualidade
-          logging: true, // Ativando logs para debug
+          scale: 2,
+          logging: false,
           useCORS: true,
-          backgroundColor: '#1f2937',
-          allowTaint: true,
-          foreignObjectRendering: true,
-          width: element.offsetWidth,
-          height: element.offsetHeight,
-          onclone: (clonedDoc) => {
-            // Garante que o elemento clonado está visível
-            const clonedElement = clonedDoc.getElementById(elementId);
-            if (clonedElement) {
-              clonedElement.style.display = 'block';
-              clonedElement.style.visibility = 'visible';
-              clonedElement.style.opacity = '1';
-            }
-          }
+          backgroundColor: '#1f2937'
         });
         
-        const blob = await (await fetch(canvas.toDataURL('image/png', 1.0))).blob();
+        const blob = await (await fetch(canvas.toDataURL('image/png'))).blob();
         const file = new File([blob], 'controle-mensalidades.png', { type: blob.type });
-        
-        const mensagem = `💰 *MENSALIDADE VALOR R$ 20,00*\n\n` +
-          `✅ *Adimplentes:* ${jogadores.filter(j => j.statusFinanceiro === 'Adimplente').length}\n` +
-          `❌ *Inadimplentes:* ${jogadores.filter(j => j.statusFinanceiro === 'Inadimplente').length}\n\n` +
-          `💳 *CHAVE PIX:* Universocajazeiras@gmail.com\n` +
-          `📝 *FAVOR ENVIAR COMPROVANTE NO GRUPO, EU ATUALIZO A LISTA*\n\n` +
-          `ℹ️ *OBS:* Este valor será para caixa para as compras de material, sendo bola, rede, pagamento de juiz.\n\n` +
-          `⚠️ *OBS:* Os nomes que estão com a tarja verde ao final, esses terão prioridades no baba, são os que no momento estão adimplentes. Espero não precisar ir no privado de cada um informar o seu compromisso. 🤝`;
         
         await navigator.share({
           title: `Controle de Mensalidades - ${new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`,
-          text: mensagem,
+          text: `Controle de mensalidades dos jogadores`,
           files: [file]
         });
       } else {
