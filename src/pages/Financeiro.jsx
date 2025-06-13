@@ -902,7 +902,7 @@ const [isento, setIsento] = useState(false);
 
       try {
         const canvas = await html2canvas(containerTemp, {
-          scale: 2,
+          scale: 3,
           useCORS: true,
           backgroundColor: '#1f2937',
           logging: false,
