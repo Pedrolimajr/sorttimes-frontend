@@ -932,24 +932,19 @@ containerTemp.appendChild(tituloContainer);
 
       try {
         const canvas = await html2canvas(containerTemp, {
-      scale: 3, // Aumentar a escala para melhor qualidade
-      useCORS: true,
-      backgroundColor: '#1f2937',
-      logging: false,
-      width: containerTemp.offsetWidth,
-      height: containerTemp.offsetHeight,
-      imageTimeout: 0,
-      pixelRatio: 2, // Forçar pixel ratio mais alto
-      windowWidth: containerTemp.offsetWidth * 2,
-      windowHeight: containerTemp.offsetHeight * 2,
-      optimizeSpeed: false, // Priorizar qualidade sobre velocidade
-    });
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#1f2937',
+          logging: false,
+          onclone: (document, element) => {
+            // Garantir que os estilos sejam aplicados no clone
+            element.style.width = 'fit-content';
+            element.style.margin = '0 auto';
+          }
+        });
 
-       canvas.toBlob(async (blob) => {
-      const file = new File([blob], 'controle-mensalidades.png', { 
-        type: 'image/png',
-        quality: 1.0 // Máxima qualidade
-      });
+        canvas.toBlob(async (blob) => {
+          const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
           try {
             await navigator.share({
               files: [file],
