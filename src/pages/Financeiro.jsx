@@ -763,15 +763,24 @@ const [isento, setIsento] = useState(false);
     try {
       if (navigator.share) {
         const element = document.getElementById(elementId);
+        
+        // Aguarda um momento para garantir que o elemento está renderizado
+        await new Promise(resolve => setTimeout(resolve, 100));
+
         const canvas = await html2canvas(element, {
-          scale: 4, // Aumentando ainda mais a escala para melhor qualidade
-          logging: false,
+          scale: 2,
+          logging: true, // Ativando logs para debug
           useCORS: true,
           backgroundColor: '#1f2937',
-          windowWidth: element.scrollWidth,
-          windowHeight: element.scrollHeight,
-          allowTaint: true,
-          foreignObjectRendering: true
+          onclone: (clonedDoc) => {
+            // Garante que o elemento clonado está visível
+            const clonedElement = clonedDoc.getElementById(elementId);
+            if (clonedElement) {
+              clonedElement.style.display = 'block';
+              clonedElement.style.visibility = 'visible';
+              clonedElement.style.opacity = '1';
+            }
+          }
         });
         
         const blob = await (await fetch(canvas.toDataURL('image/png', 1.0))).blob();
