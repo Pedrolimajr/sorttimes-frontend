@@ -765,22 +765,22 @@ const compartilharControle = async (elementId) => {
       const originalElement = document.getElementById(elementId);
 
       // Cria container invisível fora da tela
+      const cloneContainer = document.createElement("div");
       cloneContainer.style.position = "absolute";
-cloneContainer.style.left = "-9999px";
-cloneContainer.style.top = "0";
-cloneContainer.style.backgroundColor = "#1f2937";
-cloneContainer.style.color = "white";
-cloneContainer.style.padding = "20px";
-cloneContainer.style.fontSize = "12px";
-cloneContainer.style.width = `${originalElement.offsetWidth}px`;
+      cloneContainer.style.left = "-9999px";
+      cloneContainer.style.top = "0";
+      cloneContainer.style.backgroundColor = "#1f2937";
+      cloneContainer.style.color = "white";
+      cloneContainer.style.padding = "20px";
+      cloneContainer.style.fontSize = "12px";
+      cloneContainer.style.width = `${originalElement.offsetWidth}px`;
 
-// 🔽 Qualidade aprimorada:
+      // 🔽 Qualidade aprimorada:
 cloneContainer.style.fontSmooth = "always";
 cloneContainer.style.webkitFontSmoothing = "antialiased";
 cloneContainer.style.mozOsxFontSmoothing = "grayscale";
 cloneContainer.style.transform = "scale(1)";
 cloneContainer.style.zoom = "1";
-      
 
       // Cabeçalho personalizado
       const header = document.createElement("div");
@@ -811,12 +811,12 @@ cloneContainer.style.zoom = "1";
       document.body.appendChild(cloneContainer);
 
       // Aguarda o render e captura
-   const canvas = await html2canvas(cloneContainer, {
-  scale: window.devicePixelRatio * 2, // Aumenta a densidade de pixels
+const canvas = await html2canvas(cloneContainer, {
+  scale: window.devicePixelRatio * 2, // ou 3 se quiser altíssima definição
+  logging: false,
   useCORS: true,
   backgroundColor: "#1f2937",
-  logging: false,
-  scrollY: -window.scrollY // ajuda com renderizações fora da viewport
+  scrollY: -window.scrollY
 });
 
       // Remove o clone do DOM
