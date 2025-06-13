@@ -585,63 +585,79 @@ const [isento, setIsento] = useState(false);
     }]
   };
 
-  // Adicione os estilos no início do componente Financeiro
-const styles = {
-  statusContainer: {
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: '4px 8px',
-    borderRadius: '4px',
-    width: '120px',
-    margin: '0 auto',
-    fontWeight: 'bold',
-    fontSize: '14px'
-  },
-  adimplente: {
-    backgroundColor: '#4ade80',
-    color: '#fff'
-  },
-  inadimplente: {
-    backgroundColor: '#f87171',
-    color: '#fff'
-  }
-};
+  const exportarPDF = async () => {
+    try {
+      // Fecha o modal de relatório antes de gerar o PDF
+      setRelatorioModal(false);
+      
+      // Aguarda um pequeno delay para garantir que o modal foi fechado
+      await new Promise(resolve => setTimeout(resolve, 300));
 
-// Modifique a função exportarPDF para incluir as configurações de melhor qualidade
-const exportarPDF = async () => {
-  try {
-    const element = document.getElementById('tabela-mensalidades');
-    if (!element) {
-      toast.error('Elemento não encontrado');
-      return;
+      const element = document.getElementById('relatorio-content');
+      if (!element) {
+        // Cria um elemento temporário para o relatório
+        const tempElement = document.createElement('div');
+        tempElement.id = 'relatorio-content';
+        tempElement.innerHTML = `
+          <div style="padding: 20px; background-color: #1f2937; color: white;">
+            <h2 style="margin-bottom: 20px;">Relatório Financeiro - ${new Date(filtroMes).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</h2>
+            
+            <div style="margin-bottom: 20px;">
+              <h3>Resumo Financeiro</h3>
+              <p>Receitas: R$ ${estatisticas.totalReceitas.toFixed(2)}</p>
+              <p>Despesas: R$ ${estatisticas.totalDespesas.toFixed(2)}</p>
+              <p>Saldo: R$ ${estatisticas.saldo.toFixed(2)}</p>
+            </div>
+            
+            <div>
+              <h3>Informações Adicionais</h3>
+              <p>Total de Jogadores: ${estatisticas.totalJogadores}</p>
+              <p>Pagamentos Pendentes: ${estatisticas.pagamentosPendentes}</p>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(tempElement);
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        const canvas = await html2canvas(tempElement, {
+          scale: 2,
+          logging: false,
+          useCORS: true,
+          backgroundColor: '#1f2937'
+        });
+        
+        document.body.removeChild(tempElement);
+        
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save(`relatorio-financeiro-${filtroMes}.pdf`);
+      } else {
+        const canvas = await html2canvas(element, {
+          scale: 2,
+          logging: false,
+          useCORS: true,
+          backgroundColor: '#1f2937'
+        });
+        
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save(`relatorio-financeiro-${filtroMes}.pdf`);
+      }
+      
+      toast.success('Relatório PDF gerado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      toast.error('Erro ao gerar PDF. Tente novamente.');
     }
-
-    const canvas = await html2canvas(element, {
-      scale: 4,
-      logging: false,
-      useCORS: true,
-      backgroundColor: '#1f2937',
-      width: element.offsetWidth,
-      height: element.offsetHeight,
-      imageTimeout: 0,
-      pixelRatio: window.devicePixelRatio
-    });
-
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-    
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-    pdf.save('controle-mensalidades.pdf');
-    
-    toast.success('PDF gerado com sucesso!');
-  } catch (error) {
-    console.error('Erro ao gerar PDF:', error);
-    toast.error('Erro ao gerar PDF');
-  }
-};
+  };
 
   const exportarImagem = async () => {
     try {
@@ -743,90 +759,35 @@ const exportarPDF = async () => {
   //   }
   // };
 
-const compartilharControle = async (elementId) => {
-  try {
-    if (navigator.share) {
-      const originalElement = document.getElementById(elementId);
-
-      // Cria container invisível fora da tela
-      const cloneContainer = document.createElement("div");
-      cloneContainer.style.position = "absolute";
-      cloneContainer.style.left = "-9999px";
-      cloneContainer.style.top = "0";
-      cloneContainer.style.backgroundColor = "#1f2937";
-      cloneContainer.style.color = "white";
-      cloneContainer.style.padding = "20px";
-      cloneContainer.style.fontSize = "12px";
-      cloneContainer.style.width = `${originalElement.offsetWidth}px`;
-
-      // 🔽 Qualidade aprimorada:
-cloneContainer.style.fontSmooth = "always";
-cloneContainer.style.webkitFontSmoothing = "antialiased";
-cloneContainer.style.mozOsxFontSmoothing = "grayscale";
-cloneContainer.style.transform = "scale(1)";
-cloneContainer.style.zoom = "1";
-
-      // Cabeçalho personalizado
-      const header = document.createElement("div");
-      header.innerHTML = `
-        💰 <strong>MENSALIDADE VALOR R$ 20,00</strong><br/>
-        ✅ <strong>Adimplentes:</strong> ${jogadores.filter(j => j.statusFinanceiro === 'Adimplente').length}<br/>
-        ❌ <strong>Inadimplentes:</strong> ${jogadores.filter(j => j.statusFinanceiro === 'Inadimplente').length}
-        <hr style="margin: 10px 0; border-color: #444;" />
-      `;
-
-      // Rodapé personalizado
-      const footer = document.createElement("div");
-      footer.innerHTML = `
-        <hr style="margin: 10px 0; border-color: #444;" />
-        💳 <strong>CHAVE PIX:</strong> Universocajazeiras@gmail.com<br/>
-        📩 <strong>FAVOR ENVIAR COMPROVANTE NO GRUPO, EU ATUALIZO A LISTA</strong><br/><br/>
-        ℹ️ <strong>OBS:</strong> Este valor será para caixa para as compras de material, sendo bola, rede, pagamento de juiz.<br/>
-        ⚠️ <strong>OBS:</strong> Os nomes que estão com a tarja verde ao final, esses terão prioridades no baba, são os que no momento estão adimplentes. Espero não precisar ir no privado de cada um informar o seu compromisso. 🤝
-      `;
-
-      // Clona o conteúdo da lista
-      const clonedTable = originalElement.cloneNode(true);
-
-      // Adiciona ao DOM invisível
-      cloneContainer.appendChild(header);
-      cloneContainer.appendChild(clonedTable);
-      cloneContainer.appendChild(footer);
-      document.body.appendChild(cloneContainer);
-
-      // Aguarda o render e captura
-const canvas = await html2canvas(cloneContainer, {
-  scale: 4, // aumenta ainda mais a densidade de pixels
-  useCORS: true,
-  logging: false,
-  backgroundColor: "#1f2937",
-  scrollY: -window.scrollY,
-  windowWidth: cloneContainer.scrollWidth,
-  windowHeight: cloneContainer.scrollHeight
-});
-
-      // Remove o clone do DOM
-      document.body.removeChild(cloneContainer);
-
-      const blob = await (await fetch(canvas.toDataURL("image/png"))).blob();
-      const file = new File([blob], "controle-mensalidades.png", { type: blob.type });
-
-      await navigator.share({
-        title: `Controle de Mensalidades - ${new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}`,
-        text: `Controle de mensalidades dos jogadores`,
-        files: [file]
-      });
-    } else {
-      toast.info("Compartilhamento não suportado neste navegador");
+  const compartilharControle = async (elementId) => {
+    try {
+      if (navigator.share) {
+        const element = document.getElementById(elementId);
+        const canvas = await html2canvas(element, {
+          scale: 2,
+          logging: false,
+          useCORS: true,
+          backgroundColor: '#1f2937'
+        });
+        
+        const blob = await (await fetch(canvas.toDataURL('image/png'))).blob();
+        const file = new File([blob], 'controle-mensalidades.png', { type: blob.type });
+        
+        await navigator.share({
+          title: `Controle de Mensalidades - ${new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`,
+          text: `Controle de mensalidades dos jogadores`,
+          files: [file]
+        });
+      } else {
+        toast.info('Compartilhamento não suportado neste navegador');
+      }
+    } catch (error) {
+      console.error('Erro ao compartilhar:', error);
+      if (error.name !== 'AbortError') {
+        toast.error('Erro ao compartilhar controle');
+      }
     }
-  } catch (error) {
-    console.error("Erro ao compartilhar:", error);
-    if (error.name !== "AbortError") {
-      toast.error("Erro ao compartilhar controle");
-    }
-  }
-};
-
+  };
 
   const compartilharHistorico = async (elementId) => {
     try {
@@ -1379,7 +1340,7 @@ const canvas = await html2canvas(cloneContainer, {
                                 onClick={() => toggleStatus(jogador._id)}
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                className={`w-full text-center px-2 py-1 rounded-full text-xs font-medium ${
+                                className={`px-2 py-1 rounded-full text-xs font-medium ${
                                   jogador.statusFinanceiro === 'Adimplente' ?
                                     'bg-green-500/20 text-green-400' :
                                     'bg-red-500/20 text-red-400'
@@ -1519,26 +1480,6 @@ const canvas = await html2canvas(cloneContainer, {
                   <p className={`text-xl sm:text-2xl font-bold ${estatisticas.saldo >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                     R$ {estatisticas.saldo.toFixed(2)}
                   </p>
-                </div>
-
-                <div className="bg-gray-700/50 p-3 sm:p-4 rounded-lg">
-                  <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">Pagamentos Pendentes</h4>
-                  <p className="text-lg sm:text-xl font-bold text-white">
-                    {estatisticas.pagamentosPendentes} mensalidades
-                  </p>
-                </div>
-
-                <div className="bg-gray-700/50 p-3 sm:p-4 rounded-lg">
-                  <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">Total de Jogadores</h4>
-                  <p className="text-lg sm:text-xl font-bold text-white">
-                    {estatisticas.totalJogadores} jogadores
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-4 sm:mt-6 flex justify-end gap-2 sm:gap-3">
-                <motion.button
-                  onClick={exportarPDF}
                 </div>
 
                 <div className="bg-gray-700/50 p-3 sm:p-4 rounded-lg">
