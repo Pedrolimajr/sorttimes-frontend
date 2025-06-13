@@ -759,16 +759,18 @@ const [isento, setIsento] = useState(false);
   //   }
   // };
 
-const compartilharControle = async (tipo) => {
+  const compartilharControle = async (elementId) => {
   try {
     toast.info('Gerando relatório em alta qualidade...');
 
+    // 1. Configurações de layout
     const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-    const LARGURA_TOTAL = 1200;
+    const LARGURA_TOTAL = 1200; // Aumentado para melhor proporção
     const LARGURA_JOGADOR = 200;
     const LARGURA_STATUS = 100;
     const LARGURA_MES = 50;
 
+    // 2. Criar container com proporções adequadas
     const tempContainer = document.createElement('div');
     tempContainer.style.position = 'fixed';
     tempContainer.style.left = '0';
@@ -783,14 +785,20 @@ const compartilharControle = async (tipo) => {
     tempContainer.style.borderRadius = '10px';
     tempContainer.style.visibility = 'hidden';
 
-    const htmlContent = `
+    // 3. Construir tabela com proporções adequadas
+    let htmlContent = `
       <div style="text-align: center; margin-bottom: 30px;">
         <div style="font-size: 28px; font-weight: bold; color: #4ade80; margin-bottom: 10px;">
           💰 MENSALIDADE VALOR 20,00R$
         </div>
       </div>
 
-      <table style="width: 100%; border-collapse: collapse; font-size: 16px; table-layout: fixed;">
+      <table style="
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 16px;
+        table-layout: fixed; /* Força o respeito às larguras */
+      ">
         <colgroup>
           <col style="width: ${LARGURA_JOGADOR}px">
           <col style="width: ${LARGURA_STATUS}px">
@@ -799,25 +807,76 @@ const compartilharControle = async (tipo) => {
 
         <thead>
           <tr>
-            <th style="padding: 12px; background: #374151; border: 1px solid #4b5563; text-align: left;">Jogador</th>
-            <th style="padding: 12px; background: #374151; border: 1px solid #4b5563;">Status</th>
+            <th style="
+              padding: 12px;
+              background: #374151;
+              border: 1px solid #4b5563;
+              text-align: left;
+              position: sticky;
+              top: 0;
+            ">Jogador</th>
+            <th style="
+              padding: 12px;
+              background: #374151;
+              border: 1px solid #4b5563;
+              position: sticky;
+              top: 0;
+            ">Status</th>
             ${MESES.map(mes => `
-              <th style="padding: 12px; background: #374151; border: 1px solid #4b5563;">${mes}</th>
+              <th style="
+                padding: 12px;
+                background: #374151;
+                border: 1px solid #4b5563;
+                position: sticky;
+                top: 0;
+              ">${mes}</th>
             `).join('')}
           </tr>
         </thead>
         <tbody>
-          ${jogadores.filter(j => j.nome.toLowerCase().includes(filtroJogador.toLowerCase())).map(jogador => `
+          ${jogadores.filter(j => 
+            j.nome.toLowerCase().includes(filtroJogador.toLowerCase())
+          ).map(jogador => `
             <tr>
-              <td style="padding: 12px; border: 1px solid #4b5563; text-align: left; overflow: hidden;">${jogador.nome}</td>
-              <td style="padding: 12px; border: 1px solid #4b5563; text-align: center;">
-                <span style="display: inline-block; padding: 6px 12px; border-radius: 20px; ${jogador.statusFinanceiro === 'Adimplente' ? 'background: #4ade8020; color: #4ade80;' : 'background: #f8717120; color: #f87171;'} font-size: 14px;">
+              <td style="
+                padding: 12px;
+                border: 1px solid #4b5563;
+                text-align: left;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+              ">${jogador.nome}</td>
+              <td style="
+                padding: 12px;
+                border: 1px solid #4b5563;
+                text-align: center;
+              ">
+                <span style="
+                  display: inline-block;
+                  padding: 6px 12px;
+                  border-radius: 20px;
+                  ${jogador.statusFinanceiro === 'Adimplente' ? 
+                    'background: #4ade8020; color: #4ade80;' : 
+                    'background: #f8717120; color: #f87171;'}
+                  font-size: 14px;
+                ">
                   ${jogador.statusFinanceiro}
                 </span>
               </td>
-              ${jogador.pagamentos.map(pago => `
-                <td style="padding: 12px; border: 1px solid #4b5563; text-align: center;">
-                  <span style="display: inline-block; width: 24px; height: 24px; border-radius: 50%; line-height: 24px; ${pago ? 'background: #4ade8020; color: #4ade80;' : 'background: #f8717120; color: #f87171;'}">
+              ${jogador.pagamentos.map((pago, i) => `
+                <td style="
+                  padding: 12px;
+                  border: 1px solid #4b5563;
+                  text-align: center;
+                ">
+                  <span style="
+                    display: inline-block;
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 50%;
+                    line-height: 24px;
+                    ${pago ? 'background: #4ade8020; color: #4ade80;' : 'background: #f8717120; color: #f87171;'}
+                  ">
                     ${pago ? '✓' : '✗'}
                   </span>
                 </td>
@@ -827,11 +886,25 @@ const compartilharControle = async (tipo) => {
         </tbody>
       </table>
 
-      <div style="margin-top: 30px; text-align: center; font-size: 18px; line-height: 1.6;">
-        <div style="color: #60a5fa; margin-bottom: 15px;">💳 CHAVE PIX: Universocajazeiras@gmail.com</div>
-        <div style="color: #fbbf24; margin-bottom: 15px;">📌 FAVOR ENVIAR COMPROVANTE NO GRUPO, EU ATUALIZO A LISTA.</div>
-        <div style="color: #a5b4fc;">ℹ️ *OBS:* Este valor será para caixa para as compras de material, sendo bola, rede, pagamento de juiz.</div>
-        <div style="color: #a5b4fc;">⚠️ *OBS:* Os nomes que estão com a tarja verde ao final, esses terão prioridades no baba.</div>
+      <div style="
+        margin-top: 30px;
+        text-align: center;
+        font-size: 18px;
+        line-height: 1.6;
+      ">
+        <div style="color: #60a5fa; margin-bottom: 15px;">
+          💳 CHAVE PIX: Universocajazeiras@gmail.com
+        </div>
+        <div style="color: #fbbf24; margin-bottom: 15px;">
+          📌 FAVOR ENVIAR COMPROVANTE NO GRUPO, EU ATUALIZO A LISTA.
+        </div>
+        <div style="color: #a5b4fc;">
+         ℹ️ *OBS:* Este valor será para caixa para as compras de material, sendo bola, rede, pagamento de juiz.
+
+        </div>
+         <div style="color: #a5b4fc;">
+         ⚠️ *OBS:* Os nomes que estão com a tarja verde ao final, esses terão prioridades no baba, são os que no momento estão adimplentes. Espero não precisar ir no privado de cada um informar o seu compromisso. 🤝
+        </div>
       </div>
     `;
 
@@ -839,50 +912,60 @@ const compartilharControle = async (tipo) => {
     document.body.appendChild(tempContainer);
     tempContainer.style.visibility = 'visible';
 
+    // 4. Gerar imagem com qualidade
     const canvas = await html2canvas(tempContainer, {
-      scale: 4,
+      scale: 3,
+      logging: true,
       useCORS: true,
       backgroundColor: null,
+      quality: 1,
+      allowTaint: true,
+      letterRendering: true,
       windowWidth: tempContainer.scrollWidth,
       windowHeight: tempContainer.scrollHeight
     });
 
-    if (tipo === 'png') {
-      canvas.toBlob(blob => {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.download = `mensalidades-${new Date().toISOString().slice(0, 10)}.png`;
-        link.href = url;
-        link.click();
-        URL.revokeObjectURL(url);
-        toast.success('Imagem PNG gerada com sucesso!');
-      }, 'image/png', 1.0);
-    }
-
-    if (tipo === 'pdf') {
-      const { jsPDF } = await import('jspdf');
-
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('l', 'px', [canvas.width, canvas.height]);
-      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-      pdf.save('controle-mensalidades.pdf');
-      toast.success('PDF gerado com sucesso!');
-    }
-
-    if (tipo === 'share' && navigator.canShare) {
-      canvas.toBlob(async (blob) => {
-        const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
-        await navigator.share({ files: [file], title: 'Controle de Mensalidades' });
-        toast.success('Imagem compartilhada com sucesso!');
-      }, 'image/png');
-    }
+    // 5. Criar link de download
+    const link = document.createElement('a');
+    link.download = `mensalidades-${new Date().toISOString().slice(0, 10)}.png`;
+    link.href = canvas.toDataURL('image/png', 1.0);
+    link.click();
+    toast.success('Relatório gerado com sucesso!');
 
   } catch (error) {
     console.error('Erro ao gerar relatório:', error);
-    toast.error('Falha ao gerar arquivo.');
+    toast.error('Erro ao gerar imagem. Tentando PDF...');
+    
+    // Fallback para PDF
+    try {
+      const { jsPDF } = await import('jspdf');
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'pt',
+        format: [tempContainer.scrollWidth * 0.75, tempContainer.scrollHeight * 0.75]
+      });
+
+      await pdf.html(tempContainer, {
+        width: tempContainer.scrollWidth * 0.75,
+        windowWidth: tempContainer.scrollWidth,
+        html2canvas: {
+          scale: 0.75,
+          letterRendering: true
+        }
+      });
+
+      pdf.save('controle-mensalidades.pdf');
+      toast.success('PDF gerado como alternativa!');
+    } catch (pdfError) {
+      console.error('Erro no PDF:', pdfError);
+      toast.error('Falha ao gerar PDF. Entre em contato com o suporte.');
+    }
   } finally {
+    // Limpeza garantida
     const container = document.querySelector('div[style*="z-index: 10000"]');
-    if (container) document.body.removeChild(container);
+    if (container) {
+      document.body.removeChild(container);
+    }
   }
 };
 
