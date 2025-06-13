@@ -759,33 +759,39 @@ const [isento, setIsento] = useState(false);
   //   }
   // };
 
-  const compartilharControle = async (elementId) => {
+  const compartilharControle = async () => {
     try {
-      if (navigator.share) {
-        const element = document.getElementById(elementId);
-        const canvas = await html2canvas(element, {
-          scale: 2,
-          logging: false,
-          useCORS: true,
-          backgroundColor: '#1f2937'
-        });
-        
-        const blob = await (await fetch(canvas.toDataURL('image/png'))).blob();
-        const file = new File([blob], 'controle-mensalidades.png', { type: blob.type });
-        
-        await navigator.share({
-          title: `Controle de Mensalidades - ${new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`,
-          text: `Controle de mensalidades dos jogadores`,
-          files: [file]
-        });
-      } else {
-        toast.info('Compartilhamento não suportado neste navegador');
+      const element = document.getElementById('tabela-mensalidades');
+      if (!element) {
+        toast.error('Elemento não encontrado');
+        return;
       }
+
+      const canvas = await html2canvas(element, {
+        scale: 4,
+        logging: false,
+        useCORS: true,
+        backgroundColor: '#1f2937',
+        width: element.offsetWidth,
+        height: element.offsetHeight,
+        imageTimeout: 0,
+        pixelRatio: window.devicePixelRatio
+      });
+
+      // Converter o canvas para blob
+      canvas.toBlob((blob) => {
+        const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(file);
+        link.download = 'controle-mensalidades.png';
+        link.click();
+        URL.revokeObjectURL(link.href);
+        toast.success('Imagem gerada com sucesso!');
+      }, 'image/png');
+
     } catch (error) {
-      console.error('Erro ao compartilhar:', error);
-      if (error.name !== 'AbortError') {
-        toast.error('Erro ao compartilhar controle');
-      }
+      console.error('Erro ao gerar imagem:', error);
+      toast.error('Erro ao gerar imagem');
     }
   };
 
