@@ -759,18 +759,18 @@ const [isento, setIsento] = useState(false);
   //   }
   // };
 
-  const compartilharControle = async (elementId) => {
+const compartilharControle = async (elementId) => {
   try {
     toast.info('Gerando relatório em alta qualidade...');
 
-    // 1. Configurações de layout
+    // Configurações de layout
     const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-    const LARGURA_TOTAL = 1200; // Aumentado para melhor proporção
+    const LARGURA_TOTAL = 1200;
     const LARGURA_JOGADOR = 200;
     const LARGURA_STATUS = 100;
     const LARGURA_MES = 50;
 
-    // 2. Criar container com proporções adequadas
+    // Criar container
     const tempContainer = document.createElement('div');
     tempContainer.style.position = 'fixed';
     tempContainer.style.left = '0';
@@ -785,11 +785,11 @@ const [isento, setIsento] = useState(false);
     tempContainer.style.borderRadius = '10px';
     tempContainer.style.visibility = 'hidden';
 
-    // 3. Construir tabela com proporções adequadas
+    // Construir tabela com centralização ajustada
     let htmlContent = `
       <div style="text-align: center; margin-bottom: 30px;">
         <div style="font-size: 28px; font-weight: bold; color: #4ade80; margin-bottom: 10px;">
-          💰 MENSALIDADE VALOR 20,00R$
+          💰 MENSALIDADE VALOR R$
         </div>
       </div>
 
@@ -797,7 +797,7 @@ const [isento, setIsento] = useState(false);
         width: 100%;
         border-collapse: collapse;
         font-size: 16px;
-        table-layout: fixed; /* Força o respeito às larguras */
+        table-layout: fixed;
       ">
         <colgroup>
           <col style="width: ${LARGURA_JOGADOR}px">
@@ -807,29 +807,10 @@ const [isento, setIsento] = useState(false);
 
         <thead>
           <tr>
-            <th style="
-              padding: 12px;
-              background: #374151;
-              border: 1px solid #4b5563;
-              text-align: left;
-              position: sticky;
-              top: 0;
-            ">Jogador</th>
-            <th style="
-              padding: 12px;
-              background: #374151;
-              border: 1px solid #4b5563;
-              position: sticky;
-              top: 0;
-            ">Status</th>
+            <th style="padding: 12px; background: #374151; border: 1px solid #4b5563; text-align: left;">Jogador</th>
+            <th style="padding: 12px; background: #374151; border: 1px solid #4b5563;">Status</th>
             ${MESES.map(mes => `
-              <th style="
-                padding: 12px;
-                background: #374151;
-                border: 1px solid #4b5563;
-                position: sticky;
-                top: 0;
-              ">${mes}</th>
+              <th style="padding: 12px; background: #374151; border: 1px solid #4b5563;">${mes}</th>
             `).join('')}
           </tr>
         </thead>
@@ -850,35 +831,56 @@ const [isento, setIsento] = useState(false);
                 padding: 12px;
                 border: 1px solid #4b5563;
                 text-align: center;
+                vertical-align: middle; /* Centraliza verticalmente */
               ">
-                <span style="
-                  display: inline-block;
-                  padding: 6px 12px;
-                  border-radius: 20px;
-                  ${jogador.statusFinanceiro === 'Adimplente' ? 
-                    'background: #4ade8020; color: #4ade80;' : 
-                    'background: #f8717120; color: #f87171;'}
-                  font-size: 14px;
+                <div style="
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  height: 100%;
                 ">
-                  ${jogador.statusFinanceiro}
-                </span>
+                  <span style="
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 6px 12px;
+                    border-radius: 20px;
+                    ${jogador.statusFinanceiro === 'Adimplente' ? 
+                      'background: #4ade8020; color: #4ade80;' : 
+                      'background: #f8717120; color: #f87171;'}
+                    font-size: 14px;
+                    height: 100%;
+                  ">
+                    ${jogador.statusFinanceiro}
+                  </span>
+                </div>
               </td>
               ${jogador.pagamentos.map((pago, i) => `
                 <td style="
                   padding: 12px;
                   border: 1px solid #4b5563;
                   text-align: center;
+                  vertical-align: middle; /* Centraliza verticalmente */
                 ">
-                  <span style="
-                    display: inline-block;
-                    width: 24px;
-                    height: 24px;
-                    border-radius: 50%;
-                    line-height: 24px;
-                    ${pago ? 'background: #4ade8020; color: #4ade80;' : 'background: #f8717120; color: #f87171;'}
+                  <div style="
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100%;
                   ">
-                    ${pago ? '✓' : '✗'}
-                  </span>
+                    <span style="
+                      display: inline-flex;
+                      align-items: center;
+                      justify-content: center;
+                      width: 24px;
+                      height: 24px;
+                      border-radius: 50%;
+                      ${pago ? 'background: #4ade8020; color: #4ade80;' : 'background: #f8717120; color: #f87171;'}
+                      font-size: 14px;
+                    ">
+                      ${pago ? '✓' : '✗'}
+                    </span>
+                  </div>
                 </td>
               `).join('')}
             </tr>
@@ -886,24 +888,15 @@ const [isento, setIsento] = useState(false);
         </tbody>
       </table>
 
-      <div style="
-        margin-top: 30px;
-        text-align: center;
-        font-size: 18px;
-        line-height: 1.6;
-      ">
+      <div style="margin-top: 30px; text-align: center; font-size: 18px; line-height: 1.6;">
         <div style="color: #60a5fa; margin-bottom: 15px;">
           💳 CHAVE PIX: Universocajazeiras@gmail.com
         </div>
         <div style="color: #fbbf24; margin-bottom: 15px;">
-          📌 FAVOR ENVIAR COMPROVANTE NO GRUPO, EU ATUALIZO A LISTA
+          📌 FAVOR ENVIAR COMPROVANTE NO GRUPO
         </div>
         <div style="color: #a5b4fc;">
-         ℹ️ *OBS:* Este valor será para caixa para as compras de material, sendo bola, rede, pagamento de juiz.
-
-        </div>
-         <div style="color: #a5b4fc;">
-         ⚠️ *OBS:* Os nomes que estão com a tarja verde ao final, esses terão prioridades no baba, são os que no momento estão adimplentes. Espero não precisar ir no privado de cada um informar o seu compromisso. 🤝
+          ℹ️ Valor para caixa (materiais, bola, rede, juiz)
         </div>
       </div>
     `;
@@ -912,7 +905,7 @@ const [isento, setIsento] = useState(false);
     document.body.appendChild(tempContainer);
     tempContainer.style.visibility = 'visible';
 
-    // 4. Gerar imagem com qualidade
+    // Restante do código (geração de imagem/PDF) permanece igual
     const canvas = await html2canvas(tempContainer, {
       scale: 3,
       logging: true,
@@ -925,7 +918,6 @@ const [isento, setIsento] = useState(false);
       windowHeight: tempContainer.scrollHeight
     });
 
-    // 5. Criar link de download
     const link = document.createElement('a');
     link.download = `mensalidades-${new Date().toISOString().slice(0, 10)}.png`;
     link.href = canvas.toDataURL('image/png', 1.0);
@@ -936,7 +928,6 @@ const [isento, setIsento] = useState(false);
     console.error('Erro ao gerar relatório:', error);
     toast.error('Erro ao gerar imagem. Tentando PDF...');
     
-    // Fallback para PDF
     try {
       const { jsPDF } = await import('jspdf');
       const pdf = new jsPDF({
@@ -961,13 +952,14 @@ const [isento, setIsento] = useState(false);
       toast.error('Falha ao gerar PDF. Entre em contato com o suporte.');
     }
   } finally {
-    // Limpeza garantida
     const container = document.querySelector('div[style*="z-index: 10000"]');
     if (container) {
       document.body.removeChild(container);
     }
   }
 };
+
+
   const compartilharHistorico = async (elementId) => {
     try {
       if (navigator.share) {
