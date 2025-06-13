@@ -778,15 +778,20 @@ const [isento, setIsento] = useState(false);
         pixelRatio: window.devicePixelRatio
       });
 
-      // Converter o canvas para blob
-      canvas.toBlob((blob) => {
+      canvas.toBlob(async (blob) => {
         const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(file);
-        link.download = 'controle-mensalidades.png';
-        link.click();
-        URL.revokeObjectURL(link.href);
-        toast.success('Imagem gerada com sucesso!');
+        
+        try {
+          await navigator.share({
+            files: [file],
+            title: 'Controle de Mensalidades',
+            text: 'Controle de Mensalidades dos Jogadores'
+          });
+          toast.success('Compartilhamento realizado com sucesso!');
+        } catch (error) {
+          console.error('Erro ao compartilhar:', error);
+          toast.error('Erro ao compartilhar imagem');
+        }
       }, 'image/png');
 
     } catch (error) {
