@@ -900,52 +900,37 @@ const [isento, setIsento] = useState(false);
       // Adicionar ao documento temporariamente
       document.body.appendChild(containerTemp);
 
-      try {
-        const canvas = await html2canvas(containerTemp, {
-      scale: 3, // Aumentar a escala para melhor qualidade
+      const canvas = await html2canvas(containerTemp, {
+      scale: 3,
       useCORS: true,
       backgroundColor: '#1f2937',
       logging: false,
       width: containerTemp.offsetWidth,
       height: containerTemp.offsetHeight,
       imageTimeout: 0,
-      pixelRatio: 2, // Forçar pixel ratio mais alto
+      pixelRatio: 2,
       windowWidth: containerTemp.offsetWidth * 2,
       windowHeight: containerTemp.offsetHeight * 2,
-      optimizeSpeed: false, // Priorizar qualidade sobre velocidade
+      optimizeSpeed: false
     });
 
-       canvas.toBlob(async (blob) => {
-      const file = new File([blob], 'controle-mensalidades.png', { 
-        type: 'image/png',
-        quality: 1.0 // Máxima qualidade
-      });
-          try {
-            // Compressão otimizada para manter qualidade
-        const compressedBlob = await imageCompression(file, {
-          maxSizeMB: 2,
-          maxWidthOrHeight: 2048,
-          useWebWorker: true,
-          preserveExif: true,
-          quality: 0.9
-            });
-await navigator.share({
-          files: [new File([compressedBlob], 'controle-mensalidades.png', {
-            type: 'image/png'
-          })],
-          title: 'Controle de Mensalidades',
+    canvas.toBlob(async (blob) => {
+      try {
+        const file = new File([blob], 'controle-mensalidades.png', { 
+          type: 'image/png'
         });
 
-          toast.success('Compartilhamento realizado com sucesso!');
+        await navigator.share({
+          files: [file],
+          title: 'Controle de Mensalidades',
+        });
+        toast.success('Compartilhamento realizado com sucesso!');
       } catch (error) {
         console.error('Erro ao compartilhar:', error);
         toast.error('Erro ao compartilhar');
       }
-        }, 'image/png', 1.0);
-      } finally {
-        document.body.removeChild(containerTemp);
-      }
-
+    }, 'image/png', 1.0);
+   
     } catch (error) {
       console.error('Erro:', error);
       toast.error('Erro ao gerar imagem');
