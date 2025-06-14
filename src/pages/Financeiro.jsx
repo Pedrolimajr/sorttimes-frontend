@@ -827,12 +827,12 @@ const compartilharControle = async () => {
 
     const criarTabela = (linhas) => {
       const tabela = document.createElement('table');
-      tabela.style.cssText = `
-        border-spacing: 0;
-        border-collapse: separate;
-        width: 550px;
-        background-color: #1f2937;
-      `;
+    tabela.style.cssText = `
+  border-spacing: 0;
+  border-collapse: separate;
+  min-width: 1100px;
+  background-color: #1f2937;
+`;
 
       const headerClone = header.cloneNode(true);
       Array.from(headerClone.children).forEach(th => {
