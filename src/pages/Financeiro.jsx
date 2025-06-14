@@ -762,13 +762,14 @@ const [isento, setIsento] = useState(false);
   
   const compartilharControle = async () => {
     try {
-      // Container principal
       const containerTemp = document.createElement('div');
       containerTemp.style.cssText = `
         background-color: #1f2937;
-        padding: 40px;
+        padding: 20px;
         color: white;
         font-family: Arial, sans-serif;
+        max-width: 100vw; // Limita a largura ao viewport
+        overflow-x: hidden; // Evita scroll horizontal
       `;
 
       // Criar e adicionar título
@@ -932,34 +933,89 @@ containerTemp.appendChild(tituloContainer);
 
       try {
         const canvas = await html2canvas(containerTemp, {
-          scale: 2,
+          scale: 2, // Reduzido para melhor performance
           useCORS: true,
           backgroundColor: '#1f2937',
           logging: false,
-          onclone: (document, element) => {
-            // Garantir que os estilos sejam aplicados no clone
-            element.style.width = 'fit-content';
-            element.style.margin = '0 auto';
-          }
+          width: containerTemp.offsetWidth,
+          height: containerTemp.offsetHeight,
+          imageTimeout: 2000, // Aumentado timeout
+          scrollX: 0,
+          scrollY: 0,
+          windowWidth: containerTemp.scrollWidth,
+          windowHeight: containerTemp.scrollHeight,
+          foreignObjectRendering: true, // Melhor renderização
+          removeContainer: true // Limpa após renderizar
         });
 
-        canvas.toBlob(async (blob) => {
-          const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
+        // Otimizar tamanho da imagem para dispositivos móveis
+        const maxWidth = 1024; // Largura máxima recomendada
+        const maxHeight = 2048; // Altura máxima recomendada
+        
+        let targetWidth = canvas.width;
+        let targetHeight = canvas.height;
+        
+        if (targetWidth > maxWidth) {
+          const ratio = maxWidth / targetWidth;
+          targetWidth = maxWidth;
+          targetHeight = Math.floor(targetHeight * ratio);
+        }
+        
+        if (targetHeight > maxHeight) {
+          const ratio = maxHeight / targetHeight;
+          targetHeight = maxHeight;
+          targetWidth = Math.floor(targetWidth * ratio);
+        }
+
+        // Criar canvas otimizado
+        const optimizedCanvas = document.createElement('canvas');
+        optimizedCanvas.width = targetWidth;
+        optimizedCanvas.height = targetHeight;
+        const ctx = optimizedCanvas.getContext('2d');
+        ctx.drawImage(canvas, 0, 0, targetWidth, targetHeight);
+
+        // Converter para blob com qualidade otimizada
+        optimizedCanvas.toBlob(async (blob) => {
           try {
-            await navigator.share({
-              files: [file],
-              title: 'Controle de Mensalidades',
+            const file = new File([blob], 'controle-mensalidades.png', {
+              type: 'image/png',
+              lastModified: Date.now()
             });
-            toast.success('Compartilhamento realizado com sucesso!');
+
+            // Verificar se o arquivo não é muito grande
+            if (file.size > 5 * 1024 * 1024) {
+              throw new Error('Imagem muito grande para compartilhar');
+            }
+
+            // Tentar compartilhar
+            if (navigator.share) {
+              await navigator.share({
+                files: [file],
+                title: 'Controle de Mensalidades',
+              });
+              toast.success('Compartilhamento realizado com sucesso!');
+            } else {
+              // Fallback para download direto
+              const link = document.createElement('a');
+              link.href = URL.createObjectURL(blob);
+              link.download = 'controle-mensalidades.png';
+              link.click();
+              URL.revokeObjectURL(link.href);
+              toast.success('Imagem baixada com sucesso!');
+            }
           } catch (error) {
             console.error('Erro ao compartilhar:', error);
-            toast.error('Erro ao compartilhar');
+            toast.error('Erro ao compartilhar. Tente baixar a imagem.');
           }
-        }, 'image/png', 1.0);
-      } finally {
-        document.body.removeChild(containerTemp);
-      }
+        }, 'image/png', 0.8); // Qualidade reduzida para 80%
 
+        // Limpar
+        document.body.removeChild(containerTemp);
+
+      } catch (error) {
+        console.error('Erro:', error);
+        toast.error('Erro ao gerar imagem');
+      }
     } catch (error) {
       console.error('Erro:', error);
       toast.error('Erro ao gerar imagem');
