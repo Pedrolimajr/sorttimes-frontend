@@ -814,12 +814,17 @@ containerTemp.appendChild(tituloContainer);
 
       // Container para as tabelas
       const tabelasContainer = document.createElement('div');
-      tabelasContainer.style.cssText = `
-        display: flex;
-        gap: 30px;
-        justify-content: center;
-        align-items: flex-start;
-      `;
+     tabelasContainer.style.cssText = isMobile ? `
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+` : `
+  display: flex;
+  gap: 30px;
+  justify-content: center;
+  align-items: flex-start;
+`;
 
       // Obter e processar a tabela original
       const tabelaOriginal = document.getElementById('tabela-mensalidades');
@@ -944,30 +949,18 @@ containerTemp.appendChild(tituloContainer);
         });
 
         canvas.toBlob(async (blob) => {
-  const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
-
-  try {
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({
-        files: [file],
-        title: 'Controle de Mensalidades',
-        text: 'Confira o controle atualizado das mensalidades dos jogadores.'
-      });
-      toast.success('Compartilhamento realizado com sucesso!');
-    } else {
-      // Fallback: baixar imagem manualmente
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(file);
-      link.download = 'controle-mensalidades.png';
-      link.click();
-      toast.info('Compartilhamento não suportado. A imagem foi baixada para envio manual.');
-    }
-  } catch (error) {
-    console.error('Erro ao compartilhar:', error);
-    toast.error('Erro ao compartilhar. Tente novamente.');
-  }
-}, 'image/png', 1.0);
-
+          const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
+          try {
+            await navigator.share({
+              files: [file],
+              title: 'Controle de Mensalidades',
+            });
+            toast.success('Compartilhamento realizado com sucesso!');
+          } catch (error) {
+            console.error('Erro ao compartilhar:', error);
+            toast.error('Erro ao compartilhar');
+          }
+        }, 'image/png', 1.0);
       } finally {
         document.body.removeChild(containerTemp);
       }
