@@ -762,15 +762,15 @@ const [isento, setIsento] = useState(false);
   
   const compartilharControle = async () => {
     try {
-      const containerTemp = document.createElement('div');
-      containerTemp.style.cssText = `
-        background-color: #1f2937;
-        padding: 20px;
-        color: white;
-        font-family: Arial, sans-serif;
-        max-width: 100vw; // Limita a largura ao viewport
-        overflow-x: hidden; // Evita scroll horizontal
-      `;
+      // Container principal
+  const containerTemp = document.createElement('div');
+    containerTemp.style.cssText = `
+      background-color: #1f2937;
+      padding: 20px;
+      color: white;
+      font-family: Arial, sans-serif;
+      width: 900px; // Largura fixa para melhor compatibilidade
+    `;
 
       // Criar e adicionar título
       const tituloContainer = document.createElement('div');
@@ -932,95 +932,58 @@ containerTemp.appendChild(tituloContainer);
       document.body.appendChild(containerTemp);
 
       try {
-        const canvas = await html2canvas(containerTemp, {
-          scale: 2, // Reduzido para melhor performance
-          useCORS: true,
-          backgroundColor: '#1f2937',
-          logging: false,
-          width: containerTemp.offsetWidth,
-          height: containerTemp.offsetHeight,
-          imageTimeout: 2000, // Aumentado timeout
-          scrollX: 0,
-          scrollY: 0,
-          windowWidth: containerTemp.scrollWidth,
-          windowHeight: containerTemp.scrollHeight,
-          foreignObjectRendering: true, // Melhor renderização
-          removeContainer: true // Limpa após renderizar
-        });
+      const canvas = await html2canvas(containerTemp, {
+        scale: 1.5, // Reduzido para melhor compatibilidade
+        useCORS: true,
+        backgroundColor: '#1f2937',
+        logging: true, // Ativado para debug
+        width: containerTemp.offsetWidth,
+        height: containerTemp.offsetHeight
+      });
 
-        // Otimizar tamanho da imagem para dispositivos móveis
-        const maxWidth = 1024; // Largura máxima recomendada
-        const maxHeight = 2048; // Altura máxima recomendada
-        
-        let targetWidth = canvas.width;
-        let targetHeight = canvas.height;
-        
-        if (targetWidth > maxWidth) {
-          const ratio = maxWidth / targetWidth;
-          targetWidth = maxWidth;
-          targetHeight = Math.floor(targetHeight * ratio);
-        }
-        
-        if (targetHeight > maxHeight) {
-          const ratio = maxHeight / targetHeight;
-          targetHeight = maxHeight;
-          targetWidth = Math.floor(targetWidth * ratio);
-        }
 
-        // Criar canvas otimizado
-        const optimizedCanvas = document.createElement('canvas');
-        optimizedCanvas.width = targetWidth;
-        optimizedCanvas.height = targetHeight;
-        const ctx = optimizedCanvas.getContext('2d');
-        ctx.drawImage(canvas, 0, 0, targetWidth, targetHeight);
+  const blob = await new Promise(resolve => {
+        canvas.toBlob(resolve, 'image/png', 0.9);
+      });
 
-        // Converter para blob com qualidade otimizada
-        optimizedCanvas.toBlob(async (blob) => {
-          try {
-            const file = new File([blob], 'controle-mensalidades.png', {
-              type: 'image/png',
-              lastModified: Date.now()
-            });
-
-            // Verificar se o arquivo não é muito grande
-            if (file.size > 5 * 1024 * 1024) {
-              throw new Error('Imagem muito grande para compartilhar');
-            }
-
-            // Tentar compartilhar
-            if (navigator.share) {
-              await navigator.share({
-                files: [file],
-                title: 'Controle de Mensalidades',
-              });
-              toast.success('Compartilhamento realizado com sucesso!');
-            } else {
-              // Fallback para download direto
-              const link = document.createElement('a');
-              link.href = URL.createObjectURL(blob);
-              link.download = 'controle-mensalidades.png';
-              link.click();
-              URL.revokeObjectURL(link.href);
-              toast.success('Imagem baixada com sucesso!');
-            }
-          } catch (error) {
-            console.error('Erro ao compartilhar:', error);
-            toast.error('Erro ao compartilhar. Tente baixar a imagem.');
-          }
-        }, 'image/png', 0.8); // Qualidade reduzida para 80%
-
-        // Limpar
-        document.body.removeChild(containerTemp);
-
-      } catch (error) {
-        console.error('Erro:', error);
-        toast.error('Erro ao gerar imagem');
+      if (!blob) {
+        throw new Error('Falha ao gerar imagem');
       }
-    } catch (error) {
-      console.error('Erro:', error);
-      toast.error('Erro ao gerar imagem');
+
+      const file = new File([blob], 'controle-mensalidades.png', {
+        type: 'image/png'
+      });
+
+     if (navigator.share && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: 'Controle de Mensalidades',
+        });
+        toast.success('Compartilhamento realizado com sucesso!');
+      } else {
+        // Fallback para download
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'controle-mensalidades.png';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        toast.success('Imagem baixada com sucesso!');
+      }
+    } finally {
+      // Garantir que o container temporário seja removido
+      if (document.body.contains(containerTemp)) {
+        document.body.removeChild(containerTemp);
+      }
     }
-  };
+
+  } catch (error) {
+    console.error('Erro detalhado:', error);
+    toast.error('Erro ao gerar/compartilhar imagem. Por favor, tente novamente.');
+  }
+};
 
   const compartilharHistorico = async (elementId) => {
     try {
