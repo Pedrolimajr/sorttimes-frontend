@@ -814,17 +814,12 @@ containerTemp.appendChild(tituloContainer);
 
       // Container para as tabelas
       const tabelasContainer = document.createElement('div');
-     tabelasContainer.style.cssText = isMobile ? `
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  align-items: center;
-` : `
-  display: flex;
-  gap: 30px;
-  justify-content: center;
-  align-items: flex-start;
-`;
+      tabelasContainer.style.cssText = `
+        display: flex;
+        gap: 30px;
+        justify-content: center;
+        align-items: flex-start;
+      `;
 
       // Obter e processar a tabela original
       const tabelaOriginal = document.getElementById('tabela-mensalidades');
@@ -937,16 +932,13 @@ containerTemp.appendChild(tituloContainer);
 
       try {
         const canvas = await html2canvas(containerTemp, {
-          scale: 2,
-          useCORS: true,
-          backgroundColor: '#1f2937',
-          logging: false,
-          onclone: (document, element) => {
-            // Garantir que os estilos sejam aplicados no clone
-            element.style.width = 'fit-content';
-            element.style.margin = '0 auto';
-          }
-        });
+  scale: 2,
+  useCORS: true,
+  backgroundColor: '#1f2937',
+  logging: false,
+  width: Math.min(containerTemp.scrollWidth, 750)
+});
+
 
         canvas.toBlob(async (blob) => {
           const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
