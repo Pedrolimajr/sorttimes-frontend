@@ -932,13 +932,16 @@ containerTemp.appendChild(tituloContainer);
 
       try {
         const canvas = await html2canvas(containerTemp, {
-  scale: 2,
-  useCORS: true,
-  backgroundColor: '#1f2937',
-  logging: false,
-  width: Math.min(containerTemp.scrollWidth, 750)
-});
-
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#1f2937',
+          logging: false,
+          onclone: (document, element) => {
+            // Garantir que os estilos sejam aplicados no clone
+            element.style.width = 'fit-content';
+            element.style.margin = '0 auto';
+          }
+        });
 
         canvas.toBlob(async (blob) => {
           const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
