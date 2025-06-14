@@ -762,7 +762,6 @@ const [isento, setIsento] = useState(false);
   
   const compartilharControle = async () => {
   try {
-    // Container principal
     const containerTemp = document.createElement('div');
     containerTemp.style.cssText = `
       background-color: #1f2937;
@@ -772,6 +771,10 @@ const [isento, setIsento] = useState(false);
       width: 1100px;
       transform: scale(1);
       transform-origin: top left;
+      position: fixed;
+      left: 0;
+      top: 0;
+      z-index: 9999;
     `;
 
     // Título
@@ -812,7 +815,7 @@ const [isento, setIsento] = useState(false);
     tituloContainer.appendChild(tituloValor);
     containerTemp.appendChild(tituloContainer);
 
-    // Container das tabelas
+    // Tabelas
     const tabelasContainer = document.createElement('div');
     tabelasContainer.style.cssText = `
       display: flex;
@@ -909,7 +912,6 @@ const [isento, setIsento] = useState(false);
 
     containerTemp.appendChild(rodape);
 
-    // Adiciona e captura imagem
     document.body.style.overflow = 'hidden';
     document.body.appendChild(containerTemp);
 
@@ -919,7 +921,8 @@ const [isento, setIsento] = useState(false);
       backgroundColor: '#1f2937',
       logging: false,
       width: 1100,
-      windowWidth: 1100
+      windowWidth: 1600,
+      windowHeight: 2000
     });
 
     canvas.toBlob(async (blob) => {
