@@ -1789,4 +1789,3 @@ containerTemp.appendChild(tituloContainer);
     </div>
   );
 }
-
