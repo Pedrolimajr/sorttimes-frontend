@@ -30,7 +30,7 @@ import ListaJogadores from './ListaJogadores';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import api from '../services/api';
-
+import domtoimage from 'dom-to-image';
 Chart.register(...registerables);
 
 export default function Financeiro() {
@@ -761,210 +761,105 @@ const [isento, setIsento] = useState(false);
 
   
   const compartilharControle = async () => {
-    try {
-      // Container principal
-      const containerTemp = document.createElement('div');
-      containerTemp.style.cssText = `
-        background-color: #1f2937;
-        padding: 40px;
-        color: white;
-        font-family: Arial, sans-serif;
-      `;
+  try {
+    const tabelaOriginal = document.getElementById('tabela-mensalidades');
+    if (!tabelaOriginal) throw new Error('Tabela não encontrada');
 
-      // Criar e adicionar título
-      const tituloContainer = document.createElement('div');
-tituloContainer.style.cssText = `
-  text-align: center;
-  margin-bottom: 30px;
-`;
-
-const tituloZoom = document.createElement('div');
-tituloZoom.style.cssText = `
-  font-size: 24px;
-  font-weight: bold;
-  color: #ffd700;
-  margin-bottom: 15px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-`;
-tituloZoom.textContent = '⚠️ FAVOR DAR ZOOM ⚠️';
-
-const tituloControle = document.createElement('div');
-tituloControle.style.cssText = `
-  font-size: 20px;
-  font-weight: bold;
-  color: white;
-  margin-bottom: 10px;
-`;
-tituloControle.textContent = 'Controle de mensalidades dos jogadores';
-
-const tituloValor = document.createElement('div');
-tituloValor.style.cssText = `
-  font-size: 20px;
-  font-weight: bold;
-  color: white;
-`;
-tituloValor.textContent = '💰 MENSALIDADE VALOR 20,00R$';
-
-tituloContainer.appendChild(tituloZoom);
-tituloContainer.appendChild(tituloControle);
-tituloContainer.appendChild(tituloValor);
-containerTemp.appendChild(tituloContainer);
-
-      // Container para as tabelas
-      const tabelasContainer = document.createElement('div');
-      tabelasContainer.style.cssText = `
-        display: flex;
-        gap: 30px;
-        justify-content: center;
-        align-items: flex-start;
-      `;
-
-      // Obter e processar a tabela original
-      const tabelaOriginal = document.getElementById('tabela-mensalidades');
-      if (!tabelaOriginal) throw new Error('Tabela não encontrada');
-
-      const todasLinhas = Array.from(tabelaOriginal.getElementsByTagName('tr'));
-      const header = todasLinhas[0];
-      const linhasConteudo = todasLinhas.slice(1);
-      const metade = Math.ceil(linhasConteudo.length / 2);
-
-      // Função para criar tabela
-     const criarTabela = (linhas) => {
-  const tabela = document.createElement('table');
-  tabela.style.cssText = `
-    border-spacing: 0;
-    border-collapse: separate;
-    width: 550px;
-    background-color: #1f2937;
-  `;
-
-  // Adicionar cabeçalho
-  const headerClone = header.cloneNode(true);
-  Array.from(headerClone.children).forEach(th => {
-    th.style.cssText = `
-      padding: 8px;
-      text-align: center;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-      border-right: 1px solid rgba(255, 255, 255, 0.2);
-      background-color: rgba(0, 0, 0, 0.2);
+    // Criar um container temporário com melhor formatação para mobile
+    const containerTemp = document.createElement('div');
+    containerTemp.style.cssText = `
+      background-color: #1f2937;
+      padding: 20px;
       color: white;
+      font-family: Arial, sans-serif;
+      width: 100%;
+      max-width: 100%;
+      overflow-x: auto;
     `;
-  });
-  tabela.appendChild(headerClone);
 
-  // Adicionar linhas
-  linhas.forEach(linha => {
-    const linhaClone = linha.cloneNode(true);
-    Array.from(linhaClone.children).forEach((td, index) => {
-      td.style.cssText = `
-        padding: 8px;
-        text-align: ${index === 0 ? 'left' : 'center'};
-        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-        border-right: 1px solid rgba(255, 255, 255, 0.2);
-        color: white;
-      `;
+    // Adicionar título e instruções
+    const titulo = document.createElement('h2');
+    titulo.textContent = 'Controle de Mensalidades';
+    titulo.style.cssText = `
+      text-align: center;
+      font-size: 18px;
+      margin-bottom: 15px;
+      color: #ffffff;
+    `;
+    containerTemp.appendChild(titulo);
 
-      // Estilo especial para a coluna de status
-      if (index === 1) {
-        td.style.backgroundColor = td.textContent.trim().toLowerCase() === 'adimplente' 
-          ? 'rgba(16, 185, 129, 0.2)' 
-          : 'rgba(239, 68, 68, 0.2)';
-      }
+    // Clonar a tabela original com estilos otimizados
+    const tabelaClone = tabelaOriginal.cloneNode(true);
+    tabelaClone.style.cssText = `
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    `;
+    
+    // Ajustar células para melhor visualização mobile
+    Array.from(tabelaClone.querySelectorAll('th, td')).forEach(cell => {
+      cell.style.padding = '6px 3px';
+      cell.style.fontSize = '12px';
+    });
+    
+    containerTemp.appendChild(tabelaClone);
 
-      // Estilo para os checkmarks e X
-      if (index > 1) {
-        if (td.textContent.includes('✓')) {
-          td.style.color = '#10b981'; // Verde para check
-        } else if (td.textContent.includes('❌')) {
-          td.style.color = '#ef4444'; // Vermelho para X
-        }
+    // Adicionar rodapé
+    const rodape = document.createElement('div');
+    rodape.style.cssText = `
+      margin-top: 15px;
+      font-size: 12px;
+      color: #cccccc;
+      text-align: center;
+    `;
+    rodape.innerHTML = `
+      <p>💳 CHAVE PIX: Universocajazeiras@gmail.com</p>
+      <p>📌 FAVOR ENVIAR COMPROVANTE NO GRUPO</p>
+    `;
+    containerTemp.appendChild(rodape);
+
+    // Adicionar temporariamente ao documento
+    document.body.appendChild(containerTemp);
+
+    // Gerar a imagem
+    const dataUrl = await domtoimage.toPng(containerTemp, {
+      quality: 0.95,
+      width: containerTemp.offsetWidth * 2,
+      height: containerTemp.offsetHeight * 2,
+      style: {
+        transform: 'scale(2)',
+        transformOrigin: 'top left',
+        width: `${containerTemp.offsetWidth}px`,
+        height: `${containerTemp.offsetHeight}px`
       }
     });
-    tabela.appendChild(linhaClone);
-  });
 
-  return tabela;
-};
+    // Remover o elemento temporário
+    document.body.removeChild(containerTemp);
 
-      // Criar e adicionar primeira tabela
-      tabelasContainer.appendChild(criarTabela(linhasConteudo.slice(0, metade)));
+    // Compartilhar a imagem
+    const blob = await (await fetch(dataUrl)).blob();
+    const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
 
-      // Criar e adicionar divisor
-      const divisor = document.createElement('div');
-      divisor.style.cssText = `
-        width: 2px;
-        background-color: #ffffff40;
-        align-self: stretch;
-      `;
-      tabelasContainer.appendChild(divisor);
-
-      // Criar e adicionar segunda tabela
-      tabelasContainer.appendChild(criarTabela(linhasConteudo.slice(metade)));
-
-      containerTemp.appendChild(tabelasContainer);
-
-      // Criar e adicionar rodapé
-      const rodape = document.createElement('div');
-      rodape.style.cssText = `
-        text-align: center;
-        margin-top: 30px;
-        font-size: 14px;
-      `;
-      
-      const textoRodape = [
-        '💳 CHAVE PIX: Universocajazeiras@gmail.com',
-        '📌 FAVOR ENVIAR COMPROVANTE NO GRUPO, EU ATUALIZO A LISTA.',
-        '⚠️ OBS: Os nomes que estão com a tarja verde ao final, esses terão prioridades no baba, são os que no momento estão adimplentes. Espero não precisar ir no privado de cada um informar o seu compromisso. 🤝'
-      ];
-
-      textoRodape.forEach(texto => {
-        const p = document.createElement('p');
-        p.textContent = texto;
-        rodape.appendChild(p);
+    if (navigator.share) {
+      await navigator.share({
+        title: 'Controle de Mensalidades',
+        files: [file]
       });
-
-      containerTemp.appendChild(rodape);
-
-      // Adicionar ao documento temporariamente
-      document.body.appendChild(containerTemp);
-
-      try {
-        const canvas = await html2canvas(containerTemp, {
-          scale: 2,
-          useCORS: true,
-          backgroundColor: '#1f2937',
-          logging: false,
-          onclone: (document, element) => {
-            // Garantir que os estilos sejam aplicados no clone
-            element.style.width = 'fit-content';
-            element.style.margin = '0 auto';
-          }
-        });
-
-        canvas.toBlob(async (blob) => {
-          const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
-          try {
-            await navigator.share({
-              files: [file],
-              title: 'Controle de Mensalidades',
-            });
-            toast.success('Compartilhamento realizado com sucesso!');
-          } catch (error) {
-            console.error('Erro ao compartilhar:', error);
-            toast.error('Erro ao compartilhar');
-          }
-        }, 'image/png', 1.0);
-      } finally {
-        document.body.removeChild(containerTemp);
-      }
-
-    } catch (error) {
-      console.error('Erro:', error);
-      toast.error('Erro ao gerar imagem');
+    } else {
+      // Fallback para download
+      const link = document.createElement('a');
+      link.download = 'controle-mensalidades.png';
+      link.href = dataUrl;
+      link.click();
     }
-  };
+
+    toast.success('Compartilhado com sucesso!');
+  } catch (error) {
+    console.error('Erro ao compartilhar:', error);
+    toast.error('Erro ao compartilhar: ' + error.message);
+  }
+};
 
   const compartilharHistorico = async (elementId) => {
     try {
