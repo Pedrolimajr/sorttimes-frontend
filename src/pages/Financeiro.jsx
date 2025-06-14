@@ -763,14 +763,13 @@ const [isento, setIsento] = useState(false);
   const compartilharControle = async () => {
     try {
       // Container principal
-  const containerTemp = document.createElement('div');
-    containerTemp.style.cssText = `
-      background-color: #1f2937;
-      padding: 20px;
-      color: white;
-      font-family: Arial, sans-serif;
-      width: 900px; // Largura fixa para melhor compatibilidade
-    `;
+      const containerTemp = document.createElement('div');
+      containerTemp.style.cssText = `
+        background-color: #1f2937;
+        padding: 40px;
+        color: white;
+        font-family: Arial, sans-serif;
+      `;
 
       // Criar e adicionar título
       const tituloContainer = document.createElement('div');
@@ -932,58 +931,40 @@ containerTemp.appendChild(tituloContainer);
       document.body.appendChild(containerTemp);
 
       try {
-      const canvas = await html2canvas(containerTemp, {
-        scale: 1.5, // Reduzido para melhor compatibilidade
-        useCORS: true,
-        backgroundColor: '#1f2937',
-        logging: true, // Ativado para debug
-        width: containerTemp.offsetWidth,
-        height: containerTemp.offsetHeight
-      });
-
-
-  const blob = await new Promise(resolve => {
-        canvas.toBlob(resolve, 'image/png', 0.9);
-      });
-
-      if (!blob) {
-        throw new Error('Falha ao gerar imagem');
-      }
-
-      const file = new File([blob], 'controle-mensalidades.png', {
-        type: 'image/png'
-      });
-
-     if (navigator.share && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: 'Controle de Mensalidades',
+        const canvas = await html2canvas(containerTemp, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#1f2937',
+          logging: false,
+          onclone: (document, element) => {
+            // Garantir que os estilos sejam aplicados no clone
+            element.style.width = 'fit-content';
+            element.style.margin = '0 auto';
+          }
         });
-        toast.success('Compartilhamento realizado com sucesso!');
-      } else {
-        // Fallback para download
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'controle-mensalidades.png';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        toast.success('Imagem baixada com sucesso!');
-      }
-    } finally {
-      // Garantir que o container temporário seja removido
-      if (document.body.contains(containerTemp)) {
+
+        canvas.toBlob(async (blob) => {
+          const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
+          try {
+            await navigator.share({
+              files: [file],
+              title: 'Controle de Mensalidades',
+            });
+            toast.success('Compartilhamento realizado com sucesso!');
+          } catch (error) {
+            console.error('Erro ao compartilhar:', error);
+            toast.error('Erro ao compartilhar');
+          }
+        }, 'image/png', 1.0);
+      } finally {
         document.body.removeChild(containerTemp);
       }
-    }
 
-  } catch (error) {
-    console.error('Erro detalhado:', error);
-    toast.error('Erro ao gerar/compartilhar imagem. Por favor, tente novamente.');
-  }
-};
+    } catch (error) {
+      console.error('Erro:', error);
+      toast.error('Erro ao gerar imagem');
+    }
+  };
 
   const compartilharHistorico = async (elementId) => {
     try {
