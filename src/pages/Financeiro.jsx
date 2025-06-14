@@ -817,12 +817,13 @@ const [isento, setIsento] = useState(false);
 
     // Tabelas
     const tabelasContainer = document.createElement('div');
-    tabelasContainer.style.cssText = `
-      display: flex;
-      gap: 30px;
-      justify-content: center;
-      align-items: flex-start;
-    `;
+  tabelasContainer.style.cssText = `
+  display: flex;
+  flex-direction: ${isMobile ? 'column' : 'row'};
+  gap: 30px;
+  justify-content: center;
+  align-items: flex-start;
+`;
 
     const tabelaOriginal = document.getElementById('tabela-mensalidades');
     if (!tabelaOriginal) throw new Error('Tabela não encontrada');
