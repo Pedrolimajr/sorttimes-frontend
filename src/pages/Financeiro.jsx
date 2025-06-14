@@ -914,52 +914,62 @@ const [isento, setIsento] = useState(false);
 
     document.body.style.overflow = 'hidden';
     document.body.appendChild(containerTemp);
+containerTemp.style.position = 'absolute';
+containerTemp.style.left = '0';
+containerTemp.style.top = '0';
+containerTemp.style.zIndex = '9999';
+containerTemp.style.width = '1100px';
+containerTemp.style.maxWidth = 'unset';
+containerTemp.style.overflow = 'visible';
 
-    const canvas = await html2canvas(containerTemp, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: '#1f2937',
-      logging: false,
-      width: 1100,
-      windowWidth: 1600,
-      windowHeight: 2000
-    });
+document.body.style.overflow = 'visible';
+document.body.appendChild(containerTemp);
 
-    canvas.toBlob(async (blob) => {
-      if (!blob) {
-        toast.error('Erro ao gerar imagem. Tente novamente.');
-        return;
-      }
+const canvas = await html2canvas(containerTemp, {
+  scale: 2,
+  useCORS: true,
+  backgroundColor: '#1f2937',
+  logging: false,
+  width: 1100,
+  windowWidth: 1600,
+  windowHeight: 2000
+});
 
-      const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
+canvas.toBlob(async (blob) => {
+  if (!blob) {
+    toast.error('Erro ao gerar imagem. Tente novamente.');
+    return;
+  }
 
-      try {
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            title: 'Controle de Mensalidades',
-            text: 'Veja a lista atualizada dos jogadores.'
-          });
-          toast.success('Compartilhamento realizado com sucesso!');
-        } else {
-          const link = document.createElement('a');
-          link.href = URL.createObjectURL(file);
-          link.download = 'controle-mensalidades.png';
-          link.click();
-          toast.info('Imagem baixada. Compartilhe manualmente.');
-        }
-      } catch (erroCompartilhar) {
-        console.error('Erro ao compartilhar:', erroCompartilhar);
-        toast.error('Erro ao compartilhar. Imagem foi baixada.');
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(file);
-        link.download = 'controle-mensalidades.png';
-        link.click();
-      }
-    }, 'image/png', 1.0);
+  const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
 
-    document.body.removeChild(containerTemp);
-    document.body.style.overflow = 'auto';
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: 'Controle de Mensalidades',
+        text: 'Veja a lista atualizada dos jogadores.'
+      });
+      toast.success('Compartilhamento realizado com sucesso!');
+    } else {
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(file);
+      link.download = 'controle-mensalidades.png';
+      link.click();
+      toast.info('Imagem baixada. Compartilhe manualmente.');
+    }
+  } catch (erroCompartilhar) {
+    console.error('Erro ao compartilhar:', erroCompartilhar);
+    toast.error('Erro ao compartilhar. Imagem foi baixada.');
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(file);
+    link.download = 'controle-mensalidades.png';
+    link.click();
+  }
+}, 'image/png', 1.0);
+
+document.body.removeChild(containerTemp);
+document.body.style.overflow = 'auto';
 
   } catch (error) {
     console.error('Erro:', error);
