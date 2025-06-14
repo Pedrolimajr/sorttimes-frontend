@@ -760,7 +760,7 @@ const [isento, setIsento] = useState(false);
   // };
 
   
-  const compartilharControle = async () => {
+ const compartilharControle = async () => {
   try {
     const tabelaOriginal = document.getElementById('tabela-mensalidades');
     if (!tabelaOriginal) throw new Error('Tabela não encontrada');
@@ -777,16 +777,50 @@ const [isento, setIsento] = useState(false);
       overflow-x: auto;
     `;
 
-    // Adicionar título e instruções
-    const titulo = document.createElement('h2');
-    titulo.textContent = 'Controle de Mensalidades';
-    titulo.style.cssText = `
+    // CABEÇALHO COM AS MENSAGENS SOLICITADAS
+    const cabecalho = document.createElement('div');
+    cabecalho.style.cssText = `
       text-align: center;
-      font-size: 18px;
-      margin-bottom: 15px;
-      color: #ffffff;
+      margin-bottom: 20px;
     `;
-    containerTemp.appendChild(titulo);
+    
+    // 1. Mensagem "FAVOR DAR ZOOM"
+    const zoomMsg = document.createElement('div');
+    zoomMsg.style.cssText = `
+      font-size: 18px;
+      font-weight: bold;
+      color: #ffd700;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    `;
+    zoomMsg.textContent = '⚠️ FAVOR DAR ZOOM ⚠️';
+    
+    // 2. Mensagem "Controle de Mensalidades"
+    const tituloMsg = document.createElement('div');
+    tituloMsg.style.cssText = `
+      font-size: 20px;
+      font-weight: bold;
+      color: white;
+      margin-bottom: 10px;
+    `;
+    tituloMsg.textContent = 'Controle de Mensalidades';
+    
+    // 3. Mensagem "Valor da Mensalidade"
+    const valorMsg = document.createElement('div');
+    valorMsg.style.cssText = `
+      font-size: 18px;
+      font-weight: bold;
+      color: #4ade80;
+    `;
+    valorMsg.textContent = '💰 MENSALIDADE VALOR R$20,00';
+
+    // Adiciona as mensagens ao cabeçalho
+    cabecalho.appendChild(zoomMsg);
+    cabecalho.appendChild(tituloMsg);
+    cabecalho.appendChild(valorMsg);
+    
+    // Adiciona o cabeçalho ao container principal
+    containerTemp.appendChild(cabecalho);
 
     // Clonar a tabela original com estilos otimizados
     const tabelaClone = tabelaOriginal.cloneNode(true);
@@ -804,17 +838,22 @@ const [isento, setIsento] = useState(false);
     
     containerTemp.appendChild(tabelaClone);
 
-    // Adicionar rodapé
+    // RODAPÉ COM AS MENSAGENS SOLICITADAS
     const rodape = document.createElement('div');
     rodape.style.cssText = `
-      margin-top: 15px;
+      margin-top: 20px;
       font-size: 12px;
       color: #cccccc;
       text-align: center;
+      line-height: 1.5;
     `;
     rodape.innerHTML = `
       <p>💳 CHAVE PIX: Universocajazeiras@gmail.com</p>
       <p>📌 FAVOR ENVIAR COMPROVANTE NO GRUPO</p>
+      <p>OBS: ESSE VALOR SERÁ PARA CAIXA PARA AS COMPRAS DE MATERIAL, SENDO BOLA, REDE, PAGAMENTO DE JUÍZ.</p>
+      <p>OBS: OS NOMES QUE ESTÃO COM A TARJA VERDE AO FINAL, ESSES TERÃO PRIORIDADES NO BABA.</p>
+      <p>SÃO OS QUE NO MOMENTO ESTÃO ADIMPLENTES.</p>
+      <p>ESPERO NÃO PRECISAR IR NO PRIVADO DE CADA UM INFORMAR O SEU COMPROMISSO. 🤝</p>
     `;
     containerTemp.appendChild(rodape);
 
