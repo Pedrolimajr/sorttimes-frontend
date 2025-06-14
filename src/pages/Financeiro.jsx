@@ -760,7 +760,8 @@ const [isento, setIsento] = useState(false);
   // };
 
   
-  const compartilharControle = async () => {
+ // Função compartilharControle atualizada para empilhar tabelas no celular e evitar corte
+const compartilharControle = async () => {
   try {
     const containerTemp = document.createElement('div');
     containerTemp.style.cssText = `
@@ -771,13 +772,12 @@ const [isento, setIsento] = useState(false);
       width: 1100px;
       transform: scale(1);
       transform-origin: top left;
-      position: fixed;
+      position: absolute;
       left: 0;
       top: 0;
       z-index: 9999;
     `;
 
-    // Título
     const tituloContainer = document.createElement('div');
     tituloContainer.style.cssText = `text-align: center; margin-bottom: 30px;`;
 
@@ -794,20 +794,11 @@ const [isento, setIsento] = useState(false);
     tituloZoom.textContent = '⚠️ FAVOR DAR ZOOM ⚠️';
 
     const tituloControle = document.createElement('div');
-    tituloControle.style.cssText = `
-      font-size: 20px;
-      font-weight: bold;
-      color: white;
-      margin-bottom: 10px;
-    `;
+    tituloControle.style.cssText = `font-size: 20px; font-weight: bold; color: white; margin-bottom: 10px;`;
     tituloControle.textContent = 'Controle de mensalidades dos jogadores';
 
     const tituloValor = document.createElement('div');
-    tituloValor.style.cssText = `
-      font-size: 20px;
-      font-weight: bold;
-      color: white;
-    `;
+    tituloValor.style.cssText = `font-size: 20px; font-weight: bold; color: white;`;
     tituloValor.textContent = '💰 MENSALIDADE VALOR 20,00R$';
 
     tituloContainer.appendChild(tituloZoom);
@@ -815,17 +806,16 @@ const [isento, setIsento] = useState(false);
     tituloContainer.appendChild(tituloValor);
     containerTemp.appendChild(tituloContainer);
 
-    // Tabelas
     const tabelasContainer = document.createElement('div');
-   const isMobile = window.innerWidth < 768;
-tabelasContainer.style.cssText = `
-  display: flex;
-  flex-direction: ${isMobile ? 'column' : 'row'};
-  gap: 30px;
-  justify-content: center;
-  align-items: flex-start;
-  width: 100%;
-`;
+    const isMobile = window.innerWidth < 768;
+    tabelasContainer.style.cssText = `
+      display: flex;
+      flex-direction: ${isMobile ? 'column' : 'row'};
+      gap: 30px;
+      justify-content: center;
+      align-items: flex-start;
+      width: 100%;
+    `;
 
     const tabelaOriginal = document.getElementById('tabela-mensalidades');
     if (!tabelaOriginal) throw new Error('Tabela não encontrada');
@@ -887,26 +877,17 @@ tabelasContainer.style.cssText = `
     };
 
     tabelasContainer.appendChild(criarTabela(linhasConteudo.slice(0, metade)));
-
-    const divisor = document.createElement('div');
-    divisor.style.cssText = `
-      width: 2px;
-      background-color: #ffffff40;
-      align-self: stretch;
-    `;
-    tabelasContainer.appendChild(divisor);
-
     tabelasContainer.appendChild(criarTabela(linhasConteudo.slice(metade)));
     containerTemp.appendChild(tabelasContainer);
 
-    // Rodapé
     const rodape = document.createElement('div');
     rodape.style.cssText = `text-align: center; margin-top: 30px; font-size: 14px;`;
 
     [
       '💳 CHAVE PIX: Universocajazeiras@gmail.com',
       '📌 FAVOR ENVIAR COMPROVANTE NO GRUPO, EU ATUALIZO A LISTA.',
-      '⚠️ OBS: Os nomes que estão com a tarja verde ao final, esses terão prioridades no baba, são os que no momento estão adimplentes. Espero não precisar ir no privado de cada um informar o seu compromisso. 🤝'
+      '⚠️ OBS: Os nomes que estão com a tarja verde ao final, esses terão prioridades no baba, ',
+      'são os que no momento estão adimplentes. Espero não precisar ir no privado de cada um informar o seu compromisso. 🤝'
     ].forEach(texto => {
       const p = document.createElement('p');
       p.textContent = texto;
@@ -915,70 +896,58 @@ tabelasContainer.style.cssText = `
 
     containerTemp.appendChild(rodape);
 
-    document.body.style.overflow = 'hidden';
     document.body.appendChild(containerTemp);
-containerTemp.style.position = 'absolute';
-containerTemp.style.left = '0';
-containerTemp.style.top = '0';
-containerTemp.style.zIndex = '9999';
-containerTemp.style.width = '1100px';
-containerTemp.style.maxWidth = 'unset';
-containerTemp.style.overflow = 'visible';
 
-document.body.style.overflow = 'visible';
-document.body.appendChild(containerTemp);
+    const canvas = await html2canvas(containerTemp, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#1f2937',
+      logging: false,
+      width: isMobile ? 600 : 1100,
+      windowWidth: isMobile ? 700 : 1600,
+      windowHeight: isMobile ? 1600 : 2000
+    });
 
-const canvas = await html2canvas(containerTemp, {
-  scale: 2,
-  useCORS: true,
-  backgroundColor: '#1f2937',
-  logging: false,
-  width: 1100,
-  windowWidth: 1600,
-  windowHeight: 2000
-});
+    canvas.toBlob(async (blob) => {
+      if (!blob) {
+        toast.error('Erro ao gerar imagem. Tente novamente.');
+        return;
+      }
 
-canvas.toBlob(async (blob) => {
-  if (!blob) {
-    toast.error('Erro ao gerar imagem. Tente novamente.');
-    return;
-  }
+      const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
 
-  const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
+      try {
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: 'Controle de Mensalidades',
+            text: 'Veja a lista atualizada dos jogadores.'
+          });
+          toast.success('Compartilhamento realizado com sucesso!');
+        } else {
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(file);
+          link.download = 'controle-mensalidades.png';
+          link.click();
+          toast.info('Imagem baixada. Compartilhe manualmente.');
+        }
+      } catch (erroCompartilhar) {
+        console.error('Erro ao compartilhar:', erroCompartilhar);
+        toast.error('Erro ao compartilhar. Imagem foi baixada.');
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(file);
+        link.download = 'controle-mensalidades.png';
+        link.click();
+      }
+    }, 'image/png', 1.0);
 
-  try {
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({
-        files: [file],
-        title: 'Controle de Mensalidades',
-        text: 'Veja a lista atualizada dos jogadores.'
-      });
-      toast.success('Compartilhamento realizado com sucesso!');
-    } else {
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(file);
-      link.download = 'controle-mensalidades.png';
-      link.click();
-      toast.info('Imagem baixada. Compartilhe manualmente.');
-    }
-  } catch (erroCompartilhar) {
-    console.error('Erro ao compartilhar:', erroCompartilhar);
-    toast.error('Erro ao compartilhar. Imagem foi baixada.');
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(file);
-    link.download = 'controle-mensalidades.png';
-    link.click();
-  }
-}, 'image/png', 1.0);
-
-document.body.removeChild(containerTemp);
-document.body.style.overflow = 'auto';
-
+    document.body.removeChild(containerTemp);
   } catch (error) {
     console.error('Erro:', error);
     toast.error('Erro ao gerar imagem');
   }
 };
+
 
   const compartilharHistorico = async (elementId) => {
     try {
