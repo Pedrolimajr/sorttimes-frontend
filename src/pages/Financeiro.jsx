@@ -760,194 +760,211 @@ const [isento, setIsento] = useState(false);
   // };
 
   
- // Função compartilharControle atualizada para empilhar tabelas no celular e evitar corte
-const compartilharControle = async () => {
-  try {
-    const containerTemp = document.createElement('div');
-    containerTemp.style.cssText = `
-      background-color: #1f2937;
-      padding: 40px;
-      color: white;
-      font-family: Arial, sans-serif;
-      width: 1100px;
-      transform: scale(1);
-      transform-origin: top left;
-      position: absolute;
-      left: 0;
-      top: 0;
-      z-index: 9999;
-    `;
+  const compartilharControle = async () => {
+    try {
+      // Container principal
+      const containerTemp = document.createElement('div');
+      containerTemp.style.cssText = `
+        background-color: #1f2937;
+        padding: 40px;
+        color: white;
+        font-family: Arial, sans-serif;
+      `;
 
-    const tituloContainer = document.createElement('div');
-    tituloContainer.style.cssText = `text-align: center; margin-bottom: 30px;`;
-
-    const tituloZoom = document.createElement('div');
-    tituloZoom.style.cssText = `
-      font-size: 24px;
-      font-weight: bold;
-      color: #ffd700;
-      margin-bottom: 15px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-    `;
-    tituloZoom.textContent = '⚠️ FAVOR DAR ZOOM ⚠️';
-
-    const tituloControle = document.createElement('div');
-    tituloControle.style.cssText = `font-size: 20px; font-weight: bold; color: white; margin-bottom: 10px;`;
-    tituloControle.textContent = 'Controle de mensalidades dos jogadores';
-
-    const tituloValor = document.createElement('div');
-    tituloValor.style.cssText = `font-size: 20px; font-weight: bold; color: white;`;
-    tituloValor.textContent = '💰 MENSALIDADE VALOR 20,00R$';
-
-    tituloContainer.appendChild(tituloZoom);
-    tituloContainer.appendChild(tituloControle);
-    tituloContainer.appendChild(tituloValor);
-    containerTemp.appendChild(tituloContainer);
-
-    const tabelasContainer = document.createElement('div');
-    const isMobile = window.innerWidth < 768;
-    tabelasContainer.style.cssText = `
-      display: flex;
-      flex-direction: ${isMobile ? 'column' : 'row'};
-      gap: 30px;
-      justify-content: center;
-      align-items: flex-start;
-      width: 100%;
-    `;
-
-    const tabelaOriginal = document.getElementById('tabela-mensalidades');
-    if (!tabelaOriginal) throw new Error('Tabela não encontrada');
-
-    const todasLinhas = Array.from(tabelaOriginal.getElementsByTagName('tr'));
-    const header = todasLinhas[0];
-    const linhasConteudo = todasLinhas.slice(1);
-    const metade = Math.ceil(linhasConteudo.length / 2);
-
-    const criarTabela = (linhas) => {
-      const tabela = document.createElement('table');
-    tabela.style.cssText = `
-  border-spacing: 0;
-  border-collapse: separate;
-  min-width: 1100px;
-  background-color: #1f2937;
+      // Criar e adicionar título
+      const tituloContainer = document.createElement('div');
+tituloContainer.style.cssText = `
+  text-align: center;
+  margin-bottom: 30px;
 `;
 
-      const headerClone = header.cloneNode(true);
-      Array.from(headerClone.children).forEach(th => {
-        th.style.cssText = `
-          padding: 8px;
-          text-align: center;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-          border-right: 1px solid rgba(255, 255, 255, 0.2);
-          background-color: rgba(0, 0, 0, 0.2);
-          color: white;
-        `;
-      });
-      tabela.appendChild(headerClone);
+const tituloZoom = document.createElement('div');
+tituloZoom.style.cssText = `
+  font-size: 24px;
+  font-weight: bold;
+  color: #ffd700;
+  margin-bottom: 15px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+`;
+tituloZoom.textContent = '⚠️ FAVOR DAR ZOOM ⚠️';
 
-      linhas.forEach(linha => {
-        const linhaClone = linha.cloneNode(true);
-        Array.from(linhaClone.children).forEach((td, index) => {
-          td.style.cssText = `
-            padding: 8px;
-            text-align: ${index === 0 ? 'left' : 'center'};
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-            border-right: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-          `;
-          if (index === 1) {
-            td.style.backgroundColor = td.textContent.trim().toLowerCase() === 'adimplente'
-              ? 'rgba(16, 185, 129, 0.2)'
-              : 'rgba(239, 68, 68, 0.2)';
-          }
-          if (index > 1) {
-            if (td.textContent.includes('✓')) {
-              td.style.color = '#10b981';
-            } else if (td.textContent.includes('❌')) {
-              td.style.color = '#ef4444';
-            }
-          }
-        });
-        tabela.appendChild(linhaClone);
-      });
+const tituloControle = document.createElement('div');
+tituloControle.style.cssText = `
+  font-size: 20px;
+  font-weight: bold;
+  color: white;
+  margin-bottom: 10px;
+`;
+tituloControle.textContent = 'Controle de mensalidades dos jogadores';
 
-      return tabela;
-    };
+const tituloValor = document.createElement('div');
+tituloValor.style.cssText = `
+  font-size: 20px;
+  font-weight: bold;
+  color: white;
+`;
+tituloValor.textContent = '💰 MENSALIDADE VALOR 20,00R$';
 
-    tabelasContainer.appendChild(criarTabela(linhasConteudo.slice(0, metade)));
-    tabelasContainer.appendChild(criarTabela(linhasConteudo.slice(metade)));
-    containerTemp.appendChild(tabelasContainer);
+tituloContainer.appendChild(tituloZoom);
+tituloContainer.appendChild(tituloControle);
+tituloContainer.appendChild(tituloValor);
+containerTemp.appendChild(tituloContainer);
 
-    const rodape = document.createElement('div');
-    rodape.style.cssText = `text-align: center; margin-top: 30px; font-size: 14px;`;
+      // Container para as tabelas
+      const tabelasContainer = document.createElement('div');
+      tabelasContainer.style.cssText = `
+        display: flex;
+        gap: 30px;
+        justify-content: center;
+        align-items: flex-start;
+      `;
 
-    [
-      '💳 CHAVE PIX: Universocajazeiras@gmail.com',
-      '📌 FAVOR ENVIAR COMPROVANTE NO GRUPO, EU ATUALIZO A LISTA.',
-      '⚠️ OBS: Os nomes que estão com a tarja verde ao final, esses terão prioridades no baba, ',
-      'são os que no momento estão adimplentes. Espero não precisar ir no privado de cada um informar o seu compromisso. 🤝'
-    ].forEach(texto => {
-      const p = document.createElement('p');
-      p.textContent = texto;
-      rodape.appendChild(p);
-    });
+      // Obter e processar a tabela original
+      const tabelaOriginal = document.getElementById('tabela-mensalidades');
+      if (!tabelaOriginal) throw new Error('Tabela não encontrada');
 
-    containerTemp.appendChild(rodape);
+      const todasLinhas = Array.from(tabelaOriginal.getElementsByTagName('tr'));
+      const header = todasLinhas[0];
+      const linhasConteudo = todasLinhas.slice(1);
+      const metade = Math.ceil(linhasConteudo.length / 2);
 
-    document.body.appendChild(containerTemp);
+      // Função para criar tabela
+     const criarTabela = (linhas) => {
+  const tabela = document.createElement('table');
+  tabela.style.cssText = `
+    border-spacing: 0;
+    border-collapse: separate;
+    width: 550px;
+    background-color: #1f2937;
+  `;
 
-    const canvas = await html2canvas(containerTemp, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: '#1f2937',
-      logging: false,
-      width: isMobile ? 600 : 1100,
-      windowWidth: isMobile ? 700 : 1600,
-      windowHeight: isMobile ? 1600 : 2000
-    });
+  // Adicionar cabeçalho
+  const headerClone = header.cloneNode(true);
+  Array.from(headerClone.children).forEach(th => {
+    th.style.cssText = `
+      padding: 8px;
+      text-align: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      border-right: 1px solid rgba(255, 255, 255, 0.2);
+      background-color: rgba(0, 0, 0, 0.2);
+      color: white;
+    `;
+  });
+  tabela.appendChild(headerClone);
 
-    canvas.toBlob(async (blob) => {
-      if (!blob) {
-        toast.error('Erro ao gerar imagem. Tente novamente.');
-        return;
+  // Adicionar linhas
+  linhas.forEach(linha => {
+    const linhaClone = linha.cloneNode(true);
+    Array.from(linhaClone.children).forEach((td, index) => {
+      td.style.cssText = `
+        padding: 8px;
+        text-align: ${index === 0 ? 'left' : 'center'};
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        border-right: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+      `;
+
+      // Estilo especial para a coluna de status
+      if (index === 1) {
+        td.style.backgroundColor = td.textContent.trim().toLowerCase() === 'adimplente' 
+          ? 'rgba(16, 185, 129, 0.2)' 
+          : 'rgba(239, 68, 68, 0.2)';
       }
 
-      const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
-
-      try {
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            title: 'Controle de Mensalidades',
-            text: 'Veja a lista atualizada dos jogadores.'
-          });
-          toast.success('Compartilhamento realizado com sucesso!');
-        } else {
-          const link = document.createElement('a');
-          link.href = URL.createObjectURL(file);
-          link.download = 'controle-mensalidades.png';
-          link.click();
-          toast.info('Imagem baixada. Compartilhe manualmente.');
+      // Estilo para os checkmarks e X
+      if (index > 1) {
+        if (td.textContent.includes('✓')) {
+          td.style.color = '#10b981'; // Verde para check
+        } else if (td.textContent.includes('❌')) {
+          td.style.color = '#ef4444'; // Vermelho para X
         }
-      } catch (erroCompartilhar) {
-        console.error('Erro ao compartilhar:', erroCompartilhar);
-        toast.error('Erro ao compartilhar. Imagem foi baixada.');
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(file);
-        link.download = 'controle-mensalidades.png';
-        link.click();
       }
-    }, 'image/png', 1.0);
+    });
+    tabela.appendChild(linhaClone);
+  });
 
-    document.body.removeChild(containerTemp);
-  } catch (error) {
-    console.error('Erro:', error);
-    toast.error('Erro ao gerar imagem');
-  }
+  return tabela;
 };
 
+      // Criar e adicionar primeira tabela
+      tabelasContainer.appendChild(criarTabela(linhasConteudo.slice(0, metade)));
+
+      // Criar e adicionar divisor
+      const divisor = document.createElement('div');
+      divisor.style.cssText = `
+        width: 2px;
+        background-color: #ffffff40;
+        align-self: stretch;
+      `;
+      tabelasContainer.appendChild(divisor);
+
+      // Criar e adicionar segunda tabela
+      tabelasContainer.appendChild(criarTabela(linhasConteudo.slice(metade)));
+
+      containerTemp.appendChild(tabelasContainer);
+
+      // Criar e adicionar rodapé
+      const rodape = document.createElement('div');
+      rodape.style.cssText = `
+        text-align: center;
+        margin-top: 30px;
+        font-size: 14px;
+      `;
+      
+      const textoRodape = [
+        '💳 CHAVE PIX: Universocajazeiras@gmail.com',
+        '📌 FAVOR ENVIAR COMPROVANTE NO GRUPO, EU ATUALIZO A LISTA.',
+        '⚠️ OBS: Os nomes que estão com a tarja verde ao final, esses terão prioridades no baba, são os que no momento estão adimplentes. Espero não precisar ir no privado de cada um informar o seu compromisso. 🤝'
+      ];
+
+      textoRodape.forEach(texto => {
+        const p = document.createElement('p');
+        p.textContent = texto;
+        rodape.appendChild(p);
+      });
+
+      containerTemp.appendChild(rodape);
+
+      // Adicionar ao documento temporariamente
+      document.body.appendChild(containerTemp);
+
+      try {
+        const canvas = await html2canvas(containerTemp, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#1f2937',
+          logging: false,
+          onclone: (document, element) => {
+            // Garantir que os estilos sejam aplicados no clone
+            element.style.width = 'fit-content';
+            element.style.margin = '0 auto';
+          }
+        });
+
+        canvas.toBlob(async (blob) => {
+          const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
+          try {
+            await navigator.share({
+              files: [file],
+              title: 'Controle de Mensalidades',
+            });
+            toast.success('Compartilhamento realizado com sucesso!');
+          } catch (error) {
+            console.error('Erro ao compartilhar:', error);
+            toast.error('Erro ao compartilhar');
+          }
+        }, 'image/png', 1.0);
+      } finally {
+        document.body.removeChild(containerTemp);
+      }
+
+    } catch (error) {
+      console.error('Erro:', error);
+      toast.error('Erro ao gerar imagem');
+    }
+  };
 
   const compartilharHistorico = async (elementId) => {
     try {
