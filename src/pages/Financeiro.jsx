@@ -765,118 +765,116 @@ const [isento, setIsento] = useState(false);
     const tabelaOriginal = document.getElementById('tabela-mensalidades');
     if (!tabelaOriginal) throw new Error('Tabela não encontrada');
 
-    // Criar container temporário com dimensões fixas
+    // 1. Configurações de tamanho para celular
+    const mobileWidth = window.screen.width * 2; // Largura do dispositivo x2
+    const paddingMultiplier = 1.5; // Fator de multiplicação para padding
+
+    // 2. Criar container com dimensões otimizadas para mobile
     const containerTemp = document.createElement('div');
     containerTemp.style.cssText = `
       background-color: #1f2937;
-      padding: 20px;
+      padding: ${20 * paddingMultiplier}px;
       color: white;
       font-family: Arial, sans-serif;
-      width: 800px; /* Largura fixa para controle preciso */
-      margin: 0 auto;
+      width: ${mobileWidth}px;
+      box-sizing: border-box;
     `;
 
-    // Cabeçalho com estilo melhorado
+    // 3. Cabeçalho com tamanho aumentado
     const cabecalho = document.createElement('div');
     cabecalho.style.cssText = `
       text-align: center;
-      font-size: 24px;
+      font-size: ${24 * paddingMultiplier}px;
       font-weight: bold;
       color: #4ade80;
-      margin-bottom: 20px;
-      padding: 10px;
-      text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+      margin-bottom: ${20 * paddingMultiplier}px;
+      padding: ${10 * paddingMultiplier}px;
     `;
     cabecalho.textContent = '💰 MENSALIDADE: R$20,00';
     containerTemp.appendChild(cabecalho);
 
-    // Clonar e estilizar a tabela com alta qualidade
+    // 4. Clonar tabela com estilos ampliados
     const tabelaClone = tabelaOriginal.cloneNode(true);
     tabelaClone.style.cssText = `
       width: 100%;
       border-collapse: separate;
       border-spacing: 0;
-      font-size: 18px;
+      font-size: ${18 * paddingMultiplier}px;
     `;
     
-    // Estilizar células para máxima legibilidade
-    Array.from(tabelaClone.querySelectorAll('th, td')).forEach((cell, index) => {
-      cell.style.padding = '10px 8px';
-      cell.style.fontSize = '16px';
+    // 5. Aumentar tamanho de células e texto
+    Array.from(tabelaClone.querySelectorAll('th, td')).forEach(cell => {
+      cell.style.padding = `${10 * paddingMultiplier}px ${8 * paddingMultiplier}px`;
+      cell.style.fontSize = `${16 * paddingMultiplier}px`;
       cell.style.border = '1px solid #4b5563';
-      cell.style.verticalAlign = 'middle';
       
-      // Melhor contraste para cabeçalhos
       if (cell.tagName === 'TH') {
-        cell.style.backgroundColor = '#374151';
-        cell.style.fontWeight = 'bold';
+        cell.style.fontSize = `${18 * paddingMultiplier}px`;
       }
     });
 
     containerTemp.appendChild(tabelaClone);
     document.body.appendChild(containerTemp);
 
-    // Configurações ULTRA-HD (4x a resolução original)
-    const scaleFactor = 4; // Fator de escala aumentado para 4x
+    // 6. Configurações de exportação para tamanho grande
     const options = {
-      quality: 1, // Qualidade máxima (0-1)
-      width: containerTemp.offsetWidth * scaleFactor,
-      height: containerTemp.offsetHeight * scaleFactor,
-      style: {
-        transform: `scale(${scaleFactor})`,
-        transformOrigin: 'top left',
-        width: `${containerTemp.offsetWidth}px`,
-        height: `${containerTemp.offsetHeight}px`
-      },
+      quality: 1,
+      width: containerTemp.offsetWidth,
+      height: containerTemp.offsetHeight,
+      scale: 2, // Fator de escala adicional
       backgroundColor: '#1f2937',
-      cacheBust: true, // Evitar cache
-      pixelRatio: window.devicePixelRatio * 2 // Dobrar a densidade de pixels
+      logging: false,
+      useCORS: true,
+      allowTaint: true,
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: document.documentElement.scrollWidth,
+      windowHeight: document.documentElement.scrollHeight
     };
 
-    // 1. Primeiro gerar em resolução ultra alta
-    const ultraHdCanvas = await html2canvas(containerTemp, options);
+    // 7. Gerar imagem em alta resolução
+    const canvas = await html2canvas(containerTemp, options);
+    const dataUrl = canvas.toDataURL('image/png', 1.0);
     
-    // 2. Reduzir para Full HD mantendo qualidade
-    const hdCanvas = document.createElement('canvas');
-    hdCanvas.width = containerTemp.offsetWidth * 2;
-    hdCanvas.height = containerTemp.offsetHeight * 2;
-    const ctx = hdCanvas.getContext('2d');
-    ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(ultraHdCanvas, 0, 0, hdCanvas.width, hdCanvas.height);
-
-    const dataUrl = hdCanvas.toDataURL('image/png', 1.0);
+    // 8. Remover elemento temporário
     document.body.removeChild(containerTemp);
 
-    // Otimização final para WhatsApp
-    const blob = await (await fetch(dataUrl)).blob();
-    const file = new File([blob], 'mensalidades_ultra_hd.png', {
-      type: 'image/png',
-      lastModified: Date.now()
-    });
+    // 9. Função para forçar download em tamanho grande
+    function downloadImage(dataUrl) {
+      const link = document.createElement('a');
+      link.download = 'mensalidades_grande.png';
+      link.href = dataUrl;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
 
+    // 10. Compartilhar ou fazer download
     if (navigator.share) {
-      await navigator.share({
-        title: 'Controle de Mensalidades',
-        files: [file]
-      }).catch(e => {
-        // Fallback se o compartilhamento falhar
+      try {
+        const blob = await (await fetch(dataUrl)).blob();
+        const file = new File([blob], 'mensalidades.png', {
+          type: 'image/png',
+          lastModified: Date.now()
+        });
+        
+        await navigator.share({
+          title: 'Controle de Mensalidades',
+          files: [file]
+        });
+      } catch (shareError) {
+        console.warn('Erro ao compartilhar, fazendo download:', shareError);
         downloadImage(dataUrl);
-      });
+      }
     } else {
       downloadImage(dataUrl);
     }
 
-    function downloadImage(url) {
-      const link = document.createElement('a');
-      link.download = 'mensalidades_hd.png';
-      link.href = url;
-      link.click();
-    }
-
-    toast.success('Imagem HD gerada com sucesso!');
+    toast.success('Imagem gerada em tamanho grande!');
   } catch (error) {
     console.error('Erro ao gerar imagem:', error);
-    toast.error('Falha ao gerar imagem: ' + error.message);
+    toast.error('Erro: ' + error.message);
   }
 };
 
