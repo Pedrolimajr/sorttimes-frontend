@@ -765,20 +765,6 @@ const compartilharControle = async () => {
     const tabelaOriginal = document.getElementById('tabela-mensalidades');
     if (!tabelaOriginal) throw new Error('Tabela não encontrada');
 
-       // 2. Cabeçalho fixo (centralizado)
-    const cabecalho = document.createElement('div');
-    cabecalho.style.cssText = `
-      text-align: center;
-      font-size: 18px;
-      font-weight: bold;
-      color: #4ade80;
-      margin-bottom: 15px;
-      position: sticky;
-      left: 0;
-    `;
-    cabecalho.textContent = '💰 MENSALIDADE: R$20,00';
-    containerTemp.appendChild(cabecalho);
-
     // 1. Criar container principal com scroll horizontal
     const containerTemp = document.createElement('div');
     containerTemp.style.cssText = `
@@ -792,7 +778,20 @@ const compartilharControle = async () => {
       white-space: nowrap; /* Impede quebra de linha */
     `;
 
- 
+    // 2. Cabeçalho fixo (centralizado)
+    const cabecalho = document.createElement('div');
+    cabecalho.style.cssText = `
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+      color: #4ade80;
+      margin-bottom: 15px;
+      position: sticky;
+      left: 0;
+    `;
+    cabecalho.textContent = '💰 MENSALIDADE: R$20,00';
+    containerTemp.appendChild(cabecalho);
+
     // 3. Container FLEX para as tabelas (modificado para mobile)
     const tabelasContainer = document.createElement('div');
     tabelasContainer.style.cssText = `
