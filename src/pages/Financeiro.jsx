@@ -760,7 +760,7 @@ const [isento, setIsento] = useState(false);
   // };
 
   
- const compartilharControle = async () => {
+const compartilharControle = async () => {
   try {
     const tabelaOriginal = document.getElementById('tabela-mensalidades');
     if (!tabelaOriginal) throw new Error('Tabela não encontrada');
@@ -776,44 +776,76 @@ const [isento, setIsento] = useState(false);
       max-width: 100%;
     `;
 
-    // Adicionar apenas o cabeçalho solicitado
+    // Adicionar cabeçalho
     const cabecalho = document.createElement('div');
     cabecalho.style.cssText = `
       text-align: center;
       font-size: 18px;
       font-weight: bold;
-      color: #4ade80; /* Verde para destacar */
+      color: #4ade80;
       margin-bottom: 15px;
       padding: 8px;
     `;
-    cabecalho.textContent = 'MENSALIDADE: R$20,00';
+    cabecalho.textContent = '💰 MENSALIDADE: R$20,00';
     containerTemp.appendChild(cabecalho);
 
-    // Clonar e estilizar a tabela para melhor qualidade
-    const tabelaClone = tabelaOriginal.cloneNode(true);
-    tabelaClone.style.cssText = `
+    // Criar container para as tabelas divididas
+    const tabelasContainer = document.createElement('div');
+    tabelasContainer.style.cssText = `
+      display: flex;
+      gap: 10px;
       width: 100%;
-      border-collapse: collapse;
-      font-size: 16px;  /* Tamanho aumentado */
     `;
-    
-    // Ajustar células
-    Array.from(tabelaClone.querySelectorAll('th, td')).forEach(cell => {
-      cell.style.padding = '8px 4px';
-      cell.style.fontSize = '14px';
-      cell.style.border = '1px solid #374151'; /* Borda sutil */
+
+    // Clonar tabela original duas vezes
+    const tabelaClone1 = tabelaOriginal.cloneNode(true);
+    const tabelaClone2 = tabelaOriginal.cloneNode(true);
+
+    // Ajustar colunas da primeira tabela (mantém primeiras colunas)
+    Array.from(tabelaClone1.querySelectorAll('tr')).forEach(row => {
+      const cells = row.querySelectorAll('td, th');
+      cells.forEach((cell, index) => {
+        if (index > 2) cell.remove(); // Mantém apenas as 3 primeiras colunas
+      });
     });
 
-    containerTemp.appendChild(tabelaClone);
+    // Ajustar colunas da segunda tabela (mantém colunas restantes)
+    Array.from(tabelaClone2.querySelectorAll('tr')).forEach(row => {
+      const cells = row.querySelectorAll('td, th');
+      cells.forEach((cell, index) => {
+        if (index <= 2) cell.remove(); // Remove as 3 primeiras colunas
+      });
+    });
+
+    // Estilizar ambas as tabelas
+    [tabelaClone1, tabelaClone2].forEach(tabela => {
+      tabela.style.cssText = `
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+        flex: 1;
+      `;
+      
+      Array.from(tabela.querySelectorAll('th, td')).forEach(cell => {
+        cell.style.padding = '6px 3px';
+        cell.style.border = '1px solid #374151';
+        cell.style.fontSize = '13px';
+      });
+    });
+
+    // Adicionar tabelas ao container
+    tabelasContainer.appendChild(tabelaClone1);
+    tabelasContainer.appendChild(tabelaClone2);
+    containerTemp.appendChild(tabelasContainer);
     document.body.appendChild(containerTemp);
 
     // Configurações de alta qualidade
     const options = {
       quality: 1,
-      width: containerTemp.offsetWidth * 3,
-      height: containerTemp.offsetHeight * 3,
+      width: containerTemp.offsetWidth * 2, // Reduzido para melhorar no WhatsApp
+      height: containerTemp.offsetHeight * 2,
       style: {
-        transform: 'scale(3)',
+        transform: 'scale(2)',
         transformOrigin: 'top left',
         width: `${containerTemp.offsetWidth}px`,
         height: `${containerTemp.offsetHeight}px`
