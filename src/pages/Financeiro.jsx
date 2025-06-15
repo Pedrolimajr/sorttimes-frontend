@@ -765,123 +765,109 @@ const compartilharControle = async () => {
     const tabelaOriginal = document.getElementById('tabela-mensalidades');
     if (!tabelaOriginal) throw new Error('Tabela não encontrada');
 
-    // 1. Container principal com scroll horizontal
+    // 1. Container principal com largura fixa
     const containerTemp = document.createElement('div');
     containerTemp.style.cssText = `
       background-color: #1f2937;
-      padding: 15px;
+      padding: 20px 10px;
       color: white;
       font-family: Arial, sans-serif;
-      width: 100vw;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
+      width: 800px; /* Largura fixa para forçar as duas tabelas */
+      margin: 0 auto;
     `;
 
-    // 2. CABEÇALHO CENTRALIZADO (MODIFICADO)
-    const cabecalhoContainer = document.createElement('div');
-    cabecalhoContainer.style.cssText = `
-      display: flex;
-      justify-content: center;
-      width: 100%;
-      margin-bottom: 15px;
-      position: sticky;
-      left: 0;
-    `;
-
+    // 2. CABEÇALHO CENTRALIZADO GRANDE
     const cabecalho = document.createElement('div');
     cabecalho.style.cssText = `
       text-align: center;
-      font-size: 22px;  /* Aumentei o tamanho */
+      font-size: 24px;
       font-weight: bold;
       color: #4ade80;
+      margin-bottom: 20px;
       padding: 10px;
-      background-color: #1f2937;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      width: fit-content;
+      width: 100%;
     `;
     cabecalho.textContent = '💰 MENSALIDADE: R$20,00';
-    cabecalhoContainer.appendChild(cabecalho);
-    containerTemp.appendChild(cabecalhoContainer);
+    containerTemp.appendChild(cabecalho);
 
-    // 3. Container para as tabelas
+    // 3. Container FLEX para tabelas
     const tabelasContainer = document.createElement('div');
     tabelasContainer.style.cssText = `
-      display: inline-flex;
+      display: flex;
       gap: 15px;
-      min-width: 200%;
+      width: 100%;
     `;
 
-    // 4. Clonagem das tabelas (mesma lógica anterior)
-    const tabela1 = tabelaOriginal.cloneNode(false);
-    const tabela2 = tabelaOriginal.cloneNode(false);
+    // 4. Clonagem PERFEITA das tabelas
+    const tabela1 = tabelaOriginal.cloneNode(true);
+    const tabela2 = tabelaOriginal.cloneNode(true);
     
-    const theadOriginal = tabelaOriginal.querySelector('thead');
-    if (theadOriginal) {
-      tabela1.appendChild(theadOriginal.cloneNode(true));
-      tabela2.appendChild(theadOriginal.cloneNode(true));
-    }
+    // Limpar dados das tabelas clonadas
+    const tbody1 = tabela1.querySelector('tbody');
+    const tbody2 = tabela2.querySelector('tbody');
+    if (tbody1) tbody1.innerHTML = '';
+    if (tbody2) tbody2.innerHTML = '';
 
+    // Dividir jogadores
     const linhas = tabelaOriginal.querySelectorAll('tbody tr');
     const metade = Math.ceil(linhas.length / 2);
 
-    const tbody1 = document.createElement('tbody');
-    const tbody2 = document.createElement('tbody');
-    
+    // Preencher tabelas
     linhas.forEach((linha, index) => {
-      (index < metade ? tbody1 : tbody2).appendChild(linha.cloneNode(true));
+      const clone = linha.cloneNode(true);
+      if (index < metade) {
+        tbody1.appendChild(clone);
+      } else {
+        tbody2.appendChild(clone);
+      }
     });
 
-    tabela1.appendChild(tbody1);
-    tabela2.appendChild(tbody2);
-
-    // 5. Estilo das tabelas
+    // 5. Estilo CONSISTENTE para ambas tabelas
     [tabela1, tabela2].forEach(tabela => {
       tabela.style.cssText = `
-        width: auto;
+        width: 100%;
         border-collapse: collapse;
-        font-size: 12px;
-        display: inline-table;
+        font-size: 14px;
       `;
       
       Array.from(tabela.querySelectorAll('th, td')).forEach(cell => {
-        cell.style.padding = '4px 2px';
+        cell.style.padding = '8px 4px';
         cell.style.border = '1px solid #374151';
-        cell.style.fontSize = '12px';
+        cell.style.textAlign = 'center';
       });
     });
 
-    // 6. Montagem final
+    // 6. Adicionar tabelas ao container
     tabelasContainer.appendChild(tabela1);
     tabelasContainer.appendChild(tabela2);
     containerTemp.appendChild(tabelasContainer);
     document.body.appendChild(containerTemp);
 
-    // 7. Configuração da imagem
+    // 7. Configuração de imagem OTIMIZADA
     const options = {
-      quality: 0.95,
-      width: containerTemp.scrollWidth * 1.5,
-      height: containerTemp.offsetHeight * 1.5,
+      quality: 1,
+      width: 800,
+      height: containerTemp.offsetHeight,
       style: {
-        transform: 'scale(1.5)',
-        transformOrigin: 'top left',
-        width: `${containerTemp.scrollWidth}px`,
-        height: `${containerTemp.offsetHeight}px`
+        transform: 'none',
+        width: '800px',
+        height: 'auto'
       },
       bgcolor: '#1f2937'
     };
 
-    // 8. Gerar e compartilhar
+    // 8. Gerar imagem
     const dataUrl = await domtoimage.toPng(containerTemp, options);
     document.body.removeChild(containerTemp);
 
+    // 9. Compartilhamento com fallback
     const blob = await (await fetch(dataUrl)).blob();
     const file = new File([blob], 'mensalidades.png', { 
       type: 'image/png',
       lastModified: Date.now()
     });
 
-    if (navigator.share && /Mobile/.test(navigator.userAgent)) {
+    if (navigator.share) {
       await navigator.share({
         files: [file],
         title: 'Controle de Mensalidades'
@@ -892,13 +878,15 @@ const compartilharControle = async () => {
       link.download = 'mensalidades.png';
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
+      setTimeout(() => {
+        document.body.removeChild(link);
+      }, 100);
     }
 
     toast.success('Imagem gerada com sucesso!');
   } catch (error) {
     console.error('Erro:', error);
-    toast.error(error.message);
+    toast.error('Falha ao gerar imagem: ' + error.message);
   }
 };
 
