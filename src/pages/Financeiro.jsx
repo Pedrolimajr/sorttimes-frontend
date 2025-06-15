@@ -765,137 +765,79 @@ const [isento, setIsento] = useState(false);
     const tabelaOriginal = document.getElementById('tabela-mensalidades');
     if (!tabelaOriginal) throw new Error('Tabela não encontrada');
 
-    // Criar um container temporário com melhor formatação para mobile
+    // Criar container temporário
     const containerTemp = document.createElement('div');
     containerTemp.style.cssText = `
       background-color: #1f2937;
-      padding: 20px;
+      padding: 15px;
       color: white;
       font-family: Arial, sans-serif;
       width: 100%;
       max-width: 100%;
-      overflow-x: auto;
     `;
 
-    // CABEÇALHO COM AS MENSAGENS SOLICITADAS
-    const cabecalho = document.createElement('div');
-    cabecalho.style.cssText = `
-      text-align: center;
-      margin-bottom: 20px;
-    `;
-    
-    // 1. Mensagem "FAVOR DAR ZOOM"
-    const zoomMsg = document.createElement('div');
-    zoomMsg.style.cssText = `
-      font-size: 18px;
-      font-weight: bold;
-      color: #ffd700;
-      margin-bottom: 10px;
-      text-transform: uppercase;
-    `;
-    zoomMsg.textContent = '⚠️ FAVOR DAR ZOOM ⚠️';
-    
-    // 2. Mensagem "Controle de Mensalidades"
-    const tituloMsg = document.createElement('div');
-    tituloMsg.style.cssText = `
-      font-size: 20px;
-      font-weight: bold;
-      color: white;
-      margin-bottom: 10px;
-    `;
-    tituloMsg.textContent = 'Controle de Mensalidades';
-    
-    // 3. Mensagem "Valor da Mensalidade"
-    const valorMsg = document.createElement('div');
-    valorMsg.style.cssText = `
-      font-size: 18px;
-      font-weight: bold;
-      color: #4ade80;
-    `;
-    valorMsg.textContent = '💰 MENSALIDADE VALOR R$20,00';
-
-    // Adiciona as mensagens ao cabeçalho
-    cabecalho.appendChild(zoomMsg);
-    cabecalho.appendChild(tituloMsg);
-    cabecalho.appendChild(valorMsg);
-    
-    // Adiciona o cabeçalho ao container principal
-    containerTemp.appendChild(cabecalho);
-
-    // Clonar a tabela original com estilos otimizados
+    // Clonar e estilizar a tabela para melhor qualidade
     const tabelaClone = tabelaOriginal.cloneNode(true);
     tabelaClone.style.cssText = `
       width: 100%;
       border-collapse: collapse;
-      font-size: 14px;
+      font-size: 16px;  /* Aumentado para melhor legibilidade */
     `;
     
-    // Ajustar células para melhor visualização mobile
+    // Ajustar células
     Array.from(tabelaClone.querySelectorAll('th, td')).forEach(cell => {
-      cell.style.padding = '6px 3px';
-      cell.style.fontSize = '12px';
+      cell.style.padding = '8px 4px';
+      cell.style.fontSize = '14px';
+      cell.style.border = '1px solid #374151';
     });
-    
+
+    // Adicionar a tabela ao container
     containerTemp.appendChild(tabelaClone);
 
-    // RODAPÉ COM AS MENSAGENS SOLICITADAS
-    const rodape = document.createElement('div');
-    rodape.style.cssText = `
-      margin-top: 20px;
-      font-size: 12px;
-      color: #cccccc;
-      text-align: center;
-      line-height: 1.5;
-    `;
-    rodape.innerHTML = `
-      <p>💳 CHAVE PIX: Universocajazeiras@gmail.com</p>
-      <p>📌 FAVOR ENVIAR COMPROVANTE NO GRUPO</p>
-      <p>OBS: ESSE VALOR SERÁ PARA CAIXA PARA AS COMPRAS DE MATERIAL, SENDO BOLA, REDE, PAGAMENTO DE JUÍZ.</p>
-      <p>OBS: OS NOMES QUE ESTÃO COM A TARJA VERDE AO FINAL, ESSES TERÃO PRIORIDADES NO BABA.</p>
-      <p>SÃO OS QUE NO MOMENTO ESTÃO ADIMPLENTES.</p>
-      <p>ESPERO NÃO PRECISAR IR NO PRIVADO DE CADA UM INFORMAR O SEU COMPROMISSO. 🤝</p>
-    `;
-    containerTemp.appendChild(rodape);
-
-    // Adicionar temporariamente ao documento
+    // Adicionar ao documento
     document.body.appendChild(containerTemp);
 
-    // Gerar a imagem
-    const dataUrl = await domtoimage.toPng(containerTemp, {
-      quality: 0.95,
-      width: containerTemp.offsetWidth * 2,
-      height: containerTemp.offsetHeight * 2,
+    // Configurações para melhor qualidade no WhatsApp
+    const options = {
+      quality: 1,  // Qualidade máxima
+      width: containerTemp.offsetWidth * 3,  // Triplica a resolução
+      height: containerTemp.offsetHeight * 3,
       style: {
-        transform: 'scale(2)',
+        transform: 'scale(3)',
         transformOrigin: 'top left',
         width: `${containerTemp.offsetWidth}px`,
         height: `${containerTemp.offsetHeight}px`
-      }
-    });
+      },
+      bgcolor: '#1f2937'  // Cor de fundo consistente
+    };
+
+    // Gerar a imagem com dom-to-image
+    const dataUrl = await domtoimage.toPng(containerTemp, options);
 
     // Remover o elemento temporário
     document.body.removeChild(containerTemp);
 
-    // Compartilhar a imagem
+    // Compartilhar
     const blob = await (await fetch(dataUrl)).blob();
-    const file = new File([blob], 'controle-mensalidades.png', { type: 'image/png' });
+    const file = new File([blob], 'mensalidades.png', { 
+      type: 'image/png',
+      lastModified: Date.now()
+    });
 
     if (navigator.share) {
       await navigator.share({
-        title: 'Controle de Mensalidades',
         files: [file]
       });
     } else {
-      // Fallback para download
       const link = document.createElement('a');
-      link.download = 'controle-mensalidades.png';
+      link.download = 'mensalidades.png';
       link.href = dataUrl;
       link.click();
     }
 
-    toast.success('Compartilhado com sucesso!');
+    toast.success('Imagem gerada com sucesso!');
   } catch (error) {
-    console.error('Erro ao compartilhar:', error);
+    console.error('Erro:', error);
     toast.error('Erro ao compartilhar: ' + error.message);
   }
 };
