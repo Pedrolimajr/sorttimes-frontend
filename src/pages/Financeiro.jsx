@@ -765,116 +765,88 @@ const [isento, setIsento] = useState(false);
     const tabelaOriginal = document.getElementById('tabela-mensalidades');
     if (!tabelaOriginal) throw new Error('Tabela não encontrada');
 
-    // 1. Configurações de tamanho para celular
-    const mobileWidth = window.screen.width * 2; // Largura do dispositivo x2
-    const paddingMultiplier = 1.5; // Fator de multiplicação para padding
-
-    // 2. Criar container com dimensões otimizadas para mobile
+    // Criar container temporário
     const containerTemp = document.createElement('div');
     containerTemp.style.cssText = `
       background-color: #1f2937;
-      padding: ${20 * paddingMultiplier}px;
+      padding: 15px;
       color: white;
       font-family: Arial, sans-serif;
-      width: ${mobileWidth}px;
-      box-sizing: border-box;
+      width: 100%;
+      max-width: 100%;
     `;
 
-    // 3. Cabeçalho com tamanho aumentado
+    // Adicionar apenas o cabeçalho solicitado
     const cabecalho = document.createElement('div');
     cabecalho.style.cssText = `
       text-align: center;
-      font-size: ${24 * paddingMultiplier}px;
+      font-size: 18px;
       font-weight: bold;
-      color: #4ade80;
-      margin-bottom: ${20 * paddingMultiplier}px;
-      padding: ${10 * paddingMultiplier}px;
+      color: #4ade80; /* Verde para destacar */
+      margin-bottom: 15px;
+      padding: 8px;
     `;
     cabecalho.textContent = '💰 MENSALIDADE: R$20,00';
     containerTemp.appendChild(cabecalho);
 
-    // 4. Clonar tabela com estilos ampliados
+    // Clonar e estilizar a tabela para melhor qualidade
     const tabelaClone = tabelaOriginal.cloneNode(true);
     tabelaClone.style.cssText = `
       width: 100%;
-      border-collapse: separate;
-      border-spacing: 0;
-      font-size: ${18 * paddingMultiplier}px;
+      border-collapse: collapse;
+      font-size: 16px;  /* Tamanho aumentado */
     `;
     
-    // 5. Aumentar tamanho de células e texto
+    // Ajustar células
     Array.from(tabelaClone.querySelectorAll('th, td')).forEach(cell => {
-      cell.style.padding = `${10 * paddingMultiplier}px ${8 * paddingMultiplier}px`;
-      cell.style.fontSize = `${16 * paddingMultiplier}px`;
-      cell.style.border = '1px solid #4b5563';
-      
-      if (cell.tagName === 'TH') {
-        cell.style.fontSize = `${18 * paddingMultiplier}px`;
-      }
+      cell.style.padding = '8px 4px';
+      cell.style.fontSize = '14px';
+      cell.style.border = '1px solid #374151'; /* Borda sutil */
     });
 
     containerTemp.appendChild(tabelaClone);
     document.body.appendChild(containerTemp);
 
-    // 6. Configurações de exportação para tamanho grande
+    // Configurações de alta qualidade
     const options = {
-      quality: 1,
-      width: containerTemp.offsetWidth,
-      height: containerTemp.offsetHeight,
-      scale: 2, // Fator de escala adicional
-      backgroundColor: '#1f2937',
-      logging: false,
-      useCORS: true,
-      allowTaint: true,
-      scrollX: 0,
-      scrollY: 0,
-      windowWidth: document.documentElement.scrollWidth,
-      windowHeight: document.documentElement.scrollHeight
+      quality: 3,
+      width: containerTemp.offsetWidth * 3,
+      height: containerTemp.offsetHeight * 3,
+      style: {
+        transform: 'scale(3)',
+        transformOrigin: 'top left',
+        width: `${containerTemp.offsetWidth}px`,
+        height: `${containerTemp.offsetHeight}px`
+      },
+      bgcolor: '#1f2937'
     };
 
-    // 7. Gerar imagem em alta resolução
-    const canvas = await html2canvas(containerTemp, options);
-    const dataUrl = canvas.toDataURL('image/png', 1.0);
-    
-    // 8. Remover elemento temporário
+    // Gerar imagem
+    const dataUrl = await domtoimage.toPng(containerTemp, options);
     document.body.removeChild(containerTemp);
 
-    // 9. Função para forçar download em tamanho grande
-    function downloadImage(dataUrl) {
-      const link = document.createElement('a');
-      link.download = 'mensalidades_grande.png';
-      link.href = dataUrl;
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
+    // Compartilhar
+    const blob = await (await fetch(dataUrl)).blob();
+    const file = new File([blob], 'mensalidades.png', { 
+      type: 'image/png',
+      lastModified: Date.now()
+    });
 
-    // 10. Compartilhar ou fazer download
     if (navigator.share) {
-      try {
-        const blob = await (await fetch(dataUrl)).blob();
-        const file = new File([blob], 'mensalidades.png', {
-          type: 'image/png',
-          lastModified: Date.now()
-        });
-        
-        await navigator.share({
-          title: 'Controle de Mensalidades',
-          files: [file]
-        });
-      } catch (shareError) {
-        console.warn('Erro ao compartilhar, fazendo download:', shareError);
-        downloadImage(dataUrl);
-      }
+      await navigator.share({
+        files: [file]
+      });
     } else {
-      downloadImage(dataUrl);
+      const link = document.createElement('a');
+      link.download = 'mensalidades.png';
+      link.href = dataUrl;
+      link.click();
     }
 
-    toast.success('Imagem gerada em tamanho grande!');
+    toast.success('Imagem gerada com sucesso!');
   } catch (error) {
-    console.error('Erro ao gerar imagem:', error);
-    toast.error('Erro: ' + error.message);
+    console.error('Erro:', error);
+    toast.error('Erro ao compartilhar: ' + error.message);
   }
 };
 
