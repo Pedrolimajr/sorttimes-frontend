@@ -786,7 +786,7 @@ const [isento, setIsento] = useState(false);
       margin-bottom: 15px;
       padding: 8px;
     `;
-    cabecalho.textContent = '💰 MENSALIDADE: R$20,00';
+    cabecalho.textContent = 'MENSALIDADE: R$20,00';
     containerTemp.appendChild(cabecalho);
 
     // Clonar e estilizar a tabela para melhor qualidade
