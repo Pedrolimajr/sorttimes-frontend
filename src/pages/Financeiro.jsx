@@ -760,72 +760,71 @@ const [isento, setIsento] = useState(false);
   // };
 
   
-const compartilharControle = async () => {
+ const compartilharControle = async () => {
   try {
     const tabelaOriginal = document.getElementById('tabela-mensalidades');
     if (!tabelaOriginal) throw new Error('Tabela não encontrada');
 
-    // 1. Container principal com largura fixa
+    // 1. Container principal com largura garantida
     const containerTemp = document.createElement('div');
     containerTemp.style.cssText = `
       background-color: #1f2937;
       padding: 20px 10px;
       color: white;
       font-family: Arial, sans-serif;
-      width: 800px; /* Largura fixa para forçar as duas tabelas */
+      width: 1200px; /* Largura maior para caber as duas tabelas */
       margin: 0 auto;
+      box-sizing: border-box;
     `;
 
-    // 2. CABEÇALHO CENTRALIZADO GRANDE
+    // 2. CABEÇALHO CENTRALIZADO SOBRE AS TABELAS
     const cabecalho = document.createElement('div');
     cabecalho.style.cssText = `
       text-align: center;
-      font-size: 24px;
+      font-size: 28px; /* Tamanho aumentado */
       font-weight: bold;
       color: #4ade80;
-      margin-bottom: 20px;
-      padding: 10px;
-      width: 100%;
+      margin: 0 auto 20px;
+      padding: 12px;
+      width: 80%;
+      background-color: #1a202c;
+      border-radius: 8px;
+      position: relative;
+      z-index: 10;
     `;
     cabecalho.textContent = '💰 MENSALIDADE: R$20,00';
     containerTemp.appendChild(cabecalho);
 
-    // 3. Container FLEX para tabelas
+    // 3. Container FLEX com largura fixa
     const tabelasContainer = document.createElement('div');
     tabelasContainer.style.cssText = `
       display: flex;
-      gap: 15px;
+      gap: 20px;
       width: 100%;
+      min-width: 1000px; /* Garante espaço para as duas tabelas */
     `;
 
-    // 4. Clonagem PERFEITA das tabelas
+    // 4. Clonagem CORRETA das tabelas
     const tabela1 = tabelaOriginal.cloneNode(true);
     const tabela2 = tabelaOriginal.cloneNode(true);
     
-    // Limpar dados das tabelas clonadas
-    const tbody1 = tabela1.querySelector('tbody');
-    const tbody2 = tabela2.querySelector('tbody');
-    if (tbody1) tbody1.innerHTML = '';
-    if (tbody2) tbody2.innerHTML = '';
-
-    // Dividir jogadores
+    // Limpar e redistribuir linhas
     const linhas = tabelaOriginal.querySelectorAll('tbody tr');
     const metade = Math.ceil(linhas.length / 2);
-
-    // Preencher tabelas
+    
+    tabela1.querySelector('tbody').innerHTML = '';
+    tabela2.querySelector('tbody').innerHTML = '';
+    
     linhas.forEach((linha, index) => {
       const clone = linha.cloneNode(true);
-      if (index < metade) {
-        tbody1.appendChild(clone);
-      } else {
-        tbody2.appendChild(clone);
-      }
+      (index < metade ? tabela1 : tabela2).querySelector('tbody').appendChild(clone);
     });
 
-    // 5. Estilo CONSISTENTE para ambas tabelas
+    // 5. Estilo OTIMIZADO PARA MOBILE
     [tabela1, tabela2].forEach(tabela => {
       tabela.style.cssText = `
         width: 100%;
+        min-width: 450px; /* Largura mínima para cada tabela */
         border-collapse: collapse;
         font-size: 14px;
       `;
@@ -837,30 +836,31 @@ const compartilharControle = async () => {
       });
     });
 
-    // 6. Adicionar tabelas ao container
+    // 6. Adicionar tabelas
     tabelasContainer.appendChild(tabela1);
     tabelasContainer.appendChild(tabela2);
     containerTemp.appendChild(tabelasContainer);
     document.body.appendChild(containerTemp);
 
-    // 7. Configuração de imagem OTIMIZADA
+    // 7. Configuração de imagem GARANTIDA
     const options = {
       quality: 1,
-      width: 800,
+      width: 1200,
       height: containerTemp.offsetHeight,
       style: {
         transform: 'none',
-        width: '800px',
+        width: '1200px',
         height: 'auto'
       },
       bgcolor: '#1f2937'
     };
 
-    // 8. Gerar imagem
+    // 8. Gerar imagem (COM TIMEOUT PARA RENDERIZAÇÃO)
+    await new Promise(resolve => setTimeout(resolve, 500)); // Espera renderização
     const dataUrl = await domtoimage.toPng(containerTemp, options);
     document.body.removeChild(containerTemp);
 
-    // 9. Compartilhamento com fallback
+    // 9. Compartilhamento OTIMIZADO
     const blob = await (await fetch(dataUrl)).blob();
     const file = new File([blob], 'mensalidades.png', { 
       type: 'image/png',
@@ -878,15 +878,13 @@ const compartilharControle = async () => {
       link.download = 'mensalidades.png';
       document.body.appendChild(link);
       link.click();
-      setTimeout(() => {
-        document.body.removeChild(link);
-      }, 100);
+      setTimeout(() => document.body.removeChild(link), 100);
     }
 
-    toast.success('Imagem gerada com sucesso!');
+    toast.success('✅ Imagem gerada com ambas as tabelas!');
   } catch (error) {
     console.error('Erro:', error);
-    toast.error('Falha ao gerar imagem: ' + error.message);
+    toast.error('❌ Erro: ' + error.message);
   }
 };
 
