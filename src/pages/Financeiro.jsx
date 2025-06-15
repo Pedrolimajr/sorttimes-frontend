@@ -778,28 +778,26 @@ const compartilharControle = async () => {
       white-space: nowrap; /* Impede quebra de linha */
     `;
 
-    // 2. Cabeçalho (movido para dentro do container das tabelas)
+    // 2. Cabeçalho fixo (centralizado)
     const cabecalho = document.createElement('div');
     cabecalho.style.cssText = `
       text-align: center;
       font-size: 18px;
       font-weight: bold;
       color: #4ade80;
-      margin: 0 15px;
-      display: inline-block;
-      vertical-align: top;
-      padding-top: 20px; /* Ajuste conforme necessário */
-      white-space: normal; /* Permite quebra de linha no título */
-      width: 150px; /* Largura fixa para o cabeçalho */
+      margin-bottom: 15px;
+      position: sticky;
+      left: 0;
     `;
     cabecalho.textContent = '💰 MENSALIDADE: R$20,00';
+    containerTemp.appendChild(cabecalho);
 
-    // 3. Container FLEX para as tabelas (modificado)
+    // 3. Container FLEX para as tabelas (modificado para mobile)
     const tabelasContainer = document.createElement('div');
     tabelasContainer.style.cssText = `
-      display: inline-flex;
-      gap: 0;
-      min-width: calc(200% + 150px); /* Ajustado para acomodar o cabeçalho */
+      display: inline-flex; /* Mudei para inline-flex */
+      gap: 15px;
+      min-width: 200%; /* Dobro da largura para caber as duas tabelas */
     `;
 
     // 4. Clonagem das tabelas (igual ao anterior)
@@ -846,7 +844,6 @@ const compartilharControle = async () => {
 
     // 6. Montagem final
     tabelasContainer.appendChild(tabela1);
-    tabelasContainer.appendChild(cabecalho); // Cabeçalho entre as tabelas
     tabelasContainer.appendChild(tabela2);
     containerTemp.appendChild(tabelasContainer);
     document.body.appendChild(containerTemp);
