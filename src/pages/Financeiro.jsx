@@ -765,57 +765,66 @@ const compartilharControle = async () => {
     const tabelaOriginal = document.getElementById('tabela-mensalidades');
     if (!tabelaOriginal) throw new Error('Tabela não encontrada');
 
-    // 1. Criar container principal com scroll horizontal
+    // 1. Container principal com scroll horizontal
     const containerTemp = document.createElement('div');
     containerTemp.style.cssText = `
       background-color: #1f2937;
       padding: 15px;
       color: white;
       font-family: Arial, sans-serif;
-      width: 100vw; /* Força largura total */
-      overflow-x: auto; /* Permite scroll horizontal no mobile */
-      -webkit-overflow-scrolling: touch; /* Melhora scroll no iOS */
-      white-space: nowrap; /* Impede quebra de linha */
+      width: 100vw;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
     `;
 
-    // 2. Cabeçalho fixo (centralizado)
-    const cabecalho = document.createElement('div');
-    cabecalho.style.cssText = `
-      text-align: center;
-      font-size: 18px;
-      font-weight: bold;
-      color: #4ade80;
+    // 2. CABEÇALHO CENTRALIZADO (MODIFICADO)
+    const cabecalhoContainer = document.createElement('div');
+    cabecalhoContainer.style.cssText = `
+      display: flex;
+      justify-content: center;
+      width: 100%;
       margin-bottom: 15px;
       position: sticky;
       left: 0;
     `;
-    cabecalho.textContent = '💰 MENSALIDADE: R$20,00';
-    containerTemp.appendChild(cabecalho);
 
-    // 3. Container FLEX para as tabelas (modificado para mobile)
+    const cabecalho = document.createElement('div');
+    cabecalho.style.cssText = `
+      text-align: center;
+      font-size: 22px;  /* Aumentei o tamanho */
+      font-weight: bold;
+      color: #4ade80;
+      padding: 10px;
+      background-color: #1f2937;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      width: fit-content;
+    `;
+    cabecalho.textContent = '💰 MENSALIDADE: R$20,00';
+    cabecalhoContainer.appendChild(cabecalho);
+    containerTemp.appendChild(cabecalhoContainer);
+
+    // 3. Container para as tabelas
     const tabelasContainer = document.createElement('div');
     tabelasContainer.style.cssText = `
-      display: inline-flex; /* Mudei para inline-flex */
+      display: inline-flex;
       gap: 15px;
-      min-width: 200%; /* Dobro da largura para caber as duas tabelas */
+      min-width: 200%;
     `;
 
-    // 4. Clonagem das tabelas (igual ao anterior)
+    // 4. Clonagem das tabelas (mesma lógica anterior)
     const tabela1 = tabelaOriginal.cloneNode(false);
     const tabela2 = tabelaOriginal.cloneNode(false);
     
-    // Cabeçalhos
     const theadOriginal = tabelaOriginal.querySelector('thead');
     if (theadOriginal) {
       tabela1.appendChild(theadOriginal.cloneNode(true));
       tabela2.appendChild(theadOriginal.cloneNode(true));
     }
 
-    // Dividir jogadores
     const linhas = tabelaOriginal.querySelectorAll('tbody tr');
     const metade = Math.ceil(linhas.length / 2);
 
-    // Preencher tabelas
     const tbody1 = document.createElement('tbody');
     const tbody2 = document.createElement('tbody');
     
@@ -826,13 +835,13 @@ const compartilharControle = async () => {
     tabela1.appendChild(tbody1);
     tabela2.appendChild(tbody2);
 
-    // 5. Estilo OTIMIZADO PARA MOBILE
+    // 5. Estilo das tabelas
     [tabela1, tabela2].forEach(tabela => {
       tabela.style.cssText = `
-        width: auto; /* Tamanho automático */
+        width: auto;
         border-collapse: collapse;
-        font-size: 12px; /* Reduzido para mobile */
-        display: inline-table; /* Importante para mobile */
+        font-size: 12px;
+        display: inline-table;
       `;
       
       Array.from(tabela.querySelectorAll('th, td')).forEach(cell => {
@@ -848,10 +857,10 @@ const compartilharControle = async () => {
     containerTemp.appendChild(tabelasContainer);
     document.body.appendChild(containerTemp);
 
-    // 7. Configuração de imagem ESPECÍFICA PARA MOBILE
+    // 7. Configuração da imagem
     const options = {
       quality: 0.95,
-      width: containerTemp.scrollWidth * 1.5, // Largura total incluindo scroll
+      width: containerTemp.scrollWidth * 1.5,
       height: containerTemp.offsetHeight * 1.5,
       style: {
         transform: 'scale(1.5)',
@@ -862,11 +871,10 @@ const compartilharControle = async () => {
       bgcolor: '#1f2937'
     };
 
-    // 8. Geração da imagem
+    // 8. Gerar e compartilhar
     const dataUrl = await domtoimage.toPng(containerTemp, options);
     document.body.removeChild(containerTemp);
 
-    // 9. Compartilhamento (com fallback)
     const blob = await (await fetch(dataUrl)).blob();
     const file = new File([blob], 'mensalidades.png', { 
       type: 'image/png',
