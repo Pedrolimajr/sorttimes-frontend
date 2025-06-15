@@ -765,109 +765,115 @@ const [isento, setIsento] = useState(false);
     const tabelaOriginal = document.getElementById('tabela-mensalidades');
     if (!tabelaOriginal) throw new Error('Tabela não encontrada');
 
-    // 1. Container principal com controle preciso de largura
+    // 1. Criar container principal com scroll horizontal
     const containerTemp = document.createElement('div');
     containerTemp.style.cssText = `
       background-color: #1f2937;
-      padding: 20px 10px;
+      padding: 15px;
       color: white;
       font-family: Arial, sans-serif;
-      width: 1000px; /* Largura fixa suficiente para duas tabelas */
-      margin: 0 auto;
-      box-sizing: border-box;
+      width: 100vw; /* Força largura total */
+      overflow-x: auto; /* Permite scroll horizontal no mobile */
+      -webkit-overflow-scrolling: touch; /* Melhora scroll no iOS */
+      white-space: nowrap; /* Impede quebra de linha */
     `;
 
-    // 2. Cabeçalho CENTRALIZADO com destaque
+    // 2. Cabeçalho fixo (centralizado)
     const cabecalho = document.createElement('div');
     cabecalho.style.cssText = `
       text-align: center;
-      font-size: 26px; /* Fonte grande */
+      font-size: 18px;
       font-weight: bold;
       color: #4ade80;
-      margin: 0 auto 25px;
-      padding: 15px;
-      width: 90%;
-      background-color: #1a202c;
-      border-radius: 10px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      margin-bottom: 15px;
+      position: sticky;
+      left: 0;
     `;
     cabecalho.textContent = '💰 MENSALIDADE: R$20,00';
     containerTemp.appendChild(cabecalho);
 
-    // 3. Container FLEX para as tabelas
+    // 3. Container FLEX para as tabelas (modificado para mobile)
     const tabelasContainer = document.createElement('div');
     tabelasContainer.style.cssText = `
-      display: flex;
-      gap: 20px;
-      width: 100%;
+      display: inline-flex; /* Mudei para inline-flex */
+      gap: 15px;
+      min-width: 200%; /* Dobro da largura para caber as duas tabelas */
     `;
 
-    // 4. Clonagem PRECISA das tabelas
-    const tabela1 = tabelaOriginal.cloneNode(true);
-    const tabela2 = tabelaOriginal.cloneNode(true);
+    // 4. Clonagem das tabelas (igual ao anterior)
+    const tabela1 = tabelaOriginal.cloneNode(false);
+    const tabela2 = tabelaOriginal.cloneNode(false);
     
-    // Limpar e redistribuir linhas
+    // Cabeçalhos
+    const theadOriginal = tabelaOriginal.querySelector('thead');
+    if (theadOriginal) {
+      tabela1.appendChild(theadOriginal.cloneNode(true));
+      tabela2.appendChild(theadOriginal.cloneNode(true));
+    }
+
+    // Dividir jogadores
     const linhas = tabelaOriginal.querySelectorAll('tbody tr');
     const metade = Math.ceil(linhas.length / 2);
-    
-    tabela1.querySelector('tbody').innerHTML = '';
-    tabela2.querySelector('tbody').innerHTML = '';
+
+    // Preencher tabelas
+    const tbody1 = document.createElement('tbody');
+    const tbody2 = document.createElement('tbody');
     
     linhas.forEach((linha, index) => {
-      const clone = linha.cloneNode(true);
-      (index < metade ? tabela1 : tabela2).querySelector('tbody').appendChild(clone);
+      (index < metade ? tbody1 : tbody2).appendChild(linha.cloneNode(true));
     });
 
-    // 5. Estilo OTIMIZADO PARA WHATSAPP
+    tabela1.appendChild(tbody1);
+    tabela2.appendChild(tbody2);
+
+    // 5. Estilo OTIMIZADO PARA MOBILE
     [tabela1, tabela2].forEach(tabela => {
       tabela.style.cssText = `
-        width: 480px; /* Largura fixa para cada tabela */
+        width: auto; /* Tamanho automático */
         border-collapse: collapse;
-        font-size: 16px;
+        font-size: 12px; /* Reduzido para mobile */
+        display: inline-table; /* Importante para mobile */
       `;
       
       Array.from(tabela.querySelectorAll('th, td')).forEach(cell => {
-        cell.style.padding = '10px 5px';
-        cell.style.border = '1px solid #445069';
-        cell.style.textAlign = 'center';
-        cell.style.fontSize = '15px';
+        cell.style.padding = '4px 2px';
+        cell.style.border = '1px solid #374151';
+        cell.style.fontSize = '12px';
       });
     });
 
-    // 6. Adicionar tabelas ao container
+    // 6. Montagem final
     tabelasContainer.appendChild(tabela1);
     tabelasContainer.appendChild(tabela2);
     containerTemp.appendChild(tabelasContainer);
     document.body.appendChild(containerTemp);
 
-    // 7. Configuração de imagem INFALÍVEL
+    // 7. Configuração de imagem ESPECÍFICA PARA MOBILE
     const options = {
-      quality: 1,
-      width: 1000,
-      height: containerTemp.offsetHeight * 1.2,
+      quality: 0.95,
+      width: containerTemp.scrollWidth * 1.5, // Largura total incluindo scroll
+      height: containerTemp.offsetHeight * 1.5,
       style: {
-        transform: 'none',
-        width: '1000px',
-        height: 'auto'
+        transform: 'scale(1.5)',
+        transformOrigin: 'top left',
+        width: `${containerTemp.scrollWidth}px`,
+        height: `${containerTemp.offsetHeight}px`
       },
       bgcolor: '#1f2937'
     };
 
-    // Pequena pausa para renderização completa
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // 8. Gerar imagem
+    // 8. Geração da imagem
     const dataUrl = await domtoimage.toPng(containerTemp, options);
     document.body.removeChild(containerTemp);
 
-    // 9. Compartilhamento OTIMIZADO
+    // 9. Compartilhamento (com fallback)
     const blob = await (await fetch(dataUrl)).blob();
     const file = new File([blob], 'mensalidades.png', { 
       type: 'image/png',
       lastModified: Date.now()
     });
 
-    if (navigator.share) {
+    if (navigator.share && /Mobile/.test(navigator.userAgent)) {
       await navigator.share({
         files: [file],
         title: 'Controle de Mensalidades'
@@ -878,13 +884,13 @@ const [isento, setIsento] = useState(false);
       link.download = 'mensalidades.png';
       document.body.appendChild(link);
       link.click();
-      setTimeout(() => document.body.removeChild(link), 100);
+      document.body.removeChild(link);
     }
 
-    toast.success('✅ Tabelas geradas com sucesso!');
+    toast.success('Imagem gerada com sucesso!');
   } catch (error) {
     console.error('Erro:', error);
-    toast.error('❌ Erro: ' + error.message);
+    toast.error(error.message);
   }
 };
 
