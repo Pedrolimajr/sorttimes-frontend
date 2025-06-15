@@ -765,7 +765,7 @@ const compartilharControle = async () => {
     const tabelaOriginal = document.getElementById('tabela-mensalidades');
     if (!tabelaOriginal) throw new Error('Tabela não encontrada');
 
-    // Criar container temporário
+    // Criar container principal
     const containerTemp = document.createElement('div');
     containerTemp.style.cssText = `
       background-color: #1f2937;
@@ -776,7 +776,7 @@ const compartilharControle = async () => {
       max-width: 100%;
     `;
 
-    // Adicionar cabeçalho
+    // Cabeçalho
     const cabecalho = document.createElement('div');
     cabecalho.style.cssText = `
       text-align: center;
@@ -784,41 +784,49 @@ const compartilharControle = async () => {
       font-weight: bold;
       color: #4ade80;
       margin-bottom: 15px;
-      padding: 8px;
     `;
     cabecalho.textContent = '💰 MENSALIDADE: R$20,00';
     containerTemp.appendChild(cabecalho);
 
-    // Criar container para as tabelas divididas
+    // Container flex para as duas tabelas
     const tabelasContainer = document.createElement('div');
     tabelasContainer.style.cssText = `
       display: flex;
-      gap: 10px;
+      gap: 15px;
       width: 100%;
     `;
 
-    // Clonar tabela original duas vezes
-    const tabelaClone1 = tabelaOriginal.cloneNode(true);
-    const tabelaClone2 = tabelaOriginal.cloneNode(true);
+    // Clonar estrutura da tabela original (cabeçalho com meses e status)
+    const tabela1 = tabelaOriginal.cloneNode(false); // Apenas a tabela sem linhas
+    const tabela2 = tabelaOriginal.cloneNode(false);
 
-    // Ajustar colunas da primeira tabela (mantém primeiras colunas)
-    Array.from(tabelaClone1.querySelectorAll('tr')).forEach(row => {
-      const cells = row.querySelectorAll('td, th');
-      cells.forEach((cell, index) => {
-        if (index > 2) cell.remove(); // Mantém apenas as 3 primeiras colunas
-      });
-    });
+    // Copiar o cabeçalho (th) para ambas
+    const theadOriginal = tabelaOriginal.querySelector('thead');
+    if (theadOriginal) {
+      tabela1.appendChild(theadOriginal.cloneNode(true));
+      tabela2.appendChild(theadOriginal.cloneNode(true));
+    }
 
-    // Ajustar colunas da segunda tabela (mantém colunas restantes)
-    Array.from(tabelaClone2.querySelectorAll('tr')).forEach(row => {
-      const cells = row.querySelectorAll('td, th');
-      cells.forEach((cell, index) => {
-        if (index <= 2) cell.remove(); // Remove as 3 primeiras colunas
-      });
-    });
+    // Dividir os jogadores (linhas da tabela)
+    const linhas = tabelaOriginal.querySelectorAll('tbody tr');
+    const metade = Math.ceil(linhas.length / 2);
+
+    // Adicionar primeira metade à tabela 1
+    const tbody1 = document.createElement('tbody');
+    for (let i = 0; i < metade; i++) {
+      tbody1.appendChild(linhas[i].cloneNode(true));
+    }
+    tabela1.appendChild(tbody1);
+
+    // Adicionar segunda metade à tabela 2
+    const tbody2 = document.createElement('tbody');
+    for (let i = metade; i < linhas.length; i++) {
+      tbody2.appendChild(linhas[i].cloneNode(true));
+    }
+    tabela2.appendChild(tbody2);
 
     // Estilizar ambas as tabelas
-    [tabelaClone1, tabelaClone2].forEach(tabela => {
+    [tabela1, tabela2].forEach(tabela => {
       tabela.style.cssText = `
         width: 100%;
         border-collapse: collapse;
@@ -826,6 +834,7 @@ const compartilharControle = async () => {
         flex: 1;
       `;
       
+      // Estilizar células
       Array.from(tabela.querySelectorAll('th, td')).forEach(cell => {
         cell.style.padding = '6px 3px';
         cell.style.border = '1px solid #374151';
@@ -834,15 +843,15 @@ const compartilharControle = async () => {
     });
 
     // Adicionar tabelas ao container
-    tabelasContainer.appendChild(tabelaClone1);
-    tabelasContainer.appendChild(tabelaClone2);
+    tabelasContainer.appendChild(tabela1);
+    tabelasContainer.appendChild(tabela2);
     containerTemp.appendChild(tabelasContainer);
     document.body.appendChild(containerTemp);
 
-    // Configurações de alta qualidade
+    // Configurações para imagem
     const options = {
       quality: 1,
-      width: containerTemp.offsetWidth * 2, // Reduzido para melhorar no WhatsApp
+      width: containerTemp.offsetWidth * 2,
       height: containerTemp.offsetHeight * 2,
       style: {
         transform: 'scale(2)',
@@ -853,11 +862,10 @@ const compartilharControle = async () => {
       bgcolor: '#1f2937'
     };
 
-    // Gerar imagem
+    // Gerar e compartilhar imagem
     const dataUrl = await domtoimage.toPng(containerTemp, options);
     document.body.removeChild(containerTemp);
 
-    // Compartilhar
     const blob = await (await fetch(dataUrl)).blob();
     const file = new File([blob], 'mensalidades.png', { 
       type: 'image/png',
