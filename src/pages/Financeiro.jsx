@@ -776,31 +776,41 @@ const [isento, setIsento] = useState(false);
       max-width: 100%;
     `;
 
+    // Adicionar apenas o cabeçalho solicitado
+    const cabecalho = document.createElement('div');
+    cabecalho.style.cssText = `
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+      color: #4ade80; /* Verde para destacar */
+      margin-bottom: 15px;
+      padding: 8px;
+    `;
+    cabecalho.textContent = '💰 MENSALIDADE: R$20,00';
+    containerTemp.appendChild(cabecalho);
+
     // Clonar e estilizar a tabela para melhor qualidade
     const tabelaClone = tabelaOriginal.cloneNode(true);
     tabelaClone.style.cssText = `
       width: 100%;
       border-collapse: collapse;
-      font-size: 16px;  /* Aumentado para melhor legibilidade */
+      font-size: 16px;  /* Tamanho aumentado */
     `;
     
     // Ajustar células
     Array.from(tabelaClone.querySelectorAll('th, td')).forEach(cell => {
       cell.style.padding = '8px 4px';
       cell.style.fontSize = '14px';
-      cell.style.border = '1px solid #374151';
+      cell.style.border = '1px solid #374151'; /* Borda sutil */
     });
 
-    // Adicionar a tabela ao container
     containerTemp.appendChild(tabelaClone);
-
-    // Adicionar ao documento
     document.body.appendChild(containerTemp);
 
-    // Configurações para melhor qualidade no WhatsApp
+    // Configurações de alta qualidade
     const options = {
-      quality: 1,  // Qualidade máxima
-      width: containerTemp.offsetWidth * 3,  // Triplica a resolução
+      quality: 1,
+      width: containerTemp.offsetWidth * 3,
       height: containerTemp.offsetHeight * 3,
       style: {
         transform: 'scale(3)',
@@ -808,13 +818,11 @@ const [isento, setIsento] = useState(false);
         width: `${containerTemp.offsetWidth}px`,
         height: `${containerTemp.offsetHeight}px`
       },
-      bgcolor: '#1f2937'  // Cor de fundo consistente
+      bgcolor: '#1f2937'
     };
 
-    // Gerar a imagem com dom-to-image
+    // Gerar imagem
     const dataUrl = await domtoimage.toPng(containerTemp, options);
-
-    // Remover o elemento temporário
     document.body.removeChild(containerTemp);
 
     // Compartilhar
