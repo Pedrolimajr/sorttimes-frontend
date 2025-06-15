@@ -809,7 +809,7 @@ const [isento, setIsento] = useState(false);
 
     // Configurações de alta qualidade
     const options = {
-      quality: 3,
+      quality: 1,
       width: containerTemp.offsetWidth * 3,
       height: containerTemp.offsetHeight * 3,
       style: {
