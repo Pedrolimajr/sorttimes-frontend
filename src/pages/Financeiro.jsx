@@ -765,7 +765,7 @@ const compartilharControle = async () => {
     const tabelaOriginal = document.getElementById('tabela-mensalidades');
     if (!tabelaOriginal) throw new Error('Tabela não encontrada');
 
-    // 1. Container principal com scroll horizontal
+    // 1. Criar container principal com scroll horizontal
     const containerTemp = document.createElement('div');
     containerTemp.style.cssText = `
       background-color: #1f2937;
@@ -775,39 +775,35 @@ const compartilharControle = async () => {
       width: 100vw;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
-    `;
-
-    // 2. Wrapper interno com largura suficiente para as duas tabelas
-    const wrapper = document.createElement('div');
-    wrapper.style.cssText = `
+      white-space: nowrap;
       display: flex;
       flex-direction: column;
       align-items: center;
-      min-width: 1200px; /* largura suficiente para caber as tabelas */
     `;
 
-    // 3. Cabeçalho centralizado
+    // 2. Cabeçalho centralizado
     const cabecalho = document.createElement('div');
     cabecalho.style.cssText = `
-      text-align: center;
+      width: 100%;
+      display: flex;
+      justify-content: center;
       font-size: 18px;
       font-weight: bold;
       color: #4ade80;
-      margin-bottom: 15px;
+      margin-bottom: 10px;
     `;
     cabecalho.textContent = '💰 MENSALIDADE: R$20,00';
+    containerTemp.appendChild(cabecalho);
 
-    // 4. Container horizontal para as duas tabelas
-    const tabelasFlex = document.createElement('div');
-    tabelasFlex.style.cssText = `
-      display: flex;
-      flex-direction: row;
-      justify-content: center;
+    // 3. Container FLEX para as tabelas
+    const tabelasContainer = document.createElement('div');
+    tabelasContainer.style.cssText = `
+      display: inline-flex;
       gap: 15px;
-      flex-wrap: nowrap;
+      min-width: 200%;
     `;
 
-    // 5. Clonar estrutura
+    // 4. Clonagem das tabelas
     const tabela1 = tabelaOriginal.cloneNode(false);
     const tabela2 = tabelaOriginal.cloneNode(false);
 
@@ -830,15 +826,15 @@ const compartilharControle = async () => {
     tabela1.appendChild(tbody1);
     tabela2.appendChild(tbody2);
 
-    // 6. Estilizar as tabelas
+    // 5. Estilo das tabelas
     [tabela1, tabela2].forEach(tabela => {
       tabela.style.cssText = `
         width: auto;
         border-collapse: collapse;
         font-size: 12px;
         display: inline-table;
-        min-width: 550px; /* largura mínima para manter todas as colunas visíveis */
       `;
+
       Array.from(tabela.querySelectorAll('th, td')).forEach(cell => {
         cell.style.padding = '4px 2px';
         cell.style.border = '1px solid #374151';
@@ -846,15 +842,13 @@ const compartilharControle = async () => {
       });
     });
 
-    // 7. Montar a estrutura
-    tabelasFlex.appendChild(tabela1);
-    tabelasFlex.appendChild(tabela2);
-    wrapper.appendChild(cabecalho);
-    wrapper.appendChild(tabelasFlex);
-    containerTemp.appendChild(wrapper);
+    // 6. Montagem final
+    tabelasContainer.appendChild(tabela1);
+    tabelasContainer.appendChild(tabela2);
+    containerTemp.appendChild(tabelasContainer);
     document.body.appendChild(containerTemp);
 
-    // 8. Gerar imagem
+    // 7. Configuração da imagem
     const options = {
       quality: 0.95,
       width: containerTemp.scrollWidth * 1.5,
@@ -868,11 +862,13 @@ const compartilharControle = async () => {
       bgcolor: '#1f2937'
     };
 
+    // 8. Geração da imagem
     const dataUrl = await domtoimage.toPng(containerTemp, options);
     document.body.removeChild(containerTemp);
 
+    // 9. Compartilhamento
     const blob = await (await fetch(dataUrl)).blob();
-    const file = new File([blob], 'mensalidades.png', {
+    const file = new File([blob], 'mensalidades.png', { 
       type: 'image/png',
       lastModified: Date.now()
     });
