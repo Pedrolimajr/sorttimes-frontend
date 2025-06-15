@@ -760,7 +760,7 @@ const [isento, setIsento] = useState(false);
   // };
 
   
- const compartilharControle = async () => {
+const compartilharControle = async () => {
   try {
     const tabelaOriginal = document.getElementById('tabela-mensalidades');
     if (!tabelaOriginal) throw new Error('Tabela não encontrada');
@@ -772,53 +772,59 @@ const [isento, setIsento] = useState(false);
       padding: 15px;
       color: white;
       font-family: Arial, sans-serif;
-      width: 100vw; /* Força largura total */
-      overflow-x: auto; /* Permite scroll horizontal no mobile */
-      -webkit-overflow-scrolling: touch; /* Melhora scroll no iOS */
-      white-space: nowrap; /* Impede quebra de linha */
+      width: 100vw;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      white-space: nowrap;
     `;
 
-    // 2. Cabeçalho fixo (centralizado)
+    // 2. Cabeçalho (centralizado dentro do container das tabelas)
     const cabecalho = document.createElement('div');
     cabecalho.style.cssText = `
+      width: 100%;
       text-align: center;
       font-size: 18px;
       font-weight: bold;
       color: #4ade80;
-      margin-bottom: 15px;
-      position: sticky;
-      left: 0;
+      margin-bottom: 10px;
     `;
     cabecalho.textContent = '💰 MENSALIDADE: R$20,00';
-    containerTemp.appendChild(cabecalho);
 
-    // 3. Container FLEX para as tabelas (modificado para mobile)
+    // 3. Container principal das tabelas
     const tabelasContainer = document.createElement('div');
     tabelasContainer.style.cssText = `
-      display: inline-flex; /* Mudei para inline-flex */
-      gap: 15px;
-      min-width: 200%; /* Dobro da largura para caber as duas tabelas */
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      min-width: 200%;
     `;
 
-    // 4. Clonagem das tabelas (igual ao anterior)
+    // 4. Sub-container horizontal para as duas tabelas
+    const linhaTabelas = document.createElement('div');
+    linhaTabelas.style.cssText = `
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      gap: 15px;
+    `;
+
+    // 5. Clonagem das tabelas
     const tabela1 = tabelaOriginal.cloneNode(false);
     const tabela2 = tabelaOriginal.cloneNode(false);
-    
-    // Cabeçalhos
+
     const theadOriginal = tabelaOriginal.querySelector('thead');
     if (theadOriginal) {
       tabela1.appendChild(theadOriginal.cloneNode(true));
       tabela2.appendChild(theadOriginal.cloneNode(true));
     }
 
-    // Dividir jogadores
     const linhas = tabelaOriginal.querySelectorAll('tbody tr');
     const metade = Math.ceil(linhas.length / 2);
 
-    // Preencher tabelas
     const tbody1 = document.createElement('tbody');
     const tbody2 = document.createElement('tbody');
-    
+
     linhas.forEach((linha, index) => {
       (index < metade ? tbody1 : tbody2).appendChild(linha.cloneNode(true));
     });
@@ -826,15 +832,14 @@ const [isento, setIsento] = useState(false);
     tabela1.appendChild(tbody1);
     tabela2.appendChild(tbody2);
 
-    // 5. Estilo OTIMIZADO PARA MOBILE
+    // 6. Estilização das tabelas para mobile
     [tabela1, tabela2].forEach(tabela => {
       tabela.style.cssText = `
-        width: auto; /* Tamanho automático */
+        width: auto;
         border-collapse: collapse;
-        font-size: 12px; /* Reduzido para mobile */
-        display: inline-table; /* Importante para mobile */
+        font-size: 12px;
+        display: inline-table;
       `;
-      
       Array.from(tabela.querySelectorAll('th, td')).forEach(cell => {
         cell.style.padding = '4px 2px';
         cell.style.border = '1px solid #374151';
@@ -842,16 +847,19 @@ const [isento, setIsento] = useState(false);
       });
     });
 
-    // 6. Montagem final
-    tabelasContainer.appendChild(tabela1);
-    tabelasContainer.appendChild(tabela2);
+    // 7. Montagem final
+    linhaTabelas.appendChild(tabela1);
+    linhaTabelas.appendChild(tabela2);
+
+    tabelasContainer.appendChild(cabecalho);
+    tabelasContainer.appendChild(linhaTabelas);
     containerTemp.appendChild(tabelasContainer);
     document.body.appendChild(containerTemp);
 
-    // 7. Configuração de imagem ESPECÍFICA PARA MOBILE
+    // 8. Configuração da imagem
     const options = {
       quality: 0.95,
-      width: containerTemp.scrollWidth * 1.5, // Largura total incluindo scroll
+      width: containerTemp.scrollWidth * 1.5,
       height: containerTemp.offsetHeight * 1.5,
       style: {
         transform: 'scale(1.5)',
@@ -862,13 +870,13 @@ const [isento, setIsento] = useState(false);
       bgcolor: '#1f2937'
     };
 
-    // 8. Geração da imagem
+    // 9. Geração da imagem
     const dataUrl = await domtoimage.toPng(containerTemp, options);
     document.body.removeChild(containerTemp);
 
-    // 9. Compartilhamento (com fallback)
+    // 10. Compartilhamento (com fallback)
     const blob = await (await fetch(dataUrl)).blob();
-    const file = new File([blob], 'mensalidades.png', { 
+    const file = new File([blob], 'mensalidades.png', {
       type: 'image/png',
       lastModified: Date.now()
     });
@@ -893,6 +901,7 @@ const [isento, setIsento] = useState(false);
     toast.error(error.message);
   }
 };
+
 
   const compartilharHistorico = async (elementId) => {
     try {
