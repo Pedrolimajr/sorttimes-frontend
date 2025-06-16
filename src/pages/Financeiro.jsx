@@ -802,15 +802,13 @@ export default function Financeiro() {
     // 2. Cabeçalho fixo (centralizado)
     const cabecalho = document.createElement('div');
     cabecalho.style.cssText = `
-      display: flex;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  font-size: 18px;
-  font-weight: bold;
-  color: #4ade80;
-  margin-bottom: 15px;
-  width: 100%;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+      color: #4ade80;
+      margin-bottom: 15px;
+      position: sticky;
+      left: 0;
     `;
     cabecalho.textContent = '💰 MENSALIDADE: R$20,00';
     containerTemp.appendChild(cabecalho);
@@ -896,22 +894,19 @@ export default function Financeiro() {
       lastModified: Date.now()
     });
 
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-  await navigator.share({
-    files: [file],
-    title: 'Controle de Mensalidades',
-    text: 'Veja o controle de mensalidades atualizado.'
-  });
-} else {
-  // fallback para download
-  const link = document.createElement('a');
-  link.href = dataUrl;
-  link.download = 'mensalidades.png';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  toast.info('Imagem baixada. Compartilhamento direto não suportado neste navegador.');
-}
+    if (navigator.share && /Mobile/.test(navigator.userAgent)) {
+      await navigator.share({
+        files: [file],
+        title: 'Controle de Mensalidades'
+      });
+    } else {
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = 'mensalidades.png';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
 
     toast.success('Imagem gerada com sucesso!');
   } catch (error) {
