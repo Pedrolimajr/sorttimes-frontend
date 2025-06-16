@@ -801,17 +801,17 @@ export default function Financeiro() {
 
     // 2. Cabeçalho fixo (centralizado)
     const cabecalho = document.createElement('div');
-    cabecalho.style.cssText = `
-      text-align: center;
-      font-size: 18px;
-      font-weight: bold;
-      color: #4ade80;
-      margin-bottom: 15px;
-      position: sticky;
-      left: 0;
-    `;
-    cabecalho.textContent = '💰 MENSALIDADE: R$20,00';
-    containerTemp.appendChild(cabecalho);
+ cabecalho.style.cssText = `
+  text-align: center;
+  font-size: 18px;
+  font-weight: bold;
+  color: #4ade80;
+  margin-bottom: 15px;
+  position: sticky;
+  left: 0;
+`;
+cabecalho.textContent = '💰 MENSALIDADE: R$20,00';
+containerTemp.appendChild(cabecalho);
 
     // 3. Container FLEX para as tabelas (modificado para mobile)
     const tabelasContainer = document.createElement('div');
