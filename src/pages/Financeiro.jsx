@@ -185,8 +185,11 @@ const [isento, setIsento] = useState(false);
   };
 
   // Adicionando transação
- const adicionarTransacao = async (e) => {
+  const adicionarTransacao = async (e) => {
   e.preventDefault();
+
+  // Declara a variável no escopo da função para que seja acessível no catch
+  let transacaoTemporaria = null;
 
   try {
     if (!novaTransacao.data || !novaTransacao.valor || !novaTransacao.descricao) {
@@ -196,9 +199,9 @@ const [isento, setIsento] = useState(false);
     // Verificar se já existe transação para o mesmo jogador na mesma data
     if (novaTransacao.jogadorId) {
       const transacaoExistente = transacoes.find(t => {
-        const mesmaData = t.data?.split('T')[0] === novaTransacao.data;
-        const mesmoJogador = t.jogadorId === novaTransacao.jogadorId;
-        return mesmaData && mesmoJogador;
+        const dataTransacao = t.data?.split('T')[0];
+        const dataNovaTransacao = novaTransacao.data;
+        return dataTransacao === dataNovaTransacao && t.jogadorId === novaTransacao.jogadorId;
       });
 
       if (transacaoExistente) {
@@ -212,48 +215,52 @@ const [isento, setIsento] = useState(false);
       data: new Date(novaTransacao.data + 'T12:00:00').toISOString()
     };
 
+    // Atualização otimista
+    transacaoTemporaria = {
+      ...payload,
+      _id: 'temp-' + Date.now(),
+      createdAt: new Date().toISOString()
+    };
+    
+    setTransacoes(prev => [transacaoTemporaria, ...prev]);
 
-      // Atualização otimista - adiciona a transação imediatamente
-      const transacaoTemporaria = {
-        ...payload,
-        _id: 'temp-' + Date.now(),
-        createdAt: new Date().toISOString()
-      };
-      
-      setTransacoes(prev => [transacaoTemporaria, ...prev]);
+    // Chamada à API
+    const response = await api.post('/financeiro/transacoes', payload);
+    const transacaoReal = response.data.data;
 
-      // Faz a chamada à API
-      const response = await api.post('/financeiro/transacoes', payload);
-      const transacaoReal = response.data.data;
+    // Atualizar estado com a transação real
+    setTransacoes(prev => [
+      transacaoReal,
+      ...prev.filter(t => t._id !== transacaoTemporaria._id)
+    ]);
 
-      // Substitui a transação temporária pela real
-      setTransacoes(prev => [
-        transacaoReal,
-        ...prev.filter(t => t._id !== transacaoTemporaria._id)
-      ]);
+    // Atualizar cache
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      jogadoresCache: jogadores,
+      transacoesCache: [transacaoReal, ...transacoes.filter(t => t._id !== transacaoTemporaria._id)],
+      lastUpdate: new Date().toISOString()
+    }));
 
-      // Atualiza localStorage
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        jogadoresCache: jogadores,
-        transacoesCache: [transacaoReal, ...transacoes.filter(t => t._id !== transacaoTemporaria._id)],
-        lastUpdate: new Date().toISOString()
-      }));
+    // Resetar formulário
+    toast.success('Transação registrada com sucesso!');
+    setNovaTransacao({
+      descricao: "",
+      valor: "",
+      tipo: "receita",
+      categoria: "",
+      data: new Date().toISOString().split("T")[0],
+      jogadorId: "",
+      jogadorNome: ""
+    });
 
-      // Reset do formulário
-      toast.success('Transação registrada com sucesso!');
-      setNovaTransacao({
-        descricao: "",
-        valor: "",
-        tipo: "receita",
-        categoria: "",
-        data: new Date().toISOString().split("T")[0],
-        jogadorId: "",
-        jogadorNome: ""
-      });
-
-} catch (error) {
+  } catch (error) {
     console.error("Erro ao adicionar transação:", error);
-    setTransacoes(prev => prev.filter(t => t._id !== transacaoTemporaria?._id));
+    
+    // Remove a transação temporária apenas se ela foi criada
+    if (transacaoTemporaria) {
+      setTransacoes(prev => prev.filter(t => t._id !== transacaoTemporaria._id));
+    }
+    
     toast.error(error.message || 'Erro ao adicionar transação');
   }
 };
