@@ -1446,7 +1446,7 @@ export default function Financeiro() {
                         <tr>
                           <th className="px-2 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Jogador</th>
                           <th className="px-2 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
-                          {dadosGraficoBarras.labels.map((mes, i) => (
+                          {dadosGraficoFluxoCaixa.labels.map((mes, i) => (
                             <th key={i} className="px-1 sm:px-2 py-2 sm:py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">
                               {mes}
                             </th>
