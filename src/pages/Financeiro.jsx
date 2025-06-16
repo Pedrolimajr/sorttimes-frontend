@@ -896,19 +896,22 @@ export default function Financeiro() {
       lastModified: Date.now()
     });
 
-    if (navigator.share && /Mobile/.test(navigator.userAgent)) {
-      await navigator.share({
-        files: [file],
-        title: 'Controle de Mensalidades'
-      });
-    } else {
-      const link = document.createElement('a');
-      link.href = dataUrl;
-      link.download = 'mensalidades.png';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+  await navigator.share({
+    files: [file],
+    title: 'Controle de Mensalidades',
+    text: 'Veja o controle de mensalidades atualizado.'
+  });
+} else {
+  // fallback para download
+  const link = document.createElement('a');
+  link.href = dataUrl;
+  link.download = 'mensalidades.png';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  toast.info('Imagem baixada. Compartilhamento direto não suportado neste navegador.');
+}
 
     toast.success('Imagem gerada com sucesso!');
   } catch (error) {
