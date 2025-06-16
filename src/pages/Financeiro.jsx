@@ -69,7 +69,7 @@ export default function Financeiro() {
   });
 
 // No início do componente, adicione:
-const [isento, setIsento] = useState(false);
+// const [isento, setIsento] = useState(false);
 
   const STORAGE_KEY = 'dadosFinanceiros';
  useEffect(() => {
@@ -546,47 +546,48 @@ const [isento, setIsento] = useState(false);
     })
     .sort((a, b) => new Date(b.data) - new Date(a.data)); // Ordena do mais recente para o mais antigo
 
-  const dadosGraficoBarras = {
-    labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
-    datasets: [
-      {
-        label: 'Receitas',
-        data: Array(12).fill(0).map((_, i) => {
-          const mes = (i + 1).toString().padStart(2, '0');
-          return transacoes
-            .filter(t => {
-              try {
-                const dataStr = typeof t.data === 'string' ? t.data : new Date(t.data).toISOString();
-                return dataStr.startsWith(`${filtroMes.slice(0, 4)}-${mes}`) && t.tipo === "receita";
-              } catch {
-                return false;
-              }
-            })
-            .reduce((acc, t) => acc + (t.valor || 0), 0);
-        }),
-        backgroundColor: '#4ade80',
-        borderRadius: 6
-      },
-      {
-        label: 'Despesas',
-        data: Array(12).fill(0).map((_, i) => {
-          const mes = (i + 1).toString().padStart(2, '0');
-          return transacoes
-            .filter(t => {
-              try {
-                const dataStr = typeof t.data === 'string' ? t.data : new Date(t.data).toISOString();
-                return dataStr.startsWith(`${filtroMes.slice(0, 4)}-${mes}`) && t.tipo === "despesa";
-              } catch {
-                return false;
-              }
-            })
-            .reduce((acc, t) => acc + (t.valor || 0), 0);
-        }),
-        backgroundColor: '#f87171',
-        borderRadius: 6
-      }
-    ]
-  };
+  const dadosGraficoFluxoCaixa = {
+  labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+  datasets: [
+    {
+      label: 'Receitas',
+      data: Array(12).fill(0).map((_, i) => {
+        const mes = (i + 1).toString().padStart(2, '0');
+        return transacoes
+          .filter(t => t.tipo === "receita" && t.data?.startsWith(`${filtroMes.slice(0, 4)}-${mes}`))
+          .reduce((acc, t) => acc + (t.valor || 0), 0);
+      }),
+      backgroundColor: '#4ade80',
+      borderRadius: 6
+    },
+    {
+      label: 'Despesas',
+      data: Array(12).fill(0).map((_, i) => {
+        const mes = (i + 1).toString().padStart(2, '0');
+        return transacoes
+          .filter(t => t.tipo === "despesa" && t.data?.startsWith(`${filtroMes.slice(0, 4)}-${mes}`))
+          .reduce((acc, t) => acc + (t.valor || 0), 0);
+      }),
+      backgroundColor: '#f87171',
+      borderRadius: 6
+    },
+    {
+      label: 'Saldo',
+      data: Array(12).fill(0).map((_, i) => {
+        const mes = (i + 1).toString().padStart(2, '0');
+        const receitas = transacoes
+          .filter(t => t.tipo === "receita" && t.data?.startsWith(`${filtroMes.slice(0, 4)}-${mes}`))
+          .reduce((acc, t) => acc + (t.valor || 0), 0);
+        const despesas = transacoes
+          .filter(t => t.tipo === "despesa" && t.data?.startsWith(`${filtroMes.slice(0, 4)}-${mes}`))
+          .reduce((acc, t) => acc + (t.valor || 0), 0);
+        return receitas - despesas;
+      }),
+      backgroundColor: '#60a5fa',
+      borderRadius: 6
+    }
+  ]
+};
 
   const dadosGraficoPizza = {
     labels: ['Pagamentos em dia', 'Pagamentos pendentes'],
@@ -1505,51 +1506,41 @@ const [isento, setIsento] = useState(false);
               transition={{ delay: 0.4 }}
               className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
             >
-              <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Fluxo Anual</h2>
-              <div className="h-48 sm:h-64">
-                <Bar
-                  data={dadosGraficoBarras}
-                  options={{
-                    maintainAspectRatio: false,
-                    scales: {
-                      y: {
-                        beginAtZero: true,
-                        grid: {
-                          color: 'rgba(229, 231, 235, 0.1)'
-                        },
-                        ticks: {
-                          color: '#e5e7eb',
-                          font: {
-                            size: window.innerWidth < 640 ? 10 : 12
-                          }
-                        }
-                      },
-                      x: {
-                        grid: {
-                          color: 'rgba(229, 231, 235, 0.1)'
-                        },
-                        ticks: {
-                          color: '#e5e7eb',
-                          font: {
-                            size: window.innerWidth < 640 ? 10 : 12
-                          }
-                        }
-                      }
-                    },
-                    plugins: {
-                      legend: {
-                        position: 'bottom',
-                        labels: {
-                          color: '#e5e7eb',
-                          font: {
-                            size: window.innerWidth < 640 ? 10 : 12
-                          }
-                        }
-                      }
-                    }
-                  }}
-                />
-              </div>
+              <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Fluxo de Caixa</h2>
+<div className="h-48 sm:h-64">
+  <Bar
+    data={dadosGraficoFluxoCaixa}
+    options={{
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: 'rgba(229, 231, 235, 0.1)' },
+          ticks: {
+            color: '#e5e7eb',
+            font: { size: window.innerWidth < 640 ? 10 : 12 }
+          }
+        },
+        x: {
+          grid: { color: 'rgba(229, 231, 235, 0.1)' },
+          ticks: {
+            color: '#e5e7eb',
+            font: { size: window.innerWidth < 640 ? 10 : 12 }
+          }
+        }
+      },
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: '#e5e7eb',
+            font: { size: window.innerWidth < 640 ? 10 : 12 }
+          }
+        }
+      }
+    }}
+  />
+</div>
             </motion.div>
           </div>
         </div>
