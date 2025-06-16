@@ -135,75 +135,76 @@ export default function ListaJogadores({
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const formDataToSend = new FormData();
-      
-      if (formData.dataNascimento) {
-        const nascimento = new Date(formData.dataNascimento + 'T12:00:00');
-        formDataToSend.append('dataNascimento', nascimento.toISOString());
-      }
-
-      if (formData.dataIngresso) {
-        const ingresso = new Date(formData.dataIngresso + 'T12:00:00');
-        formDataToSend.append('dataIngresso', ingresso.toISOString());
-      }
-
-      Object.keys(formData).forEach(key => {
-        if (key !== 'dataNascimento' && key !== 'dataIngresso' && 
-            formData[key] !== null && formData[key] !== undefined) {
-          formDataToSend.append(key, formData[key]);
-        }
-      });
-
-      if (editando) {
-        formDataToSend.append('id', editando);
-      }
-
-      const url = editando 
-        ? `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/jogadores/${editando}`
-        : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/jogadores`;
-
-      const response = await fetch(url, {
-        method: editando ? 'PUT' : 'POST',
-        body: formDataToSend
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Erro ao salvar jogador');
-      }
-
-      const data = await response.json();
-      toast.success(`Jogador ${data.data.nome} ${editando ? 'atualizado' : 'cadastrado'} com sucesso!`);
-      
-      setJogadores(prev => {
-        if (editando) {
-          return prev.map(j => j._id === editando ? data.data : j);
-        } else {
-          return [data.data, ...prev];
-        }
-      });
-      
-      setEditando(null);
-      setFormData({
-        nome: '',
-        dataNascimento: '',
-        posicao: '',
-        telefone: '',
-        email: '',
-        dataIngresso: '',
-        statusFinanceiro: 'Adimplente',
-        foto: null,
-        endereco: '',
-        numeroCamisa: '',
-        nivel: 'Associado'
-      });
-    } catch (error) {
-      console.error("Erro ao salvar jogador:", error);
-      toast.error(error.message || 'Erro ao salvar jogador');
+  e.preventDefault();
+  try {
+    const formDataToSend = new FormData();
+    
+    if (formData.dataNascimento) {
+      const nascimento = new Date(formData.dataNascimento + 'T12:00:00');
+      formDataToSend.append('dataNascimento', nascimento.toISOString());
     }
-  };
+
+    if (formData.dataIngresso) {
+      const ingresso = new Date(formData.dataIngresso + 'T12:00:00');
+      formDataToSend.append('dataIngresso', ingresso.toISOString());
+    }
+
+    Object.keys(formData).forEach(key => {
+      if (key !== 'dataNascimento' && key !== 'dataIngresso' && 
+          formData[key] !== null && formData[key] !== undefined) {
+        formDataToSend.append(key, formData[key]);
+      }
+    });
+
+    if (editando) {
+      formDataToSend.append('id', editando);
+    }
+
+    const url = editando 
+      ? `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/jogadores/${editando}`
+      : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/jogadores`;
+
+    const response = await fetch(url, {
+      method: editando ? 'PUT' : 'POST',
+      body: formDataToSend
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Erro ao salvar jogador');
+    }
+
+    const data = await response.json();
+    toast.success(`Jogador ${data.data.nome} ${editando ? 'atualizado' : 'cadastrado'} com sucesso!`);
+    
+    // Atualização usando o contexto
+    if (editando) {
+      atualizarJogador(data.data);
+    } else {
+      // Se você não tiver adicionarJogador no contexto, pode forçar uma recarga
+      window.location.reload(); // Solução temporária
+      // Idealmente, você deveria adicionar adicionarJogador ao seu contexto
+    }
+    
+    setEditando(null);
+    setFormData({
+      nome: '',
+      dataNascimento: '',
+      posicao: '',
+      telefone: '',
+      email: '',
+      dataIngresso: '',
+      statusFinanceiro: 'Adimplente',
+      foto: null,
+      endereco: '',
+      numeroCamisa: '',
+      nivel: 'Associado'
+    });
+  } catch (error) {
+    console.error("Erro ao salvar jogador:", error);
+    toast.error(error.message || 'Erro ao salvar jogador');
+  }
+};
 
   const handleEditar = (jogador) => {
     setEditando(jogador._id);
