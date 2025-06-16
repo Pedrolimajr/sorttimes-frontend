@@ -185,19 +185,33 @@ const [isento, setIsento] = useState(false);
   };
 
   // Adicionando transação
-  const adicionarTransacao = async (e) => {
-    e.preventDefault();
+ const adicionarTransacao = async (e) => {
+  e.preventDefault();
 
-    try {
-      if (!novaTransacao.data || !novaTransacao.valor || !novaTransacao.descricao) {
-        throw new Error('Preencha todos os campos obrigatórios');
+  try {
+    if (!novaTransacao.data || !novaTransacao.valor || !novaTransacao.descricao) {
+      throw new Error('Preencha todos os campos obrigatórios');
+    }
+
+    // Verificar se já existe transação para o mesmo jogador na mesma data
+    if (novaTransacao.jogadorId) {
+      const transacaoExistente = transacoes.find(t => {
+        const mesmaData = t.data?.split('T')[0] === novaTransacao.data;
+        const mesmoJogador = t.jogadorId === novaTransacao.jogadorId;
+        return mesmaData && mesmoJogador;
+      });
+
+      if (transacaoExistente) {
+        throw new Error('Já existe uma transação para este jogador na data selecionada');
       }
+    }
 
-      const payload = {
-        ...novaTransacao,
-        valor: parseFloat(novaTransacao.valor),
-        data: new Date(novaTransacao.data + 'T12:00:00').toISOString()
-      };
+    const payload = {
+      ...novaTransacao,
+      valor: parseFloat(novaTransacao.valor),
+      data: new Date(novaTransacao.data + 'T12:00:00').toISOString()
+    };
+
 
       // Atualização otimista - adiciona a transação imediatamente
       const transacaoTemporaria = {
@@ -237,13 +251,12 @@ const [isento, setIsento] = useState(false);
         jogadorNome: ""
       });
 
-    } catch (error) {
-      console.error("Erro ao adicionar transação:", error);
-      // Remove a transação temporária em caso de erro
-      setTransacoes(prev => prev.filter(t => t._id !== transacaoTemporaria?._id));
-      toast.error(error.message || 'Erro ao adicionar transação');
-    }
-  };
+} catch (error) {
+    console.error("Erro ao adicionar transação:", error);
+    setTransacoes(prev => prev.filter(t => t._id !== transacaoTemporaria?._id));
+    toast.error(error.message || 'Erro ao adicionar transação');
+  }
+};
 
   const togglePagamento = async (jogadorId, mesIndex) => {
     const jogadorAtual = jogadores.find(j => j._id === jogadorId);
