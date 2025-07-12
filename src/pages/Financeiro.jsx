@@ -546,6 +546,34 @@ export default function Financeiro() {
     })
     .sort((a, b) => new Date(b.data) - new Date(a.data)); // Ordena do mais recente para o mais antigo
 
+  // Cálculo do mês atual selecionado no filtro
+const mesAtualFiltro = filtroMes ? Number(filtroMes.split('-')[1]) : (new Date().getMonth() + 1);
+
+// Novo cálculo para o gráfico de pizza
+const pagamentosAteMesAtual = jogadores.reduce(
+  (acc, jogador) => {
+    for (let i = 0; i < mesAtualFiltro; i++) {
+      if (jogador.pagamentos[i]) {
+        acc.pagos += 1;
+      } else {
+        acc.pendentes += 1;
+      }
+    }
+    return acc;
+  },
+  { pagos: 0, pendentes: 0 }
+);
+
+const dadosGraficoPizza = {
+  labels: ['Pagamentos em dia', 'Pagamentos pendentes'],
+  datasets: [{
+    data: [pagamentosAteMesAtual.pagos, pagamentosAteMesAtual.pendentes],
+    backgroundColor: ['#4ade80', '#f87171'],
+    hoverOffset: 4,
+    borderWidth: 0
+  }]
+};
+
   const dadosGraficoFluxoCaixa = {
   labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
   datasets: [
@@ -588,23 +616,6 @@ export default function Financeiro() {
     }
   ]
 };
-
-  const dadosGraficoPizza = {
-    labels: ['Pagamentos em dia', 'Pagamentos pendentes'],
-    datasets: [{
-      data: [
-        jogadores.reduce((total, jogador) => 
-          total + jogador.pagamentos.filter(pago => pago).length, 0
-        ),
-        jogadores.reduce((total, jogador) => 
-          total + jogador.pagamentos.filter(pago => !pago).length, 0
-        )
-      ],
-      backgroundColor: ['#4ade80', '#f87171'],
-      hoverOffset: 4,
-      borderWidth: 0
-    }]
-  };
 
   const exportarPDF = async () => {
     try {
@@ -1268,7 +1279,7 @@ export default function Financeiro() {
                 />
               </div>
               <div className="mt-3 sm:mt-4 text-center text-xs sm:text-sm text-gray-400">
-                {estatisticas.pagamentosPendentes} Pagamentos pendentes este ano
+                {pagamentosAteMesAtual.pendentes} Pagamentos pendentes até {filtroMes ? new Date(filtroMes + '-01').toLocaleDateString('pt-BR', { month: 'long' }) : 'o mês atual'}
               </div>
             </motion.div>
           </div>
