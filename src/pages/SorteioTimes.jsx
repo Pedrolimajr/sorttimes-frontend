@@ -272,7 +272,7 @@ export default function SorteioTimes() {
 };
 
   // Carrega jogadores do backend ao montar o componente
-  useEffect(() => {
+ useEffect(() => {
   const carregarJogadores = async () => {
     setCarregandoJogadores(true);
     try {
@@ -280,27 +280,13 @@ export default function SorteioTimes() {
       const { data: jogadores } = await response.json();
 
       setJogadoresSelecionados(prev => {
-        // Se não houver dados salvos, inicializa com todos como false
-        if (!prev || prev.length === 0) {
-          return jogadores.map(jogador => ({
-            ...jogador,
-            presente: false,
-            posicao: jogador.posicao || POSICOES.MEIA,
-            posicaoOriginal: jogador.posicao || POSICOES.MEIA,
-            nivel: parseNivel(jogador.nivel)
-          }));
-        }
-        
-        // Mantém os estados existentes e adiciona novos jogadores
+        // Mantém o estado de presença salvo para cada jogador
         return jogadores.map(jogador => {
           const existente = prev.find(j => j._id === jogador._id);
-          if (existente) {
-            return existente; // Mantém o jogador exatamente como estava
-          }
           return {
             ...jogador,
-            presente: false, // Novos jogadores começam como não presentes
-            posicao: jogador.posicao || POSICOES.MEIA,
+            presente: existente ? existente.presente : false, // mantém o valor salvo
+            posicao: existente?.posicao || jogador.posicao || POSICOES.MEIA,
             posicaoOriginal: jogador.posicao || POSICOES.MEIA,
             nivel: parseNivel(jogador.nivel)
           };
