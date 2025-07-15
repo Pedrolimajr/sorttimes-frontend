@@ -272,7 +272,7 @@ export default function SorteioTimes() {
 };
 
   // Carrega jogadores do backend ao montar o componente
- useEffect(() => {
+  useEffect(() => {
   const carregarJogadores = async () => {
     setCarregandoJogadores(true);
     try {
@@ -280,12 +280,12 @@ export default function SorteioTimes() {
       const { data: jogadores } = await response.json();
 
       setJogadoresSelecionados(prev => {
-        // Mantém o estado de presença salvo para cada jogador
+        // Mantém os estados existentes e adiciona novos jogadores
         return jogadores.map(jogador => {
           const existente = prev.find(j => j._id === jogador._id);
           return {
             ...jogador,
-            presente: existente ? existente.presente : false, // mantém o valor salvo
+            presente: existente ? existente.presente : false, // Mantém o valor salvo
             posicao: existente?.posicao || jogador.posicao || POSICOES.MEIA,
             posicaoOriginal: jogador.posicao || POSICOES.MEIA,
             nivel: parseNivel(jogador.nivel)
@@ -305,23 +305,7 @@ export default function SorteioTimes() {
 
 //Carregar estado salvo
 // Carrega estado salvo ao iniciar
-useEffect(() => {
-  const carregarEstadoSalvo = async () => {
-    try {
-      const jogadoresSalvos = localStorage.getItem(LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS);
-      if (jogadoresSalvos) {
-        const parsed = JSON.parse(jogadoresSalvos);
-        if (parsed && parsed.length > 0) {
-          setJogadoresSelecionados(parsed);
-        }
-      }
-    } catch (error) {
-      console.error("Erro ao carregar estado salvo:", error);
-    }
-  };
 
-  carregarEstadoSalvo();
-}, []);
 
 //Evitar repetição de código
 const parseNivel = (nivelStr) => {
