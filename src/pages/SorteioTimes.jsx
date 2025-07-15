@@ -596,7 +596,8 @@ const aplicarFiltroPosicao = () => {
       if (idx === 0) nomeTime = "Time (Preto)";
       else if (idx === 1) nomeTime = "Time (Amarelo)";
       else nomeTime = time.nome || `Time ${idx + 1}`;
-      return `${nomeTime}:\n${time.jogadores.map(j => `- ${j.nome} (${j.posicao})`).join('\n')}`;
+      // Aqui faz a numeração dos jogadores
+      return `${nomeTime}:\n${time.jogadores.map((j, i) => `${i + 1}. ${j.nome} (${j.posicao})`).join('\n')}`;
     }).join('\n\n');
     
     if (navigator.share) {
