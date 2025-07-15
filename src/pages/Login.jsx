@@ -19,8 +19,8 @@ export default function Login() {
     setCarregando(true);
 
     try {
-      // Limpa dados anteriores
-      localStorage.clear();
+      // NÃO limpe o localStorage aqui!
+    // localStorage.clear();
       
       const response = await authService.login(email, senha);
       navigate("/dashboard");
