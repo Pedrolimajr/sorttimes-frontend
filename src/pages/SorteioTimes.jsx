@@ -590,10 +590,14 @@ const aplicarFiltroPosicao = () => {
   /**
    * Compartilha os times sorteados
    */
-  const compartilharTimes = () => {
-    const texto = times.map(time => 
-      `${time.nome}:\n${time.jogadores.map(j => `- ${j.nome} (${j.posicao})`).join('\n')}`
-    ).join('\n\n');
+   const compartilharTimes = () => {
+    const texto = times.map((time, idx) => {
+      let nomeTime;
+      if (idx === 0) nomeTime = "Time (Preto)";
+      else if (idx === 1) nomeTime = "Time (Amarelo)";
+      else nomeTime = time.nome || `Time ${idx + 1}`;
+      return `${nomeTime}:\n${time.jogadores.map(j => `- ${j.nome} (${j.posicao})`).join('\n')}`;
+    }).join('\n\n');
     
     if (navigator.share) {
       navigator.share({
