@@ -416,66 +416,63 @@ const aplicarFiltroPosicao = () => {
   
    const sortearTimes = async () => {
   const jogadoresPresentes = jogadoresSelecionados.filter(j => j.presente);
-  
+
   if (jogadoresPresentes.length < 2) {
     toast.error("Mínimo de 2 jogadores necessários");
     return;
   }
 
   setCarregando(true);
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/sorteio-times/sortear`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          jogadoresIds: jogadoresPresentes.map(j => j._id),
-          posicaoUnica: filtroPosicao,
-          balanceamento,
-          posicoesEspecificas: balanceamento === TIPOS_BALANCEAMENTO.POSICAO ? 
-            { [POSICOES.GOLEIRO]: 1 } : null,
-          jogadoresPorTime: Math.ceil(jogadoresPresentes.length / 2)
-        })
-      });
-  
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Erro ao sortear times');
-      }
-  
-      const { data } = await response.json();
-      
-      if (!data?.times) {
-        throw new Error('Resposta inválida do servidor');
-      }
-  
-      const timesComIds = data.times.map(time => ({
-        ...time,
-        jogadores: time.jogadores.map(j => ({ 
-          ...j, 
-          id: j._id || Math.random().toString(36).substr(2, 9),
-          posicao: filtroPosicao || j.posicao
-        }))
-      }));
-      
-      setTimes(timesComIds);
-      
-      const novoSorteio = {
-        times: timesComIds,
-        data: new Date(),
-        jogadoresPresentes: jogadoresPresentes.length,
-        balanceamento,
-        posicaoUnica: filtroPosicao
-      };
-      
-      setHistorico([novoSorteio, ...historico.slice(0, 4)]);
-      toast.success(`Times sorteados com sucesso! ${data.times.length} times formados`);
+  try {
+    // Identifica a posição mais comum (posição padrão)
+    const posicoes = jogadoresPresentes.map(j => j.posicao);
+    const posicaoMaisComum = posicoes.sort((a,b) =>
+      posicoes.filter(p => p === a).length - posicoes.filter(p => p === b).length
+    ).pop();
 
-      // Limpa os dados de presença do localStorage após o sorteio
-      // localStorage.removeItem(LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS);
-  
- } catch (error) {
+    // Separa jogadores com posição diferente da mais comum
+    const jogadoresDiferentes = jogadoresPresentes.filter(j => j.posicao !== posicaoMaisComum);
+    const jogadoresPadrao = jogadoresPresentes.filter(j => j.posicao === posicaoMaisComum);
+
+    // Embaralha os jogadores padrão
+    const embaralhar = arr => arr.sort(() => Math.random() - 0.5);
+    const jogadoresPadraoEmbaralhados = embaralhar([...jogadoresPadrao]);
+
+    // Cria os times e garante que jogadores diferentes fiquem em times opostos
+    let times = [[], []];
+
+    // Distribui jogadores diferentes (um para cada time)
+    jogadoresDiferentes.forEach((jogador, idx) => {
+      times[idx % 2].push(jogador);
+    });
+
+    // Distribui o restante dos jogadores
+    jogadoresPadraoEmbaralhados.forEach((jogador, idx) => {
+      times[idx % 2].push(jogador);
+    });
+
+    // Monta o objeto de times para o restante do código
+    const timesComIds = times.map((jogadores, idx) => ({
+      nome: idx === 0 ? "Time (Preto)" : "Time (Amarelo)",
+      jogadores: jogadores.map(j => ({
+        ...j,
+        id: j._id || Math.random().toString(36).substr(2, 9),
+      }))
+    }));
+
+    setTimes(timesComIds);
+
+    const novoSorteio = {
+      times: timesComIds,
+      data: new Date(),
+      jogadoresPresentes: jogadoresPresentes.length,
+      balanceamento,
+      posicaoUnica: filtroPosicao
+    };
+
+    setHistorico([novoSorteio, ...historico.slice(0, 4)]);
+    toast.success(`Times sorteados com sucesso! ${timesComIds.length} times formados`);
+  } catch (error) {
     console.error("Erro ao sortear times:", error);
     toast.error(error.message || 'Erro ao sortear times');
   } finally {
