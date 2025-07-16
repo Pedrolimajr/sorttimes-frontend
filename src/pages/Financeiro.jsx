@@ -852,12 +852,11 @@ export default function Financeiro() {
     // 5. Estilo OTIMIZADO PARA MOBILE
     [tabela1, tabela2].forEach(tabela => {
       tabela.style.cssText = `
-        width: auto; /* Tamanho automático */
+        width: auto;
         border-collapse: collapse;
-        font-size: 12px; /* Reduzido para mobile */
-        display: inline-table; /* Importante para mobile */
+        font-size: 12px;
+        display: inline-table;
       `;
-      
       Array.from(tabela.querySelectorAll('th, td')).forEach(cell => {
         cell.style.padding = '4px 2px';
         cell.style.border = '1px solid #374151';
@@ -865,10 +864,13 @@ export default function Financeiro() {
       });
     });
 
+    tabelasContainer.appendChild(tabela1);
+tabelasContainer.appendChild(tabela2);
+
     // 6. Montagem final
     containerTemp.appendChild(cabecalho);        // Adiciona o título primeiro
-containerTemp.appendChild(tabelasContainer); // Depois as tabelas
-document.body.appendChild(containerTemp);
+    containerTemp.appendChild(tabelasContainer); // Depois as tabelas
+    document.body.appendChild(containerTemp);
 
     // 7. Configuração de imagem ESPECÍFICA PARA MOBILE
     const options = {
@@ -1700,8 +1702,6 @@ document.body.appendChild(containerTemp);
 
                 <div className="grid grid-cols-2 gap-3 sm:gap-4 pt-2">
                   <motion.button
-                    type="button"
-                    onClick={() => deletarJogador(jogadorSelecionado._id)}
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
                     className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 sm:py-2 rounded-lg flex items-center justify-center gap-2 transition-all text-xs sm:text-sm"
