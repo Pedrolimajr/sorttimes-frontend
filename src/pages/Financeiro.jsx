@@ -1415,7 +1415,10 @@ export default function Financeiro() {
                     <FaSearch className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs sm:text-sm" />
                   </div>
                   <motion.button
-                    onClick={() => compartilharControle('tabela-mensalidades')}
+                    onClick={async (e) => {
+    // Chame a função de compartilhamento diretamente no clique
+    await compartilharControle('tabela-mensalidades');
+  }}
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     className="bg-blue-600 p-1.5 sm:p-2 rounded-lg text-white hover:bg-blue-700 transition-colors flex-shrink-0"
