@@ -802,25 +802,23 @@ export default function Financeiro() {
     // 2. Cabeçalho fixo (centralizado)
     const cabecalho = document.createElement('div');
     cabecalho.style.cssText = `
-      width: 100%;
       text-align: center;
       font-size: 18px;
       font-weight: bold;
       color: #4ade80;
       margin-bottom: 15px;
-      margin-top: 0;
-      display: block;
+      position: sticky;
+      left: 0;
     `;
     cabecalho.textContent = '💰 MENSALIDADE: R$20,00';
+    containerTemp.appendChild(cabecalho);
 
     // 3. Container FLEX para as tabelas (modificado para mobile)
     const tabelasContainer = document.createElement('div');
     tabelasContainer.style.cssText = `
-      display: flex;
-      flex-direction: row;
-      justify-content: center;
+      display: inline-flex; /* Mudei para inline-flex */
       gap: 15px;
-      width: 100%;
+      min-width: 200%; /* Dobro da largura para caber as duas tabelas */
     `;
 
     // 4. Clonagem das tabelas (igual ao anterior)
@@ -852,11 +850,12 @@ export default function Financeiro() {
     // 5. Estilo OTIMIZADO PARA MOBILE
     [tabela1, tabela2].forEach(tabela => {
       tabela.style.cssText = `
-        width: auto;
+        width: auto; /* Tamanho automático */
         border-collapse: collapse;
-        font-size: 12px;
-        display: inline-table;
+        font-size: 12px; /* Reduzido para mobile */
+        display: inline-table; /* Importante para mobile */
       `;
+      
       Array.from(tabela.querySelectorAll('th, td')).forEach(cell => {
         cell.style.padding = '4px 2px';
         cell.style.border = '1px solid #374151';
@@ -864,12 +863,10 @@ export default function Financeiro() {
       });
     });
 
-    tabelasContainer.appendChild(tabela1);
-tabelasContainer.appendChild(tabela2);
-
     // 6. Montagem final
-    containerTemp.appendChild(cabecalho);        // Adiciona o título primeiro
-    containerTemp.appendChild(tabelasContainer); // Depois as tabelas
+    tabelasContainer.appendChild(tabela1);
+    tabelasContainer.appendChild(tabela2);
+    containerTemp.appendChild(tabelasContainer);
     document.body.appendChild(containerTemp);
 
     // 7. Configuração de imagem ESPECÍFICA PARA MOBILE
@@ -1690,6 +1687,7 @@ tabelasContainer.appendChild(tabela2);
                 </div>
 
                 <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Status de Pagamento</label>
                   <select
                     value={jogadorSelecionado.statusFinanceiro || 'Inadimplente'}
                     onChange={(e) => setJogadorSelecionado({ ...jogadorSelecionado, statusFinanceiro: e.target.value })}
@@ -1702,6 +1700,8 @@ tabelasContainer.appendChild(tabela2);
 
                 <div className="grid grid-cols-2 gap-3 sm:gap-4 pt-2">
                   <motion.button
+                    type="button"
+                    onClick={() => deletarJogador(jogadorSelecionado._id)}
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
                     className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 sm:py-2 rounded-lg flex items-center justify-center gap-2 transition-all text-xs sm:text-sm"
@@ -1712,7 +1712,7 @@ tabelasContainer.appendChild(tabela2);
                     type="button"
                     onClick={editarJogador}
                     whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale:  0.97 }}
+                    whileTap={{ scale: 0.97 }}
                     className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-3 py-2 sm:py-2 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg text-xs sm:text-sm"
                   >
                     <FaEdit className="text-xs sm:text-sm" /> Salvar Alterações
