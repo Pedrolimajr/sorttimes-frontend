@@ -894,21 +894,23 @@ export default function Financeiro() {
       lastModified: Date.now()
     });
 
+    // Compartilhamento só pode ser chamado diretamente aqui!
     if (navigator.share && /Mobile/.test(navigator.userAgent)) {
       await navigator.share({
         files: [file],
         title: 'Controle de Mensalidades'
       });
+      toast.success('Compartilhado com sucesso!');
     } else {
+      // Fallback para download
       const link = document.createElement('a');
       link.href = dataUrl;
       link.download = 'mensalidades.png';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      toast.info('Compartilhamento não suportado, imagem baixada.');
     }
-
-    toast.success('Imagem gerada com sucesso!');
   } catch (error) {
     console.error('Erro:', error);
     toast.error(error.message);
