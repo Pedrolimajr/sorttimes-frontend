@@ -801,25 +801,28 @@ export default function Financeiro() {
 
     // 2. Cabeçalho fixo (centralizado)
     const cabecalho = document.createElement('div');
-    cabecalho.style.cssText = `
-      text-align: center;
-      font-size: 18px;
-      font-weight: bold;
-      color: #4ade80;
-      margin-bottom: 15px;
-      position: sticky;
-      left: 0;
-    `;
+   cabecalho.style.cssText = `
+  width: 100%;
+  text-align: center;
+  font-size: 18px;
+  font-weight: bold;
+  color: #4ade80;
+  margin-bottom: 15px;
+  margin-top: 0;
+  display: block;
+`;
     cabecalho.textContent = '💰 MENSALIDADE: R$20,00';
-    containerTemp.appendChild(cabecalho);
+   containerTemp.appendChild(tabelasContainer);
 
     // 3. Container FLEX para as tabelas (modificado para mobile)
     const tabelasContainer = document.createElement('div');
-    tabelasContainer.style.cssText = `
-      display: inline-flex; /* Mudei para inline-flex */
-      gap: 15px;
-      min-width: 200%; /* Dobro da largura para caber as duas tabelas */
-    `;
+   tabelasContainer.style.cssText = `
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 15px;
+  width: 100%;
+`;
 
     // 4. Clonagem das tabelas (igual ao anterior)
     const tabela1 = tabelaOriginal.cloneNode(false);
