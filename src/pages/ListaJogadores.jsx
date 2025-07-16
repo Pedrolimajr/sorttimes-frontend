@@ -32,6 +32,7 @@ export default function ListaJogadores({
   const [filtro, setFiltro] = useState('');
   const [filtroPosicao, setFiltroPosicao] = useState('');
   const [filtroStatus, setFiltroStatus] = useState('');
+  const [filtroNivel, setFiltroNivel] = useState('');
   const [editando, setEditando] = useState(null);
   const [mensagemSucesso, setMensagemSucesso] = useState(null);
   const [fotoAmpliada, setFotoAmpliada] = useState({
@@ -127,7 +128,8 @@ export default function ListaJogadores({
     const matchesNome = jogador.nome?.toLowerCase().includes(filtro.toLowerCase());
     const matchesPosicao = filtroPosicao ? jogador.posicao === filtroPosicao : true;
     const matchesStatus = filtroStatus ? jogador.statusFinanceiro === filtroStatus : true;
-    return matchesNome && matchesPosicao && matchesStatus;
+    const matchesNivel = filtroNivel ? jogador.nivel === filtroNivel : true;
+    return matchesNome && matchesPosicao && matchesStatus && matchesNivel;
   });
 
   const handleChange = (e) => {
@@ -478,6 +480,24 @@ export default function ListaJogadores({
                   {statusFinanceiroOptions.map(status => (
                     <option key={status} value={status} className="bg-gray-800">
                       {status}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-400">
+                  Nível
+                </label>
+                <select 
+                  className="w-full p-2 text-sm bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                  value={filtroNivel} 
+                  onChange={(e) => setFiltroNivel(e.target.value)} 
+                >
+                  <option value="" className="bg-gray-800">Todos os níveis</option>
+                  {niveisOptions.map(nivel => (
+                    <option key={nivel} value={nivel} className="bg-gray-800">
+                      {nivel}
                     </option>
                   ))}
                 </select>
