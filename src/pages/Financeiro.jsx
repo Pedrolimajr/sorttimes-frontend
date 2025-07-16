@@ -801,28 +801,27 @@ export default function Financeiro() {
 
     // 2. Cabeçalho fixo (centralizado)
     const cabecalho = document.createElement('div');
-   cabecalho.style.cssText = `
-  width: 100%;
-  text-align: center;
-  font-size: 18px;
-  font-weight: bold;
-  color: #4ade80;
-  margin-bottom: 15px;
-  margin-top: 0;
-  display: block;
-`;
+    cabecalho.style.cssText = `
+      width: 100%;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+      color: #4ade80;
+      margin-bottom: 15px;
+      margin-top: 0;
+      display: block;
+    `;
     cabecalho.textContent = '💰 MENSALIDADE: R$20,00';
-   containerTemp.appendChild(tabelasContainer);
 
     // 3. Container FLEX para as tabelas (modificado para mobile)
     const tabelasContainer = document.createElement('div');
-   tabelasContainer.style.cssText = `
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  gap: 15px;
-  width: 100%;
-`;
+    tabelasContainer.style.cssText = `
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      gap: 15px;
+      width: 100%;
+    `;
 
     // 4. Clonagem das tabelas (igual ao anterior)
     const tabela1 = tabelaOriginal.cloneNode(false);
@@ -867,10 +866,9 @@ export default function Financeiro() {
     });
 
     // 6. Montagem final
-    tabelasContainer.appendChild(tabela1);
-    tabelasContainer.appendChild(tabela2);
-    containerTemp.appendChild(tabelasContainer);
-    document.body.appendChild(containerTemp);
+    containerTemp.appendChild(cabecalho);        // Adiciona o título primeiro
+containerTemp.appendChild(tabelasContainer); // Depois as tabelas
+document.body.appendChild(containerTemp);
 
     // 7. Configuração de imagem ESPECÍFICA PARA MOBILE
     const options = {
@@ -1690,7 +1688,6 @@ export default function Financeiro() {
                 </div>
 
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Status de Pagamento</label>
                   <select
                     value={jogadorSelecionado.statusFinanceiro || 'Inadimplente'}
                     onChange={(e) => setJogadorSelecionado({ ...jogadorSelecionado, statusFinanceiro: e.target.value })}
@@ -1715,7 +1712,7 @@ export default function Financeiro() {
                     type="button"
                     onClick={editarJogador}
                     whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
+                    whileTap={{ scale:  0.97 }}
                     className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-3 py-2 sm:py-2 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg text-xs sm:text-sm"
                   >
                     <FaEdit className="text-xs sm:text-sm" /> Salvar Alterações
