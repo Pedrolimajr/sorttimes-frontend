@@ -27,7 +27,8 @@ export default function ListaJogadores({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { jogadores, carregando, atualizarStatusFinanceiro, atualizarJogador } = useJogadores();
+  const { jogadores: jogadoresContext, carregando, atualizarStatusFinanceiro, atualizarJogador } = useJogadores();
+  const [jogadores, setJogadores] = useState([]);
   const [filtro, setFiltro] = useState('');
   const [filtroPosicao, setFiltroPosicao] = useState('');
   const [filtroStatus, setFiltroStatus] = useState('');
@@ -118,6 +119,10 @@ export default function ListaJogadores({
     };
   }, [jogadores, atualizarJogador]);
 
+  useEffect(() => {
+    setJogadores(jogadoresContext);
+  }, [jogadoresContext]);
+
   const jogadoresFiltrados = jogadores.filter(jogador => {
     const matchesNome = jogador.nome?.toLowerCase().includes(filtro.toLowerCase());
     const matchesPosicao = filtroPosicao ? jogador.posicao === filtroPosicao : true;
@@ -180,7 +185,11 @@ export default function ListaJogadores({
     // Atualização usando o contexto
     if (editando) {
       atualizarJogador(data.data);
+      setJogadores(prev =>
+        prev.map(j => j._id === data.data._id ? data.data : j)
+      );
     } else {
+      setJogadores(prev => [...prev, data.data]);
       // Se você não tiver adicionarJogador no contexto, pode forçar uma recarga
       window.location.reload(); // Solução temporária
       // Idealmente, você deveria adicionar adicionarJogador ao seu contexto
