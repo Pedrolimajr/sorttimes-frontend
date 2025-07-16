@@ -470,7 +470,7 @@ const aplicarFiltroPosicao = () => {
       posicaoUnica: filtroPosicao
     };
 
-    setHistorico([novoSorteio, ...historico.slice(0, 4)]);
+    setHistorico([novoSorteio, ...historico]);setHistorico([novoSorteio, ...historico.slice(0, 4)]);
     toast.success(`Times sorteados com sucesso! ${timesComIds.length} times formados`);
   } catch (error) {
     console.error("Erro ao sortear times:", error);
