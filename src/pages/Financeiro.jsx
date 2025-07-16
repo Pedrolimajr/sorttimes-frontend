@@ -802,24 +802,28 @@ export default function Financeiro() {
     // 2. Cabeçalho fixo (centralizado)
     const cabecalho = document.createElement('div');
     cabecalho.style.cssText = `
+      width: 100%;
       text-align: center;
       font-size: 18px;
       font-weight: bold;
       color: #4ade80;
       margin-bottom: 15px;
-      position: sticky;
-      left: 0;
+      position: relative;
     `;
     cabecalho.textContent = '💰 MENSALIDADE: R$20,00';
-    containerTemp.appendChild(cabecalho);
 
     // 3. Container FLEX para as tabelas (modificado para mobile)
     const tabelasContainer = document.createElement('div');
     tabelasContainer.style.cssText = `
-      display: inline-flex; /* Mudei para inline-flex */
+      display: inline-flex;
+      flex-direction: column; /* Agora em coluna */
+      align-items: center;    /* Centraliza horizontalmente */
       gap: 15px;
-      min-width: 200%; /* Dobro da largura para caber as duas tabelas */
+      min-width: 200%;
     `;
+
+    // Adiciona o título acima das tabelas
+    tabelasContainer.appendChild(cabecalho);
 
     // 4. Clonagem das tabelas (igual ao anterior)
     const tabela1 = tabelaOriginal.cloneNode(false);
@@ -894,7 +898,7 @@ export default function Financeiro() {
       lastModified: Date.now()
     });
 
-    if (navigator.share && /Mobile/.test(navigator.userAgent)) {
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({
         files: [file],
         title: 'Controle de Mensalidades'
@@ -906,6 +910,7 @@ export default function Financeiro() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      toast.info('Compartilhamento não suportado, imagem baixada.');
     }
 
     toast.success('Imagem gerada com sucesso!');
@@ -1681,7 +1686,6 @@ export default function Financeiro() {
                   <input
                     type="email"
                     value={jogadorSelecionado.email}
-                    onChange={(e) => setJogadorSelecionado({ ...jogadorSelecionado, email: e.target.value })}
                     className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
                   />
                 </div>
