@@ -72,7 +72,7 @@ export default function Financeiro() {
 // const [isento, setIsento] = useState(false);
 
   const STORAGE_KEY = 'dadosFinanceiros';
- useEffect(() => {
+useEffect(() => {
   const carregarDados = async () => {
     try {
       setCarregando(true);
@@ -80,7 +80,11 @@ export default function Financeiro() {
       // Tenta carregar do cache primeiro
       const cachedData = JSON.parse(localStorage.getItem(STORAGE_KEY));
       if (cachedData) {
-        setJogadores(cachedData.jogadoresCache || []);
+        // Filtra apenas associados do cache
+        const jogadoresAssociadosCache = (cachedData.jogadoresCache || []).filter(
+          j => j.tipo === 'Associado'
+        );
+        setJogadores(jogadoresAssociadosCache);
         setTransacoes(cachedData.transacoesCache || []);
       }
 
@@ -93,39 +97,41 @@ export default function Financeiro() {
       const jogadoresData = jogadoresRes.data?.data || jogadoresRes.data || [];
       const transacoesData = transacoesRes.data?.data || transacoesRes.data || [];
 
-      // Processa os jogadores
-      const jogadoresProcessados = jogadoresData.map(jogador => {
-        // Converte os pagamentos do formato do backend para o formato do frontend
-        const pagamentos = Array(12).fill(false);
-        if (jogador.pagamentos && Array.isArray(jogador.pagamentos)) {
-          jogador.pagamentos.forEach((pagamento, index) => {
-            if (typeof pagamento === 'object' && pagamento !== null) {
-              pagamentos[index] = pagamento.pago || false;
-            } else {
-              pagamentos[index] = pagamento || false;
-            }
-          });
-        }
+      // Filtra apenas jogadores associados e processa os pagamentos
+      const jogadoresAssociados = jogadoresData
+        .filter(jogador => jogador.tipo === 'Associado') // Filtro para associados apenas
+        .map(jogador => {
+          // Converte os pagamentos do formato do backend para o formato do frontend
+          const pagamentos = Array(12).fill(false);
+          if (jogador.pagamentos && Array.isArray(jogador.pagamentos)) {
+            jogador.pagamentos.forEach((pagamento, index) => {
+              if (typeof pagamento === 'object' && pagamento !== null) {
+                pagamentos[index] = pagamento.pago || false;
+              } else {
+                pagamentos[index] = pagamento || false;
+              }
+            });
+          }
 
-        // Verifica status - Nova lógica considerando o mês anterior
-        const mesAtual = new Date().getMonth();
-        const mesAnterior = mesAtual === 0 ? 11 : mesAtual - 1;
-        const todosMesesPagos = pagamentos[mesAnterior];
+          // Verifica status - Nova lógica considerando o mês anterior
+          const mesAtual = new Date().getMonth();
+          const mesAnterior = mesAtual === 0 ? 11 : mesAtual - 1;
+          const todosMesesPagos = pagamentos[mesAnterior];
 
-        return {
-          ...jogador,
-          pagamentos: pagamentos,
-          statusFinanceiro: todosMesesPagos ? 'Adimplente' : 'Inadimplente'
-        };
-      });
+          return {
+            ...jogador,
+            pagamentos: pagamentos,
+            statusFinanceiro: todosMesesPagos ? 'Adimplente' : 'Inadimplente'
+          };
+        });
 
       // Atualiza estados
-      setJogadores(jogadoresProcessados);
+      setJogadores(jogadoresAssociados);
       setTransacoes(transacoesData);
 
       // Atualiza cache
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        jogadoresCache: jogadoresProcessados,
+        jogadoresCache: jogadoresAssociados,
         transacoesCache: transacoesData,
         lastUpdate: new Date().toISOString()
       }));
@@ -441,6 +447,48 @@ export default function Financeiro() {
       });
     }
   };
+
+
+// Adicione este estado para controlar o filtro de status
+const [filtroStatus, setFiltroStatus] = useState('todos'); // 'todos', 'adimplente', 'inadimplente'
+
+// Adicione este seletor de filtro no componente de controle de mensalidades
+<div className="flex items-center gap-2 w-full sm:w-auto">
+  <div className="relative flex-1 sm:flex-none">
+    <input
+      type="text"
+      placeholder="Buscar jogador..."
+      value={filtroJogador}
+      onChange={(e) => setFiltroJogador(e.target.value)}
+      className="w-full sm:w-40 px-2 sm:px-3 py-1 sm:py-1.5 bg-gray-700 border border-gray-600 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+    />
+    <FaSearch className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs sm:text-sm" />
+  </div>
+  
+  {/* Novo seletor de status */}
+  <select
+    value={filtroStatus}
+    onChange={(e) => setFiltroStatus(e.target.value)}
+    className="w-full sm:w-40 px-2 sm:px-3 py-1 sm:py-1.5 bg-gray-700 border border-gray-600 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+  >
+    <option value="todos">Todos os status</option>
+    <option value="adimplente">Adimplentes</option>
+    <option value="inadimplente">Inadimplentes</option>
+  </select>
+  
+  <motion.button
+    onClick={async (e) => {
+      await compartilharControle('tabela-mensalidades');
+    }}
+    whileHover={{ scale: 1.1 }}
+    whileTap={{ scale: 0.9 }}
+    className="bg-blue-600 p-1.5 sm:p-2 rounded-lg text-white hover:bg-blue-700 transition-colors flex-shrink-0"
+    title="Compartilhar controle de mensalidades"
+  >
+    <FaShare className="text-sm sm:text-base" />
+  </motion.button>
+</div>
+
 
   const deletarTransacao = async (id) => {
     try {
@@ -945,9 +993,19 @@ export default function Financeiro() {
     }
   };
 
-  const jogadoresFiltrados = jogadores.filter(jogador =>
-    jogador.nome.toLowerCase().includes(filtroJogador.toLowerCase())
-  );
+  // Substitua a linha atual de jogadoresFiltrados por:
+const jogadoresFiltrados = jogadores.filter(jogador => {
+  // Filtro por nome
+  const nomeMatch = jogador.nome.toLowerCase().includes(filtroJogador.toLowerCase());
+  
+  // Filtro por status
+  let statusMatch = true;
+  if (filtroStatus !== 'todos') {
+    statusMatch = jogador.statusFinanceiro?.toLowerCase() === filtroStatus.toLowerCase();
+  }
+  
+  return nomeMatch && statusMatch;
+});
 
   return (
     <div className="min-h-screen bg-gray-900 p-4 sm:p-6">
@@ -1395,113 +1453,122 @@ export default function Financeiro() {
               )}
             </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
-            >
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3 sm:mb-4">
-                <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Controle de Mensalidades</h2>
-                <div className="flex items-center gap-2 w-full sm:w-auto">
-                  <div className="relative flex-1 sm:flex-none">
-                    <input
-                      type="text"
-                      placeholder="Buscar jogador..."
-                      value={filtroJogador}
-                      onChange={(e) => setFiltroJogador(e.target.value)}
-                      className="w-full sm:w-40 px-2 sm:px-3 py-1 sm:py-1.5 bg-gray-700 border border-gray-600 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
-                    />
-                    <FaSearch className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs sm:text-sm" />
-                  </div>
-                  <motion.button
-                    onClick={async (e) => {
-    // Chame a função de compartilhamento diretamente no clique
-    await compartilharControle('tabela-mensalidades');
-  }}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    className="bg-blue-600 p-1.5 sm:p-2 rounded-lg text-white hover:bg-blue-700 transition-colors flex-shrink-0"
-                    title="Compartilhar controle de mensalidades"
-                  >
-                    <FaShare className="text-sm sm:text-base" />
-                  </motion.button>
-                </div>
-              </div>
+      <motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ delay: 0.3 }}
+  className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
+>
+  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3 sm:mb-4">
+    <h2 className="text-lg sm:text-xl font-semibold text-white">Controle de Mensalidades</h2>
+    <div className="flex items-center gap-2 w-full sm:w-auto">
+      <div className="relative flex-1 sm:flex-none">
+        <input
+          type="text"
+          placeholder="Buscar jogador..."
+          value={filtroJogador}
+          onChange={(e) => setFiltroJogador(e.target.value)}
+          className="w-full sm:w-40 px-2 sm:px-3 py-1 sm:py-1.5 bg-gray-700 border border-gray-600 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+        />
+        <FaSearch className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs sm:text-sm" />
+      </div>
+      
+      {/* Novo seletor de status */}
+      <select
+        value={filtroStatus}
+        onChange={(e) => setFiltroStatus(e.target.value)}
+        className="w-full sm:w-40 px-2 sm:px-3 py-1 sm:py-1.5 bg-gray-700 border border-gray-600 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+      >
+        <option value="todos">Todos os status</option>
+        <option value="adimplente">Adimplentes</option>
+        <option value="inadimplente">Inadimplentes</option>
+      </select>
+      
+      <motion.button
+        onClick={async (e) => {
+          await compartilharControle('tabela-mensalidades');
+        }}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        className="bg-blue-600 p-1.5 sm:p-2 rounded-lg text-white hover:bg-blue-700 transition-colors flex-shrink-0"
+        title="Compartilhar controle de mensalidades"
+      >
+        <FaShare className="text-sm sm:text-base" />
+      </motion.button>
+    </div>
+  </div>
 
-              {carregando ? (
-                <div className="flex justify-center py-6 sm:py-8">
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    className="h-6 w-6 sm:h-8 sm:w-8 border-4 border-blue-500 border-t-transparent rounded-full"
-                  />
-                </div>
-              ) : jogadores.length === 0 ? (
-                <div className="text-center py-6 sm:py-8 text-gray-400 text-xs sm:text-sm">
-                  Nenhum jogador cadastrado
-                </div>
-              ) : (
-                <div className="overflow-x-auto max-h-[60vh] sm:max-h-[70vh] md:max-h-[80vh]">
-                  <div id="tabela-mensalidades" className="min-w-[800px]">
-                    <table className="w-full divide-y divide-gray-700">
-                      <thead className="bg-gray-700 sticky top-0">
-                        <tr>
-                          <th className="px-2 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Jogador</th>
-                          <th className="px-2 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
-                          {dadosGraficoFluxoCaixa.labels.map((mes, i) => (
-                            <th key={i} className="px-1 sm:px-2 py-2 sm:py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">
-                              {mes}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-700">
-                        {jogadores.filter(jogador =>
-                          jogador.nome.toLowerCase().includes(filtroJogador.toLowerCase())
-                        ).map((jogador) => (
-                          <tr key={jogador._id} className="hover:bg-gray-700/50">
-                            <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium text-white">
-                              {jogador.nome}
-                            </td>
-                            <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap">
-                              <motion.button
-                                onClick={() => toggleStatus(jogador._id)}
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                  jogador.statusFinanceiro === 'Adimplente' ?
-                                    'bg-green-500/20 text-green-400' :
-                                    'bg-red-500/20 text-red-400'
-                                }`}
-                              >
-                                {jogador.statusFinanceiro || 'Inadimplente'}
-                              </motion.button>
-                            </td>
-                            {jogador.pagamentos.map((pago, i) => (
-                              <td key={i} className="px-1 sm:px-2 py-2 sm:py-3 whitespace-nowrap text-center">
-                                <motion.button
-                                  onClick={() => togglePagamento(jogador._id, i)}
-                                  whileHover={{ scale: 1.1 }}
-                                  whileTap={{ scale: 0.9 }}
-                                  className={`
-                                    w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center
-                                    ${pago ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}
-                                  `}
-                                  title={pago ? "Mensalidade paga" : "Mensalidade pendente"}
-                                >
-                                  {pago ? <FaCheck size={8} className="sm:text-xs" /> : <FaTimes size={8} className="sm:text-xs" />}
-                                </motion.button>
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </motion.div>
+  {carregando ? (
+    <div className="flex justify-center py-6 sm:py-8">
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+        className="h-6 w-6 sm:h-8 sm:w-8 border-4 border-blue-500 border-t-transparent rounded-full"
+      />
+    </div>
+  ) : jogadores.length === 0 ? (
+    <div className="text-center py-6 sm:py-8 text-gray-400 text-xs sm:text-sm">
+      Nenhum jogador cadastrado
+    </div>
+  ) : (
+    <div className="overflow-x-auto max-h-[60vh] sm:max-h-[70vh] md:max-h-[80vh]">
+      <div id="tabela-mensalidades" className="min-w-[800px]">
+        <table className="w-full divide-y divide-gray-700">
+          <thead className="bg-gray-700 sticky top-0">
+            <tr>
+              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Jogador</th>
+              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
+              {dadosGraficoFluxoCaixa.labels.map((mes, i) => (
+                <th key={i} className="px-1 sm:px-2 py-2 sm:py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  {mes}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-700">
+            {jogadoresFiltrados.map((jogador) => (
+              <tr key={jogador._id} className="hover:bg-gray-700/50">
+                <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium text-white">
+                  {jogador.nome}
+                </td>
+                <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap">
+                  <motion.button
+                    onClick={() => toggleStatus(jogador._id)}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      jogador.statusFinanceiro === 'Adimplente' ?
+                        'bg-green-500/20 text-green-400' :
+                        'bg-red-500/20 text-red-400'
+                    }`}
+                  >
+                    {jogador.statusFinanceiro || 'Inadimplente'}
+                  </motion.button>
+                </td>
+                {jogador.pagamentos.map((pago, i) => (
+                  <td key={i} className="px-1 sm:px-2 py-2 sm:py-3 whitespace-nowrap text-center">
+                    <motion.button
+                      onClick={() => togglePagamento(jogador._id, i)}
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      className={`
+                        w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center
+                        ${pago ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}
+                      `}
+                      title={pago ? "Mensalidade paga" : "Mensalidade pendente"}
+                    >
+                      {pago ? <FaCheck size={8} className="sm:text-xs" /> : <FaTimes size={8} className="sm:text-xs" />}
+                    </motion.button>
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )}
+</motion.div>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
