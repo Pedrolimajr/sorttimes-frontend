@@ -464,7 +464,6 @@ const [filtroStatus, setFiltroStatus] = useState('todos'); // 'todos', 'adimplen
     />
     <FaSearch className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs sm:text-sm" />
   </div>
-  
   {/* Novo seletor de status */}
   <select
     value={filtroStatus}
@@ -475,11 +474,8 @@ const [filtroStatus, setFiltroStatus] = useState('todos'); // 'todos', 'adimplen
     <option value="adimplente">Adimplentes</option>
     <option value="inadimplente">Inadimplentes</option>
   </select>
-  
   <motion.button
-    onClick={async (e) => {
-      await compartilharControle('tabela-mensalidades');
-    }}
+    onClick={async (e) => { await compartilharControle('tabela-mensalidades'); }}
     whileHover={{ scale: 1.1 }}
     whileTap={{ scale: 0.9 }}
     className="bg-blue-600 p-1.5 sm:p-2 rounded-lg text-white hover:bg-blue-700 transition-colors flex-shrink-0"
@@ -994,18 +990,19 @@ const [filtroStatus, setFiltroStatus] = useState('todos'); // 'todos', 'adimplen
   };
 
   // Substitua a linha atual de jogadoresFiltrados por:
-const jogadoresFiltrados = jogadores.filter(jogador => {
-  // Filtro por nome
-  const nomeMatch = jogador.nome.toLowerCase().includes(filtroJogador.toLowerCase());
-  
-  // Filtro por status
-  let statusMatch = true;
-  if (filtroStatus !== 'todos') {
-    statusMatch = jogador.statusFinanceiro?.toLowerCase() === filtroStatus.toLowerCase();
-  }
-  
-  return nomeMatch && statusMatch;
-});
+const jogadoresFiltrados = jogadores
+  .filter(jogador => jogador.tipo === 'Associado') // Filtra apenas Associados primeiro :cite[2]
+  .filter(jogador => {
+    // Filtro por nome
+    const nomeMatch = jogador.nome.toLowerCase().includes(filtroJogador.toLowerCase());
+    // Filtro por status
+    let statusMatch = true;
+    if (filtroStatus !== 'todos') {
+      // Comparação robusta para status
+      statusMatch = jogador.statusFinanceiro?.toLowerCase() === filtroStatus.toLowerCase();
+    }
+    return nomeMatch && statusMatch;
+  });
 
   return (
     <div className="min-h-screen bg-gray-900 p-4 sm:p-6">
@@ -1526,8 +1523,8 @@ const jogadoresFiltrados = jogadores.filter(jogador => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-700">
-            {jogadoresFiltrados.map((jogador) => (
-              <tr key={jogador._id} className="hover:bg-gray-700/50">
+  {jogadoresFiltrados.map((jogador) => (
+    <tr key={jogador._id} className="hover:bg-gray-700/50">
                 <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium text-white">
                   {jogador.nome}
                 </td>
