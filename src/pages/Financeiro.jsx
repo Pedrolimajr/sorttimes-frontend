@@ -947,9 +947,11 @@ export default function Financeiro() {
     }
   };
 
-  const jogadoresFiltrados = jogadores.filter(jogador =>
-    jogador.nome.toLowerCase().includes(filtroJogador.toLowerCase())
-  );
+ const jogadoresFiltrados = jogadores.filter(jogador =>
+  jogador.nivel === 'Associado' &&
+  jogador.nome.toLowerCase().includes(filtroJogador.toLowerCase())
+);
+
 
   return (
     <div className="min-h-screen bg-gray-900 p-4 sm:p-6">
