@@ -947,10 +947,9 @@ export default function Financeiro() {
     }
   };
 
-const jogadoresFiltrados = jogadores.filter(jogador =>
+ const jogadoresFiltrados = jogadores.filter(jogador =>
   jogador.nivel === 'Associado' &&
-  jogador.nome.toLowerCase().includes(filtroJogador.toLowerCase()) &&
-  (filtroStatusFinanceiro === '' || jogador.statusFinanceiro === filtroStatusFinanceiro)
+  jogador.nome.toLowerCase().includes(filtroJogador.toLowerCase())
 );
 
 
