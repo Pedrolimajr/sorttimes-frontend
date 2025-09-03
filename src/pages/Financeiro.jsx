@@ -35,6 +35,8 @@ Chart.register(...registerables);
 
 export default function Financeiro() {
   const navigate = useNavigate();
+  const [filtroStatusFinanceiro, setFiltroStatusFinanceiro] = useState('');
+
   const [transacoes, setTransacoes] = useState([]);
   const [jogadores, setJogadores] = useState([]);
   const [filtroMes, setFiltroMes] = useState(new Date().toISOString().slice(0, 7));
@@ -1395,113 +1397,127 @@ export default function Financeiro() {
               )}
             </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
-            >
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3 sm:mb-4">
-                <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Controle de Mensalidades</h2>
-                <div className="flex items-center gap-2 w-full sm:w-auto">
-                  <div className="relative flex-1 sm:flex-none">
-                    <input
-                      type="text"
-                      placeholder="Buscar jogador..."
-                      value={filtroJogador}
-                      onChange={(e) => setFiltroJogador(e.target.value)}
-                      className="w-full sm:w-40 px-2 sm:px-3 py-1 sm:py-1.5 bg-gray-700 border border-gray-600 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
-                    />
-                    <FaSearch className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs sm:text-sm" />
-                  </div>
-                  <motion.button
-                    onClick={async (e) => {
-    // Chame a função de compartilhamento diretamente no clique
-    await compartilharControle('tabela-mensalidades');
-  }}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    className="bg-blue-600 p-1.5 sm:p-2 rounded-lg text-white hover:bg-blue-700 transition-colors flex-shrink-0"
-                    title="Compartilhar controle de mensalidades"
-                  >
-                    <FaShare className="text-sm sm:text-base" />
-                  </motion.button>
-                </div>
-              </div>
+        <motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ delay: 0.3 }}
+  className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
+>
+  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3 sm:mb-4">
+    <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Controle de Mensalidades</h2>
+    <div className="flex items-center gap-2 w-full sm:w-auto">
+      <div className="relative flex-1 sm:flex-none">
+        <input
+          type="text"
+          placeholder="Buscar jogador..."
+          value={filtroJogador}
+          onChange={(e) => setFiltroJogador(e.target.value)}
+          className="w-full sm:w-40 px-2 sm:px-3 py-1 sm:py-1.5 bg-gray-700 border border-gray-600 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+        />
+        <FaSearch className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs sm:text-sm" />
+      </div>
 
-              {carregando ? (
-                <div className="flex justify-center py-6 sm:py-8">
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    className="h-6 w-6 sm:h-8 sm:w-8 border-4 border-blue-500 border-t-transparent rounded-full"
-                  />
-                </div>
-              ) : jogadores.length === 0 ? (
-                <div className="text-center py-6 sm:py-8 text-gray-400 text-xs sm:text-sm">
-                  Nenhum jogador cadastrado
-                </div>
-              ) : (
-                <div className="overflow-x-auto max-h-[60vh] sm:max-h-[70vh] md:max-h-[80vh]">
-                  <div id="tabela-mensalidades" className="min-w-[800px]">
-                    <table className="w-full divide-y divide-gray-700">
-                      <thead className="bg-gray-700 sticky top-0">
-                        <tr>
-                          <th className="px-2 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Jogador</th>
-                          <th className="px-2 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
-                          {dadosGraficoFluxoCaixa.labels.map((mes, i) => (
-                            <th key={i} className="px-1 sm:px-2 py-2 sm:py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">
-                              {mes}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-700">
-                        {jogadores.filter(jogador =>
-                          jogador.nome.toLowerCase().includes(filtroJogador.toLowerCase())
-                        ).map((jogador) => (
-                          <tr key={jogador._id} className="hover:bg-gray-700/50">
-                            <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium text-white">
-                              {jogador.nome}
-                            </td>
-                            <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap">
-                              <motion.button
-                                onClick={() => toggleStatus(jogador._id)}
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                  jogador.statusFinanceiro === 'Adimplente' ?
-                                    'bg-green-500/20 text-green-400' :
-                                    'bg-red-500/20 text-red-400'
-                                }`}
-                              >
-                                {jogador.statusFinanceiro || 'Inadimplente'}
-                              </motion.button>
-                            </td>
-                            {jogador.pagamentos.map((pago, i) => (
-                              <td key={i} className="px-1 sm:px-2 py-2 sm:py-3 whitespace-nowrap text-center">
-                                <motion.button
-                                  onClick={() => togglePagamento(jogador._id, i)}
-                                  whileHover={{ scale: 1.1 }}
-                                  whileTap={{ scale: 0.9 }}
-                                  className={`
-                                    w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center
-                                    ${pago ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}
-                                  `}
-                                  title={pago ? "Mensalidade paga" : "Mensalidade pendente"}
-                                >
-                                  {pago ? <FaCheck size={8} className="sm:text-xs" /> : <FaTimes size={8} className="sm:text-xs" />}
-                                </motion.button>
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </motion.div>
+      {/* Filtro por status financeiro */}
+      <select
+        value={filtroStatusFinanceiro}
+        onChange={(e) => setFiltroStatusFinanceiro(e.target.value)}
+        className="w-full sm:w-40 px-2 sm:px-3 py-1 sm:py-1.5 bg-gray-700 border border-gray-600 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+      >
+        <option value="">Todos</option>
+        <option value="Adimplente">Adimplente</option>
+        <option value="Inadimplente">Inadimplente</option>
+      </select>
+
+      <motion.button
+        onClick={async () => await compartilharControle('tabela-mensalidades')}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        className="bg-blue-600 p-1.5 sm:p-2 rounded-lg text-white hover:bg-blue-700 transition-colors flex-shrink-0"
+        title="Compartilhar controle de mensalidades"
+      >
+        <FaShare className="text-sm sm:text-base" />
+      </motion.button>
+    </div>
+  </div>
+
+  {carregando ? (
+    <div className="flex justify-center py-6 sm:py-8">
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+        className="h-6 w-6 sm:h-8 sm:w-8 border-4 border-blue-500 border-t-transparent rounded-full"
+      />
+    </div>
+  ) : jogadores.length === 0 ? (
+    <div className="text-center py-6 sm:py-8 text-gray-400 text-xs sm:text-sm">
+      Nenhum jogador cadastrado
+    </div>
+  ) : (
+    <div className="overflow-x-auto max-h-[60vh] sm:max-h-[70vh] md:max-h-[80vh]">
+      <div id="tabela-mensalidades" className="min-w-[800px]">
+        <table className="w-full divide-y divide-gray-700">
+          <thead className="bg-gray-700 sticky top-0">
+            <tr>
+              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Jogador</th>
+              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
+              {dadosGraficoFluxoCaixa.labels.map((mes, i) => (
+                <th key={i} className="px-1 sm:px-2 py-2 sm:py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  {mes}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-700">
+            {jogadores
+              .filter(jogador =>
+                jogador.nivel === 'Associado' &&
+                jogador.nome.toLowerCase().includes(filtroJogador.toLowerCase()) &&
+                (filtroStatusFinanceiro === '' || jogador.statusFinanceiro === filtroStatusFinanceiro)
+              )
+              .map((jogador) => (
+                <tr key={jogador._id} className="hover:bg-gray-700/50">
+                  <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium text-white">
+                    {jogador.nome}
+                  </td>
+                  <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap">
+                    <motion.button
+                      onClick={() => toggleStatus(jogador._id)}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        jogador.statusFinanceiro === 'Adimplente'
+                          ? 'bg-green-500/20 text-green-400'
+                          : 'bg-red-500/20 text-red-400'
+                      }`}
+                    >
+                      {jogador.statusFinanceiro || 'Inadimplente'}
+                    </motion.button>
+                  </td>
+                  {jogador.pagamentos.map((pago, i) => (
+                    <td key={i} className="px-1 sm:px-2 py-2 sm:py-3 whitespace-nowrap text-center">
+                      <motion.button
+                        onClick={() => togglePagamento(jogador._id, i)}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        className={`
+                          w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center
+                          ${pago ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}
+                        `}
+                        title={pago ? "Mensalidade paga" : "Mensalidade pendente"}
+                      >
+                        {pago ? <FaCheck size={8} className="sm:text-xs" /> : <FaTimes size={8} className="sm:text-xs" />}
+                      </motion.button>
+                    </td>
+                  ))}
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )}
+</motion.div>
+
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
