@@ -1,14 +1,20 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { authService } from '../services/authService';
+import { useAuth } from '../context/AuthContext';
 
 const PrivateRoute = ({ children }) => {
-  const isAuth = authService.isAuthenticated();
-  console.log("🔒 Verificando autenticação:", isAuth);
-  console.log("🔑 Token no localStorage:", localStorage.getItem('token'));
-  console.log("👤 User no localStorage:", localStorage.getItem('user'));
+  const { isAuthenticated, loading } = useAuth();
 
-  return isAuth ? children : <Navigate to="/login" replace />;
+  // Enquanto verifica o token com o backend, evita piscar a tela
+  if (loading) {
+    return (
+      <div className="w-full h-full flex items-center justify-center text-gray-100">
+        Verificando sessão...
+      </div>
+    );
+  }
+
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
 };
 
 export default PrivateRoute;

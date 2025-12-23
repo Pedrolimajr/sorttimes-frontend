@@ -122,6 +122,10 @@ isAuthenticated: () => {
           }
         }
       );
+
+      // Após alterar a senha, força logout para invalidar sessão antiga
+      authService.logout();
+
       return response.data;
     } catch (error) {
       console.error('Erro ao atualizar senha:', error.response?.data || error.message);

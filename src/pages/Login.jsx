@@ -3,6 +3,7 @@ import { FaEye, FaEyeSlash, FaSignInAlt, FaKey } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { authService } from "../services/authService";
+import { useAuth } from "../context/AuthContext";
 import { toast } from "react-toastify";
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 
@@ -13,6 +14,7 @@ export default function Login() {
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const fazerLogin = async (e) => {
     e.preventDefault();
@@ -23,6 +25,12 @@ export default function Login() {
     // localStorage.clear();
       
       const response = await authService.login(email, senha);
+
+      // Atualiza contexto de autenticação com o usuário logado
+      if (response?.user) {
+        login(response.user);
+      }
+
       navigate("/dashboard");
     } catch (error) {
       console.error('Erro ao fazer login:', error);

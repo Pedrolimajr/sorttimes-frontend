@@ -5,6 +5,7 @@ import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { useNavigate } from "react-router-dom";
 import { authService } from "../services/authService";
 import { toast } from "react-toastify";
+import { useAuth } from "../context/AuthContext";
 
 export default function ConfiguracoesConta() {
   const [novoEmail, setNovoEmail] = useState("");
@@ -14,6 +15,7 @@ export default function ConfiguracoesConta() {
   const [confirmarNovaSenha, setConfirmarNovaSenha] = useState("");
   const [carregando, setCarregando] = useState(false);
   const navigate = useNavigate();
+  const { login, logout } = useAuth();
 
   const atualizarEmail = async (e) => {
     e.preventDefault();
@@ -22,7 +24,14 @@ export default function ConfiguracoesConta() {
     try {
       console.log('Enviando dados:', { novoEmail, senha });
       
-      await authService.atualizarEmail(novoEmail, senha);
+      const result = await authService.atualizarEmail(novoEmail, senha);
+
+      // Mantém o contexto e o localStorage sincronizados com o novo email
+      if (result?.user) {
+        localStorage.setItem('user', JSON.stringify(result.user));
+        login(result.user);
+      }
+
       toast.success('Email atualizado com sucesso!');
       setNovoEmail('');
       setSenha('');
@@ -46,7 +55,13 @@ export default function ConfiguracoesConta() {
 
     try {
       await authService.atualizarSenha(senhaAtual, novaSenha);
-      toast.success("Senha atualizada com sucesso!");
+
+      // authService.atualizarSenha já faz logout (limpa localStorage),
+      // aqui garantimos que o contexto também seja limpo e forçamos novo login.
+      logout();
+      toast.success("Senha atualizada com sucesso! Faça login novamente.");
+
+      navigate("/login");
       setSenhaAtual("");
       setNovaSenha("");
       setConfirmarNovaSenha("");
@@ -168,6 +183,36 @@ export default function ConfiguracoesConta() {
               </motion.button>
             </div>
           </motion.form>
+
+          {/* Seção de segurança / sair da conta */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="bg-gray-800/50 backdrop-blur-sm p-6 sm:p-8 rounded-2xl shadow-xl border border-red-500/30 hover:border-red-500/60 transition-all duration-300"
+          >
+            <h2 className="text-xl sm:text-2xl text-white mb-4 flex items-center gap-3">
+              <div className="p-2.5 bg-red-500/10 rounded-xl">
+                <FaKey className="text-red-400 text-xl sm:text-2xl" />
+              </div>
+              Segurança da Conta
+            </h2>
+            <p className="text-gray-400 text-sm sm:text-base mb-4">
+              Se estiver usando este dispositivo em ambiente compartilhado, recomendamos encerrar sua sessão após o uso.
+            </p>
+            <motion.button
+              type="button"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => {
+                logout();
+                navigate("/login");
+              }}
+              className="w-full bg-gradient-to-r from-red-600 to-rose-500 hover:from-red-700 hover:to-rose-600 text-white py-3 rounded-lg font-medium shadow-lg transition-all duration-300 flex items-center justify-center gap-2"
+            >
+              Sair da conta
+            </motion.button>
+          </motion.div>
 
           {/* Formulário de Senha */}
           <motion.form 
