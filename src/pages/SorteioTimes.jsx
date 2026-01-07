@@ -13,6 +13,7 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import socket from '../services/socket';
 import usePersistedState from '../hooks/usePersistedState';
+import api from '../services/api';
 // Constantes para organizar os valores fixos
 const POSICOES = {
   GOLEIRO: "Goleiro",
@@ -276,8 +277,9 @@ export default function SorteioTimes() {
   const carregarJogadores = async () => {
     setCarregandoJogadores(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/jogadores`);
-      const { data: jogadores } = await response.json();
+      const response = await api.get('/jogadores');
+      const apiData = response.data;
+      const jogadores = Array.isArray(apiData?.data) ? apiData.data : [];
 
       setJogadoresSelecionados(prev => {
         // Mantém os estados existentes e adiciona novos jogadores
@@ -294,7 +296,11 @@ export default function SorteioTimes() {
       });
     } catch (error) {
       console.error("Erro ao carregar jogadores:", error);
-      toast.error("Erro ao carregar jogadores");
+      if (error.response?.status === 401) {
+        toast.error('Sessão expirada. Faça login novamente.');
+      } else {
+        toast.error("Erro ao carregar jogadores");
+      }
     } finally {
       setCarregandoJogadores(false);
     }
@@ -485,10 +491,10 @@ const aplicarFiltroPosicao = () => {
   const recarregarJogadores = async () => {
   setCarregandoJogadores(true);
   try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/jogadores`);
-    if (!response.ok) throw new Error('Erro ao recarregar jogadores');
-    
-    const { data: jogadores } = await response.json();
+    const response = await api.get('/jogadores');
+    const apiData = response.data;
+    const jogadores = Array.isArray(apiData?.data) ? apiData.data : [];
+
     setJogadoresCadastrados(jogadores);
     
     setJogadoresSelecionados(jogadores.map(jogador => {
@@ -507,7 +513,11 @@ const aplicarFiltroPosicao = () => {
     toast.success('Jogadores atualizados com sucesso');
   } catch (error) {
     console.error("Erro:", error);
-    toast.error(error.message || 'Erro ao atualizar jogadores');
+    if (error.response?.status === 401) {
+      toast.error('Sessão expirada. Faça login novamente.');
+    } else {
+      toast.error(error.message || 'Erro ao atualizar jogadores');
+    }
   } finally {
     setCarregandoJogadores(false);
   }
