@@ -1719,48 +1719,9 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                   <p className="text-xs sm:text-sm text-green-300 mb-1">
                     Receitas: <span className="font-semibold">{qtdReceitasAno}</span> lançamentos
                   </p>
-                  <p className="text-xs sm:text-sm text-red-300 mb-2">
+                  <p className="text-xs sm:text-sm text-red-300">
                     Despesas: <span className="font-semibold">{qtdDespesasAno}</span> lançamentos
                   </p>
-
-                  {/* Resumo mensal condensado */}
-                  {resumoMensalAno.length > 0 && (
-                    <div className="mt-2 border-t border-gray-600 pt-2">
-                      <h5 className="text-[11px] sm:text-xs font-semibold text-gray-200 mb-1">Resumo mensal</h5>
-                      <div className="grid grid-cols-2 gap-1 sm:gap-2 max-h-32 overflow-y-auto pr-1">
-                        {resumoMensalAno.map((m) => (
-                          <div key={m.mesIndex} className="text-[10px] sm:text-xs text-gray-300">
-                            <span className="font-semibold text-white">
-                              {dadosGraficoFluxoCaixa.labels[m.mesIndex]}:
-                            </span>{' '}
-                            R$ {m.receitas.toFixed(2)} - R$ {m.despesas.toFixed(2)} ={' '}
-                            <span className={m.saldo >= 0 ? 'text-green-300' : 'text-red-300'}>
-                              R$ {m.saldo.toFixed(2)}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Resumo por categoria */}
-                  {Object.keys(resumoCategoriasAno).length > 0 && (
-                    <div className="mt-2 border-t border-gray-600 pt-2">
-                      <h5 className="text-[11px] sm:text-xs font-semibold text-gray-200 mb-1">Resumo por categoria</h5>
-                      <div className="space-y-1 max-h-28 overflow-y-auto pr-1">
-                        {Object.entries(resumoCategoriasAno).map(([cat, info]) => (
-                          <div key={cat} className="text-[10px] sm:text-xs text-gray-300 flex justify-between">
-                            <span className="truncate mr-2">
-                              {cat} ({info.tipo === 'receita' ? 'Receita' : 'Despesa'})
-                            </span>
-                            <span className={info.tipo === 'receita' ? 'text-green-300' : 'text-red-300'}>
-                              {info.quantidade}x • R$ {info.total.toFixed(2)}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
 
