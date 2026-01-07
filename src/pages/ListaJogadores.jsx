@@ -12,6 +12,7 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useJogadores } from '../context/JogadoresContext';
 import { calcularIdade } from '../utils/dateUtils';
+import api from '../services/api';
 
 const posicoes = [
   'Goleiro', 'Defensor', 'Lateral-Esquerdo', 'Lateral-Direito', 
@@ -89,27 +90,18 @@ export default function ListaJogadores({
     const { jogador, novoAtivo } = modalBloqueio;
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/jogadores/${jogador._id}/bloqueio`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ativo: novoAtivo })
+      const response = await api.patch(`/jogadores/${jogador._id}/bloqueio`, {
+        ativo: novoAtivo,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Erro ao atualizar bloqueio');
-      }
-
-      const data = await response.json();
+      const data = response.data;
       toast.success(data.message || (novoAtivo ? 'Jogador desbloqueado' : 'Jogador bloqueado'));
 
       atualizarJogador(data.data);
       setJogadores(prev => prev.map(j => j._id === data.data._id ? data.data : j));
     } catch (error) {
       console.error('Erro ao bloquear/desbloquear jogador:', error);
-      toast.error(error.message || 'Erro ao atualizar bloqueio');
+      toast.error(error.response?.data?.message || error.message || 'Erro ao atualizar bloqueio');
     } finally {
       fecharModalBloqueio();
     }
