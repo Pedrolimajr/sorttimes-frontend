@@ -42,6 +42,12 @@ export default function ListaJogadores({
     url: null,
     nome: ''
   });
+
+  const [modalBloqueio, setModalBloqueio] = useState({
+    aberto: false,
+    jogador: null,
+    novoAtivo: true,
+  });
   
   const [formData, setFormData] = useState({
     nome: '',
@@ -71,6 +77,42 @@ export default function ListaJogadores({
       url: null,
       nome: ''
     });
+  };
+
+  const fecharModalBloqueio = () => {
+    setModalBloqueio({ aberto: false, jogador: null, novoAtivo: true });
+  };
+
+  const confirmarBloqueio = async () => {
+    if (!modalBloqueio.jogador) return;
+
+    const { jogador, novoAtivo } = modalBloqueio;
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/jogadores/${jogador._id}/bloqueio`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ativo: novoAtivo })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao atualizar bloqueio');
+      }
+
+      const data = await response.json();
+      toast.success(data.message || (novoAtivo ? 'Jogador desbloqueado' : 'Jogador bloqueado'));
+
+      atualizarJogador(data.data);
+      setJogadores(prev => prev.map(j => j._id === data.data._id ? data.data : j));
+    } catch (error) {
+      console.error('Erro ao bloquear/desbloquear jogador:', error);
+      toast.error(error.message || 'Erro ao atualizar bloqueio');
+    } finally {
+      fecharModalBloqueio();
+    }
   };
 
   useEffect(() => {
@@ -292,40 +334,90 @@ export default function ListaJogadores({
   return (
     <div className={`${!modoSelecao ? 'min-h-screen' : ''} bg-gray-900 p-4 sm:p-6`}>
       {/* Modal para foto ampliada */}
- <AnimatePresence>
-  {fotoAmpliada.aberto && (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 p-4"
-      onClick={fecharFotoAmpliada}
-    >
-      <motion.div
-        initial={{ scale: 0.9 }}
-        animate={{ scale: 1 }}
-        exit={{ scale: 0.9 }}
-        className="relative w-full h-full flex items-center justify-center"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          onClick={fecharFotoAmpliada}
-          className="absolute top-4 right-4 text-white hover:text-gray-300 z-10 bg-gray-800 rounded-full p-2"
-        >
-          <FaTimes size={24} />
-        </button>
-        
-        <div className="max-w-full max-h-full flex items-center justify-center">
-          <img 
-            src={fotoAmpliada.url} 
-            alt="Foto do jogador"
-            className="max-w-full max-h-full object-contain"
-          />
-        </div>
-      </motion.div>
-    </motion.div>
-  )}
-</AnimatePresence>
+      <AnimatePresence>
+        {fotoAmpliada.aberto && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 p-4"
+            onClick={fecharFotoAmpliada}
+          >
+            <motion.div
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              className="relative w-full h-full flex items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={fecharFotoAmpliada}
+                className="absolute top-4 right-4 text-white hover:text-gray-300 z-10 bg-gray-800 rounded-full p-2"
+              >
+                <FaTimes size={24} />
+              </button>
+              
+              <div className="max-w-full max-h-full flex items-center justify-center">
+                <img 
+                  src={fotoAmpliada.url} 
+                  alt="Foto do jogador"
+                  className="max-w-full max-h-full object-contain"
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal para bloqueio/desbloqueio de jogador */}
+      <AnimatePresence>
+        {modalBloqueio.aberto && modalBloqueio.jogador && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 p-4"
+            onClick={fecharModalBloqueio}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-gray-800 rounded-xl max-w-md w-full p-6 shadow-xl border border-gray-700"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 className="text-lg font-semibold text-white mb-3">
+                {modalBloqueio.novoAtivo ? 'Desbloquear jogador' : 'Bloquear jogador'}
+              </h2>
+
+              <p className="text-gray-300 text-sm mb-4">
+                {modalBloqueio.novoAtivo
+                  ? `Deseja DESBLOQUEAR o jogador "${modalBloqueio.jogador.nome}"? Ele voltará a aparecer nas demais telas.`
+                  : `Deseja BLOQUEAR o jogador "${modalBloqueio.jogador.nome}"? Ele não aparecerá mais nas telas de Financeiro, Sorteio e Presença.`}
+              </p>
+
+              <div className="flex justify-end gap-3 mt-4">
+                <button
+                  onClick={fecharModalBloqueio}
+                  className="px-4 py-2 text-sm rounded-lg bg-gray-700 text-gray-200 hover:bg-gray-600"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmarBloqueio}
+                  className={`px-4 py-2 text-sm rounded-lg text-white ${
+                    modalBloqueio.novoAtivo
+                      ? 'bg-green-600 hover:bg-green-700'
+                      : 'bg-red-600 hover:bg-red-700'
+                  }`}
+                >
+                  Confirmar
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {!modoSelecao && (
         <AnimatePresence>
@@ -919,42 +1011,15 @@ export default function ListaJogadores({
                                 <div className="flex gap-2 sm:gap-3">
                                   {/* Bloquear / Desbloquear antes do botão Editar */}
                                   <motion.button
-                                    onClick={async () => {
+                                    onClick={() => {
                                       const ativoAtual = jogador.ativo !== false;
                                       const novoAtivo = !ativoAtual;
 
-                                      const mensagemConfirmacao = novoAtivo
-                                        ? `Deseja DESBLOQUEAR o jogador "${jogador.nome}"? Ele voltará a aparecer nas demais telas.`
-                                        : `Deseja BLOQUEAR o jogador "${jogador.nome}"? Ele não aparecerá mais nas telas de Financeiro, Sorteio e Presença.`;
-
-                                      if (!window.confirm(mensagemConfirmacao)) {
-                                        return;
-                                      }
-
-                                      try {
-                                        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/jogadores/${jogador._id}/bloqueio`, {
-                                          method: 'PATCH',
-                                          headers: {
-                                            'Content-Type': 'application/json',
-                                          },
-                                          body: JSON.stringify({ ativo: novoAtivo })
-                                        });
-
-                                        if (!response.ok) {
-                                          const errorData = await response.json();
-                                          throw new Error(errorData.message || 'Erro ao atualizar bloqueio');
-                                        }
-
-                                        const data = await response.json();
-                                        toast.success(data.message || (novoAtivo ? 'Jogador desbloqueado' : 'Jogador bloqueado'));
-
-                                        // Atualiza contexto e estado local
-                                        atualizarJogador(data.data);
-                                        setJogadores(prev => prev.map(j => j._id === data.data._id ? data.data : j));
-                                      } catch (error) {
-                                        console.error('Erro ao bloquear/desbloquear jogador:', error);
-                                        toast.error(error.message || 'Erro ao atualizar bloqueio');
-                                      }
+                                      setModalBloqueio({
+                                        aberto: true,
+                                        jogador,
+                                        novoAtivo,
+                                      });
                                     }}
                                     whileHover={{ scale: 1.1 }}
                                     whileTap={{ scale: 0.9 }}
