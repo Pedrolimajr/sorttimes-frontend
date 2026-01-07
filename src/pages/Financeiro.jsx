@@ -31,6 +31,7 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import api from '../services/api';
 import domtoimage from 'dom-to-image';
+import { getHojeSaoPauloISODate, getAnoMesAtualSaoPaulo } from '../utils/dateUtils';
 Chart.register(...registerables);
 
 export default function Financeiro() {
@@ -39,7 +40,7 @@ export default function Financeiro() {
 
   const [transacoes, setTransacoes] = useState([]);
   const [jogadores, setJogadores] = useState([]);
-  const [filtroMes, setFiltroMes] = useState(new Date().toISOString().slice(0, 7));
+  const [filtroMes, setFiltroMes] = useState(getAnoMesAtualSaoPaulo());
   const [carregando, setCarregando] = useState(true);
   const [relatorioModal, setRelatorioModal] = useState(false);
   const [editarModal, setEditarModal] = useState(false);
@@ -56,7 +57,7 @@ export default function Financeiro() {
     valor: "",
     tipo: "receita",
     categoria: "",
-    data: new Date().toISOString().substring(0, 10),
+    data: getHojeSaoPauloISODate(),
     jogadorId: "",
     jogadorNome: "",
     isento: false // Adicionando o estado para 'isento'
@@ -245,12 +246,12 @@ export default function Financeiro() {
 
     // Resetar formulário
     toast.success('Transação registrada com sucesso!');
-    setNovaTransacao({
+      setNovaTransacao({
       descricao: "",
       valor: "",
       tipo: "receita",
       categoria: "",
-      data: new Date().toISOString().split("T")[0],
+      data: getHojeSaoPauloISODate(),
       jogadorId: "",
       jogadorNome: ""
     });

@@ -10,7 +10,10 @@ export function JogadoresProvider({ children }) {
   const carregarJogadores = async () => {
     try {
       setCarregando(true);
-      const response = await api.get('/jogadores');
+      // Para gestão (Lista de Jogadores), traz também bloqueados/inativos
+      const response = await api.get('/jogadores', {
+        params: { incluirInativos: true }
+      });
       if (response.data.success) {
         setJogadores(response.data.data);
       }

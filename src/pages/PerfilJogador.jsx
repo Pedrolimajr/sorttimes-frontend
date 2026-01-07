@@ -7,6 +7,7 @@ import {
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { calcularIdade } from '../utils/dateUtils';
 
 export default function PerfilJogador() {
   const { id } = useParams();
@@ -133,10 +134,15 @@ export default function PerfilJogador() {
                   <div>
                     <h3 className="text-gray-400 text-sm">Data de Nascimento</h3>
                     <p className="text-white">
-                      {jogador.dataNascimento ? 
-                        new Date(jogador.dataNascimento).toLocaleDateString() + 
-                        ` (${new Date().getFullYear() - new Date(jogador.dataNascimento).getFullYear()} anos)` : 
-                        'Não informada'}
+                      {jogador.dataNascimento ? (
+                        (() => {
+                          const idade = calcularIdade(jogador.dataNascimento);
+                          const dataFormatada = new Date(jogador.dataNascimento).toLocaleDateString('pt-BR');
+                          return `${dataFormatada} (${idade !== null ? `${idade} anos` : 'idade não informada'})`;
+                        })()
+                      ) : (
+                        'Não informada'
+                      )}
                     </p>
                   </div>
                 </div>

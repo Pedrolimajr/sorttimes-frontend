@@ -4,13 +4,14 @@ import {
   FaArrowLeft, FaUsers, FaEdit, FaTrash, FaPlus,
   FaSave, FaTimes, FaSearch, FaFilter, FaUserCircle,
   FaCheck, FaMoneyBillWave, FaTshirt, FaMapMarkerAlt, 
-  FaStar, FaCalendarAlt, FaPhone, FaEnvelope
+  FaStar, FaCalendarAlt, FaPhone, FaEnvelope, FaBan, FaUnlock
 } from 'react-icons/fa';
 import { RiArrowLeftDoubleLine } from 'react-icons/ri';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useJogadores } from '../context/JogadoresContext';
+import { calcularIdade } from '../utils/dateUtils';
 
 const posicoes = [
   'Goleiro', 'Defensor', 'Lateral-Esquerdo', 'Lateral-Direito', 
@@ -33,6 +34,7 @@ export default function ListaJogadores({
   const [filtroPosicao, setFiltroPosicao] = useState('');
   const [filtroStatus, setFiltroStatus] = useState('');
   const [filtroNivel, setFiltroNivel] = useState('');
+  const [filtroAtivo, setFiltroAtivo] = useState('todos'); // todos | ativos | bloqueados
   const [editando, setEditando] = useState(null);
   const [mensagemSucesso, setMensagemSucesso] = useState(null);
   const [fotoAmpliada, setFotoAmpliada] = useState({
@@ -124,7 +126,16 @@ export default function ListaJogadores({
     setJogadores(jogadoresContext);
   }, [jogadoresContext]);
 
-  const jogadoresFiltrados = jogadores.filter(jogador => {
+  // Em modo de seleção (ex.: Financeiro, Sorteio, etc.), ocultar jogadores bloqueados (ativo === false)
+  const jogadoresBase = modoSelecao
+    ? jogadores.filter(j => j.ativo !== false)
+    : jogadores.filter(jogador => {
+        if (filtroAtivo === 'ativos') return jogador.ativo !== false;
+        if (filtroAtivo === 'bloqueados') return jogador.ativo === false;
+        return true; // 'todos'
+      });
+
+  const jogadoresFiltrados = jogadoresBase.filter(jogador => {
     const matchesNome = jogador.nome?.toLowerCase().includes(filtro.toLowerCase());
     const matchesPosicao = filtroPosicao ? jogador.posicao === filtroPosicao : true;
     const matchesStatus = filtroStatus ? jogador.statusFinanceiro === filtroStatus : true;
@@ -435,7 +446,7 @@ export default function ListaJogadores({
               <FaFilter className="text-blue-400" /> Filtros
             </h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-400 flex items-center gap-2">
                   <FaSearch /> Buscar por nome
@@ -502,6 +513,21 @@ export default function ListaJogadores({
                   ))}
                 </select>
               </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-400">
+                  Status do Jogador
+                </label>
+                <select
+                  className="w-full p-2 text-sm bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={filtroAtivo}
+                  onChange={(e) => setFiltroAtivo(e.target.value)}
+                >
+                  <option value="todos" className="bg-gray-800">Todos</option>
+                  <option value="ativos" className="bg-gray-800">Somente ativos</option>
+                  <option value="bloqueados" className="bg-gray-800">Somente bloqueados</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -537,7 +563,6 @@ export default function ListaJogadores({
                         value={formData.nome} 
                         onChange={handleChange} 
                         className="w-full p-2 text-sm bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                        required 
                       />
                     </div>
                     
@@ -549,7 +574,6 @@ export default function ListaJogadores({
                         value={formData.dataNascimento} 
                         onChange={handleChange} 
                         className="w-full p-2 text-sm bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                        required 
                       />
                     </div>
                     
@@ -560,7 +584,6 @@ export default function ListaJogadores({
                         value={formData.posicao} 
                         onChange={handleChange} 
                         className="w-full p-2 text-sm bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                        required 
                       >
                         <option value="" className="bg-gray-800">Selecione uma posição</option>
                         {posicoes.map(posicao => (
@@ -581,7 +604,6 @@ export default function ListaJogadores({
                         value={formData.telefone} 
                         onChange={handleChange} 
                         className="w-full p-2 text-sm bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                        required 
                       />
                     </div>
                     
@@ -595,7 +617,6 @@ export default function ListaJogadores({
                         value={formData.email} 
                         onChange={handleChange} 
                         className="w-full p-2 text-sm bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                        required 
                       />
                     </div>
                     
@@ -609,7 +630,6 @@ export default function ListaJogadores({
                         value={formData.dataIngresso} 
                         onChange={handleChange} 
                         className="w-full p-2 text-sm bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                        required 
                       />
                     </div>
                     
@@ -622,7 +642,6 @@ export default function ListaJogadores({
                         value={formData.statusFinanceiro} 
                         onChange={handleChange} 
                         className="w-full p-2 text-sm bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                        required 
                       >
                         {statusFinanceiroOptions.map(status => (
                           <option key={status} value={status} className="bg-gray-800">
@@ -821,11 +840,15 @@ export default function ListaJogadores({
                                   <div>
                                     <div className="text-sm font-medium text-white">
                                       {jogador.nome}
+                                      {jogador.ativo === false && (
+                                        <span className="ml-2 text-xs text-red-400 font-normal">(Bloqueado)</span>
+                                      )}
                                     </div>
                                     <div className="text-xs text-gray-400 mt-1">
-                                      {jogador.dataNascimento ? 
-                                        `${new Date().getFullYear() - new Date(jogador.dataNascimento).getFullYear()} anos` : 
-                                        'Idade não informada'}
+                                      {(() => {
+                                        const idade = calcularIdade(jogador.dataNascimento);
+                                        return idade !== null ? `${idade} anos` : 'Idade não informada';
+                                      })()}
                                     </div>
                                   </div>
                                 </div>
@@ -894,6 +917,57 @@ export default function ListaJogadores({
                               
                               <td className="px-4 py-4 whitespace-nowrap text-sm font-medium sm:px-6">
                                 <div className="flex gap-2 sm:gap-3">
+                                  {/* Bloquear / Desbloquear antes do botão Editar */}
+                                  <motion.button
+                                    onClick={async () => {
+                                      const ativoAtual = jogador.ativo !== false;
+                                      const novoAtivo = !ativoAtual;
+
+                                      const mensagemConfirmacao = novoAtivo
+                                        ? `Deseja DESBLOQUEAR o jogador "${jogador.nome}"? Ele voltará a aparecer nas demais telas.`
+                                        : `Deseja BLOQUEAR o jogador "${jogador.nome}"? Ele não aparecerá mais nas telas de Financeiro, Sorteio e Presença.`;
+
+                                      if (!window.confirm(mensagemConfirmacao)) {
+                                        return;
+                                      }
+
+                                      try {
+                                        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/jogadores/${jogador._id}/bloqueio`, {
+                                          method: 'PATCH',
+                                          headers: {
+                                            'Content-Type': 'application/json',
+                                          },
+                                          body: JSON.stringify({ ativo: novoAtivo })
+                                        });
+
+                                        if (!response.ok) {
+                                          const errorData = await response.json();
+                                          throw new Error(errorData.message || 'Erro ao atualizar bloqueio');
+                                        }
+
+                                        const data = await response.json();
+                                        toast.success(data.message || (novoAtivo ? 'Jogador desbloqueado' : 'Jogador bloqueado'));
+
+                                        // Atualiza contexto e estado local
+                                        atualizarJogador(data.data);
+                                        setJogadores(prev => prev.map(j => j._id === data.data._id ? data.data : j));
+                                      } catch (error) {
+                                        console.error('Erro ao bloquear/desbloquear jogador:', error);
+                                        toast.error(error.message || 'Erro ao atualizar bloqueio');
+                                      }
+                                    }}
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    className={jogador.ativo === false ? 'text-green-400 hover:text-green-300' : 'text-yellow-400 hover:text-yellow-300'}
+                                    title={jogador.ativo === false ? 'Desbloquear' : 'Bloquear'}
+                                  >
+                                    {jogador.ativo === false ? (
+                                      <FaUnlock className="text-sm sm:text-base" />
+                                    ) : (
+                                      <FaBan className="text-sm sm:text-base" />
+                                    )}
+                                  </motion.button>
+
                                   <motion.button
                                     onClick={() => handleEditar(jogador)}
                                     whileHover={{ scale: 1.1 }}
