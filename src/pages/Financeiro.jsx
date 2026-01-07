@@ -605,64 +605,85 @@ export default function Financeiro() {
       // Aguarda um pequeno delay para garantir que o modal foi fechado
       await new Promise(resolve => setTimeout(resolve, 300));
 
-      const element = document.getElementById('relatorio-content');
-      if (!element) {
-        // Cria um elemento temporário para o relatório
-        const tempElement = document.createElement('div');
-        tempElement.id = 'relatorio-content';
-        tempElement.innerHTML = `
-          <div style="padding: 20px; background-color: #1f2937; color: white;">
-            <h2 style="margin-bottom: 20px;">Relatório Financeiro - ${new Date(filtroMes).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</h2>
-            
-            <div style="margin-bottom: 20px;">
-              <h3>Resumo Financeiro</h3>
-              <p>Receitas: R$ ${estatisticas.totalReceitas.toFixed(2)}</p>
-              <p>Despesas: R$ ${estatisticas.totalDespesas.toFixed(2)}</p>
-              <p>Saldo: R$ ${estatisticas.saldo.toFixed(2)}</p>
+      // Sempre usa um elemento temporário para capturar o relatório COMPLETO,
+      // sem depender de scroll ou altura do modal na tela.
+      const tempElement = document.createElement('div');
+      tempElement.id = 'relatorio-content-export';
+      tempElement.style.padding = '20px';
+      tempElement.style.backgroundColor = '#1f2937';
+      tempElement.style.color = 'white';
+      tempElement.style.width = '800px';
+      tempElement.innerHTML = `
+        <div>
+          <h2 style="margin-bottom: 16px; font-size: 20px;">Relatório Financeiro - ${new Date(filtroMes).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</h2>
+          <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+            <div style="flex: 1; background-color: #374151; padding: 8px; border-radius: 8px;">
+              <h3 style="margin: 0 0 8px 0; font-size: 14px;">Receitas</h3>
+              <p style="margin: 0;">R$ ${estatisticas.totalReceitas.toFixed(2)}</p>
             </div>
-            
-            <div>
-              <h3>Informações Adicionais</h3>
-              <p>Total de Jogadores: ${estatisticas.totalJogadores}</p>
-              <p>Pagamentos Pendentes: ${estatisticas.pagamentosPendentes}</p>
+            <div style="flex: 1; background-color: #374151; padding: 8px; border-radius: 8px;">
+              <h3 style="margin: 0 0 8px 0; font-size: 14px;">Despesas</h3>
+              <p style="margin: 0;">R$ ${estatisticas.totalDespesas.toFixed(2)}</p>
+            </div>
+            <div style="flex: 1; background-color: #374151; padding: 8px; border-radius: 8px;">
+              <h3 style="margin: 0 0 8px 0; font-size: 14px;">Saldo</h3>
+              <p style="margin: 0;">R$ ${estatisticas.saldo.toFixed(2)}</p>
             </div>
           </div>
-        `;
-        document.body.appendChild(tempElement);
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        const canvas = await html2canvas(tempElement, {
-          scale: 2,
-          logging: false,
-          useCORS: true,
-          backgroundColor: '#1f2937'
-        });
-        
-        document.body.removeChild(tempElement);
-        
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save(`relatorio-financeiro-${filtroMes}.pdf`);
-      } else {
-        const canvas = await html2canvas(element, {
-          scale: 3,
-          logging: false,
-          useCORS: true,
-          backgroundColor: '#1f2937'
-        });
-        
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save(`relatorio-financeiro-${filtroMes}.pdf`);
-      }
+
+          <div style="margin-bottom: 12px;">
+            <h3 style="margin: 0 0 6px 0; font-size: 14px;">Informações gerais</h3>
+            <p style="margin: 0 0 2px 0;">Total de Jogadores: ${estatisticas.totalJogadores}</p>
+            <p style="margin: 0 0 2px 0;">Pagamentos Pendentes: ${estatisticas.pagamentosPendentes}</p>
+            <p style="margin: 0 0 2px 0;">Total de transações: ${transacoesAno.length}</p>
+            <p style="margin: 0;">Receitas: ${qtdReceitasAno} • Despesas: ${qtdDespesasAno}</p>
+          </div>
+
+          ${resumoMensalAno.length > 0 ? `
+          <div style="margin-bottom: 12px;">
+            <h3 style="margin: 0 0 6px 0; font-size: 14px;">Resumo mensal</h3>
+            ${resumoMensalAno.map(m => `
+              <p style="margin: 0 0 2px 0; font-size: 12px;">
+                <strong>${dadosGraficoFluxoCaixa.labels[m.mesIndex]}:</strong>
+                R$ ${m.receitas.toFixed(2)} - R$ ${m.despesas.toFixed(2)} = R$ ${m.saldo.toFixed(2)}
+              </p>
+            `).join('')}
+          </div>
+          ` : ''}
+
+          ${Object.keys(resumoCategoriasAno).length > 0 ? `
+          <div style="margin-bottom: 8px;">
+            <h3 style="margin: 0 0 6px 0; font-size: 14px;">Resumo por categoria</h3>
+            ${Object.entries(resumoCategoriasAno).map(([cat, info]) => `
+              <p style="margin: 0 0 2px 0; font-size: 12px; display: flex; justify-content: space-between;">
+                <span>${cat} (${info.tipo === 'receita' ? 'Receita' : 'Despesa'})</span>
+                <span>${info.quantidade}x • R$ ${info.total.toFixed(2)}</span>
+              </p>
+            `).join('')}
+          </div>
+          ` : ''}
+        </div>
+      `;
+
+      document.body.appendChild(tempElement);
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const canvas = await html2canvas(tempElement, {
+        scale: 2,
+        logging: false,
+        useCORS: true,
+        backgroundColor: '#1f2937'
+      });
+
+      document.body.removeChild(tempElement);
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`relatorio-financeiro-${filtroMes}.pdf`);
       
       toast.success('Relatório PDF gerado com sucesso!');
     } catch (error) {
@@ -679,60 +700,81 @@ export default function Financeiro() {
       // Aguarda um pequeno delay para garantir que o modal foi fechado
       await new Promise(resolve => setTimeout(resolve, 300));
 
-      const element = document.getElementById('relatorio-content');
-      if (!element) {
-        // Cria um elemento temporário para o relatório
-        const tempElement = document.createElement('div');
-        tempElement.id = 'relatorio-content';
-        tempElement.innerHTML = `
-          <div style="padding: 20px; background-color: #1f2937; color: white;">
-            <h2 style="margin-bottom: 20px;">Relatório Financeiro - ${new Date(filtroMes).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</h2>
-            
-            <div style="margin-bottom: 20px;">
-              <h3>Resumo Financeiro</h3>
-              <p>Receitas: R$ ${estatisticas.totalReceitas.toFixed(2)}</p>
-              <p>Despesas: R$ ${estatisticas.totalDespesas.toFixed(2)}</p>
-              <p>Saldo: R$ ${estatisticas.saldo.toFixed(2)}</p>
+      // Assim como no PDF, usamos sempre um elemento temporário sem scroll
+      const tempElement = document.createElement('div');
+      tempElement.id = 'relatorio-content-export-img';
+      tempElement.style.padding = '20px';
+      tempElement.style.backgroundColor = '#1f2937';
+      tempElement.style.color = 'white';
+      tempElement.style.width = '800px';
+      tempElement.innerHTML = `
+        <div>
+          <h2 style="margin-bottom: 16px; font-size: 20px;">Relatório Financeiro - ${new Date(filtroMes).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</h2>
+          <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+            <div style="flex: 1; background-color: #374151; padding: 8px; border-radius: 8px;">
+              <h3 style="margin: 0 0 8px 0; font-size: 14px;">Receitas</h3>
+              <p style="margin: 0;">R$ ${estatisticas.totalReceitas.toFixed(2)}</p>
             </div>
-            
-            <div>
-              <h3>Informações Adicionais</h3>
-              <p>Total de Jogadores: ${estatisticas.totalJogadores}</p>
-              <p>Pagamentos Pendentes: ${estatisticas.pagamentosPendentes}</p>
+            <div style="flex: 1; background-color: #374151; padding: 8px; border-radius: 8px;">
+              <h3 style="margin: 0 0 8px 0; font-size: 14px;">Despesas</h3>
+              <p style="margin: 0;">R$ ${estatisticas.totalDespesas.toFixed(2)}</p>
+            </div>
+            <div style="flex: 1; background-color: #374151; padding: 8px; border-radius: 8px;">
+              <h3 style="margin: 0 0 8px 0; font-size: 14px;">Saldo</h3>
+              <p style="margin: 0;">R$ ${estatisticas.saldo.toFixed(2)}</p>
             </div>
           </div>
-        `;
-        document.body.appendChild(tempElement);
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        const canvas = await html2canvas(tempElement, {
-          scale: 2,
-          logging: false,
-          useCORS: true,
-          backgroundColor: '#1f2937'
-        });
-        
-        document.body.removeChild(tempElement);
-        
-        // Cria um link temporário para download da imagem
-        const link = document.createElement('a');
-        link.download = `relatorio-financeiro-${filtroMes}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-      } else {
-        const canvas = await html2canvas(element, {
-          scale: 2,
-          logging: false,
-          useCORS: true,
-          backgroundColor: '#1f2937'
-        });
-        
-        // Cria um link temporário para download da imagem
-        const link = document.createElement('a');
-        link.download = `relatorio-financeiro-${filtroMes}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-      }
+
+          <div style="margin-bottom: 12px;">
+            <h3 style="margin: 0 0 6px 0; font-size: 14px;">Informações gerais</h3>
+            <p style="margin: 0 0 2px 0;">Total de Jogadores: ${estatisticas.totalJogadores}</p>
+            <p style="margin: 0 0 2px 0;">Pagamentos Pendentes: ${estatisticas.pagamentosPendentes}</p>
+            <p style="margin: 0 0 2px 0;">Total de transações: ${transacoesAno.length}</p>
+            <p style="margin: 0;">Receitas: ${qtdReceitasAno} • Despesas: ${qtdDespesasAno}</p>
+          </div>
+
+          ${resumoMensalAno.length > 0 ? `
+          <div style="margin-bottom: 12px;">
+            <h3 style="margin: 0 0 6px 0; font-size: 14px;">Resumo mensal</h3>
+            ${resumoMensalAno.map(m => `
+              <p style="margin: 0 0 2px 0; font-size: 12px;">
+                <strong>${dadosGraficoFluxoCaixa.labels[m.mesIndex]}:</strong>
+                R$ ${m.receitas.toFixed(2)} - R$ ${m.despesas.toFixed(2)} = R$ ${m.saldo.toFixed(2)}
+              </p>
+            `).join('')}
+          </div>
+          ` : ''}
+
+          ${Object.keys(resumoCategoriasAno).length > 0 ? `
+          <div style="margin-bottom: 8px;">
+            <h3 style="margin: 0 0 6px 0; font-size: 14px;">Resumo por categoria</h3>
+            ${Object.entries(resumoCategoriasAno).map(([cat, info]) => `
+              <p style="margin: 0 0 2px 0; font-size: 12px; display: flex; justify-content: space-between;">
+                <span>${cat} (${info.tipo === 'receita' ? 'Receita' : 'Despesa'})</span>
+                <span>${info.quantidade}x • R$ ${info.total.toFixed(2)}</span>
+              </p>
+            `).join('')}
+          </div>
+          ` : ''}
+        </div>
+      `;
+
+      document.body.appendChild(tempElement);
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      const canvas = await html2canvas(tempElement, {
+        scale: 2,
+        logging: false,
+        useCORS: true,
+        backgroundColor: '#1f2937'
+      });
+      
+      document.body.removeChild(tempElement);
+      
+      const link = document.createElement('a');
+      link.download = `relatorio-financeiro-${filtroMes}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
       
       toast.success('Imagem gerada com sucesso!');
     } catch (error) {
