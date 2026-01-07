@@ -1,7 +1,26 @@
 export const getNowInSaoPaulo = () => {
-  const now = new Date();
-  const spString = now.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-  return new Date(spString);
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+
+  const parts = formatter.formatToParts(new Date());
+  const get = (type) => parts.find(p => p.type === type)?.value.padStart(2, '0');
+
+  const year = get('year');
+  const month = get('month');
+  const day = get('day');
+  const hour = get('hour');
+  const minute = get('minute');
+  const second = get('second');
+
+  return new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}`);
 };
 
 export const getHojeSaoPauloISODate = () => {

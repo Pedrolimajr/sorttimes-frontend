@@ -213,20 +213,19 @@ export default function ListaJogadores({
     }
 
     const url = editando 
-      ? `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/jogadores/${editando}`
-      : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/jogadores`;
+      ? `/jogadores/${editando}`
+      : '/jogadores';
 
-    const response = await fetch(url, {
-      method: editando ? 'PUT' : 'POST',
-      body: formDataToSend
+    const response = await api({
+      method: editando ? 'put' : 'post',
+      url,
+      data: formDataToSend,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Erro ao salvar jogador');
-    }
-
-    const data = await response.json();
+    const data = response.data;
     toast.success(`Jogador ${data.data.nome} ${editando ? 'atualizado' : 'cadastrado'} com sucesso!`);
     
     // Atualização usando o contexto
@@ -236,10 +235,8 @@ export default function ListaJogadores({
         prev.map(j => j._id === data.data._id ? data.data : j)
       );
     } else {
+      atualizarJogador(data.data);
       setJogadores(prev => [...prev, data.data]);
-      // Se você não tiver adicionarJogador no contexto, pode forçar uma recarga
-      window.location.reload(); // Solução temporária
-      // Idealmente, você deveria adicionar adicionarJogador ao seu contexto
     }
     
     setEditando(null);
