@@ -605,12 +605,25 @@ export default function Financeiro() {
         return;
       }
 
+      // Ajusta estilos temporariamente para capturar todo o conteúdo (inclusive em mobile)
+      const prevOverflow = element.style.overflow;
+      const prevMaxHeight = element.style.maxHeight;
+      const prevHeight = element.style.height;
+      element.style.overflow = 'visible';
+      element.style.maxHeight = 'none';
+      element.style.height = 'auto';
+
       const canvas = await html2canvas(element, {
         scale: 2,
         logging: false,
         useCORS: true,
         backgroundColor: '#1f2937',
       });
+
+      // Restaura estilos
+      element.style.overflow = prevOverflow;
+      element.style.maxHeight = prevMaxHeight;
+      element.style.height = prevHeight;
 
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
@@ -635,12 +648,25 @@ export default function Financeiro() {
         return;
       }
 
+      // Ajusta estilos temporariamente para capturar todo o conteúdo (inclusive em mobile)
+      const prevOverflow = element.style.overflow;
+      const prevMaxHeight = element.style.maxHeight;
+      const prevHeight = element.style.height;
+      element.style.overflow = 'visible';
+      element.style.maxHeight = 'none';
+      element.style.height = 'auto';
+
       const canvas = await html2canvas(element, {
         scale: 2,
         logging: false,
         useCORS: true,
         backgroundColor: '#1f2937',
       });
+
+      // Restaura estilos
+      element.style.overflow = prevOverflow;
+      element.style.maxHeight = prevMaxHeight;
+      element.style.height = prevHeight;
 
       const link = document.createElement('a');
       link.download = `relatorio-financeiro-${filtroMes}.png`;
