@@ -599,83 +599,18 @@ export default function Financeiro() {
 
   const exportarPDF = async () => {
     try {
-      // Fecha o modal de relatório antes de gerar o PDF
-      setRelatorioModal(false);
-      
-      // Aguarda um pequeno delay para garantir que o modal foi fechado
-      await new Promise(resolve => setTimeout(resolve, 300));
+      const element = document.getElementById('relatorio-content');
+      if (!element) {
+        toast.error('Abra o relatório antes de exportar.');
+        return;
+      }
 
-      // Sempre usa um elemento temporário para capturar o relatório COMPLETO,
-      // sem depender de scroll ou altura do modal na tela.
-      const tempElement = document.createElement('div');
-      tempElement.id = 'relatorio-content-export';
-      tempElement.style.padding = '20px';
-      tempElement.style.backgroundColor = '#1f2937';
-      tempElement.style.color = 'white';
-      tempElement.style.width = '800px';
-      tempElement.innerHTML = `
-        <div>
-          <h2 style="margin-bottom: 16px; font-size: 20px;">Relatório Financeiro - ${new Date(filtroMes).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</h2>
-          <div style="display: flex; gap: 12px; margin-bottom: 16px;">
-            <div style="flex: 1; background-color: #374151; padding: 8px; border-radius: 8px;">
-              <h3 style="margin: 0 0 8px 0; font-size: 14px;">Receitas</h3>
-              <p style="margin: 0;">R$ ${estatisticas.totalReceitas.toFixed(2)}</p>
-            </div>
-            <div style="flex: 1; background-color: #374151; padding: 8px; border-radius: 8px;">
-              <h3 style="margin: 0 0 8px 0; font-size: 14px;">Despesas</h3>
-              <p style="margin: 0;">R$ ${estatisticas.totalDespesas.toFixed(2)}</p>
-            </div>
-            <div style="flex: 1; background-color: #374151; padding: 8px; border-radius: 8px;">
-              <h3 style="margin: 0 0 8px 0; font-size: 14px;">Saldo</h3>
-              <p style="margin: 0;">R$ ${estatisticas.saldo.toFixed(2)}</p>
-            </div>
-          </div>
-
-          <div style="margin-bottom: 12px;">
-            <h3 style="margin: 0 0 6px 0; font-size: 14px;">Informações gerais</h3>
-            <p style="margin: 0 0 2px 0;">Total de Jogadores: ${estatisticas.totalJogadores}</p>
-            <p style="margin: 0 0 2px 0;">Pagamentos Pendentes: ${estatisticas.pagamentosPendentes}</p>
-            <p style="margin: 0 0 2px 0;">Total de transações: ${transacoesAno.length}</p>
-            <p style="margin: 0;">Receitas: ${qtdReceitasAno} • Despesas: ${qtdDespesasAno}</p>
-          </div>
-
-          ${resumoMensalAno.length > 0 ? `
-          <div style="margin-bottom: 12px;">
-            <h3 style="margin: 0 0 6px 0; font-size: 14px;">Resumo mensal</h3>
-            ${resumoMensalAno.map(m => `
-              <p style="margin: 0 0 2px 0; font-size: 12px;">
-                <strong>${dadosGraficoFluxoCaixa.labels[m.mesIndex]}:</strong>
-                R$ ${m.receitas.toFixed(2)} - R$ ${m.despesas.toFixed(2)} = R$ ${m.saldo.toFixed(2)}
-              </p>
-            `).join('')}
-          </div>
-          ` : ''}
-
-          ${Object.keys(resumoCategoriasAno).length > 0 ? `
-          <div style="margin-bottom: 8px;">
-            <h3 style="margin: 0 0 6px 0; font-size: 14px;">Resumo por categoria</h3>
-            ${Object.entries(resumoCategoriasAno).map(([cat, info]) => `
-              <p style="margin: 0 0 2px 0; font-size: 12px; display: flex; justify-content: space-between;">
-                <span>${cat} (${info.tipo === 'receita' ? 'Receita' : 'Despesa'})</span>
-                <span>${info.quantidade}x • R$ ${info.total.toFixed(2)}</span>
-              </p>
-            `).join('')}
-          </div>
-          ` : ''}
-        </div>
-      `;
-
-      document.body.appendChild(tempElement);
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      const canvas = await html2canvas(tempElement, {
+      const canvas = await html2canvas(element, {
         scale: 2,
         logging: false,
         useCORS: true,
-        backgroundColor: '#1f2937'
+        backgroundColor: '#1f2937',
       });
-
-      document.body.removeChild(tempElement);
 
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
@@ -684,7 +619,7 @@ export default function Financeiro() {
 
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`relatorio-financeiro-${filtroMes}.pdf`);
-      
+
       toast.success('Relatório PDF gerado com sucesso!');
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
@@ -694,88 +629,24 @@ export default function Financeiro() {
 
   const exportarImagem = async () => {
     try {
-      // Fecha o modal de relatório antes de gerar a imagem
-      setRelatorioModal(false);
-      
-      // Aguarda um pequeno delay para garantir que o modal foi fechado
-      await new Promise(resolve => setTimeout(resolve, 300));
+      const element = document.getElementById('relatorio-content');
+      if (!element) {
+        toast.error('Abra o relatório antes de exportar.');
+        return;
+      }
 
-      // Assim como no PDF, usamos sempre um elemento temporário sem scroll
-      const tempElement = document.createElement('div');
-      tempElement.id = 'relatorio-content-export-img';
-      tempElement.style.padding = '20px';
-      tempElement.style.backgroundColor = '#1f2937';
-      tempElement.style.color = 'white';
-      tempElement.style.width = '800px';
-      tempElement.innerHTML = `
-        <div>
-          <h2 style="margin-bottom: 16px; font-size: 20px;">Relatório Financeiro - ${new Date(filtroMes).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</h2>
-          <div style="display: flex; gap: 12px; margin-bottom: 16px;">
-            <div style="flex: 1; background-color: #374151; padding: 8px; border-radius: 8px;">
-              <h3 style="margin: 0 0 8px 0; font-size: 14px;">Receitas</h3>
-              <p style="margin: 0;">R$ ${estatisticas.totalReceitas.toFixed(2)}</p>
-            </div>
-            <div style="flex: 1; background-color: #374151; padding: 8px; border-radius: 8px;">
-              <h3 style="margin: 0 0 8px 0; font-size: 14px;">Despesas</h3>
-              <p style="margin: 0;">R$ ${estatisticas.totalDespesas.toFixed(2)}</p>
-            </div>
-            <div style="flex: 1; background-color: #374151; padding: 8px; border-radius: 8px;">
-              <h3 style="margin: 0 0 8px 0; font-size: 14px;">Saldo</h3>
-              <p style="margin: 0;">R$ ${estatisticas.saldo.toFixed(2)}</p>
-            </div>
-          </div>
-
-          <div style="margin-bottom: 12px;">
-            <h3 style="margin: 0 0 6px 0; font-size: 14px;">Informações gerais</h3>
-            <p style="margin: 0 0 2px 0;">Total de Jogadores: ${estatisticas.totalJogadores}</p>
-            <p style="margin: 0 0 2px 0;">Pagamentos Pendentes: ${estatisticas.pagamentosPendentes}</p>
-            <p style="margin: 0 0 2px 0;">Total de transações: ${transacoesAno.length}</p>
-            <p style="margin: 0;">Receitas: ${qtdReceitasAno} • Despesas: ${qtdDespesasAno}</p>
-          </div>
-
-          ${resumoMensalAno.length > 0 ? `
-          <div style="margin-bottom: 12px;">
-            <h3 style="margin: 0 0 6px 0; font-size: 14px;">Resumo mensal</h3>
-            ${resumoMensalAno.map(m => `
-              <p style="margin: 0 0 2px 0; font-size: 12px;">
-                <strong>${dadosGraficoFluxoCaixa.labels[m.mesIndex]}:</strong>
-                R$ ${m.receitas.toFixed(2)} - R$ ${m.despesas.toFixed(2)} = R$ ${m.saldo.toFixed(2)}
-              </p>
-            `).join('')}
-          </div>
-          ` : ''}
-
-          ${Object.keys(resumoCategoriasAno).length > 0 ? `
-          <div style="margin-bottom: 8px;">
-            <h3 style="margin: 0 0 6px 0; font-size: 14px;">Resumo por categoria</h3>
-            ${Object.entries(resumoCategoriasAno).map(([cat, info]) => `
-              <p style="margin: 0 0 2px 0; font-size: 12px; display: flex; justify-content: space-between;">
-                <span>${cat} (${info.tipo === 'receita' ? 'Receita' : 'Despesa'})</span>
-                <span>${info.quantidade}x • R$ ${info.total.toFixed(2)}</span>
-              </p>
-            `).join('')}
-          </div>
-          ` : ''}
-        </div>
-      `;
-
-      document.body.appendChild(tempElement);
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      const canvas = await html2canvas(tempElement, {
+      const canvas = await html2canvas(element, {
         scale: 2,
         logging: false,
         useCORS: true,
-        backgroundColor: '#1f2937'
+        backgroundColor: '#1f2937',
       });
-      
-      document.body.removeChild(tempElement);
-      
+
       const link = document.createElement('a');
       link.download = `relatorio-financeiro-${filtroMes}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
-      
+
       toast.success('Imagem gerada com sucesso!');
     } catch (error) {
       console.error('Erro ao gerar imagem:', error);
