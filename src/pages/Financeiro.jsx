@@ -1614,10 +1614,10 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 20, opacity: 0 }}
-              className="bg-gray-800 rounded-xl shadow-2xl p-4 sm:p-6 w-full max-w-md sm:max-w-2xl border border-gray-700"
+              className="bg-gray-800 rounded-xl shadow-2xl w-full max-w-md sm:max-w-2xl border border-gray-700 flex flex-col max-h-[90vh]"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex justify-between items-center mb-3 sm:mb-4">
+              <div className="flex justify-between items-center px-4 sm:px-6 pt-4 pb-2 border-b border-gray-700">
                 <h3 className="text-lg sm:text-xl font-bold text-white">Relatório Financeiro</h3>
                 <motion.button
                   onClick={() => setRelatorioModal(false)}
@@ -1628,7 +1628,10 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                 </motion.button>
               </div>
 
-              <div id="relatorio-content" className="space-y-3 sm:space-y-4">
+              <div
+                id="relatorio-content"
+                className="space-y-3 sm:space-y-4 px-4 sm:px-6 py-4 overflow-y-auto flex-1"
+              >
                 {/* Conteúdo existente do modal */}
                 <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   <div className="bg-gray-700/50 p-3 sm:p-4 rounded-lg">
@@ -1719,7 +1722,7 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                 </div>
               </div>
 
-              <div className="mt-4 sm:mt-6 flex justify-end gap-2 sm:gap-3">
+              <div className="mt-2 sm:mt-4 px-4 sm:px-6 pb-4 pt-2 border-t border-gray-700 flex justify-end gap-2 sm:gap-3 bg-gray-800/90">
                 <motion.button
                   onClick={exportarPDF}
                   whileHover={{ scale: 1.03 }}
