@@ -517,22 +517,10 @@ export default function Financeiro() {
     }
   };
 
-  // Filtrar transações por mês/ano
+  // Filtrar transações do histórico (todas os anos, apenas por jogador/tipo)
   const transacoesFiltradas = transacoes
     .filter(t => {
       if (!t.data) return false;
-      
-      // Filtro por ano (não por mês)
-      try {
-        const dataStr = typeof t.data === 'string' 
-          ? t.data 
-          : new Date(t.data).toISOString();
-        return dataStr.startsWith(filtroMes.slice(0, 4)); // Filtra por ano apenas
-      } catch {
-        return false;
-      }
-    })
-    .filter(t => {
       // Filtro por jogador
       if (filtroHistorico.jogador && t.jogadorId) {
         const jogador = jogadores.find(j => j._id === t.jogadorId);
@@ -948,10 +936,26 @@ export default function Financeiro() {
     }
   };
 
- const jogadoresFiltrados = jogadores.filter(jogador =>
+const jogadoresFiltrados = jogadores.filter(jogador =>
   jogador.nivel === 'Associado' &&
   jogador.nome.toLowerCase().includes(filtroJogador.toLowerCase())
 );
+
+// Dados adicionais para o relatório (baseados no ano selecionado em filtroMes)
+const anoFiltro = filtroMes?.slice(0, 4) || new Date().getFullYear().toString();
+const transacoesAno = transacoes.filter(t => {
+  if (!t.data) return false;
+  try {
+    const dataStr = typeof t.data === 'string'
+      ? t.data
+      : new Date(t.data).toISOString();
+    return dataStr.startsWith(anoFiltro);
+  } catch {
+    return false;
+  }
+});
+const qtdReceitasAno = transacoesAno.filter(t => t.tipo === 'receita').length;
+const qtdDespesasAno = transacoesAno.filter(t => t.tipo === 'despesa').length;
 
 
   return (
@@ -1394,7 +1398,7 @@ export default function Financeiro() {
                     </table>
                   </div>
                   <div className="text-xs text-gray-500 mt-2">
-                    Mostrando {transacoesFiltradas.length} de {transacoes.length} transações
+                    Mostrando {transacoesFiltradas.length} transações (todas as transações registradas)
                   </div>
                 </div>
               )}
@@ -1631,6 +1635,19 @@ export default function Financeiro() {
                   <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">Total de Jogadores</h4>
                   <p className="text-lg sm:text-xl font-bold text-white">
                     {estatisticas.totalJogadores} jogadores
+                  </p>
+                </div>
+
+                <div className="bg-gray-700/50 p-3 sm:p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">Detalhes das Transações ({anoFiltro})</h4>
+                  <p className="text-xs sm:text-sm text-gray-300 mb-1">
+                    Total de transações: <span className="font-semibold text-white">{transacoesAno.length}</span>
+                  </p>
+                  <p className="text-xs sm:text-sm text-green-300 mb-1">
+                    Receitas: <span className="font-semibold">{qtdReceitasAno}</span> lançamentos
+                  </p>
+                  <p className="text-xs sm:text-sm text-red-300">
+                    Despesas: <span className="font-semibold">{qtdDespesasAno}</span> lançamentos
                   </p>
                 </div>
               </div>
