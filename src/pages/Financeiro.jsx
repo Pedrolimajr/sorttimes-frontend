@@ -1675,16 +1675,16 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                 className="space-y-3 sm:space-y-4 px-4 sm:px-6 py-4 overflow-y-auto flex-1"
               >
                 {/* Conteúdo existente do modal */}
-                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                <div className="grid grid-cols-1 gap-3 sm:gap-4">
                   <div className="bg-gray-700/50 p-3 sm:p-4 rounded-lg">
-                    <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">Receitas</h4>
-                    <p className="text-xl sm:text-2xl font-bold text-green-400">
+                    <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-sm sm:text-base">Receitas</h4>
+                    <p className="text-2xl sm:text-3xl font-bold text-green-400">
                       R$ {estatisticas.totalReceitas.toFixed(2)}
                     </p>
                   </div>
                   <div className="bg-gray-700/50 p-3 sm:p-4 rounded-lg">
-                    <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">Despesas</h4>
-                    <p className="text-xl sm:text-2xl font-bold text-red-400">
+                    <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-sm sm:text-base">Despesas</h4>
+                    <p className="text-2xl sm:text-3xl font-bold text-red-400">
                       R$ {estatisticas.totalDespesas.toFixed(2)}
                     </p>
                   </div>
