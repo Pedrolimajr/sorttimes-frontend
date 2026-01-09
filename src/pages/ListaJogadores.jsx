@@ -325,7 +325,7 @@ export default function ListaJogadores({
 
   const totalAssociados = jogadores.filter(j => j.nivel === 'Associado').length;
   const totalConvidados = jogadores.filter(j => j.nivel === 'Convidado').length;
-  const totalVisitantes = jogadores.filter(j => j.nivel === 'Visitante').length;
+  const totalBloqueados = jogadores.filter(j => j.ativo === false).length;
   const totalGeral = jogadores.filter(j => j.nivel === 'Associado' && j.ativo !== false).length;
 
   return (
@@ -1060,7 +1060,7 @@ export default function ListaJogadores({
                       <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
                         <span>Associados: <strong>{totalAssociados}</strong></span>
                         <span>Convidados: <strong>{totalConvidados}</strong></span>
-                        <span>Visitantes: <strong>{totalVisitantes}</strong></span>
+                        <span>Bloqueados: <strong>{totalBloqueados}</strong></span>
                         <span>Total: <strong>{totalGeral}</strong></span>
                       </div>
                     </div>
