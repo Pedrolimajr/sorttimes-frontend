@@ -1059,8 +1059,8 @@ export default function ListaJogadores({
                     <div className="sticky bottom-0 left-0 w-full bg-gray-900 border-t border-gray-700 py-3 px-4 text-center text-gray-300 text-sm sm:text-base z-20 shadow-inner">
                       <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
                         <span>Associados: <strong>{totalAssociados}</strong></span>
-                        <span>Convidados: <strong>{totalConvidados}</strong></span>
                         <span>Bloqueados: <strong>{totalBloqueados}</strong></span>
+                        <span>Convidados: <strong>{totalConvidados}</strong></span>
                         <span>Total: <strong>{totalGeral}</strong></span>
                       </div>
                     </div>
