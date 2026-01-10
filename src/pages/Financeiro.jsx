@@ -110,15 +110,10 @@ export default function Financeiro() {
           });
         }
 
-        // Verifica status - Nova lógica considerando o mês anterior
-        const mesAtual = new Date().getMonth();
-        const mesAnterior = mesAtual === 0 ? 11 : mesAtual - 1;
-        const todosMesesPagos = pagamentos[mesAnterior];
-
         return {
           ...jogador,
           pagamentos: pagamentos,
-          statusFinanceiro: todosMesesPagos ? 'Adimplente' : 'Inadimplente'
+              statusFinanceiro: jogador.statusFinanceiro || 'Inadimplente'
         };
       });
 
