@@ -41,10 +41,6 @@ export default function Financeiro() {
   const [transacoes, setTransacoes] = useState([]);
   const [jogadores, setJogadores] = useState([]);
   const [filtroMes, setFiltroMes] = useState(getAnoMesAtualSaoPaulo());
-
-  // Estado local e manual para o Controle de Mensalidades
-  const [controleJogadores, setControleJogadores] = useState([]);
-  const [controleDirty, setControleDirty] = useState(false); // marca alterações locais pendentes
   const [carregando, setCarregando] = useState(true);
   const [relatorioModal, setRelatorioModal] = useState(false);
   const [editarModal, setEditarModal] = useState(false);
@@ -54,9 +50,7 @@ export default function Financeiro() {
   const [filtroHistorico, setFiltroHistorico] = useState({
     jogador: '',
     tipo: 'todos',
-    categoria: '',
-    mes: '', // formato YYYY-MM para filtrar por mês
-    data: '' // formato YYYY-MM-DD para filtrar por data exata
+    categoria: ''
   });
   const [novaTransacao, setNovaTransacao] = useState({
     descricao: "",
@@ -102,14 +96,6 @@ export default function Financeiro() {
       const jogadoresData = jogadoresRes.data?.data || jogadoresRes.data || [];
       const transacoesData = transacoesRes.data?.data || transacoesRes.data || [];
 
-      // Normaliza transações (garante que valor é Number e data é ISO string)
-      const transacoesNorm = (Array.isArray(transacoesData) ? transacoesData : []).map(t => ({
-        ...t,
-        valor: Number(t.valor) || 0,
-        data: t.data ? new Date(t.data).toISOString() : getHojeSaoPauloISODate(),
-        isento: Boolean(t.isento)
-      }));
-
       // Processa os jogadores
       const jogadoresProcessados = jogadoresData.map(jogador => {
         // Converte os pagamentos do formato do backend para o formato do frontend
@@ -133,12 +119,12 @@ export default function Financeiro() {
 
       // Atualiza estados
       setJogadores(jogadoresProcessados);
-      setTransacoes(transacoesNorm);
+      setTransacoes(transacoesData);
 
       // Atualiza cache
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         jogadoresCache: jogadoresProcessados,
-        transacoesCache: transacoesNorm,
+        transacoesCache: transacoesData,
         lastUpdate: new Date().toISOString()
       }));
 
@@ -191,13 +177,6 @@ export default function Financeiro() {
     carregarEstatisticas();
   }, [filtroMes, transacoes, jogadores]); // Dependências necessárias
 
-  // Inicializa o controle de mensalidades de forma manual apenas quando ainda não houver dados
-  useEffect(() => {
-    if ((controleJogadores || []).length === 0 && jogadores && jogadores.length > 0) {
-      setControleJogadores(jogadores.map(j => ({ ...j, pagamentos: Array.isArray(j.pagamentos) ? [...j.pagamentos] : Array(12).fill(false) })));
-    }
-  }, [jogadores]);
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setNovaTransacao(prev => ({ ...prev, [name]: value }));
@@ -209,8 +188,6 @@ export default function Financeiro() {
 
   // Declara a variável no escopo da função para que seja acessível no catch
   let transacaoTemporaria = null;
-
-  const isValidObjectId = (id) => /^[0-9a-fA-F]{24}$/.test(id);
 
   try {
     if (!novaTransacao.data || !novaTransacao.valor || !novaTransacao.descricao) {
@@ -230,36 +207,11 @@ export default function Financeiro() {
       }
     }
 
-    const valorNumero = parseFloat(String(novaTransacao.valor).replace(',', '.'));
-    if (!Number.isFinite(valorNumero) || valorNumero <= 0) {
-      throw new Error('Valor inválido. Informe um número maior que 0');
-    }
-
-    const dataIso = new Date(novaTransacao.data + 'T12:00:00').toISOString();
-    if (isNaN(Date.parse(dataIso))) {
-      throw new Error('Data inválida');
-    }
-
     const payload = {
-      descricao: novaTransacao.descricao,
-      valor: valorNumero,
-      tipo: novaTransacao.tipo,
-      categoria: novaTransacao.categoria || (novaTransacao.tipo === 'receita' ? 'mensalidade' : 'outros'),
-      data: dataIso,
-      isento: Boolean(novaTransacao.isento)
+      ...novaTransacao,
+      valor: parseFloat(novaTransacao.valor),
+      data: new Date(novaTransacao.data + 'T12:00:00').toISOString()
     };
-
-    // Se houver jogador selecionado, inclua apenas se for um ObjectId válido
-    if (novaTransacao.jogadorId) {
-      if (isValidObjectId(novaTransacao.jogadorId)) {
-        payload.jogadorId = novaTransacao.jogadorId;
-        payload.jogadorNome = novaTransacao.jogadorNome;
-      } else {
-        // Não enviar jogadorId inválido
-        console.warn('Jogador ID inválido removido do payload:', novaTransacao.jogadorId);
-        toast.warn('ID do jogador inválido foi removido automaticamente');
-      }
-    }
 
     // Atualização otimista
     transacaoTemporaria = {
@@ -267,7 +219,7 @@ export default function Financeiro() {
       _id: 'temp-' + Date.now(),
       createdAt: new Date().toISOString()
     };
-
+    
     setTransacoes(prev => [transacaoTemporaria, ...prev]);
 
     // Chamada à API
@@ -275,7 +227,7 @@ export default function Financeiro() {
     const transacaoReal = response.data?.data || response.data;
 
     if (!transacaoReal || !transacaoReal._id) {
-      throw new Error(response.data?.message || 'Resposta inválida do servidor ao criar transação');
+      throw new Error('Resposta inválida do servidor ao criar transação');
     }
 
     // Atualizar estado com a transação real e atualizar cache com o novo array
@@ -292,7 +244,7 @@ export default function Financeiro() {
 
     // Resetar formulário
     toast.success('Transação registrada com sucesso!');
-    setNovaTransacao({
+      setNovaTransacao({
       descricao: "",
       valor: "",
       tipo: "receita",
@@ -305,17 +257,13 @@ export default function Financeiro() {
 
   } catch (error) {
     console.error("Erro ao adicionar transação:", error);
-    // Se houver resposta do servidor, logue os detalhes
-    if (error?.response) {
-      console.error('Resposta da API:', error.response.data);
-      toast.error(error.response.data?.message || 'Erro ao adicionar transação (servidor)');
-    } else {
-      // Remove a transação temporária apenas se ela foi criada
-      if (transacaoTemporaria) {
-        setTransacoes(prev => prev.filter(t => t._id !== transacaoTemporaria._id));
-      }
-      toast.error(error.message || 'Erro ao adicionar transação');
+    
+    // Remove a transação temporária apenas se ela foi criada
+    if (transacaoTemporaria) {
+      setTransacoes(prev => prev.filter(t => t._id !== transacaoTemporaria._id));
     }
+    
+    toast.error(error.message || 'Erro ao adicionar transação');
   }
 };
 
@@ -568,150 +516,21 @@ export default function Financeiro() {
     }
   };
 
-  // --- Funções do Controle de Mensalidades (manuais) ---
-  const togglePagamentoLocal = (jogadorId, mesIndex) => {
-    setControleJogadores(prev => {
-      const updated = prev.map(j => {
-        if (j._id === jogadorId) {
-          const pagamentos = Array.isArray(j.pagamentos) ? [...j.pagamentos] : Array(12).fill(false);
-          pagamentos[mesIndex] = !pagamentos[mesIndex];
-          return { ...j, pagamentos };
-        }
-        return j;
-      });
-      setControleDirty(true);
-      return updated;
-    });
-  };
-
-  const toggleStatusLocal = (jogadorId) => {
-    setControleJogadores(prev => {
-      const updated = prev.map(j => {
-        if (j._id === jogadorId) {
-          const newStatus = j.statusFinanceiro === 'Adimplente' ? 'Inadimplente' : 'Adimplente';
-          return { ...j, statusFinanceiro: newStatus };
-        }
-        return j;
-      });
-      setControleDirty(true);
-      return updated;
-    });
-  };
-
-  const salvarControle = async () => {
-    try {
-      const requests = [];
-
-      controleJogadores.forEach(j => {
-        const original = jogadores.find(orig => orig._id === j._id);
-        if (!original) return;
-
-        // Status diferente
-        if (original.statusFinanceiro !== j.statusFinanceiro) {
-          requests.push(api.patch(`/jogadores/${j._id}/status`, { status: j.statusFinanceiro }));
-        }
-
-        // Pagamentos diferentes (envia uma requisição por mês alterado)
-        const pagamentosOrig = original.pagamentos || [];
-        const pagamentosNovo = j.pagamentos || [];
-        pagamentosNovo.forEach((pago, idx) => {
-          const origPago = pagamentosOrig[idx] || false;
-          if ((origPago) !== (pago || false)) {
-            const payload = {
-              mes: idx,
-              pago: !!pago,
-              isento: false,
-              dataPagamento: pago ? new Date().toISOString() : null,
-              dataLimite: new Date(new Date().getFullYear(), idx, 20)
-            };
-            requests.push(api.post(`/jogadores/${j._id}/pagamentos`, payload));
-          }
-        });
-      });
-
-      if (requests.length === 0) {
-        toast.info('Nenhuma alteração para salvar');
-        return;
-      }
-
-      await Promise.all(requests);
-
-      toast.success('Alterações salvas com sucesso!');
-
-      // Recarrega jogadores do servidor para manter a fonte da verdade
-      const res = await api.get('/jogadores');
-      const jogadoresData = res.data?.data || res.data || [];
-
-      const jogadoresProcessados = jogadoresData.map(jogador => {
-        const pagamentos = Array(12).fill(false);
-        if (jogador.pagamentos && Array.isArray(jogador.pagamentos)) {
-          jogador.pagamentos.forEach((pagamento, index) => {
-            if (typeof pagamento === 'object' && pagamento !== null) {
-              pagamentos[index] = pagamento.pago || false;
-            } else {
-              pagamentos[index] = pagamento || false;
-            }
-          });
-        }
-        return { ...jogador, pagamentos, statusFinanceiro: jogador.statusFinanceiro || 'Inadimplente' };
-      });
-
-      setJogadores(jogadoresProcessados);
-      setControleJogadores(jogadoresProcessados.map(j => ({ ...j, pagamentos: [...j.pagamentos] })));
-      setControleDirty(false);
-
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        jogadoresCache: jogadoresProcessados,
-        transacoesCache: transacoes,
-        lastUpdate: new Date().toISOString()
-      }));
-
-    } catch (error) {
-      console.error('Erro ao salvar controle:', error);
-      toast.error('Erro ao salvar alterações do controle. Tente novamente.');
-    }
-  };
-
-  const recarregarControle = () => {
-    setControleJogadores(jogadores.map(j => ({ ...j, pagamentos: Array.isArray(j.pagamentos) ? [...j.pagamentos] : Array(12).fill(false) })));
-    setControleDirty(false);
-    toast.info('Dados do controle recarregados a partir do servidor');
-  };
-
   // Filtrar transações do histórico (todas os anos, apenas por jogador/tipo)
   const transacoesFiltradas = transacoes
     .filter(t => {
       if (!t.data) return false;
-
       // Filtro por jogador
       if (filtroHistorico.jogador && t.jogadorId) {
         const jogador = jogadores.find(j => j._id === t.jogadorId);
-        if (!jogador?.nome?.toLowerCase().includes(filtroHistorico.jogador.toLowerCase())) return false;
+        return jogador?.nome.toLowerCase().includes(filtroHistorico.jogador.toLowerCase());
       }
-
-      // Filtro por mês (YYYY-MM)
-      if (filtroHistorico.mes) {
-        if (!t.data?.startsWith(filtroHistorico.mes)) return false;
-      }
-
-      // Filtro por data exata (YYYY-MM-DD)
-      if (filtroHistorico.data) {
-        if (!t.data?.startsWith(filtroHistorico.data)) return false;
-      }
-
       return true;
     })
     .filter(t => {
       // Filtro por tipo
       if (filtroHistorico.tipo !== 'todos') {
         return t.tipo === filtroHistorico.tipo;
-      }
-      return true;
-    })
-    .filter(t => {
-      // Filtro por categoria, se desejado
-      if (filtroHistorico.categoria) {
-        return t.categoria === filtroHistorico.categoria;
       }
       return true;
     })
@@ -1452,7 +1271,7 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
               </div>
 
               {/* Filtros do histórico */}
-              <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 mb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
                 <div className="relative">
                   <input
                     type="text"
@@ -1463,7 +1282,7 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                   />
                   <FaSearch className="absolute right-3 top-2.5 text-gray-400 text-xs sm:text-sm" />
                 </div>
-
+                
                 <select
                   value={filtroHistorico.tipo}
                   onChange={(e) => setFiltroHistorico({...filtroHistorico, tipo: e.target.value})}
@@ -1473,40 +1292,9 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                   <option value="receita">Receitas</option>
                   <option value="despesa">Despesas</option>
                 </select>
-
-                <div>
-                  <input
-                    type="month"
-                    value={filtroHistorico.mes}
-                    onChange={(e) => setFiltroHistorico({...filtroHistorico, mes: e.target.value})}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
-                  />
-                </div>
-
-                <div>
-                  <input
-                    type="date"
-                    value={filtroHistorico.data}
-                    onChange={(e) => setFiltroHistorico({...filtroHistorico, data: e.target.value})}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
-                  />
-                </div>
-
-                <div>
-                  <select
-                    value={filtroHistorico.categoria}
-                    onChange={(e) => setFiltroHistorico({...filtroHistorico, categoria: e.target.value})}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
-                  >
-                    <option value="">Todas as categorias</option>
-                    <option value="mensalidade">Mensalidade</option>
-                    <option value="doacao">Doação</option>
-                    <option value="outros">Outros</option>
-                  </select>
-                </div>
-
+                
                 <button
-                  onClick={() => setFiltroHistorico({ jogador: '', tipo: 'todos', categoria: '', mes: '', data: '' })}
+                  onClick={() => setFiltroHistorico({ jogador: '', tipo: 'todos', categoria: '' })}
                   className="w-full bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-xs sm:text-sm"
                 >
                   Limpar filtros
@@ -1590,7 +1378,6 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
 >
   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3 sm:mb-4">
     <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Controle de Mensalidades</h2>
-    <p className="text-xs text-gray-400 mb-2 sm:mb-0">Alterações são manuais aqui — clique em <span className="font-medium text-white">Salvar alterações</span> para persistir ou em <span className="font-medium text-white">Recarregar</span> para restaurar do servidor.</p>
     <div className="flex items-center gap-2 w-full sm:w-auto">
       <div className="relative flex-1 sm:flex-none">
         <input
@@ -1613,24 +1400,6 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
         <option value="Adimplente">Adimplente</option>
         <option value="Inadimplente">Inadimplente</option>
       </select>
-
-      <motion.button
-        onClick={recarregarControle}
-        whileHover={{ scale: 1.05 }}
-        className="bg-gray-600 p-1.5 rounded-lg text-white hover:bg-gray-500 transition-colors text-xs sm:text-sm"
-        title="Recarregar dados do servidor"
-      >
-        Recarregar
-      </motion.button>
-
-      <motion.button
-        onClick={salvarControle}
-        whileHover={{ scale: 1.05 }}
-        className={`bg-green-600 p-1.5 rounded-lg text-white hover:bg-green-700 transition-colors text-xs sm:text-sm ${!controleDirty ? 'opacity-60 pointer-events-none' : ''}`}
-        title="Salvar alterações"
-      >
-        Salvar alterações
-      </motion.button>
 
       <motion.button
         onClick={async () => await compartilharControle('tabela-mensalidades')}
@@ -1672,7 +1441,7 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-700">
-            {controleJogadores
+            {jogadores
               .filter(jogador =>
                 jogador.nivel === 'Associado' &&
                 jogador.nome.toLowerCase().includes(filtroJogador.toLowerCase()) &&
@@ -1685,7 +1454,7 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                   </td>
                   <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap">
                     <motion.button
-                      onClick={() => toggleStatusLocal(jogador._id)}
+                      onClick={() => toggleStatus(jogador._id)}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -1700,7 +1469,7 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                   {jogador.pagamentos.map((pago, i) => (
                     <td key={i} className="px-1 sm:px-2 py-2 sm:py-3 whitespace-nowrap text-center">
                       <motion.button
-                        onClick={() => togglePagamentoLocal(jogador._id, i)}
+                        onClick={() => togglePagamento(jogador._id, i)}
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         className={`
@@ -1824,7 +1593,19 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                   </p>
                 </div>
 
+                <div className="bg-gray-700/50 p-3 sm:p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">Pagamentos Pendentes</h4>
+                  <p className="text-lg sm:text-xl font-bold text-white">
+                    {estatisticas.pagamentosPendentes} mensalidades
+                  </p>
+                </div>
 
+                <div className="bg-gray-700/50 p-3 sm:p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">Total de Jogadores</h4>
+                  <p className="text-lg sm:text-xl font-bold text-white">
+                    {estatisticas.totalJogadores} jogadores
+                  </p>
+                </div>
 
                 <div className="bg-gray-700/50 p-3 sm:p-4 rounded-lg">
                   <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">Detalhes das Transações ({anoFiltro})</h4>
