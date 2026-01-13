@@ -30,7 +30,7 @@ export default function ListaJogadores({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { jogadores: jogadoresContext, carregando, atualizarStatusFinanceiro, atualizarJogador } = useJogadores();
+  const { jogadores: jogadoresContext, carregando, carregarJogadores, atualizarStatusFinanceiro, atualizarJogador } = useJogadores();
   const [jogadores, setJogadores] = useState([]);
   const [filtro, setFiltro] = useState('');
   const [filtroPosicao, setFiltroPosicao] = useState('');
