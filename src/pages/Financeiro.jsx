@@ -147,12 +147,12 @@ export default function Financeiro() {
       try {
        const receitasMes = transacoes
   .filter(t => t?.tipo === "receita" && 
-              t?.data?.startsWith(filtroMes?.slice(0, 4)) &&
+              t?.data?.startsWith(filtroMes) &&
               !t.isento) // Ignora transações isentas
   .reduce((acc, t) => acc + (Number(t?.valor) || 0), 0);
 
         const despesasMes = transacoes
-          .filter(t => t.tipo === "despesa" && t.data?.startsWith(filtroMes.slice(0, 4)))
+          .filter(t => t.tipo === "despesa" && t.data?.startsWith(filtroMes))
           .reduce((acc, t) => acc + (Number(t.valor) || 0), 0);
 
         const pagamentosPendentes = jogadores.reduce((total, jogador) => {
@@ -224,20 +224,23 @@ export default function Financeiro() {
 
     // Chamada à API
     const response = await api.post('/financeiro/transacoes', payload);
-    const transacaoReal = response.data.data;
+    const transacaoReal = response.data?.data || response.data;
 
-    // Atualizar estado com a transação real
-    setTransacoes(prev => [
-      transacaoReal,
-      ...prev.filter(t => t._id !== transacaoTemporaria._id)
-    ]);
+    if (!transacaoReal || !transacaoReal._id) {
+      throw new Error('Resposta inválida do servidor ao criar transação');
+    }
 
-    // Atualizar cache
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      jogadoresCache: jogadores,
-      transacoesCache: [transacaoReal, ...transacoes.filter(t => t._id !== transacaoTemporaria._id)],
-      lastUpdate: new Date().toISOString()
-    }));
+    // Atualizar estado com a transação real e atualizar cache com o novo array
+    setTransacoes(prev => {
+      const updated = [transacaoReal, ...prev.filter(t => t._id !== transacaoTemporaria._id)];
+      // Atualiza cache
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        jogadoresCache: jogadores,
+        transacoesCache: updated,
+        lastUpdate: new Date().toISOString()
+      }));
+      return updated;
+    });
 
     // Resetar formulário
     toast.success('Transação registrada com sucesso!');
@@ -248,7 +251,8 @@ export default function Financeiro() {
       categoria: "",
       data: getHojeSaoPauloISODate(),
       jogadorId: "",
-      jogadorNome: ""
+      jogadorNome: "",
+      isento: false
     });
 
   } catch (error) {
@@ -541,7 +545,7 @@ export default function Financeiro() {
         const mes = (i + 1).toString().padStart(2, '0');
         return transacoes
           .filter(t => t.tipo === "receita" && t.data?.startsWith(`${filtroMes.slice(0, 4)}-${mes}`))
-          .reduce((acc, t) => acc + (t.valor || 0), 0);
+          .reduce((acc, t) => acc + (Number(t.valor) || 0), 0);
       }),
       backgroundColor: '#4ade80',
       borderRadius: 6
@@ -552,7 +556,7 @@ export default function Financeiro() {
         const mes = (i + 1).toString().padStart(2, '0');
         return transacoes
           .filter(t => t.tipo === "despesa" && t.data?.startsWith(`${filtroMes.slice(0, 4)}-${mes}`))
-          .reduce((acc, t) => acc + (t.valor || 0), 0);
+          .reduce((acc, t) => acc + (Number(t.valor) || 0), 0);
       }),
       backgroundColor: '#f87171',
       borderRadius: 6
@@ -563,10 +567,10 @@ export default function Financeiro() {
         const mes = (i + 1).toString().padStart(2, '0');
         const receitas = transacoes
           .filter(t => t.tipo === "receita" && t.data?.startsWith(`${filtroMes.slice(0, 4)}-${mes}`))
-          .reduce((acc, t) => acc + (t.valor || 0), 0);
+          .reduce((acc, t) => acc + (Number(t.valor) || 0), 0);
         const despesas = transacoes
           .filter(t => t.tipo === "despesa" && t.data?.startsWith(`${filtroMes.slice(0, 4)}-${mes}`))
-          .reduce((acc, t) => acc + (t.valor || 0), 0);
+          .reduce((acc, t) => acc + (Number(t.valor) || 0), 0);
         return receitas - despesas;
       }),
       backgroundColor: '#60a5fa',
@@ -1341,7 +1345,7 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
         (t.isento ? "text-yellow-400" : "text-green-400") : 
         "text-red-400"
     }`}>
-      {t.tipo === "receita" ? "+" : "-"} R$ {t.valor.toFixed(2)}
+      {t.tipo === "receita" ? "+" : "-"} R$ {(Number(t.valor) || 0).toFixed(2)}
       {t.isento && " (Isento)"}
     </td>
                             <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-gray-400">
