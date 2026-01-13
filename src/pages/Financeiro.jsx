@@ -568,6 +568,116 @@ export default function Financeiro() {
     }
   };
 
+  // --- Funções do Controle de Mensalidades (manuais) ---
+  const togglePagamentoLocal = (jogadorId, mesIndex) => {
+    setControleJogadores(prev => {
+      const updated = prev.map(j => {
+        if (j._id === jogadorId) {
+          const pagamentos = Array.isArray(j.pagamentos) ? [...j.pagamentos] : Array(12).fill(false);
+          pagamentos[mesIndex] = !pagamentos[mesIndex];
+          return { ...j, pagamentos };
+        }
+        return j;
+      });
+      setControleDirty(true);
+      return updated;
+    });
+  };
+
+  const toggleStatusLocal = (jogadorId) => {
+    setControleJogadores(prev => {
+      const updated = prev.map(j => {
+        if (j._id === jogadorId) {
+          const newStatus = j.statusFinanceiro === 'Adimplente' ? 'Inadimplente' : 'Adimplente';
+          return { ...j, statusFinanceiro: newStatus };
+        }
+        return j;
+      });
+      setControleDirty(true);
+      return updated;
+    });
+  };
+
+  const salvarControle = async () => {
+    try {
+      const requests = [];
+
+      controleJogadores.forEach(j => {
+        const original = jogadores.find(orig => orig._id === j._id);
+        if (!original) return;
+
+        // Status diferente
+        if (original.statusFinanceiro !== j.statusFinanceiro) {
+          requests.push(api.patch(`/jogadores/${j._id}/status`, { status: j.statusFinanceiro }));
+        }
+
+        // Pagamentos diferentes (envia uma requisição por mês alterado)
+        const pagamentosOrig = original.pagamentos || [];
+        const pagamentosNovo = j.pagamentos || [];
+        pagamentosNovo.forEach((pago, idx) => {
+          const origPago = pagamentosOrig[idx] || false;
+          if ((origPago) !== (pago || false)) {
+            const payload = {
+              mes: idx,
+              pago: !!pago,
+              isento: false,
+              dataPagamento: pago ? new Date().toISOString() : null,
+              dataLimite: new Date(new Date().getFullYear(), idx, 20)
+            };
+            requests.push(api.post(`/jogadores/${j._id}/pagamentos`, payload));
+          }
+        });
+      });
+
+      if (requests.length === 0) {
+        toast.info('Nenhuma alteração para salvar');
+        return;
+      }
+
+      await Promise.all(requests);
+
+      toast.success('Alterações salvas com sucesso!');
+
+      // Recarrega jogadores do servidor para manter a fonte da verdade
+      const res = await api.get('/jogadores');
+      const jogadoresData = res.data?.data || res.data || [];
+
+      const jogadoresProcessados = jogadoresData.map(jogador => {
+        const pagamentos = Array(12).fill(false);
+        if (jogador.pagamentos && Array.isArray(jogador.pagamentos)) {
+          jogador.pagamentos.forEach((pagamento, index) => {
+            if (typeof pagamento === 'object' && pagamento !== null) {
+              pagamentos[index] = pagamento.pago || false;
+            } else {
+              pagamentos[index] = pagamento || false;
+            }
+          });
+        }
+        return { ...jogador, pagamentos, statusFinanceiro: jogador.statusFinanceiro || 'Inadimplente' };
+      });
+
+      setJogadores(jogadoresProcessados);
+      setControleJogadores(jogadoresProcessados.map(j => ({ ...j, pagamentos: [...j.pagamentos] })));
+      setControleDirty(false);
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        jogadoresCache: jogadoresProcessados,
+        transacoesCache: transacoes,
+        lastUpdate: new Date().toISOString()
+      }));
+
+    } catch (error) {
+      console.error('Erro ao salvar controle:', error);
+      toast.error('Erro ao salvar alterações do controle. Tente novamente.');
+    }
+  };
+
+  const recarregarControle = () => {
+    setControleJogadores(jogadores.map(j => ({ ...j, pagamentos: Array.isArray(j.pagamentos) ? [...j.pagamentos] : Array(12).fill(false) })));
+    setControleDirty(false);
+    toast.info('Dados do controle recarregados a partir do servidor');
+  };
+
   // Filtrar transações do histórico (todas os anos, apenas por jogador/tipo)
   const transacoesFiltradas = transacoes
     .filter(t => {
@@ -1575,7 +1685,7 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                   </td>
                   <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap">
                     <motion.button
-                      onClick={() => toggleStatus(jogador._id)}
+                      onClick={() => toggleStatusLocal(jogador._id)}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       className={`px-2 py-1 rounded-full text-xs font-medium ${
