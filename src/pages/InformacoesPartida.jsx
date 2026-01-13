@@ -14,7 +14,7 @@ import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import api from '../services/api';
 
 export default function InformacoesPartida() {
@@ -26,6 +26,9 @@ export default function InformacoesPartida() {
   const [tabela, setTabela] = useState([['Cabeçalho', 'Valor'], ['', '']]);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState(null);
+
+  // Modal de confirmação para exclusão de planilha
+  const [confirmDeletePlanilha, setConfirmDeletePlanilha] = useState({ open: false, planilha: null });
 
   const refPlanilha = useRef(null);
 
@@ -145,26 +148,36 @@ export default function InformacoesPartida() {
     setTabela(tabela.map(row => row.filter((_, i) => i !== colIndex)));
   };
 
-  // Função para deletar planilha
-  const deletarPlanilha = async (id) => {
-    if (!window.confirm('Tem certeza que deseja excluir esta planilha?')) {
+  // Abre modal de confirmação para exclusão de planilha
+  const deletarPlanilha = (id) => {
+    const planilha = planilhas.find(p => p._id === id);
+    if (!planilha) {
+      toast.error('Planilha não encontrada');
       return;
     }
 
+    setConfirmDeletePlanilha({ open: true, planilha });
+  };
+
+  // Realiza a exclusão efetiva (otimista com rollback)
+  const performDeletePlanilha = async (id) => {
+    const originalPlanilhas = [...planilhas];
     try {
       setCarregando(true);
 
       const token = localStorage.getItem('token');
       if (!token) {
         toast.error('Faça login para excluir planilhas');
+        setConfirmDeletePlanilha({ open: false, planilha: null });
         return;
       }
 
-      const response = await api.delete(`/planilhas/${id}`);
-      const data = response.data?.data || response.data;
-
+      // Otimista: remove da UI imediatamente
       setPlanilhas(prev => prev.filter(p => p._id !== id));
-      
+
+      await api.delete(`/planilhas/${id}`);
+
+      // Se a planilha ativa for a excluída, resetar o editor
       if (planilhaAtiva?._id === id) {
         setTitulo('Nova Planilha');
         setSubtitulo('');
@@ -179,6 +192,7 @@ export default function InformacoesPartida() {
       });
     } catch (error) {
       console.error('Erro:', error);
+      setPlanilhas(originalPlanilhas);
       toast.error(`Falha ao excluir: ${error.message}`, {
         position: "bottom-right",
         autoClose: 2000,
@@ -186,6 +200,7 @@ export default function InformacoesPartida() {
       });
     } finally {
       setCarregando(false);
+      setConfirmDeletePlanilha({ open: false, planilha: null });
     }
   };
 
@@ -559,6 +574,68 @@ export default function InformacoesPartida() {
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {confirmDeletePlanilha.open && confirmDeletePlanilha.planilha && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 backdrop-blur-sm"
+            onClick={() => setConfirmDeletePlanilha({ open: false, planilha: null })}
+          >
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 20, opacity: 0 }}
+              className="bg-gray-800 rounded-xl shadow-2xl w-full max-w-md border border-gray-700"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center px-4 sm:px-6 pt-4 pb-2 border-b border-gray-700">
+                <h3 className="text-lg sm:text-xl font-bold text-white">Confirmar exclusão</h3>
+                <motion.button
+                  onClick={() => setConfirmDeletePlanilha({ open: false, planilha: null })}
+                  whileHover={{ rotate: 90 }}
+                  className="text-gray-400 hover:text-white text-sm sm:text-base"
+                >
+                  <FaTimesCircle />
+                </motion.button>
+              </div>
+
+              <div className="p-4">
+                <p className="text-sm text-gray-300">
+                  Você está prestes a excluir a planilha <span className="font-medium text-white">{confirmDeletePlanilha.planilha.titulo}</span>. Esta ação é permanente e não pode ser desfeita.
+                </p>
+                <div className="mt-3">
+                  {confirmDeletePlanilha.planilha.subtitulo && (
+                    <p className="text-xs text-gray-400">Subtítulo: <span className="font-medium text-white">{confirmDeletePlanilha.planilha.subtitulo}</span></p>
+                  )}
+                  <p className="text-xs text-gray-400">Atualizada em: <span className="font-medium text-white">{new Date(confirmDeletePlanilha.planilha.dataAtualizacao).toLocaleDateString()}</span></p>
+                </div>
+              </div>
+
+              <div className="mt-2 sm:mt-4 px-4 sm:px-6 pb-4 pt-2 border-t border-gray-700 flex justify-end gap-2 sm:gap-3 bg-gray-800/90">
+                <motion.button
+                  onClick={() => setConfirmDeletePlanilha({ open: false, planilha: null })}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm"
+                >
+                  Cancelar
+                </motion.button>
+                <motion.button
+                  onClick={() => performDeletePlanilha(confirmDeletePlanilha.planilha._id)}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm"
+                >
+                  Confirmar exclusão
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <ToastContainer 
         position="bottom-right"

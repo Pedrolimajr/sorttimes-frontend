@@ -8,11 +8,12 @@ import {
   FaClock,
   FaMapMarkerAlt,
   FaEdit,
-  FaTrash
+  FaTrash,
+  FaTimesCircle
 } from 'react-icons/fa';
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
-import { motion } from 'framer-motion';
-import axios from 'axios';
+import { motion, AnimatePresence } from 'framer-motion';
+import api from '../services/api';
 import { toast } from 'react-toastify';
 
 const PartidasAgendadas = () => {
@@ -20,18 +21,22 @@ const PartidasAgendadas = () => {
   const [partidas, setPartidas] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000',
-    headers: {
-      'Authorization': `Bearer ${localStorage.getItem('token')}`
-    }
-  });
+  const [confirmDeletePartida, setConfirmDeletePartida] = useState({ open: false, partida: null });
+
 
   useEffect(() => {
     const carregarPartidas = async () => {
       try {
-        const response = await api.get('/api/agenda');
-        setPartidas(response.data);
+        const token = localStorage.getItem('token');
+        if (!token) {
+          toast.error('Faça login para ver as partidas agendadas');
+          setLoading(false);
+          return;
+        }
+
+        const response = await api.get('/agenda');
+        const data = response.data?.data || response.data;
+        setPartidas(data || []);
       } catch (error) {
         toast.error('Erro ao carregar partidas agendadas');
         console.error('Erro:', error);
@@ -59,16 +64,43 @@ const PartidasAgendadas = () => {
     });
   };
 
-  const handleExcluirPartida = async (id) => {
-    if (window.confirm('Tem certeza que deseja excluir esta partida?')) {
-      try {
-        await api.delete(`/api/agenda/${id}`);
-        setPartidas(partidas.filter(partida => partida._id !== id));
-        toast.success('Partida excluída com sucesso!');
-      } catch (error) {
-        toast.error('Erro ao excluir partida');
-        console.error('Erro:', error);
+  // Abre o modal de confirmação ao tentar excluir
+  const handleExcluirPartida = (id) => {
+    const partida = partidas.find(p => p._id === id);
+    if (!partida) {
+      toast.error('Partida não encontrada');
+      return;
+    }
+
+    setConfirmDeletePartida({ open: true, partida });
+  };
+
+  // Executa a exclusão (otimista com rollback)
+  const performDeletePartida = async (id) => {
+    const original = [...partidas];
+    try {
+      setLoading(true);
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('Faça login para excluir partidas');
+        setConfirmDeletePartida({ open: false, partida: null });
+        return;
       }
+
+      // Atualização otimista
+      setPartidas(prev => prev.filter(partida => partida._id !== id));
+
+      await api.delete(`/agenda/${id}`);
+
+      toast.success('Partida excluída com sucesso!');
+    } catch (error) {
+      console.error('Erro ao excluir partida:', error);
+      setPartidas(original);
+      toast.error('Erro ao excluir partida');
+    } finally {
+      setLoading(false);
+      setConfirmDeletePartida({ open: false, partida: null });
     }
   };
 
@@ -242,6 +274,71 @@ const PartidasAgendadas = () => {
           )}
         </motion.div>
       </div>
+
+      <AnimatePresence>
+        {confirmDeletePartida.open && confirmDeletePartida.partida && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 backdrop-blur-sm"
+            onClick={() => setConfirmDeletePartida({ open: false, partida: null })}
+          >
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 20, opacity: 0 }}
+              className="bg-gray-800 rounded-xl shadow-2xl w-full max-w-md border border-gray-700"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center px-4 sm:px-6 pt-4 pb-2 border-b border-gray-700">
+                <h3 className="text-lg sm:text-xl font-bold text-white">Confirmar exclusão</h3>
+                <motion.button
+                  onClick={() => setConfirmDeletePartida({ open: false, partida: null })}
+                  whileHover={{ rotate: 90 }}
+                  className="text-gray-400 hover:text-white text-sm sm:text-base"
+                >
+                  <FaTimesCircle />
+                </motion.button>
+              </div>
+
+              <div className="p-4">
+                <p className="text-sm text-gray-300">
+                  Você está prestes a excluir a partida marcada para <span className="font-medium text-white">{formatarData(confirmDeletePartida.partida.data)}</span> às <span className="font-medium text-white">{confirmDeletePartida.partida.horario}</span>. Esta ação é permanente e não pode ser desfeita.
+                </p>
+                <div className="mt-3">
+                  {confirmDeletePartida.partida.local && (
+                    <p className="text-xs text-gray-400">Local: <span className="font-medium text-white">{confirmDeletePartida.partida.local}</span></p>
+                  )}
+                  {confirmDeletePartida.partida.observacoes && (
+                    <p className="text-xs text-gray-400">Observações: <span className="font-medium text-white">{confirmDeletePartida.partida.observacoes}</span></p>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-2 sm:mt-4 px-4 sm:px-6 pb-4 pt-2 border-t border-gray-700 flex justify-end gap-2 sm:gap-3 bg-gray-800/90">
+                <motion.button
+                  onClick={() => setConfirmDeletePartida({ open: false, partida: null })}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm"
+                >
+                  Cancelar
+                </motion.button>
+                <motion.button
+                  onClick={() => performDeletePartida(confirmDeletePartida.partida._id)}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm"
+                >
+                  Confirmar exclusão
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 };
