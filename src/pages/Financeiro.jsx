@@ -96,6 +96,14 @@ export default function Financeiro() {
       const jogadoresData = jogadoresRes.data?.data || jogadoresRes.data || [];
       const transacoesData = transacoesRes.data?.data || transacoesRes.data || [];
 
+      // Normaliza transações (garante que valor é Number e data é ISO string)
+      const transacoesNorm = (Array.isArray(transacoesData) ? transacoesData : []).map(t => ({
+        ...t,
+        valor: Number(t.valor) || 0,
+        data: t.data ? new Date(t.data).toISOString() : getHojeSaoPauloISODate(),
+        isento: Boolean(t.isento)
+      }));
+
       // Processa os jogadores
       const jogadoresProcessados = jogadoresData.map(jogador => {
         // Converte os pagamentos do formato do backend para o formato do frontend
@@ -119,12 +127,12 @@ export default function Financeiro() {
 
       // Atualiza estados
       setJogadores(jogadoresProcessados);
-      setTransacoes(transacoesData);
+      setTransacoes(transacoesNorm);
 
       // Atualiza cache
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         jogadoresCache: jogadoresProcessados,
-        transacoesCache: transacoesData,
+        transacoesCache: transacoesNorm,
         lastUpdate: new Date().toISOString()
       }));
 
@@ -189,6 +197,8 @@ export default function Financeiro() {
   // Declara a variável no escopo da função para que seja acessível no catch
   let transacaoTemporaria = null;
 
+  const isValidObjectId = (id) => /^[0-9a-fA-F]{24}$/.test(id);
+
   try {
     if (!novaTransacao.data || !novaTransacao.valor || !novaTransacao.descricao) {
       throw new Error('Preencha todos os campos obrigatórios');
@@ -207,11 +217,36 @@ export default function Financeiro() {
       }
     }
 
+    const valorNumero = parseFloat(String(novaTransacao.valor).replace(',', '.'));
+    if (!Number.isFinite(valorNumero) || valorNumero <= 0) {
+      throw new Error('Valor inválido. Informe um número maior que 0');
+    }
+
+    const dataIso = new Date(novaTransacao.data + 'T12:00:00').toISOString();
+    if (isNaN(Date.parse(dataIso))) {
+      throw new Error('Data inválida');
+    }
+
     const payload = {
-      ...novaTransacao,
-      valor: parseFloat(novaTransacao.valor),
-      data: new Date(novaTransacao.data + 'T12:00:00').toISOString()
+      descricao: novaTransacao.descricao,
+      valor: valorNumero,
+      tipo: novaTransacao.tipo,
+      categoria: novaTransacao.categoria || (novaTransacao.tipo === 'receita' ? 'mensalidade' : 'outros'),
+      data: dataIso,
+      isento: Boolean(novaTransacao.isento)
     };
+
+    // Se houver jogador selecionado, inclua apenas se for um ObjectId válido
+    if (novaTransacao.jogadorId) {
+      if (isValidObjectId(novaTransacao.jogadorId)) {
+        payload.jogadorId = novaTransacao.jogadorId;
+        payload.jogadorNome = novaTransacao.jogadorNome;
+      } else {
+        // Não enviar jogadorId inválido
+        console.warn('Jogador ID inválido removido do payload:', novaTransacao.jogadorId);
+        toast.warn('ID do jogador inválido foi removido automaticamente');
+      }
+    }
 
     // Atualização otimista
     transacaoTemporaria = {
@@ -219,7 +254,7 @@ export default function Financeiro() {
       _id: 'temp-' + Date.now(),
       createdAt: new Date().toISOString()
     };
-    
+
     setTransacoes(prev => [transacaoTemporaria, ...prev]);
 
     // Chamada à API
@@ -227,7 +262,7 @@ export default function Financeiro() {
     const transacaoReal = response.data?.data || response.data;
 
     if (!transacaoReal || !transacaoReal._id) {
-      throw new Error('Resposta inválida do servidor ao criar transação');
+      throw new Error(response.data?.message || 'Resposta inválida do servidor ao criar transação');
     }
 
     // Atualizar estado com a transação real e atualizar cache com o novo array
@@ -244,7 +279,7 @@ export default function Financeiro() {
 
     // Resetar formulário
     toast.success('Transação registrada com sucesso!');
-      setNovaTransacao({
+    setNovaTransacao({
       descricao: "",
       valor: "",
       tipo: "receita",
@@ -257,13 +292,17 @@ export default function Financeiro() {
 
   } catch (error) {
     console.error("Erro ao adicionar transação:", error);
-    
-    // Remove a transação temporária apenas se ela foi criada
-    if (transacaoTemporaria) {
-      setTransacoes(prev => prev.filter(t => t._id !== transacaoTemporaria._id));
+    // Se houver resposta do servidor, logue os detalhes
+    if (error?.response) {
+      console.error('Resposta da API:', error.response.data);
+      toast.error(error.response.data?.message || 'Erro ao adicionar transação (servidor)');
+    } else {
+      // Remove a transação temporária apenas se ela foi criada
+      if (transacaoTemporaria) {
+        setTransacoes(prev => prev.filter(t => t._id !== transacaoTemporaria._id));
+      }
+      toast.error(error.message || 'Erro ao adicionar transação');
     }
-    
-    toast.error(error.message || 'Erro ao adicionar transação');
   }
 };
 
