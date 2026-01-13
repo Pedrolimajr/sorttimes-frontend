@@ -438,6 +438,16 @@ export default function ListaJogadores({
         )}
       </AnimatePresence>
 
+      <ConfirmModal
+        open={confirmDeleteJogador.open}
+        title="Confirmar exclusão de jogador"
+        description={confirmDeleteJogador.jogador ? `Deseja excluir o jogador "${confirmDeleteJogador.jogador.nome}"? Esta ação é permanente.` : ''}
+        confirmLabel="Excluir"
+        cancelLabel="Cancelar"
+        onConfirm={() => confirmDeleteJogador.jogador && performDeleteJogador(confirmDeleteJogador.jogador._id)}
+        onCancel={() => setConfirmDeleteJogador({ open: false, jogador: null })}
+      />
+
       {!modoSelecao && (
         <AnimatePresence>
           {mensagemSucesso && (
