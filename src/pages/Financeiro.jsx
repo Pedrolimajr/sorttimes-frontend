@@ -501,15 +501,9 @@ export default function Financeiro() {
         return;
       }
 
-      // Se for ano anterior ao atual, abrir modal de confirmação
-      const anoAtualNum = Number(anoAtual);
-      if (anoTransacao < anoAtualNum) {
-        setConfirmDeleteModal({ open: true, transacao: transacaoParaDeletar });
-        return;
-      }
-
-      // Sem confirmação para o ano atual
-      await performDeleteTransacao(id);
+      // Abrir modal de confirmação para qualquer exclusão no histórico (garante confirmação explícita)
+      setConfirmDeleteModal({ open: true, transacao: transacaoParaDeletar });
+      return;
     } catch (error) {
       console.error("Erro ao deletar transação:", error);
       toast.error(error.message || 'Erro ao deletar transação');
