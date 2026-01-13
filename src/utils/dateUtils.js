@@ -11,7 +11,11 @@ export const getNowInSaoPaulo = () => {
   });
 
   const parts = formatter.formatToParts(new Date());
-  const get = (type) => parts.find(p => p.type === type)?.value.padStart(2, '0');
+  const get = (type) => {
+    const part = parts.find(p => p.type === type);
+    const value = part && part.value ? String(part.value) : '';
+    return value ? value.padStart(2, '0') : '00';
+  };
 
   const year = get('year');
   const month = get('month');
