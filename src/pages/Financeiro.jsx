@@ -54,6 +54,9 @@ export default function Financeiro() {
     categoria: '',
     ano: anoAtual
   });
+
+  // Modal de confirmação para exclusão segura
+  const [confirmDeleteModal, setConfirmDeleteModal] = useState({ open: false, transacao: null });
   const [novaTransacao, setNovaTransacao] = useState({
     descricao: "",
     valor: "",
@@ -446,6 +449,36 @@ export default function Financeiro() {
     }
   };
 
+  const performDeleteTransacao = async (id) => {
+    const originalTransacoes = [...transacoes];
+    try {
+      // Atualização otimista - remove a transação imediatamente e atualiza cache
+      setTransacoes(prev => {
+        const updated = prev.filter(t => t._id !== id);
+        requestAnimationFrame(() => {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            jogadoresCache: jogadores,
+            transacoesCache: updated,
+            lastUpdate: new Date().toISOString()
+          }));
+        });
+        return updated;
+      });
+
+      // Chamada à API para deletar
+      await api.delete(`/financeiro/transacoes/${id}`);
+
+      toast.success('Transação removida com sucesso!');
+    } catch (error) {
+      console.error("Erro ao deletar transação:", error);
+      // Reverte as mudanças em caso de erro
+      setTransacoes(originalTransacoes);
+      toast.error(error.message || 'Erro ao deletar transação');
+    } finally {
+      setConfirmDeleteModal({ open: false, transacao: null });
+    }
+  };
+
   const deletarTransacao = async (id) => {
     try {
       // Encontra a transação que será deletada
@@ -468,36 +501,17 @@ export default function Financeiro() {
         return;
       }
 
-      // Confirmação explícita para exclusão de anos anteriores
+      // Se for ano anterior ao atual, abrir modal de confirmação
       const anoAtualNum = Number(anoAtual);
       if (anoTransacao < anoAtualNum) {
-        const confirmar = window.confirm(`Você está prestes a excluir uma transação do ano ${anoTransacao}. Esta ação é permanente. Deseja continuar?`);
-        if (!confirmar) return;
+        setConfirmDeleteModal({ open: true, transacao: transacaoParaDeletar });
+        return;
       }
 
-      // Atualização otimista - remove a transação imediatamente
-      setTransacoes(prev => prev.filter(t => t._id !== id));
-
-      // Ao deletar uma transação, NÃO alteramos automaticamente o Controle de Mensalidades.
-      // O estado de `jogadores.pagamentos` e `statusFinanceiro` é controlado manualmente via Controle de Mensalidades.
-      // Manteremos apenas a remoção da transação do histórico.
-
-      // Faz a chamada à API para deletar
-      await api.delete(`/financeiro/transacoes/${id}`);
-
-      // Atualiza localStorage
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        jogadoresCache: jogadores,
-        transacoesCache: transacoes.filter(t => t._id !== id),
-        lastUpdate: new Date().toISOString()
-      }));
-
-      toast.success('Transação removida com sucesso!');
+      // Sem confirmação para o ano atual
+      await performDeleteTransacao(id);
     } catch (error) {
       console.error("Erro ao deletar transação:", error);
-      // Reverte as mudanças em caso de erro
-      setTransacoes(transacoes);
-      setJogadores(jogadores);
       toast.error(error.message || 'Erro ao deletar transação');
     }
   };
@@ -1573,6 +1587,68 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
           </div>
         </div>
       </div>
+
+      {/* Confirmar exclusão (Modal customizado) */}
+      <AnimatePresence>
+        {confirmDeleteModal.open && confirmDeleteModal.transacao && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 backdrop-blur-sm"
+            onClick={() => setConfirmDeleteModal({ open: false, transacao: null })}
+          >
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 20, opacity: 0 }}
+              className="bg-gray-800 rounded-xl shadow-2xl w-full max-w-md border border-gray-700"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center px-4 sm:px-6 pt-4 pb-2 border-b border-gray-700">
+                <h3 className="text-lg sm:text-xl font-bold text-white">Confirmar exclusão</h3>
+                <motion.button
+                  onClick={() => setConfirmDeleteModal({ open: false, transacao: null })}
+                  whileHover={{ rotate: 90 }}
+                  className="text-gray-400 hover:text-white text-sm sm:text-base"
+                >
+                  <FaTimes />
+                </motion.button>
+              </div>
+
+              <div className="p-4">
+                <p className="text-sm text-gray-300">
+                  Você está prestes a excluir uma transação do ano {new Date(confirmDeleteModal.transacao.data || confirmDeleteModal.transacao.createdAt).getFullYear()}. Esta ação é permanente e não pode ser desfeita.
+                </p>
+                <div className="mt-3">
+                  <p className="text-xs text-gray-400">Descrição: <span className="font-medium text-white">{confirmDeleteModal.transacao.descricao}</span></p>
+                  <p className="text-xs text-gray-400">Valor: <span className="font-medium text-white">R$ {(Number(confirmDeleteModal.transacao.valor) || 0).toFixed(2)}</span></p>
+                  <p className="text-xs text-gray-400">Data: <span className="font-medium text-white">{new Date(confirmDeleteModal.transacao.data || confirmDeleteModal.transacao.createdAt).toLocaleDateString('pt-BR')}</span></p>
+                </div>
+              </div>
+
+              <div className="mt-2 sm:mt-4 px-4 sm:px-6 pb-4 pt-2 border-t border-gray-700 flex justify-end gap-2 sm:gap-3 bg-gray-800/90">
+                <motion.button
+                  onClick={() => setConfirmDeleteModal({ open: false, transacao: null })}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm"
+                >
+                  Cancelar
+                </motion.button>
+                <motion.button
+                  onClick={() => performDeleteTransacao(confirmDeleteModal.transacao._id)}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm"
+                >
+                  Confirmar exclusão
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Modal de Relatório */}
       <AnimatePresence>
