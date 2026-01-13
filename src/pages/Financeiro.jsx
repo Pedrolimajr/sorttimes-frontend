@@ -1593,19 +1593,7 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                   </p>
                 </div>
 
-                <div className="bg-gray-700/50 p-3 sm:p-4 rounded-lg">
-                  <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">Pagamentos Pendentes</h4>
-                  <p className="text-lg sm:text-xl font-bold text-white">
-                    {estatisticas.pagamentosPendentes} mensalidades
-                  </p>
-                </div>
 
-                <div className="bg-gray-700/50 p-3 sm:p-4 rounded-lg">
-                  <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">Total de Jogadores</h4>
-                  <p className="text-lg sm:text-xl font-bold text-white">
-                    {estatisticas.totalJogadores} jogadores
-                  </p>
-                </div>
 
                 <div className="bg-gray-700/50 p-3 sm:p-4 rounded-lg">
                   <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">Detalhes das Transações ({anoFiltro})</h4>
