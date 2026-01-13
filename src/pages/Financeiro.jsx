@@ -41,6 +41,7 @@ export default function Financeiro() {
   const [transacoes, setTransacoes] = useState([]);
   const [jogadores, setJogadores] = useState([]);
   const [filtroMes, setFiltroMes] = useState(getAnoMesAtualSaoPaulo());
+  const anoAtual = new Date().getFullYear().toString();
   const [carregando, setCarregando] = useState(true);
   const [relatorioModal, setRelatorioModal] = useState(false);
   const [editarModal, setEditarModal] = useState(false);
@@ -50,7 +51,8 @@ export default function Financeiro() {
   const [filtroHistorico, setFiltroHistorico] = useState({
     jogador: '',
     tipo: 'todos',
-    categoria: ''
+    categoria: '',
+    ano: anoAtual
   });
   const [novaTransacao, setNovaTransacao] = useState({
     descricao: "",
@@ -452,35 +454,33 @@ export default function Financeiro() {
         throw new Error('Transação não encontrada');
       }
 
+      // Segurança: somente permitir exclusão se a transação pertence ao ano filtrado
+      const d = transacaoParaDeletar.data || transacaoParaDeletar.createdAt;
+      if (!d) {
+        throw new Error('Transação sem data não pode ser excluída por segurança');
+      }
+      const dataStr = typeof d === 'string' ? d : new Date(d).toISOString();
+      const anoTransacao = Number(dataStr.slice(0,4));
+      const filtroAnoSelecionado = filtroHistorico.ano;
+
+      if (filtroAnoSelecionado && filtroAnoSelecionado !== 'Todos' && Number(filtroAnoSelecionado) !== anoTransacao) {
+        toast.error('A exclusão só pode ser feita para transações do ano atualmente filtrado.');
+        return;
+      }
+
+      // Confirmação explícita para exclusão de anos anteriores
+      const anoAtualNum = Number(anoAtual);
+      if (anoTransacao < anoAtualNum) {
+        const confirmar = window.confirm(`Você está prestes a excluir uma transação do ano ${anoTransacao}. Esta ação é permanente. Deseja continuar?`);
+        if (!confirmar) return;
+      }
+
       // Atualização otimista - remove a transação imediatamente
       setTransacoes(prev => prev.filter(t => t._id !== id));
 
-      // Se for uma transação de mensalidade, desmarca o mês correspondente
-      if (transacaoParaDeletar.categoria === 'mensalidade' && transacaoParaDeletar.jogadorId) {
-        const dataTransacao = new Date(transacaoParaDeletar.data);
-        const mesTransacao = dataTransacao.getMonth();
-        
-        setJogadores(prevJogadores => {
-          return prevJogadores.map(jogador => {
-            if (jogador._id === transacaoParaDeletar.jogadorId) {
-              const pagamentosAtualizados = [...jogador.pagamentos];
-              pagamentosAtualizados[mesTransacao] = false;
-              
-              const mesAtual = new Date().getMonth();
-              const todosMesesPagos = pagamentosAtualizados
-                .slice(0, mesAtual + 1)
-                .every(pago => pago);
-              
-              return {
-                ...jogador,
-                pagamentos: pagamentosAtualizados,
-                statusFinanceiro: todosMesesPagos ? 'Adimplente' : 'Inadimplente'
-              };
-            }
-            return jogador;
-          });
-        });
-      }
+      // Ao deletar uma transação, NÃO alteramos automaticamente o Controle de Mensalidades.
+      // O estado de `jogadores.pagamentos` e `statusFinanceiro` é controlado manualmente via Controle de Mensalidades.
+      // Manteremos apenas a remoção da transação do histórico.
 
       // Faz a chamada à API para deletar
       await api.delete(`/financeiro/transacoes/${id}`);
@@ -531,6 +531,17 @@ export default function Financeiro() {
       // Filtro por tipo
       if (filtroHistorico.tipo !== 'todos') {
         return t.tipo === filtroHistorico.tipo;
+      }
+      return true;
+    })
+    .filter(t => {
+      // Filtro por ano (usa t.data, com fallback para createdAt)
+      const d = t.data || t.createdAt;
+      if (!d) return false;
+      const dataStr = typeof d === 'string' ? d : new Date(d).toISOString();
+      const anoTrans = dataStr.slice(0,4);
+      if (filtroHistorico.ano && filtroHistorico.ano !== 'Todos') {
+        return anoTrans === filtroHistorico.ano;
       }
       return true;
     })
@@ -873,6 +884,20 @@ export default function Financeiro() {
       }
     }
   };
+
+const anosDisponiveis = Array.from(new Set(transacoes.map(t => {
+  try {
+    const dataStr = typeof t.data === 'string' ? t.data : new Date(t.data).toISOString();
+    return dataStr.slice(0,4);
+  } catch {
+    return null;
+  }
+}).filter(Boolean))).sort((a,b) => b - a);
+
+// Garantir que o ano atual esteja presente
+if (!anosDisponiveis.includes(anoAtual)) {
+  anosDisponiveis.unshift(anoAtual);
+}
 
 const jogadoresFiltrados = jogadores.filter(jogador =>
   jogador.nivel === 'Associado' &&
@@ -1271,7 +1296,7 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
               </div>
 
               {/* Filtros do histórico */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-4">
                 <div className="relative">
                   <input
                     type="text"
@@ -1292,9 +1317,20 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                   <option value="receita">Receitas</option>
                   <option value="despesa">Despesas</option>
                 </select>
+
+                <select
+                  value={filtroHistorico.ano}
+                  onChange={(e) => setFiltroHistorico({...filtroHistorico, ano: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                >
+                  <option value="Todos">Todos os anos</option>
+                  {anosDisponiveis.map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
                 
                 <button
-                  onClick={() => setFiltroHistorico({ jogador: '', tipo: 'todos', categoria: '' })}
+                  onClick={() => setFiltroHistorico({ jogador: '', tipo: 'todos', categoria: '', ano: anoAtual })}
                   className="w-full bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-xs sm:text-sm"
                 >
                   Limpar filtros
