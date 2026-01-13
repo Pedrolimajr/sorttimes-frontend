@@ -41,6 +41,10 @@ export default function Financeiro() {
   const [transacoes, setTransacoes] = useState([]);
   const [jogadores, setJogadores] = useState([]);
   const [filtroMes, setFiltroMes] = useState(getAnoMesAtualSaoPaulo());
+
+  // Estado local e manual para o Controle de Mensalidades
+  const [controleJogadores, setControleJogadores] = useState([]);
+  const [controleDirty, setControleDirty] = useState(false); // marca alterações locais pendentes
   const [carregando, setCarregando] = useState(true);
   const [relatorioModal, setRelatorioModal] = useState(false);
   const [editarModal, setEditarModal] = useState(false);
@@ -186,6 +190,13 @@ export default function Financeiro() {
 
     carregarEstatisticas();
   }, [filtroMes, transacoes, jogadores]); // Dependências necessárias
+
+  // Inicializa o controle de mensalidades de forma manual apenas quando ainda não houver dados
+  useEffect(() => {
+    if ((controleJogadores || []).length === 0 && jogadores && jogadores.length > 0) {
+      setControleJogadores(jogadores.map(j => ({ ...j, pagamentos: Array.isArray(j.pagamentos) ? [...j.pagamentos] : Array(12).fill(false) })));
+    }
+  }, [jogadores]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -1371,6 +1382,19 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                   />
                 </div>
 
+                <div>
+                  <select
+                    value={filtroHistorico.categoria}
+                    onChange={(e) => setFiltroHistorico({...filtroHistorico, categoria: e.target.value})}
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                  >
+                    <option value="">Todas as categorias</option>
+                    <option value="mensalidade">Mensalidade</option>
+                    <option value="doacao">Doação</option>
+                    <option value="outros">Outros</option>
+                  </select>
+                </div>
+
                 <button
                   onClick={() => setFiltroHistorico({ jogador: '', tipo: 'todos', categoria: '', mes: '', data: '' })}
                   className="w-full bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-xs sm:text-sm"
@@ -1456,6 +1480,7 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
 >
   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3 sm:mb-4">
     <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Controle de Mensalidades</h2>
+    <p className="text-xs text-gray-400 mb-2 sm:mb-0">Alterações são manuais aqui — clique em <span className="font-medium text-white">Salvar alterações</span> para persistir ou em <span className="font-medium text-white">Recarregar</span> para restaurar do servidor.</p>
     <div className="flex items-center gap-2 w-full sm:w-auto">
       <div className="relative flex-1 sm:flex-none">
         <input
@@ -1478,6 +1503,24 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
         <option value="Adimplente">Adimplente</option>
         <option value="Inadimplente">Inadimplente</option>
       </select>
+
+      <motion.button
+        onClick={recarregarControle}
+        whileHover={{ scale: 1.05 }}
+        className="bg-gray-600 p-1.5 rounded-lg text-white hover:bg-gray-500 transition-colors text-xs sm:text-sm"
+        title="Recarregar dados do servidor"
+      >
+        Recarregar
+      </motion.button>
+
+      <motion.button
+        onClick={salvarControle}
+        whileHover={{ scale: 1.05 }}
+        className={`bg-green-600 p-1.5 rounded-lg text-white hover:bg-green-700 transition-colors text-xs sm:text-sm ${!controleDirty ? 'opacity-60 pointer-events-none' : ''}`}
+        title="Salvar alterações"
+      >
+        Salvar alterações
+      </motion.button>
 
       <motion.button
         onClick={async () => await compartilharControle('tabela-mensalidades')}
@@ -1519,7 +1562,7 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-700">
-            {jogadores
+            {controleJogadores
               .filter(jogador =>
                 jogador.nivel === 'Associado' &&
                 jogador.nome.toLowerCase().includes(filtroJogador.toLowerCase()) &&
@@ -1547,7 +1590,7 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                   {jogador.pagamentos.map((pago, i) => (
                     <td key={i} className="px-1 sm:px-2 py-2 sm:py-3 whitespace-nowrap text-center">
                       <motion.button
-                        onClick={() => togglePagamento(jogador._id, i)}
+                        onClick={() => togglePagamentoLocal(jogador._id, i)}
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         className={`
