@@ -15,6 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { motion } from 'framer-motion';
+import api from '../services/api';
 
 export default function InformacoesPartida() {
   const navigate = useNavigate();
@@ -33,15 +34,18 @@ export default function InformacoesPartida() {
     const carregarPlanilhas = async () => {
       try {
         setCarregando(true);
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/planilhas`);
-        
-        if (!response.ok) throw new Error('Erro ao carregar planilhas');
-        
-        const data = await response.json();
-        setPlanilhas(data.data || []);
-        
-        if (data.data?.length > 0) {
-          selecionarPlanilha(data.data[0]);
+
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('Faça login para carregar as planilhas');
+        }
+
+        const response = await api.get('/planilhas');
+        const data = response.data?.data || response.data || [];
+        setPlanilhas(data || []);
+
+        if (data?.length > 0) {
+          selecionarPlanilha(data[0]);
         }
       } catch (error) {
         setErro(error.message);
@@ -76,30 +80,20 @@ export default function InformacoesPartida() {
         dataAtualizacao: new Date().toISOString()
       };
 
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 10000);
-
-      const url = planilhaAtiva?._id 
-        ? `${import.meta.env.VITE_API_URL}/api/planilhas/${planilhaAtiva._id}`
-        : `${import.meta.env.VITE_API_URL}/api/planilhas`;
-
-      const response = await fetch(url, {
-        method: planilhaAtiva?._id ? 'PUT' : 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(planilhaData),
-        signal: controller.signal
-      });
-
-      clearTimeout(timeout);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Erro ao salvar');
+      // Verificar token antes de salvar
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('Faça login para salvar planilhas');
+        return;
       }
 
-      const { data } = await response.json();
+      // Usar axios com timeout para salvar (PUT ou POST)
+      const config = { timeout: 10000 };
+      const endpoint = planilhaAtiva?._id ? `/planilhas/${planilhaAtiva._id}` : '/planilhas';
+      const method = planilhaAtiva?._id ? api.put : api.post;
+
+      const response = await method(endpoint, planilhaData, config);
+      const data = response.data?.data || response.data;
 
       setPlanilhas(prev => 
         planilhaAtiva?._id 
@@ -159,22 +153,15 @@ export default function InformacoesPartida() {
 
     try {
       setCarregando(true);
-      
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/planilhas/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        credentials: 'include'
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Erro ${response.status} ao excluir`);
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('Faça login para excluir planilhas');
+        return;
       }
 
-      const data = await response.json();
+      const response = await api.delete(`/planilhas/${id}`);
+      const data = response.data?.data || response.data;
 
       setPlanilhas(prev => prev.filter(p => p._id !== id));
       
