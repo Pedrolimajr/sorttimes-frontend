@@ -8,6 +8,7 @@ import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import api from '../services/api';
 
 export default function CadastroJogadores() {
   const navigate = useNavigate();
@@ -131,17 +132,20 @@ export default function CadastroJogadores() {
       if (jogador.numeroCamisa) formData.append('numeroCamisa', jogador.numeroCamisa);
       if (jogador.foto) formData.append('foto', jogador.foto);
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/jogadores`, {
-        method: 'POST',
-        body: formData
-      });
-  
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Erro ao cadastrar jogador');
+      // Verificar se há token. Se não houver, solicitar login para evitar 401 remoto.
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('Faça login antes de cadastrar jogadores');
+        setEnviando(false);
+        return;
       }
-  
-      const data = await response.json();
+
+      // Usar axios (`api`) para garantir que o token seja enviado automaticamente pelo interceptor
+      const response = await api.post('/jogadores', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      const data = response.data?.data || response.data;
       toast.success('Jogador cadastrado com sucesso!');
       
       navigate('/lista-jogadores', {
