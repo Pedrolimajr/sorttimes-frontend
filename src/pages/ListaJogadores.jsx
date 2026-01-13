@@ -112,10 +112,26 @@ export default function ListaJogadores({
 
   useEffect(() => {
     if (location.state?.novoJogador) {
+      const novo = location.state.novoJogador;
       setMensagemSucesso(location.state.mensagem);
+
+      // Atualização otimista: insere imediatamente o novo jogador na lista local
+      setJogadores(prev => {
+        if (!prev.some(j => j._id === novo._id)) {
+          return [novo, ...prev];
+        }
+        return prev;
+      });
+
+      // Recarrega do servidor para garantir consistência (atualiza o contexto)
+      if (typeof carregarJogadores === 'function') {
+        carregarJogadores();
+      }
+
+      // Limpa o estado de navegação para não exibir a mensagem novamente
       navigate(location.pathname, { replace: true, state: {} });
     }
-  }, [location.state, navigate, location.pathname]);
+  }, [location.state, navigate, location.pathname, carregarJogadores]);
 
   useEffect(() => {
     if (mensagemSucesso) {
