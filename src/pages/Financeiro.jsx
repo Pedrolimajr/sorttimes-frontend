@@ -50,7 +50,9 @@ export default function Financeiro() {
   const [filtroHistorico, setFiltroHistorico] = useState({
     jogador: '',
     tipo: 'todos',
-    categoria: ''
+    categoria: '',
+    mes: '', // formato YYYY-MM para filtrar por mês
+    data: '' // formato YYYY-MM-DD para filtrar por data exata
   });
   const [novaTransacao, setNovaTransacao] = useState({
     descricao: "",
@@ -559,17 +561,36 @@ export default function Financeiro() {
   const transacoesFiltradas = transacoes
     .filter(t => {
       if (!t.data) return false;
+
       // Filtro por jogador
       if (filtroHistorico.jogador && t.jogadorId) {
         const jogador = jogadores.find(j => j._id === t.jogadorId);
-        return jogador?.nome.toLowerCase().includes(filtroHistorico.jogador.toLowerCase());
+        if (!jogador?.nome?.toLowerCase().includes(filtroHistorico.jogador.toLowerCase())) return false;
       }
+
+      // Filtro por mês (YYYY-MM)
+      if (filtroHistorico.mes) {
+        if (!t.data?.startsWith(filtroHistorico.mes)) return false;
+      }
+
+      // Filtro por data exata (YYYY-MM-DD)
+      if (filtroHistorico.data) {
+        if (!t.data?.startsWith(filtroHistorico.data)) return false;
+      }
+
       return true;
     })
     .filter(t => {
       // Filtro por tipo
       if (filtroHistorico.tipo !== 'todos') {
         return t.tipo === filtroHistorico.tipo;
+      }
+      return true;
+    })
+    .filter(t => {
+      // Filtro por categoria, se desejado
+      if (filtroHistorico.categoria) {
+        return t.categoria === filtroHistorico.categoria;
       }
       return true;
     })
@@ -1310,7 +1331,7 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
               </div>
 
               {/* Filtros do histórico */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 mb-4">
                 <div className="relative">
                   <input
                     type="text"
@@ -1321,7 +1342,7 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                   />
                   <FaSearch className="absolute right-3 top-2.5 text-gray-400 text-xs sm:text-sm" />
                 </div>
-                
+
                 <select
                   value={filtroHistorico.tipo}
                   onChange={(e) => setFiltroHistorico({...filtroHistorico, tipo: e.target.value})}
@@ -1331,9 +1352,27 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                   <option value="receita">Receitas</option>
                   <option value="despesa">Despesas</option>
                 </select>
-                
+
+                <div>
+                  <input
+                    type="month"
+                    value={filtroHistorico.mes}
+                    onChange={(e) => setFiltroHistorico({...filtroHistorico, mes: e.target.value})}
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                  />
+                </div>
+
+                <div>
+                  <input
+                    type="date"
+                    value={filtroHistorico.data}
+                    onChange={(e) => setFiltroHistorico({...filtroHistorico, data: e.target.value})}
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                  />
+                </div>
+
                 <button
-                  onClick={() => setFiltroHistorico({ jogador: '', tipo: 'todos', categoria: '' })}
+                  onClick={() => setFiltroHistorico({ jogador: '', tipo: 'todos', categoria: '', mes: '', data: '' })}
                   className="w-full bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-xs sm:text-sm"
                 >
                   Limpar filtros
