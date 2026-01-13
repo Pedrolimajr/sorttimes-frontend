@@ -7,6 +7,7 @@ import {
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import api from '../services/api';
 import { calcularIdade } from '../utils/dateUtils';
 
 export default function PerfilJogador() {
@@ -16,41 +17,34 @@ export default function PerfilJogador() {
   const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
-    const carregarJogadores = async () => {
+    const carregarJogador = async () => {
       try {
         setCarregando(true);
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/jogadores`);
-  
-        if (!response.ok) {
-          throw new Error('Erro ao carregar jogadores');
+        const token = localStorage.getItem('token');
+        if (!token) {
+          toast.error('Usuário não autenticado. Faça login.');
+          navigate('/login');
+          return;
         }
-  
-        const result = await response.json();
-        console.log('Dados recebidos da API:', result);
-  
-        const jogadoresArray = Array.isArray(result.data) ? result.data : [];
-  
-        if (location.state?.novoJogador) {
-          const jogadorExiste = jogadoresArray.some(j => j._id === location.state.novoJogador._id);
-          if (!jogadorExiste) {
-            jogadoresArray.unshift(location.state.novoJogador);
-          }
-          setMensagemSucesso(location.state.mensagem);
-          navigate(location.pathname, { replace: true, state: {} });
+
+        const response = await api.get(`/jogadores/${id}`);
+
+        if (response.data && response.data.success) {
+          setJogador(response.data.data);
+        } else {
+          throw new Error(response.data?.message || 'Erro ao carregar jogador');
         }
-  
-        setJogadores(jogadoresArray);
       } catch (error) {
-        console.error("Erro ao carregar jogadores:", error);
-        toast.error(error.message || 'Erro ao carregar jogadores');
-        setJogadores([]);
+        console.error('Erro ao carregar jogador:', error);
+        toast.error(error.message || 'Erro ao carregar jogador');
+        setJogador(null);
       } finally {
         setCarregando(false);
       }
     };
-  
-    carregarJogadores();
-  }, [location.state, navigate, location.pathname]);
+
+    if (id) carregarJogador();
+  }, [id, navigate]);
   
 
   if (carregando) {

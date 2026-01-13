@@ -13,6 +13,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { useJogadores } from '../context/JogadoresContext';
 import { calcularIdade } from '../utils/dateUtils';
 import api from '../services/api';
+import ConfirmModal from '../components/ConfirmModal';
 
 const posicoes = [
   'Goleiro', 'Defensor', 'Lateral-Esquerdo', 'Lateral-Direito', 
@@ -49,6 +50,8 @@ export default function ListaJogadores({
     jogador: null,
     novoAtivo: true,
   });
+
+  const [confirmDeleteJogador, setConfirmDeleteJogador] = useState({ open: false, jogador: null });
   
   const [formData, setFormData] = useState({
     nome: '',
@@ -276,28 +279,31 @@ export default function ListaJogadores({
     });
   };
 
-  const handleExcluir = async (id) => {
-    if (window.confirm('Tem certeza que deseja excluir este jogador?')) {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/jogadores/${id}`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Erro ao excluir jogador');
-        }
-        
-        const data = await response.json();
-        toast.success(data.message || 'Jogador excluído com sucesso');
-        setJogadores(prev => prev.filter(j => j._id !== id));
-      } catch (error) {
-        console.error("Erro ao excluir jogador:", error);
-        toast.error(error.message || 'Erro ao excluir jogador');
-      }
+  const handleExcluir = (id) => {
+    const jogador = jogadores.find(j => j._id === id);
+    if (!jogador) {
+      toast.error('Jogador não encontrado');
+      return;
+    }
+
+    setConfirmDeleteJogador({ open: true, jogador });
+  };
+
+  const performDeleteJogador = async (id) => {
+    const original = [...jogadores];
+    try {
+      setJogadores(prev => prev.filter(j => j._id !== id));
+
+      const response = await api.delete(`/jogadores/${id}`);
+      const data = response.data;
+
+      toast.success(data.message || 'Jogador excluído com sucesso');
+    } catch (error) {
+      console.error('Erro ao excluir jogador:', error);
+      setJogadores(original);
+      toast.error(error.response?.data?.message || error.message || 'Erro ao excluir jogador');
+    } finally {
+      setConfirmDeleteJogador({ open: false, jogador: null });
     }
   };
 

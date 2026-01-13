@@ -14,6 +14,7 @@ import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import ConfirmModal from '../components/ConfirmModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../services/api';
 
@@ -220,80 +221,59 @@ export default function InformacoesPartida() {
 
   const voltarParaDashboard = () => navigate('/dashboard');
 
+  const [exportModalOpen, setExportModalOpen] = useState(false);
+
+  const exportarParaPDF = () => {
+    return new Promise((resolve) => {
+      setTimeout(async () => {
+        const { jsPDF } = await import('jspdf');
+        const doc = new jsPDF();
+
+        doc.setFontSize(20);
+        doc.text(titulo, 14, 15);
+
+        if (subtitulo) {
+          doc.setFontSize(12);
+          doc.text(subtitulo, 14, 22);
+        }
+
+        doc.setFontSize(10);
+        doc.text(`Exportado em: ${new Date().toLocaleString()}`, 14, 29);
+
+        let y = 40;
+        tabela.forEach((linha, i) => {
+          linha.forEach((celula, j) => {
+            doc.setFontSize(i === 0 ? 12 : 10);
+            doc.setTextColor(i === 0 ? '#000000' : '#333333');
+            doc.text(celula, 14 + (j * 40), y);
+          });
+          y += 10;
+        });
+
+        doc.save(`planilha_${titulo}_${new Date().getTime()}.pdf`);
+        resolve();
+      }, 100);
+    });
+  };
+
+  const exportarParaImagem = async () => {
+    const { toPng } = await import('html-to-image');
+    const elemento = refPlanilha.current;
+
+    if (elemento) {
+      const dataUrl = await toPng(elemento);
+      const link = document.createElement('a');
+      link.download = `planilha_${titulo}_${new Date().getTime()}.png`;
+      link.href = dataUrl;
+      link.click();
+    }
+  };
+
   const exportarPDF = async () => {
     try {
       setCarregando(true);
-      
-      const dadosParaExportar = {
-        titulo,
-        subtitulo,
-        tabela,
-        data: new Date().toLocaleString()
-      };
 
-      const exportarParaPDF = () => {
-        return new Promise((resolve) => {
-          setTimeout(async () => {
-            const { jsPDF } = await import('jspdf');
-            const doc = new jsPDF();
-            
-            doc.setFontSize(20);
-            doc.text(titulo, 14, 15);
-            
-            if (subtitulo) {
-              doc.setFontSize(12);
-              doc.text(subtitulo, 14, 22);
-            }
-            
-            doc.setFontSize(10);
-            doc.text(`Exportado em: ${new Date().toLocaleString()}`, 14, 29);
-            
-            let y = 40;
-            tabela.forEach((linha, i) => {
-              linha.forEach((celula, j) => {
-                doc.setFontSize(i === 0 ? 12 : 10);
-                doc.setTextColor(i === 0 ? '#000000' : '#333333');
-                doc.text(celula, 14 + (j * 40), y);
-              });
-              y += 10;
-            });
-            
-            doc.save(`planilha_${titulo}_${new Date().getTime()}.pdf`);
-            resolve();
-          }, 100);
-        });
-      };
-
-      const exportarParaImagem = async () => {
-        const { toPng } = await import('html-to-image');
-        const elemento = refPlanilha.current;
-        
-        if (elemento) {
-          const dataUrl = await toPng(elemento);
-          const link = document.createElement('a');
-          link.download = `planilha_${titulo}_${new Date().getTime()}.png`;
-          link.href = dataUrl;
-          link.click();
-        }
-      };
-
-      const tipoExportacao = window.confirm('Clique em OK para exportar como PDF ou Cancelar para exportar como Imagem');
-      
-      if (tipoExportacao) {
-        await exportarParaPDF();
-        toast.success('PDF gerado!', {
-          position: "bottom-right",
-          autoClose: 1500,
-          hideProgressBar: true
-        });
-      } else {
-        await exportarParaImagem();
-        toast.success('Imagem gerada!', {
-          position: "bottom-right",
-          autoClose: 1500,
-          hideProgressBar: true
-        });
-      }
+      setExportModalOpen(true);
 
     } catch (error) {
       console.error('Erro ao exportar:', error);
@@ -302,6 +282,33 @@ export default function InformacoesPartida() {
         autoClose: 2000,
         hideProgressBar: true
       });
+      setCarregando(false);
+    }
+  };
+
+  const confirmarExportarPDF = async () => {
+    setExportModalOpen(false);
+    try {
+      setCarregando(true);
+      await exportarParaPDF();
+      toast.success('PDF gerado!', { position: 'bottom-right', autoClose: 1500, hideProgressBar: true });
+    } catch (error) {
+      console.error('Erro ao exportar PDF:', error);
+      toast.error('Falha ao gerar PDF');
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  const cancelarExportarImagem = async () => {
+    setExportModalOpen(false);
+    try {
+      setCarregando(true);
+      await exportarParaImagem();
+      toast.success('Imagem gerada!', { position: 'bottom-right', autoClose: 1500, hideProgressBar: true });
+    } catch (error) {
+      console.error('Erro ao exportar imagem:', error);
+      toast.error('Falha ao gerar imagem');
     } finally {
       setCarregando(false);
     }
@@ -636,6 +643,16 @@ export default function InformacoesPartida() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ConfirmModal
+        open={exportModalOpen}
+        title="Exportar Planilha"
+        description="Clique em 'Exportar como PDF' para gerar um PDF ou 'Exportar como Imagem' para gerar PNG."
+        confirmLabel="Exportar como PDF"
+        cancelLabel="Exportar como Imagem"
+        onConfirm={confirmarExportarPDF}
+        onCancel={cancelarExportarImagem}
+      />
 
       <ToastContainer 
         position="bottom-right"

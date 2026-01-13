@@ -197,22 +197,18 @@ export default function SorteioTimes() {
     }
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/gerar-link-presenca`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          jogadores: jogadoresSelecionados.map(j => ({
-            id: j._id,
-            nome: j.nome,
-            presente: j.presente
-          })),
-          dataJogo
-        })
+      const response = await api.post('/gerar-link-presenca', {
+        jogadores: jogadoresSelecionados.map(j => ({
+          id: j._id,
+          nome: j.nome,
+          presente: j.presente
+        })),
+        dataJogo
       });
 
-      const { linkId } = await response.json();
+      const linkId = response.data?.linkId;
+      if (!linkId) throw new Error('Não foi possível gerar link');
+
       localStorage.setItem('linkPresencaId', linkId);
 
       const linkCompleto = `${window.location.origin}/confirmar-presenca/${linkId}`;
@@ -348,27 +344,19 @@ const alternarPresenca = async (jogadorId) => {
   }
 
   try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/presenca/${linkId}/confirmar`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        jogadorId,
-        presente: novoEstado
-      })
+    const response = await api.post(`/presenca/${linkId}/confirmar`, {
+      jogadorId,
+      presente: novoEstado
     });
 
-    const result = await response.json();
-
-    if (!result.success) {
-      throw new Error(result.message || "Erro ao confirmar presença");
+    if (!response.data || !response.data.success) {
+      throw new Error(response.data?.message || 'Erro ao confirmar presença');
     }
 
     toast.success(novoEstado ? '✅ Presença confirmada!' : '❌ Presença desmarcada!');
   } catch (error) {
-    console.error("Erro ao atualizar presença:", error);
-    toast.error("Erro ao comunicar com o servidor.");
+    console.error('Erro ao atualizar presença:', error);
+    toast.error('Erro ao comunicar com o servidor.');
   }
 };
 
