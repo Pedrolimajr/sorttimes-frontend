@@ -9,6 +9,7 @@ import {
   FaTimes,
   FaFilePdf,
   FaFileImage,
+  FaFileAlt,
   FaPrint,
   FaCalendarAlt,
   FaUser,
@@ -32,6 +33,7 @@ import jsPDF from 'jspdf';
 import api from '../services/api';
 import domtoimage from 'dom-to-image';
 import { getHojeSaoPauloISODate, getAnoMesAtualSaoPaulo } from '../utils/dateUtils';
+import * as XLSX from 'xlsx';
 Chart.register(...registerables);
 
 export default function Financeiro() {
@@ -53,6 +55,11 @@ export default function Financeiro() {
     tipo: 'todos',
     categoria: '',
     ano: anoAtual
+  });
+  const [filtroExportacao, setFiltroExportacao] = useState({
+    tipo: 'ano', // 'ano' ou 'mes'
+    ano: anoAtual,
+    mes: getAnoMesAtualSaoPaulo()
   });
 
   // Modal de confirmação para exclusão segura
@@ -739,6 +746,193 @@ export default function Financeiro() {
     } catch (error) {
       console.error('Erro ao gerar imagem:', error);
       toast.error('Erro ao gerar imagem. Tente novamente.');
+    }
+  };
+
+  const exportarExcel = () => {
+    try {
+      // Filtra as transações baseado no filtro de exportação
+      let transacoesParaExportar = [...transacoes];
+
+      if (filtroExportacao.tipo === 'ano') {
+        // Filtra por ano
+        const anoFiltro = filtroExportacao.ano;
+        transacoesParaExportar = transacoesParaExportar.filter(t => {
+          const dataStr = getDataISO(t.data || t.createdAt);
+          if (!dataStr) return false;
+          return dataStr.startsWith(anoFiltro);
+        });
+      } else if (filtroExportacao.tipo === 'mes') {
+        // Filtra por mês específico
+        const mesFiltro = filtroExportacao.mes;
+        transacoesParaExportar = transacoesParaExportar.filter(t => {
+          const dataStr = getDataISO(t.data || t.createdAt);
+          if (!dataStr) return false;
+          return dataStr.startsWith(mesFiltro);
+        });
+      }
+
+      if (transacoesParaExportar.length === 0) {
+        toast.warning('Nenhuma transação encontrada para o período selecionado.');
+        return;
+      }
+
+      // Ordena por data (mais recente primeiro)
+      transacoesParaExportar.sort((a, b) => {
+        const dataA = new Date(a.data || a.createdAt);
+        const dataB = new Date(b.data || b.createdAt);
+        return dataB - dataA;
+      });
+
+      // Prepara os dados para o Excel
+      const dadosExcel = transacoesParaExportar.map((t, index) => {
+        const dataStr = getDataISO(t.data || t.createdAt);
+        const dataFormatada = dataStr 
+          ? new Date(dataStr).toLocaleDateString('pt-BR', { 
+              day: '2-digit', 
+              month: '2-digit', 
+              year: 'numeric' 
+            })
+          : 'Data não disponível';
+        
+        const jogadorNome = t.jogadorId 
+          ? jogadores.find(j => j._id === t.jogadorId)?.nome || ''
+          : '';
+
+        return {
+          'Nº': index + 1,
+          'Data': dataFormatada,
+          'Tipo': t.tipo === 'receita' ? 'Receita' : 'Despesa',
+          'Descrição': t.descricao || '',
+          'Jogador': jogadorNome,
+          'Valor': Number(t.valor) || 0,
+          'Status': t.isento ? 'Isento' : 'Normal',
+          'Categoria': t.categoria || '-'
+        };
+      });
+
+      // Cria a planilha
+      const ws = XLSX.utils.json_to_sheet(dadosExcel);
+
+      // Ajusta largura das colunas
+      const colWidths = [
+        { wch: 5 },   // Nº
+        { wch: 12 },  // Data
+        { wch: 10 },  // Tipo
+        { wch: 30 },  // Descrição
+        { wch: 20 },  // Jogador
+        { wch: 15 },  // Valor
+        { wch: 10 },  // Status
+        { wch: 15 }   // Categoria
+      ];
+      ws['!cols'] = colWidths;
+
+      // Formata cabeçalho
+      const range = XLSX.utils.decode_range(ws['!ref']);
+      for (let C = range.s.c; C <= range.e.c; ++C) {
+        const cellAddress = XLSX.utils.encode_cell({ c: C, r: 0 });
+        if (!ws[cellAddress]) continue;
+        ws[cellAddress].s = {
+          font: { bold: true, color: { rgb: 'FFFFFF' } },
+          fill: { fgColor: { rgb: '4472C4' } },
+          alignment: { horizontal: 'center', vertical: 'center' },
+          border: {
+            top: { style: 'thin' },
+            bottom: { style: 'thin' },
+            left: { style: 'thin' },
+            right: { style: 'thin' }
+          }
+        };
+      }
+
+      // Formata células de valor (coluna F - índice 5)
+      for (let R = 1; R <= range.e.r; ++R) {
+        const cellAddress = XLSX.utils.encode_cell({ c: 5, r: R });
+        if (ws[cellAddress]) {
+          ws[cellAddress].z = 'R$ #,##0.00';
+          const tipo = transacoesParaExportar[R - 1]?.tipo;
+          ws[cellAddress].s = {
+            numFmt: 'R$ #,##0.00',
+            font: { 
+              color: { rgb: tipo === 'receita' ? '00B050' : 'FF0000' },
+              bold: true
+            }
+          };
+        }
+      }
+
+      // Formata células de tipo (coluna C - índice 2)
+      for (let R = 1; R <= range.e.r; ++R) {
+        const cellAddress = XLSX.utils.encode_cell({ c: 2, r: R });
+        if (ws[cellAddress]) {
+          const tipo = transacoesParaExportar[R - 1]?.tipo;
+          ws[cellAddress].s = {
+            fill: { 
+              fgColor: { rgb: tipo === 'receita' ? 'C6EFCE' : 'FFC7CE' }
+            },
+            alignment: { horizontal: 'center' }
+          };
+        }
+      }
+
+      // Cria o workbook
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Transações');
+
+      // Adiciona uma planilha de resumo
+      const resumo = [
+        { 'Métrica': 'Total de Transações', 'Valor': transacoesParaExportar.length },
+        { 'Métrica': 'Total Receitas', 'Valor': transacoesParaExportar.filter(t => t.tipo === 'receita' && !t.isento).reduce((acc, t) => acc + (Number(t.valor) || 0), 0) },
+        { 'Métrica': 'Total Despesas', 'Valor': transacoesParaExportar.filter(t => t.tipo === 'despesa').reduce((acc, t) => acc + (Number(t.valor) || 0), 0) },
+        { 'Métrica': 'Saldo', 'Valor': transacoesParaExportar.filter(t => t.tipo === 'receita' && !t.isento).reduce((acc, t) => acc + (Number(t.valor) || 0), 0) - transacoesParaExportar.filter(t => t.tipo === 'despesa').reduce((acc, t) => acc + (Number(t.valor) || 0), 0) }
+      ];
+
+      const wsResumo = XLSX.utils.json_to_sheet(resumo);
+      wsResumo['!cols'] = [{ wch: 20 }, { wch: 20 }];
+      
+      // Formata cabeçalho do resumo
+      const rangeResumo = XLSX.utils.decode_range(wsResumo['!ref']);
+      for (let C = rangeResumo.s.c; C <= rangeResumo.e.c; ++C) {
+        const cellAddress = XLSX.utils.encode_cell({ c: C, r: 0 });
+        if (!wsResumo[cellAddress]) continue;
+        wsResumo[cellAddress].s = {
+          font: { bold: true, color: { rgb: 'FFFFFF' } },
+          fill: { fgColor: { rgb: '70AD47' } },
+          alignment: { horizontal: 'center', vertical: 'center' },
+          border: {
+            top: { style: 'thin' },
+            bottom: { style: 'thin' },
+            left: { style: 'thin' },
+            right: { style: 'thin' }
+          }
+        };
+      }
+
+      // Formata valores do resumo
+      for (let R = 1; R <= rangeResumo.e.r; ++R) {
+        const cellAddress = XLSX.utils.encode_cell({ c: 1, r: R });
+        if (wsResumo[cellAddress] && R > 1) {
+          wsResumo[cellAddress].z = 'R$ #,##0.00';
+          wsResumo[cellAddress].s = {
+            numFmt: 'R$ #,##0.00',
+            font: { bold: true }
+          };
+        }
+      }
+
+      XLSX.utils.book_append_sheet(wb, wsResumo, 'Resumo');
+
+      // Gera o arquivo
+      const nomeArquivo = filtroExportacao.tipo === 'ano' 
+        ? `historico-transacoes-${filtroExportacao.ano}.xlsx`
+        : `historico-transacoes-${filtroExportacao.mes}.xlsx`;
+
+      XLSX.writeFile(wb, nomeArquivo);
+
+      toast.success('Excel exportado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao exportar Excel:', error);
+      toast.error('Erro ao exportar Excel. Tente novamente.');
     }
   };
 
@@ -1762,6 +1956,69 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                   <p className="text-xs sm:text-sm text-red-300">
                     Despesas: <span className="font-semibold">{qtdDespesasAno}</span> lançamentos
                   </p>
+                </div>
+
+                {/* Seção de Exportação do Histórico de Transações */}
+                <div className="bg-gradient-to-r from-gray-700/50 to-gray-600/50 p-4 sm:p-5 rounded-lg border border-gray-600">
+                  <h4 className="font-semibold text-white mb-3 sm:mb-4 text-sm sm:text-base flex items-center gap-2">
+                    <FaFileAlt className="text-green-400" />
+                    Exportar Histórico de Transações para Excel
+                  </h4>
+                  
+                  <div className="space-y-3 sm:space-y-4">
+                    <div>
+                      <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-2">
+                        Tipo de Exportação
+                      </label>
+                      <select
+                        value={filtroExportacao.tipo}
+                        onChange={(e) => setFiltroExportacao({...filtroExportacao, tipo: e.target.value})}
+                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white text-xs sm:text-sm"
+                      >
+                        <option value="ano">Por Ano</option>
+                        <option value="mes">Por Mês</option>
+                      </select>
+                    </div>
+
+                    {filtroExportacao.tipo === 'ano' ? (
+                      <div>
+                        <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-2">
+                          Selecionar Ano
+                        </label>
+                        <select
+                          value={filtroExportacao.ano}
+                          onChange={(e) => setFiltroExportacao({...filtroExportacao, ano: e.target.value})}
+                          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white text-xs sm:text-sm"
+                        >
+                          {anosDisponiveis.map(y => (
+                            <option key={y} value={y}>{y}</option>
+                          ))}
+                        </select>
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-2">
+                          Selecionar Mês
+                        </label>
+                        <input
+                          type="month"
+                          value={filtroExportacao.mes}
+                          onChange={(e) => setFiltroExportacao({...filtroExportacao, mes: e.target.value})}
+                          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white text-xs sm:text-sm"
+                        />
+                      </div>
+                    )}
+
+                    <motion.button
+                      onClick={exportarExcel}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg text-xs sm:text-sm font-medium"
+                    >
+                      <FaFileAlt className="text-sm sm:text-base" />
+                      Exportar para Excel
+                    </motion.button>
+                  </div>
                 </div>
               </div>
 
