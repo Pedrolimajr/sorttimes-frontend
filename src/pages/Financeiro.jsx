@@ -80,6 +80,17 @@ export default function Financeiro() {
 // const [isento, setIsento] = useState(false);
 
   const STORAGE_KEY = 'dadosFinanceiros';
+
+  // Helper para normalizar datas (string ISO ou Date) em uma string ISO
+  const getDataISO = (data) => {
+    if (!data) return null;
+    try {
+      return typeof data === 'string' ? data : new Date(data).toISOString();
+    } catch {
+      return null;
+    }
+  };
+
  useEffect(() => {
   const carregarDados = async () => {
     try {
@@ -150,14 +161,22 @@ export default function Financeiro() {
       if (!transacoes || !jogadores) return; // Evita cálculos desnecessários
       
       try {
-       const receitasMes = transacoes
-  .filter(t => t?.tipo === "receita" && 
-              t?.data?.startsWith(filtroMes) &&
-              !t.isento) // Ignora transações isentas
-  .reduce((acc, t) => acc + (Number(t?.valor) || 0), 0);
+        const receitasMes = transacoes
+          .filter(t => {
+            if (!t || t.tipo !== "receita" || t.isento) return false; // Ignora transações isentas
+            const dataStr = getDataISO(t.data);
+            if (!dataStr) return false;
+            return dataStr.startsWith(filtroMes);
+          })
+          .reduce((acc, t) => acc + (Number(t?.valor) || 0), 0);
 
         const despesasMes = transacoes
-          .filter(t => t.tipo === "despesa" && t.data?.startsWith(filtroMes))
+          .filter(t => {
+            if (!t || t.tipo !== "despesa") return false;
+            const dataStr = getDataISO(t.data);
+            if (!dataStr) return false;
+            return dataStr.startsWith(filtroMes);
+          })
           .reduce((acc, t) => acc + (Number(t.valor) || 0), 0);
 
         const pagamentosPendentes = jogadores.reduce((total, jogador) => {
@@ -563,7 +582,12 @@ export default function Financeiro() {
       data: Array(12).fill(0).map((_, i) => {
         const mes = (i + 1).toString().padStart(2, '0');
         return transacoes
-          .filter(t => t.tipo === "receita" && t.data?.startsWith(`${filtroMes.slice(0, 4)}-${mes}`))
+          .filter(t => {
+            if (!t || t.tipo !== "receita") return false;
+            const dataStr = getDataISO(t.data);
+            if (!dataStr) return false;
+            return dataStr.startsWith(`${filtroMes.slice(0, 4)}-${mes}`);
+          })
           .reduce((acc, t) => acc + (Number(t.valor) || 0), 0);
       }),
       backgroundColor: '#4ade80',
@@ -574,7 +598,12 @@ export default function Financeiro() {
       data: Array(12).fill(0).map((_, i) => {
         const mes = (i + 1).toString().padStart(2, '0');
         return transacoes
-          .filter(t => t.tipo === "despesa" && t.data?.startsWith(`${filtroMes.slice(0, 4)}-${mes}`))
+          .filter(t => {
+            if (!t || t.tipo !== "despesa") return false;
+            const dataStr = getDataISO(t.data);
+            if (!dataStr) return false;
+            return dataStr.startsWith(`${filtroMes.slice(0, 4)}-${mes}`);
+          })
           .reduce((acc, t) => acc + (Number(t.valor) || 0), 0);
       }),
       backgroundColor: '#f87171',
