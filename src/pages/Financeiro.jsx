@@ -97,10 +97,20 @@ export default function Financeiro() {
       setCarregando(true);
 
       // Tenta carregar do cache primeiro
-      const cachedData = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      const cachedDataRaw = localStorage.getItem(STORAGE_KEY);
+      let cachedData = null;
+      try {
+        cachedData = cachedDataRaw ? JSON.parse(cachedDataRaw) : null;
+      } catch {
+        cachedData = null;
+      }
+
+      const cachedJogadores = cachedData?.jogadoresCache || [];
+      const cachedTransacoes = cachedData?.transacoesCache || [];
+
       if (cachedData) {
-        setJogadores(cachedData.jogadoresCache || []);
-        setTransacoes(cachedData.transacoesCache || []);
+        setJogadores(cachedJogadores);
+        setTransacoes(cachedTransacoes);
       }
 
       // Busca dados da API
@@ -114,7 +124,6 @@ export default function Financeiro() {
 
       // Processa os jogadores
       const jogadoresProcessados = jogadoresData.map(jogador => {
-        // Converte os pagamentos do formato do backend para o formato do frontend
         const pagamentos = Array(12).fill(false);
         if (jogador.pagamentos && Array.isArray(jogador.pagamentos)) {
           jogador.pagamentos.forEach((pagamento, index) => {
@@ -128,19 +137,39 @@ export default function Financeiro() {
 
         return {
           ...jogador,
-          pagamentos: pagamentos,
-              statusFinanceiro: jogador.statusFinanceiro || 'Inadimplente'
+          pagamentos,
+          statusFinanceiro: jogador.statusFinanceiro || 'Inadimplente'
         };
       });
 
-      // Atualiza estados
+      // Mescla transações da API com as do cache, sem perder as que só existiam localmente
+      const transacoesMap = new Map();
+
+      const addToMap = (t, source) => {
+        if (!t) return;
+        const key =
+          t._id ||
+          `${t.jogadorId || ''}-${getDataISO(t.data || t.createdAt) || ''}-${t.descricao || ''}-${t.valor || ''}`;
+        if (!key) return;
+        // API tem prioridade se houver conflito
+        if (!transacoesMap.has(key) || source === 'api') {
+          transacoesMap.set(key, t);
+        }
+      };
+
+      cachedTransacoes.forEach(t => addToMap(t, 'cache'));
+      (Array.isArray(transacoesData) ? transacoesData : []).forEach(t => addToMap(t, 'api'));
+
+      const transacoesMescladas = Array.from(transacoesMap.values());
+
+      // Atualiza estados com dados mesclados
       setJogadores(jogadoresProcessados);
-      setTransacoes(transacoesData);
+      setTransacoes(transacoesMescladas);
 
       // Atualiza cache
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         jogadoresCache: jogadoresProcessados,
-        transacoesCache: transacoesData,
+        transacoesCache: transacoesMescladas,
         lastUpdate: new Date().toISOString()
       }));
 
