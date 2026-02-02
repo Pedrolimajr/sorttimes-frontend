@@ -161,21 +161,25 @@ export default function Financeiro() {
       if (!transacoes || !jogadores) return; // Evita cálculos desnecessários
       
       try {
-        const receitasMes = transacoes
+        // Usa apenas o ano do filtro para considerar todos os lançamentos do ano,
+        // independente do mês de lançamento
+        const anoFiltroEstatisticas = (filtroMes || '').slice(0, 4) || new Date().getFullYear().toString();
+
+        const receitasAno = transacoes
           .filter(t => {
             if (!t || t.tipo !== "receita" || t.isento) return false; // Ignora transações isentas
             const dataStr = getDataISO(t.data || t.createdAt);
             if (!dataStr) return false;
-            return dataStr.startsWith(filtroMes);
+            return dataStr.startsWith(anoFiltroEstatisticas);
           })
           .reduce((acc, t) => acc + (Number(t?.valor) || 0), 0);
 
-        const despesasMes = transacoes
+        const despesasAno = transacoes
           .filter(t => {
             if (!t || t.tipo !== "despesa") return false;
             const dataStr = getDataISO(t.data || t.createdAt);
             if (!dataStr) return false;
-            return dataStr.startsWith(filtroMes);
+            return dataStr.startsWith(anoFiltroEstatisticas);
           })
           .reduce((acc, t) => acc + (Number(t.valor) || 0), 0);
 
@@ -185,9 +189,9 @@ export default function Financeiro() {
 
         setEstatisticas(prev => ({
           ...prev,
-          totalReceitas: receitasMes,
-          totalDespesas: despesasMes,
-          saldo: receitasMes - despesasMes,
+          totalReceitas: receitasAno,
+          totalDespesas: despesasAno,
+          saldo: receitasAno - despesasAno,
           pagamentosPendentes,
           totalJogadores: jogadores.length
         }));
