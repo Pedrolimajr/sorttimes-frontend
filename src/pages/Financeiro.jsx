@@ -164,7 +164,7 @@ export default function Financeiro() {
         const receitasMes = transacoes
           .filter(t => {
             if (!t || t.tipo !== "receita" || t.isento) return false; // Ignora transações isentas
-            const dataStr = getDataISO(t.data);
+            const dataStr = getDataISO(t.data || t.createdAt);
             if (!dataStr) return false;
             return dataStr.startsWith(filtroMes);
           })
@@ -173,7 +173,7 @@ export default function Financeiro() {
         const despesasMes = transacoes
           .filter(t => {
             if (!t || t.tipo !== "despesa") return false;
-            const dataStr = getDataISO(t.data);
+            const dataStr = getDataISO(t.data || t.createdAt);
             if (!dataStr) return false;
             return dataStr.startsWith(filtroMes);
           })
@@ -546,7 +546,8 @@ export default function Financeiro() {
   // Filtrar transações do histórico (todas os anos, apenas por jogador/tipo)
   const transacoesFiltradas = transacoes
     .filter(t => {
-      if (!t.data) return false;
+      const d = t.data || t.createdAt;
+      if (!d) return false;
       // Filtro por jogador
       if (filtroHistorico.jogador && t.jogadorId) {
         const jogador = jogadores.find(j => j._id === t.jogadorId);
@@ -572,7 +573,7 @@ export default function Financeiro() {
       }
       return true;
     })
-    .sort((a, b) => new Date(b.data) - new Date(a.data)); // Ordena do mais recente para o mais antigo
+    .sort((a, b) => new Date(b.data || b.createdAt) - new Date(a.data || a.createdAt)); // Ordena do mais recente para o mais antigo
 
   const dadosGraficoFluxoCaixa = {
   labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
@@ -584,7 +585,7 @@ export default function Financeiro() {
         return transacoes
           .filter(t => {
             if (!t || t.tipo !== "receita") return false;
-            const dataStr = getDataISO(t.data);
+            const dataStr = getDataISO(t.data || t.createdAt);
             if (!dataStr) return false;
             return dataStr.startsWith(`${filtroMes.slice(0, 4)}-${mes}`);
           })
@@ -600,7 +601,7 @@ export default function Financeiro() {
         return transacoes
           .filter(t => {
             if (!t || t.tipo !== "despesa") return false;
-            const dataStr = getDataISO(t.data);
+            const dataStr = getDataISO(t.data || t.createdAt);
             if (!dataStr) return false;
             return dataStr.startsWith(`${filtroMes.slice(0, 4)}-${mes}`);
           })
@@ -614,10 +615,20 @@ export default function Financeiro() {
       data: Array(12).fill(0).map((_, i) => {
         const mes = (i + 1).toString().padStart(2, '0');
         const receitas = transacoes
-          .filter(t => t.tipo === "receita" && t.data?.startsWith(`${filtroMes.slice(0, 4)}-${mes}`))
+          .filter(t => {
+            if (!t || t.tipo !== "receita") return false;
+            const dataStr = getDataISO(t.data || t.createdAt);
+            if (!dataStr) return false;
+            return dataStr.startsWith(`${filtroMes.slice(0, 4)}-${mes}`);
+          })
           .reduce((acc, t) => acc + (Number(t.valor) || 0), 0);
         const despesas = transacoes
-          .filter(t => t.tipo === "despesa" && t.data?.startsWith(`${filtroMes.slice(0, 4)}-${mes}`))
+          .filter(t => {
+            if (!t || t.tipo !== "despesa") return false;
+            const dataStr = getDataISO(t.data || t.createdAt);
+            if (!dataStr) return false;
+            return dataStr.startsWith(`${filtroMes.slice(0, 4)}-${mes}`);
+          })
           .reduce((acc, t) => acc + (Number(t.valor) || 0), 0);
         return receitas - despesas;
       }),
@@ -922,14 +933,16 @@ export default function Financeiro() {
     }
   };
 
-const anosDisponiveis = Array.from(new Set(transacoes.map(t => {
-  try {
-    const dataStr = typeof t.data === 'string' ? t.data : new Date(t.data).toISOString();
-    return dataStr.slice(0,4);
-  } catch {
-    return null;
-  }
-}).filter(Boolean))).sort((a,b) => b - a);
+const anosDisponiveis = Array.from(new Set(
+  transacoes.map(t => {
+    try {
+      const dataStr = getDataISO(t.data || t.createdAt);
+      return dataStr ? dataStr.slice(0, 4) : null;
+    } catch {
+      return null;
+    }
+  }).filter(Boolean)
+)).sort((a,b) => b - a);
 
 // Garantir que o ano atual esteja presente
 if (!anosDisponiveis.includes(anoAtual)) {
@@ -944,15 +957,9 @@ const jogadoresFiltrados = jogadores.filter(jogador =>
 // Dados adicionais para o relatório (baseados no ano selecionado em filtroMes)
 const anoFiltro = filtroMes?.slice(0, 4) || new Date().getFullYear().toString();
 const transacoesAno = transacoes.filter(t => {
-  if (!t.data) return false;
-  try {
-    const dataStr = typeof t.data === 'string'
-      ? t.data
-      : new Date(t.data).toISOString();
-    return dataStr.startsWith(anoFiltro);
-  } catch {
-    return false;
-  }
+  const dataStr = getDataISO(t.data || t.createdAt);
+  if (!dataStr) return false;
+  return dataStr.startsWith(anoFiltro);
 });
 const qtdReceitasAno = transacoesAno.filter(t => t.tipo === 'receita').length;
 const qtdDespesasAno = transacoesAno.filter(t => t.tipo === 'despesa').length;
@@ -961,10 +968,20 @@ const qtdDespesasAno = transacoesAno.filter(t => t.tipo === 'despesa').length;
 const resumoMensalAno = Array.from({ length: 12 }, (_, i) => {
   const mes = (i + 1).toString().padStart(2, '0');
   const receitasMes = transacoesAno
-    .filter(t => t.tipo === 'receita' && t.data && new Date(t.data).toISOString().startsWith(`${anoFiltro}-${mes}`))
+    .filter(t => {
+      if (t.tipo !== 'receita') return false;
+      const dataStr = getDataISO(t.data || t.createdAt);
+      if (!dataStr) return false;
+      return dataStr.startsWith(`${anoFiltro}-${mes}`);
+    })
     .reduce((acc, t) => acc + (Number(t.valor) || 0), 0);
   const despesasMes = transacoesAno
-    .filter(t => t.tipo === 'despesa' && t.data && new Date(t.data).toISOString().startsWith(`${anoFiltro}-${mes}`))
+    .filter(t => {
+      if (t.tipo !== 'despesa') return false;
+      const dataStr = getDataISO(t.data || t.createdAt);
+      if (!dataStr) return false;
+      return dataStr.startsWith(`${anoFiltro}-${mes}`);
+    })
     .reduce((acc, t) => acc + (Number(t.valor) || 0), 0);
   return {
     mesIndex: i,
@@ -1400,9 +1417,9 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                       </thead>
                       <tbody className="divide-y divide-gray-700">
                       {transacoesFiltradas.map((t) => (
- <tr className={`${t.isento ? "bg-yellow-100/10 border-l-4 border-yellow-400/50" : ""}`}>
-    <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-gray-300">
-      {new Date(t.data).toLocaleDateString('pt-BR')}
+<tr className={`${t.isento ? "bg-yellow-100/10 border-l-4 border-yellow-400/50" : ""}`}>
+   <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-gray-300">
+      {new Date(t.data || t.createdAt).toLocaleDateString('pt-BR')}
     </td>
     <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium text-white">
       {t.descricao}
