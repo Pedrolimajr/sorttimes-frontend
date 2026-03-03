@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -497,38 +496,56 @@ export default function ConfirmarPresenca() {
                     </div>
                   </div>
 
-                  <div className="max-h-80 overflow-y-auto space-y-2 pr-1">
+                  <div className="max-h-96 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
                     {jogadoresAdmin.length === 0 ? (
-                      <p className="text-gray-500 text-sm text-center py-6">
-                        Nenhum jogador vinculado a este link de presença.
-                      </p>
+                      <div className="flex flex-col items-center justify-center py-8 text-gray-500">
+                        <FaUserShield className="text-4xl mb-2 opacity-20" />
+                        <p className="text-sm">Nenhum jogador vinculado.</p>
+                      </div>
                     ) : (
                       jogadoresAdmin.map((jogador) => (
-                        <div
+                        <motion.div
+                          layout
                           key={jogador.id}
-                          className="flex items-center justify-between bg-gray-700/60 border border-gray-600 rounded-xl px-4 py-3"
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-300 ${
+                            jogador.presente 
+                              ? 'bg-green-900/10 border-green-500/30 shadow-[0_0_15px_-5px_rgba(34,197,94,0.1)]' 
+                              : 'bg-gray-800/40 border-gray-700 hover:border-gray-600'
+                          }`}
                         >
-                          <div>
-                            <p className="text-white font-medium text-sm">{jogador.nome}</p>
-                            <p className="text-xs text-gray-400">
-                              Status:{' '}
-                              <span className={jogador.presente ? 'text-green-400' : 'text-red-400'}>
-                                {jogador.presente ? 'Confirmado' : 'Não confirmado'}
-                              </span>
-                            </p>
+                          <div className="flex items-center gap-3">
+                            <div className={`w-1.5 h-1.5 rounded-full transition-colors duration-300 ${
+                              jogador.presente ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]' : 'bg-red-400'
+                            }`} />
+                            <div>
+                              <p className={`font-medium text-sm transition-colors ${
+                                jogador.presente ? 'text-white' : 'text-gray-300'
+                              }`}>
+                                {jogador.nome}
+                              </p>
+                              <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-500">
+                                {jogador.presente ? 'Confirmado' : 'Pendente'}
+                              </p>
+                            </div>
                           </div>
-                          <button
+
+                          <motion.button
+                            whileHover={{ scale: 1.1, rotate: 5 }}
+                            whileTap={{ scale: 0.9 }}
                             onClick={() => alternarPresencaAdmin(jogador.id, jogador.presente)}
                             disabled={submetendo}
-                            className={`px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                            className={`p-2.5 rounded-xl transition-all duration-300 ${
                               jogador.presente
-                                ? 'bg-red-600 hover:bg-red-700 text-white'
-                                : 'bg-green-600 hover:bg-green-700 text-white'
+                                ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20'
+                                : 'bg-red-500/10 text-red-400 hover:bg-red-500/20'
                             }`}
+                            title={jogador.presente ? 'Desmarcar presença' : 'Confirmar presença'}
                           >
-                            {jogador.presente ? 'Desmarcar' : 'Confirmar'}
-                          </button>
-                        </div>
+                            <GiSoccerKick className="text-2xl" />
+                          </motion.button>
+                        </motion.div>
                       ))
                     )}
                   </div>
@@ -541,5 +558,3 @@ export default function ConfirmarPresenca() {
     </div>
   );
 }
-
-
