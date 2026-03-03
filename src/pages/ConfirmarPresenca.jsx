@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 import api from '../services/api';
 import { GiSoccerKick } from "react-icons/gi";
-import { FaUser, FaLock, FaCalendarAlt, FaUserShield } from 'react-icons/fa';
+import { FaUser, FaLock, FaCalendarAlt, FaUserShield, FaEye, FaEyeSlash } from 'react-icons/fa';
 
 export default function ConfirmarPresenca() {
   const { linkId } = useParams();
@@ -37,6 +37,9 @@ export default function ConfirmarPresenca() {
   // Nome salvo localmente para agilizar login de jogador
   const [nomeSalvo, setNomeSalvo] = useState('');
   const [usarNomeSalvo, setUsarNomeSalvo] = useState(true);
+  const [mostrarSenhaJogador, setMostrarSenhaJogador] = useState(false);
+
+  const [mostrarSenhaAdmin, setMostrarSenhaAdmin] = useState(false);
 
   // Carregamento inicial dos dados do evento (sem lista de jogadores)
   useEffect(() => {
@@ -308,15 +311,26 @@ export default function ConfirmarPresenca() {
                     <label className="text-gray-300 text-sm font-medium flex items-center gap-2">
                       <FaLock className="text-blue-500" /> Data de Nascimento (Senha)
                     </label>
-                    <input
-                      type="text"
-                      value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value.replace(/\D/g, '').slice(0, 8) })}
-                      placeholder="DDMMAAAA"
-                      className="w-full bg-gray-700 border border-gray-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                      required
-                    />
-                    <p className="text-gray-500 text-xs">Apenas números. Ex: 15051990</p>
+                    <div className="relative">
+                      <input
+                        type={mostrarSenhaJogador ? 'text' : 'password'}
+                        inputMode="numeric"
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value.replace(/\D/g, '').slice(0, 8) })}
+                        placeholder="DDMMAAAA"
+                        className="w-full bg-gray-700 border border-gray-600 rounded-xl px-4 py-3 pr-10 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setMostrarSenhaJogador((prev) => !prev)}
+                        className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-200"
+                        aria-label={mostrarSenhaJogador ? 'Ocultar senha' : 'Mostrar senha'}
+                      >
+                        {mostrarSenhaJogador ? <FaEyeSlash /> : <FaEye />}
+                      </button>
+                    </div>
+                    <p className="text-gray-500 text-xs mt-1">Apenas números. Ex: 15051990</p>
                   </div>
 
                   <button
@@ -402,17 +416,24 @@ export default function ConfirmarPresenca() {
                     <label className="text-gray-300 text-sm font-medium flex items-center gap-2">
                       <FaLock className="text-purple-500" /> Senha Admin
                     </label>
-                    <input
-                      type="password"
-                      value={adminForm.password}
-                      onChange={(e) => setAdminForm({ ...adminForm, password: e.target.value })}
-                      placeholder="Senha admin"
-                      className="w-full bg-gray-700 border border-gray-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
-                      required
-                    />
-                    <p className="text-gray-500 text-xs">
-                      Usuário: <span className="font-mono">sorttimes</span> | Senha: <span className="font-mono">2025@sorttimes</span>
-                    </p>
+                    <div className="relative">
+                      <input
+                        type={mostrarSenhaAdmin ? 'text' : 'password'}
+                        value={adminForm.password}
+                        onChange={(e) => setAdminForm({ ...adminForm, password: e.target.value })}
+                        placeholder="Senha admin"
+                        className="w-full bg-gray-700 border border-gray-600 rounded-xl px-4 py-3 pr-10 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setMostrarSenhaAdmin((prev) => !prev)}
+                        className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-200"
+                        aria-label={mostrarSenhaAdmin ? 'Ocultar senha admin' : 'Mostrar senha admin'}
+                      >
+                        {mostrarSenhaAdmin ? <FaEyeSlash /> : <FaEye />}
+                      </button>
+                    </div>
                   </div>
 
                   <button
