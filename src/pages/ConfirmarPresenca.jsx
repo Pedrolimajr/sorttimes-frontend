@@ -1,3 +1,5 @@
+
+
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -225,3 +227,5 @@ export default function ConfirmarPresenca() {
     </div>
   );
 }
+
+
