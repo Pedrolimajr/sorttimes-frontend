@@ -3,8 +3,8 @@ import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 import api from '../services/api';
-import { GiSoccerKick } from "react-icons/gi";
-import { FaUser, FaLock, FaCalendarAlt, FaUserShield, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { GiSoccerKick } from 'react-icons/gi';
+import { FaUser, FaLock, FaCalendarAlt, FaUserShield, FaEye, FaEyeSlash, FaSignOutAlt } from 'react-icons/fa';
 
 export default function ConfirmarPresenca() {
   const { linkId } = useParams();
@@ -278,13 +278,13 @@ export default function ConfirmarPresenca() {
                   {!usarNomeSalvo && (
                     <div className="space-y-2">
                       <label className="text-gray-300 text-sm font-medium flex items-center gap-2">
-                        <FaUser className="text-blue-500" /> Seu Nome Completo
+                        <FaUser className="text-blue-500" /> Nome e Sobrenome
                       </label>
                       <input
                         type="text"
                         value={formData.nome}
                         onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                        placeholder="Ex: João Silva"
+                        placeholder="Ex: Pedro Jr"
                         className="w-full bg-gray-700 border border-gray-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                         required
                       />
@@ -405,9 +405,10 @@ export default function ConfirmarPresenca() {
                       setJogadorLogado(null);
                       setSessionId(null);
                     }}
-                    className="text-gray-500 hover:text-gray-300 text-sm underline transition-colors"
+                    className="flex items-center justify-center gap-2 text-gray-500 hover:text-gray-400 text-xs transition-colors group pt-2"
                   >
-                    Sair / Entrar com outro nome
+                    <FaSignOutAlt className="group-hover:text-red-400 transition-colors" />
+                    <span>Sair / Entrar com outro nome</span>
                   </button>
                 </motion.div>
               )
