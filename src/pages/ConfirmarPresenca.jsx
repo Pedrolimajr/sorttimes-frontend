@@ -34,6 +34,10 @@ export default function ConfirmarPresenca() {
     password: '' // DDMMAAAA
   });
 
+  // Nome salvo localmente para agilizar login de jogador
+  const [nomeSalvo, setNomeSalvo] = useState('');
+  const [usarNomeSalvo, setUsarNomeSalvo] = useState(true);
+
   // Carregamento inicial dos dados do evento (sem lista de jogadores)
   useEffect(() => {
     const carregarEvento = async () => {
@@ -61,6 +65,17 @@ export default function ConfirmarPresenca() {
     };
 
     carregarEvento();
+
+    // Carrega nome salvo (se existir) para agilizar login do jogador
+    const storageKey = `presenca_nome_${linkId}`;
+    const salvo = localStorage.getItem(storageKey);
+    if (salvo) {
+      setNomeSalvo(salvo);
+      setFormData(prev => ({ ...prev, nome: salvo }));
+      setUsarNomeSalvo(true);
+    } else {
+      setUsarNomeSalvo(false);
+    }
   }, [linkId]);
 
   const handleLogin = async (e) => {
@@ -72,8 +87,13 @@ export default function ConfirmarPresenca() {
 
     try {
       setSubmetendo(true);
+      const storageKey = `presenca_nome_${linkId}`;
+
+      // Usa o nome salvo quando disponível e habilitado
+      const nomeParaLogin = usarNomeSalvo && nomeSalvo ? nomeSalvo : formData.nome;
+
       const response = await api.post(`/presenca/${linkId}/auth`, {
-        nome: formData.nome,
+        nome: nomeParaLogin,
         password: formData.password
       });
 
@@ -81,6 +101,14 @@ export default function ConfirmarPresenca() {
         setJogadorLogado(response.data.jogador);
         setSessionId(response.data.sessionId || null);
         setAutenticado(true);
+
+        // Salva nome usado para agilizar próximos acessos
+        if (nomeParaLogin) {
+          localStorage.setItem(storageKey, nomeParaLogin);
+          setNomeSalvo(nomeParaLogin);
+          setUsarNomeSalvo(true);
+        }
+
         toast.success(`Bem-vindo, ${response.data.jogador.nome}!`);
       }
     } catch (error) {
@@ -192,13 +220,13 @@ export default function ConfirmarPresenca() {
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 px-4 py-8 flex flex-col items-center justify-center">
       <div className="max-w-md w-full">
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: -24 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gray-800 rounded-2xl p-8 shadow-2xl border border-gray-700"
+          className="bg-gradient-to-b from-gray-800/90 to-gray-900/90 rounded-3xl p-8 shadow-2xl border border-gray-700/80 backdrop-blur-sm"
         >
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">SortTimes</h1>
-            <p className="text-blue-400 font-medium">Confirmação de Presença</p>
+            <h1 className="text-3xl font-extrabold text-white mb-2 tracking-tight">SortTimes</h1>
+            <p className="text-blue-400 font-semibold text-sm uppercase tracking-wide">Confirmação de Presença</p>
             {eventoData && (
               <p className="text-gray-400 text-sm mt-2 flex items-center justify-center gap-2">
                 <FaCalendarAlt className="text-blue-500" /> {eventoData}
@@ -207,7 +235,7 @@ export default function ConfirmarPresenca() {
           </div>
 
           {/* Troca entre modo Jogador e Admin */}
-          <div className="flex mb-6 bg-gray-900/60 rounded-xl p-1">
+          <div className="flex mb-6 bg-gray-900/80 rounded-2xl p-1">
             <button
               type="button"
               onClick={() => setModo('jogador')}
@@ -243,19 +271,38 @@ export default function ConfirmarPresenca() {
                   onSubmit={handleLogin}
                   className="space-y-6"
                 >
-                  <div className="space-y-2">
-                    <label className="text-gray-300 text-sm font-medium flex items-center gap-2">
-                      <FaUser className="text-blue-500" /> Seu Nome Completo
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.nome}
-                      onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                      placeholder="Ex: João Silva"
-                      className="w-full bg-gray-700 border border-gray-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                      required
-                    />
-                  </div>
+                  {/* Nome opcional – fica oculto quando já existe nome salvo para agilizar confirmação */}
+                  {!usarNomeSalvo && (
+                    <div className="space-y-2">
+                      <label className="text-gray-300 text-sm font-medium flex items-center gap-2">
+                        <FaUser className="text-blue-500" /> Seu Nome Completo
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.nome}
+                        onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                        placeholder="Ex: João Silva"
+                        className="w-full bg-gray-700 border border-gray-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                        required
+                      />
+                    </div>
+                  )}
+
+                  {usarNomeSalvo && nomeSalvo && (
+                    <div className="flex items-center justify-between bg-gray-900/70 border border-gray-700 rounded-2xl px-4 py-3 mb-1">
+                      <div>
+                        <p className="text-xs text-gray-400">Confirmando presença como:</p>
+                        <p className="text-sm font-semibold text-white">{nomeSalvo}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setUsarNomeSalvo(false)}
+                        className="text-xs text-blue-400 hover:text-blue-300 underline"
+                      >
+                        Não sou essa pessoa
+                      </button>
+                    </div>
+                  )}
 
                   <div className="space-y-2">
                     <label className="text-gray-300 text-sm font-medium flex items-center gap-2">
@@ -275,7 +322,7 @@ export default function ConfirmarPresenca() {
                   <button
                     type="submit"
                     disabled={submetendo}
-                    className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-600/20 transition-all transform active:scale-95 flex items-center justify-center gap-2"
+                    className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold py-3 rounded-2xl shadow-lg shadow-blue-600/30 transition-all transform active:scale-95 flex items-center justify-center gap-2"
                   >
                     {submetendo ? (
                       <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
@@ -291,7 +338,7 @@ export default function ConfirmarPresenca() {
                   animate={{ opacity: 1, scale: 1 }}
                   className="space-y-8 text-center"
                 >
-                  <div className="p-6 bg-gray-700/50 rounded-2xl border border-gray-600">
+                  <div className="p-6 bg-gray-900/60 rounded-2xl border border-gray-700">
                     <p className="text-gray-400 text-sm mb-1">Jogador</p>
                     <h2 className="text-xl font-bold text-white mb-4">{jogadorLogado.nome}</h2>
                     
