@@ -242,13 +242,13 @@ export default function ConfirmarPresenca() {
             <button
               type="button"
               onClick={() => setModo('jogador')}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`flex-1 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all ${
                 modo === 'jogador'
                   ? 'bg-blue-600 text-white'
                   : 'text-gray-300 hover:text-white'
               }`}
             >
-              Jogador
+              <FaUser /> Jogador
             </button>
             <button
               type="button"
@@ -292,19 +292,28 @@ export default function ConfirmarPresenca() {
                   )}
 
                   {usarNomeSalvo && nomeSalvo && (
-                    <div className="flex items-center justify-between bg-gray-900/70 border border-gray-700 rounded-2xl px-4 py-3 mb-1">
-                      <div>
-                        <p className="text-xs text-gray-400">Confirmando presença como:</p>
-                        <p className="text-sm font-semibold text-white">{nomeSalvo}</p>
+                    <motion.div 
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="bg-gray-800/60 border border-blue-500/30 rounded-2xl p-4 mb-6 relative overflow-hidden"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                          <FaUser className="text-white text-xl" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-0.5">Confirmando presença como:</p>
+                          <p className="text-xl font-bold text-white">{nomeSalvo}</p>
+                        </div>
                       </div>
                       <button
                         type="button"
                         onClick={() => setUsarNomeSalvo(false)}
-                        className="text-xs text-blue-400 hover:text-blue-300 underline"
+                        className="mt-3 text-xs text-red-400 hover:text-red-300 hover:underline w-full text-left pl-[4rem] transition-colors"
                       >
                         Não sou essa pessoa
                       </button>
-                    </div>
+                    </motion.div>
                   )}
 
                   <div className="space-y-2">
@@ -350,39 +359,53 @@ export default function ConfirmarPresenca() {
                   key="confirm-section"
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="space-y-8 text-center"
+                  className="space-y-6 text-center"
                 >
-                  <div className="p-6 bg-gray-900/60 rounded-2xl border border-gray-700">
-                    <p className="text-gray-400 text-sm mb-1">Jogador</p>
-                    <h2 className="text-xl font-bold text-white mb-4">{jogadorLogado.nome}</h2>
-                    
-                    <div className="flex flex-col items-center gap-4">
-                      <p className="text-gray-300">Sua presença está:</p>
-                      <div className={`px-4 py-2 rounded-full font-bold text-lg ${
-                        jogadorLogado.presente ? 'bg-green-900/50 text-green-400 border border-green-500/30' : 'bg-red-900/50 text-red-400 border border-red-500/30'
-                      }`}>
-                        {jogadorLogado.presente ? 'CONFIRMADA' : 'NÃO CONFIRMADA'}
-                      </div>
-                    </div>
+                  <div className="space-y-3">
+                    <h2 className="text-2xl font-bold text-white">{jogadorLogado.nome}</h2>
+                    <p className="text-sm text-gray-400">Sua presença para o jogo está:</p>
+                    <motion.div
+                      layout
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-base font-bold tracking-wider border ${
+                        jogadorLogado.presente
+                          ? 'bg-green-900/50 text-green-300 border-green-500/30'
+                          : 'bg-red-900/50 text-red-400 border-red-500/30'
+                      }`}
+                    >
+                      <div className={`w-2 h-2 rounded-full ${jogadorLogado.presente ? 'bg-green-400' : 'bg-red-400'}`} />
+                      {jogadorLogado.presente ? 'CONFIRMADA' : 'NÃO CONFIRMADA'}
+                    </motion.div>
                   </div>
 
-                  <button
+                  <motion.button
                     onClick={alternarPresenca}
                     disabled={submetendo}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     className={`
-                      w-full py-4 rounded-2xl font-black text-xl shadow-2xl transition-all transform active:scale-95 flex items-center justify-center gap-3
+                      w-full py-4 rounded-2xl font-bold text-lg shadow-lg transition-all flex items-center justify-center gap-3
                       ${jogadorLogado.presente 
                         ? 'bg-red-600 hover:bg-red-700 text-white shadow-red-600/20' 
                         : 'bg-green-600 hover:bg-green-700 text-white shadow-green-600/20'}
                     `}
                   >
-                    <GiSoccerKick className={`text-3xl transition-transform ${jogadorLogado.presente ? 'rotate-180' : ''}`} />
-                    {jogadorLogado.presente ? 'DESMARCAR PRESENÇA' : 'CONFIRMAR PRESENÇA'}
-                  </button>
+                    {submetendo ? (
+                      <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-white"></div>
+                    ) : (
+                      <>
+                        <GiSoccerKick className={`text-2xl transition-transform duration-300 ${jogadorLogado.presente ? 'opacity-70' : 'rotate-[-15deg]'}`} />
+                        <span>{jogadorLogado.presente ? 'Desmarcar Presença' : 'Confirmar Presença'}</span>
+                      </>
+                    )}
+                  </motion.button>
 
                   <button
-                    onClick={() => setAutenticado(false)}
-                    className="text-gray-500 hover:text-gray-300 text-sm transition-colors"
+                    onClick={() => {
+                      setAutenticado(false);
+                      setJogadorLogado(null);
+                      setSessionId(null);
+                    }}
+                    className="text-gray-500 hover:text-gray-300 text-sm underline transition-colors"
                   >
                     Sair / Entrar com outro nome
                   </button>
