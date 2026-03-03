@@ -405,9 +405,9 @@ export default function ConfirmarPresenca() {
                       setJogadorLogado(null);
                       setSessionId(null);
                     }}
-                    className="flex items-center justify-center gap-2 text-gray-500 hover:text-gray-400 text-xs transition-colors group pt-2"
+                    className="w-full mt-6 py-3 rounded-xl border border-gray-700 text-gray-300 hover:text-white hover:bg-gray-800 transition-all flex items-center justify-center gap-2 text-sm font-medium group"
                   >
-                    <FaSignOutAlt className="group-hover:text-red-400 transition-colors" />
+                    <FaSignOutAlt className="group-hover:text-red-400 transition-colors text-lg" />
                     <span>Sair / Entrar com outro nome</span>
                   </button>
                 </motion.div>
