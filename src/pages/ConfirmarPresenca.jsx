@@ -406,6 +406,28 @@ export default function ConfirmarPresenca() {
                     Você está visualizando todos os jogadores deste jogo e pode marcar ou desmarcar a presença de qualquer um.
                   </p>
 
+                  {/* Resumo de quantidades */}
+                  <div className="grid grid-cols-3 gap-3 text-center text-xs">
+                    <div className="bg-gray-700/60 rounded-xl p-3 border border-gray-600">
+                      <p className="text-gray-400">Total</p>
+                      <p className="text-lg font-bold text-white">
+                        {jogadoresAdmin.length}
+                      </p>
+                    </div>
+                    <div className="bg-green-900/40 rounded-xl p-3 border border-green-600/40">
+                      <p className="text-green-300">Confirmados</p>
+                      <p className="text-lg font-bold text-green-400">
+                        {jogadoresAdmin.filter(j => j.presente).length}
+                      </p>
+                    </div>
+                    <div className="bg-red-900/40 rounded-xl p-3 border border-red-600/40">
+                      <p className="text-red-300">Não confirmados</p>
+                      <p className="text-lg font-bold text-red-400">
+                        {jogadoresAdmin.filter(j => !j.presente).length}
+                      </p>
+                    </div>
+                  </div>
+
                   <div className="max-h-80 overflow-y-auto space-y-2 pr-1">
                     {jogadoresAdmin.length === 0 ? (
                       <p className="text-gray-500 text-sm text-center py-6">
