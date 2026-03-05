@@ -221,16 +221,12 @@ export default function SorteioTimes() {
         minute: '2-digit'
       });
 
-      // Capitaliza a primeira letra da data para ficar mais elegante
-      const dataFinal = dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1);
-
-      const mensagem = `⚽ *CONVOCAÇÃO GERAL* ⚽\n\n` +
-        `Fala galera! A lista de presença está liberada! 🔥\n` +
-        `Quem vai pro jogo? Confirma aí pra gente fechar os times!\n\n` +
-        `🗓 *Data:* ${dataFinal}\n\n` +
-        `📲 *Link para confirmação:* 👇\n` +
+      const mensagem = `⚽ Confirmação de Presença - Fut de domingo!\n\n` +
+        `Fala galera! Chegou a hora de confirmar presença para o nosso fut!\n\n` +
+        `🗓 Data: ${dataFormatada}\n\n` +
+        `📲 Confirme sua presença acessando:\n\n` +
         `${linkCompleto}\n\n` +
-        `_Bora pro jogo!_ 🏃💨`;
+        `Clique no link acima para confirmar sua participação.`;
 
       if (navigator.share) {
         await navigator.share({
@@ -757,14 +753,7 @@ const TimeSorteado = ({ time, index }) => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 px-4 py-8 sm:px-6 lg:px-8 relative">
-      {/* Efeitos de luz de fundo (Glow) */}
-      <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
-        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-blue-600/10 blur-[120px]" />
-        <div className="absolute top-[40%] -right-[10%] w-[40%] h-[40%] rounded-full bg-cyan-500/10 blur-[100px]" />
-        <div className="absolute -bottom-[10%] left-[20%] w-[30%] h-[30%] rounded-full bg-purple-500/10 blur-[100px]" />
-      </div>
-
+    <div className="min-h-screen bg-gray-900 px-4 py-8 sm:px-6 lg:px-8">
       {/* Efeito de fundo com partículas */}
       <div className="fixed inset-0 overflow-hidden -z-10 opacity-20">
         {[...Array(20)].map((_, i) => (
@@ -1141,3 +1130,5 @@ const TimeSorteado = ({ time, index }) => {
     </div>
   );
 }
+
+
