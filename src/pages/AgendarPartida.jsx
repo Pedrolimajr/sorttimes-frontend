@@ -1,7 +1,7 @@
 // src/pages/AgendarPartida.jsx
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FaCalendarAlt, FaClock, FaMapMarkerAlt, FaStickyNote, FaSave, FaShare, FaLink, FaBullhorn } from "react-icons/fa";
+import { FaCalendarAlt, FaClock, FaMapMarkerAlt, FaStickyNote, FaSave, FaShare, FaLink, FaBullhorn, FaTimes, FaCheck } from "react-icons/fa";
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import api from '../services/api';
 import { toast } from 'react-toastify';
@@ -21,6 +21,11 @@ export default function AgendarPartida() {
   const [error, setError] = useState(null);
   const [modoEdicao, setModoEdicao] = useState(false);
   const [editandoId, setEditandoId] = useState(null);
+
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [tempTime, setTempTime] = useState({ hour: '20', minute: '00' });
+  const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
+  const minutes = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'));
 
   // Carrega dados da partida para edição
   useEffect(() => {
@@ -52,6 +57,26 @@ export default function AgendarPartida() {
     };
     fetchJogadores();
   }, []);
+
+  const openTimePicker = () => {
+    if (formData.horario) {
+      const [h, m] = formData.horario.split(':');
+      setTempTime({ hour: h, minute: m });
+    } else {
+      const now = new Date();
+      // Arredonda para o próximo intervalo de 5 minutos
+      let m = Math.ceil(now.getMinutes() / 5) * 5;
+      let h = now.getHours();
+      if (m >= 60) { m = 0; h = (h + 1) % 24; }
+      setTempTime({ hour: String(h).padStart(2, '0'), minute: String(m).padStart(2, '0') });
+    }
+    setShowTimePicker(true);
+  };
+
+  const handleTimeConfirm = () => {
+    setFormData({ ...formData, horario: `${tempTime.hour}:${tempTime.minute}` });
+    setShowTimePicker(false);
+  };
 
   const gerarLinkPresenca = async () => {
     if (!formData.data || !formData.horario) {
@@ -277,12 +302,20 @@ export default function AgendarPartida() {
                     <label className="text-gray-300 mb-2 flex items-center gap-2 text-sm font-medium">
                       <FaClock className="text-blue-400" /> Horário
                     </label>
+                    <div 
+                      onClick={openTimePicker}
+                      className="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent transition-all cursor-pointer flex items-center justify-between hover:bg-gray-600/50"
+                    >
+                      <span className={formData.horario ? "text-white font-medium" : "text-gray-400"}>
+                        {formData.horario || "Selecione o horário"}
+                      </span>
+                      <FaClock className="text-gray-400" />
+                    </div>
+                    {/* Input oculto para manter a validação HTML5 do formulário */}
                     <input 
-                      type="time" 
+                      type="hidden" 
                       value={formData.horario} 
-                      onChange={(e) => setFormData({...formData, horario: e.target.value})} 
                       required 
-                      className="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
                     />
                   </div>
                 </div>
@@ -394,6 +427,108 @@ export default function AgendarPartida() {
           </motion.div>
         </div>
       </div>
+
+      {/* Modal de Seleção de Horário Personalizado */}
+      <AnimatePresence>
+        {showTimePicker && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+            onClick={() => setShowTimePicker(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-gray-800 rounded-xl w-full max-w-md border border-gray-700 shadow-2xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-4 border-b border-gray-700 flex justify-between items-center bg-gray-900/50">
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <FaClock className="text-blue-400" /> Escolha o Horário
+                </h3>
+                <button onClick={() => setShowTimePicker(false)} className="text-gray-400 hover:text-white transition-colors">
+                  <FaTimes />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6">
+                {/* Mostrador Digital */}
+                <div className="flex justify-center mb-4">
+                  <div className="bg-gray-900 px-8 py-4 rounded-2xl border border-gray-600 flex items-center gap-2 shadow-inner">
+                    <span className="text-5xl font-mono font-bold text-white tracking-wider">{tempTime.hour}</span>
+                    <span className="text-5xl font-mono font-bold text-blue-500 animate-pulse pb-2">:</span>
+                    <span className="text-5xl font-mono font-bold text-white tracking-wider">{tempTime.minute}</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {/* Seleção de Horas */}
+                  <div className="space-y-2">
+                    <p className="text-xs text-gray-400 uppercase font-bold text-center mb-2 tracking-wider">Horas</p>
+                    <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto custom-scrollbar pr-1">
+                      {hours.map(h => (
+                        <button
+                          key={h}
+                          type="button"
+                          onClick={() => setTempTime(prev => ({ ...prev, hour: h }))}
+                          className={`p-2 rounded-lg text-sm font-bold transition-all ${
+                            tempTime.hour === h 
+                              ? 'bg-blue-600 text-white shadow-lg scale-105 ring-2 ring-blue-400/50' 
+                              : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
+                          }`}
+                        >
+                          {h}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Seleção de Minutos */}
+                  <div className="space-y-2">
+                    <p className="text-xs text-gray-400 uppercase font-bold text-center mb-2 tracking-wider">Minutos</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {minutes.map(m => (
+                        <button
+                          key={m}
+                          type="button"
+                          onClick={() => setTempTime(prev => ({ ...prev, minute: m }))}
+                          className={`p-2 rounded-lg text-sm font-bold transition-all ${
+                            tempTime.minute === m 
+                              ? 'bg-blue-600 text-white shadow-lg scale-105 ring-2 ring-blue-400/50' 
+                              : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
+                          }`}
+                        >
+                          {m}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 border-t border-gray-700 bg-gray-900/50 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowTimePicker(false)}
+                  className="px-4 py-2.5 rounded-lg text-gray-300 hover:text-white hover:bg-gray-700 transition-colors text-sm font-medium"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleTimeConfirm}
+                  className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold shadow-lg transition-all flex items-center gap-2 text-sm transform active:scale-95"
+                >
+                  <FaCheck /> Confirmar Horário
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
