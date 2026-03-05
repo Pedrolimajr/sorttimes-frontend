@@ -47,8 +47,6 @@ const LOCAL_STORAGE_KEYS = {
   HISTORICO_SORTEIOS: "historicoSorteios"
   
 };
-// Defina a chave para o localStorage
-const STORAGE_KEY = 'jogadoresPresenca';
 /**
  * Componente principal para sorteio de times de futebol
  * Permite selecionar jogadores, definir posições e balancear times de diferentes formas
@@ -63,7 +61,7 @@ export default function SorteioTimes() {
   []
 );
   const [times, setTimes] = useState([]);
-  const [balanceamento, setBalanceamento] = useState(TIPOS_BALANCEAMENTO.POSICAO); //const [balanceamento, setBalanceamento] = useState(TIPOS_BALANCEAMENTO.ALEATORIO);
+  const [balanceamento, setBalanceamento] = useState(TIPOS_BALANCEAMENTO.POSICAO);
   const [carregando, setCarregando] = useState(false);
   const [historico, setHistorico] = useState(() => {
     const saved = localStorage.getItem('historicoSorteios');
@@ -233,9 +231,10 @@ export default function SorteioTimes() {
         `Atenção, boleiros!\n` +
         `A lista de presença já está liberada! 🔥\n\n` +
         `Confirme sua participação e garanta sua vaga para mais uma grande partida.\n` +
-        `Vamos fechar os times e fazer aquele jogo de respeito! 💪⚽\n\n` +
+        `Vamos fechar os times e fazer aquele baba de respeito! 💪⚽\n\n` +
         `🗓 *Data:* ${dataFinal} às ${horaFormatada}\n\n` +
-        `🔗 *Confirme sua presença:*\n` +
+        `🔗 *Confirme sua presença clicando no link abaixo:*\n` +
+        `👇\n` +
         `${linkCompleto}\n\n` +
         `🔥 _Bora pro jogo!_ 🏃⚽`;
       
@@ -478,7 +477,8 @@ const aplicarFiltroPosicao = () => {
       posicaoUnica: filtroPosicao
     };
 
-    setHistorico([novoSorteio, ...historico]);setHistorico([novoSorteio, ...historico.slice(0, 4)]);
+    // Adiciona ao histórico mantendo apenas os 5 últimos
+    setHistorico(prev => [novoSorteio, ...prev].slice(0, 5));
     toast.success(`Times sorteados com sucesso! ${timesComIds.length} times formados`);
   } catch (error) {
     console.error("Erro ao sortear times:", error);
@@ -1147,64 +1147,6 @@ const TimeSorteado = ({ time, index }) => {
             </div>
           </motion.div>
         )}
-
-        {/* Card Oculto para Geração de Imagem (Convite) */}
-        <div
-          id="card-convocacao"
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: '-9999px', // Mantém fora da tela
-            width: '600px',
-            height: '600px',
-            background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontFamily: 'Arial, sans-serif',
-            color: 'white',
-            padding: '40px',
-            zIndex: -1000
-          }}
-        >
-          {/* Elementos decorativos de fundo (Glow) */}
-          <div style={{ position: 'absolute', top: '-50px', left: '-50px', width: '250px', height: '250px', background: 'rgba(59, 130, 246, 0.15)', borderRadius: '50%', filter: 'blur(80px)' }} />
-          <div style={{ position: 'absolute', bottom: '-50px', right: '-50px', width: '250px', height: '250px', background: 'rgba(168, 85, 247, 0.15)', borderRadius: '50%', filter: 'blur(80px)' }} />
-
-          {/* Cabeçalho */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px', background: 'rgba(255,255,255,0.05)', padding: '10px 30px', borderRadius: '50px', border: '1px solid rgba(255,255,255,0.1)' }}>
-            <GiSoccerKick size={40} color="#60a5fa" />
-            <h1 style={{ fontSize: '32px', fontWeight: '800', margin: 0, background: 'linear-gradient(to right, #60a5fa, #22d3ee)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              SortTimes
-            </h1>
-          </div>
-
-          <h2 style={{ fontSize: '48px', fontWeight: '900', margin: '0 0 10px 0', textTransform: 'uppercase', letterSpacing: '2px', textAlign: 'center', textShadow: '0 4px 10px rgba(0,0,0,0.3)' }}>
-            CONVOCAÇÃO
-          </h2>
-          <p style={{ fontSize: '22px', color: '#9ca3af', margin: '0 0 40px 0' }}>A lista de presença está aberta!</p>
-
-          {/* Box de Data e Hora */}
-          <div style={{ width: '100%', background: 'rgba(17, 24, 39, 0.6)', border: '2px solid #3b82f6', borderRadius: '25px', padding: '30px', textAlign: 'center', boxShadow: '0 10px 30px -5px rgba(59, 130, 246, 0.25)', backdropFilter: 'blur(10px)' }}>
-            <div style={{ fontSize: '16px', color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '10px', fontWeight: 'bold' }}>
-              Data do Jogo
-            </div>
-            <div style={{ fontSize: '48px', fontWeight: 'bold', color: 'white', lineHeight: '1.1', marginBottom: '5px' }}>
-              {dataJogo ? new Date(dataJogo).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : '--/--'}
-            </div>
-            <div style={{ fontSize: '18px', color: '#d1d5db', textTransform: 'uppercase', marginBottom: '15px' }}>
-              {dataJogo ? new Date(dataJogo).toLocaleDateString('pt-BR', { weekday: 'long' }) : 'Dia da semana'}
-            </div>
-            <div style={{ fontSize: '56px', fontWeight: 'bold', color: '#fbbf24', lineHeight: '1', textShadow: '0 2px 10px rgba(251, 191, 36, 0.3)' }}>
-              {dataJogo ? new Date(dataJogo).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
-            </div>
-          </div>
-
-          <div style={{ marginTop: '40px', textAlign: 'center' }}>
-            <p style={{ fontSize: '18px', color: '#e5e7eb' }}>Clique no link da mensagem para confirmar 👇</p>
-          </div>
-        </div>
       </div>
     </div>
   );
