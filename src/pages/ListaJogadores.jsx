@@ -3,8 +3,8 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   FaArrowLeft, FaUsers, FaEdit, FaTrash, FaPlus,
   FaSave, FaTimes, FaSearch, FaFilter, FaUserCircle,
-  FaCheck, FaMoneyBillWave, FaTshirt, FaMapMarkerAlt,
-  FaStar, FaCalendarAlt, FaPhone, FaEnvelope, FaBan, FaUnlock, FaFileContract
+  FaCheck, FaMoneyBillWave, FaTshirt, FaMapMarkerAlt, FaAward,
+  FaStar, FaCalendarAlt, FaPhone, FaEnvelope, FaBan, FaUnlock
 } from 'react-icons/fa';
 import { RiArrowLeftDoubleLine } from 'react-icons/ri';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -1135,7 +1135,7 @@ export default function ListaJogadores({
                                     className={jogador.pagamentos?.every(p => p.isento) ? 'text-yellow-400 hover:text-yellow-300' : 'text-gray-400 hover:text-gray-300'}
                                     title={jogador.pagamentos?.every(p => p.isento) ? 'Remover Isenção' : 'Isentar de Mensalidades'}
                                   >
-                                    <FaFileContract className="text-sm sm:text-base" />
+                                    <FaAward className="text-sm sm:text-base" />
                                   </motion.button>
 
 

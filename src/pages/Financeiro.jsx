@@ -1735,18 +1735,25 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                     {jogador.nome}
                   </td>
                   <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap">
-                    <motion.button
-                      onClick={() => toggleStatus(jogador._id)}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        jogador.statusFinanceiro === 'Adimplente'
-                          ? 'bg-green-500/20 text-green-400'
-                          : 'bg-red-500/20 text-red-400'
-                      }`}
-                    >
-                      {jogador.statusFinanceiro || 'Inadimplente'}
-                    </motion.button>
+                    {jogador.pagamentos?.every(p => p.isento) ? (
+                      <span
+                        className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-400 cursor-default"
+                        title="Este jogador está isento de todas as mensalidades."
+                      >
+                        Isento
+                      </span>
+                    ) : (
+                      <motion.button
+                        onClick={() => toggleStatus(jogador._id)}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          jogador.statusFinanceiro === 'Adimplente' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                        }`}
+                      >
+                        {jogador.statusFinanceiro || 'Inadimplente'}
+                      </motion.button>
+                    )}
                   </td>
                   {jogador.pagamentos.map((pagamento, i) => (
                     <td key={i} className="px-1 sm:px-2 py-2 sm:py-3 whitespace-nowrap text-center">
