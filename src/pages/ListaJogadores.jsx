@@ -3,8 +3,8 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   FaArrowLeft, FaUsers, FaEdit, FaTrash, FaPlus,
   FaSave, FaTimes, FaSearch, FaFilter, FaUserCircle,
-  FaCheck, FaMoneyBillWave, FaTshirt, FaMapMarkerAlt, 
-  FaStar, FaCalendarAlt, FaPhone, FaEnvelope, FaBan, FaUnlock
+  FaCheck, FaMoneyBillWave, FaTshirt, FaMapMarkerAlt,
+  FaStar, FaCalendarAlt, FaPhone, FaEnvelope, FaBan, FaUnlock, FaFileContract
 } from 'react-icons/fa';
 import { RiArrowLeftDoubleLine } from 'react-icons/ri';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -51,6 +51,12 @@ export default function ListaJogadores({
     novoAtivo: true,
   });
 
+  const [modalIsencao, setModalIsencao] = useState({
+    aberto: false,
+    jogador: null,
+    novoIsento: false,
+  });
+
   const [confirmDeleteJogador, setConfirmDeleteJogador] = useState({ open: false, jogador: null });
   
   const [formData, setFormData] = useState({
@@ -85,6 +91,36 @@ export default function ListaJogadores({
 
   const fecharModalBloqueio = () => {
     setModalBloqueio({ aberto: false, jogador: null, novoAtivo: true });
+  };
+
+  const fecharModalIsencao = () => {
+    setModalIsencao({ aberto: false, jogador: null, novoIsento: false });
+  };
+
+  const confirmarIsencao = async () => {
+    if (!modalIsencao.jogador) return;
+
+    const { jogador, novoIsento } = modalIsencao;
+
+    try {
+      const response = await api.patch(`/jogadores/${jogador._id}/isencao`, {
+        isento: novoIsento,
+      });
+
+      const data = response.data;
+      toast.success(data.message || (novoIsento ? 'Jogador isento de pagamentos' : 'Isenção do jogador removida'));
+
+      // Atualiza o jogador no contexto e no estado local
+      const jogadorAtualizado = data.data;
+      atualizarJogador(jogadorAtualizado);
+      setJogadores(prev => prev.map(j => (j._id === jogadorAtualizado._id ? jogadorAtualizado : j)));
+
+    } catch (error) {
+      console.error('Erro ao atualizar isenção do jogador:', error);
+      toast.error(error.response?.data?.message || error.message || 'Erro ao atualizar isenção');
+    } finally {
+      fecharModalIsencao();
+    }
   };
 
   const confirmarBloqueio = async () => {
@@ -429,6 +465,52 @@ export default function ListaJogadores({
                       ? 'bg-green-600 hover:bg-green-700'
                       : 'bg-red-600 hover:bg-red-700'
                   }`}
+                >
+                  Confirmar
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal para isenção de jogador */}
+      <AnimatePresence>
+        {modalIsencao.aberto && modalIsencao.jogador && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 p-4"
+            onClick={fecharModalIsencao}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-gray-800 rounded-xl max-w-md w-full p-6 shadow-xl border border-gray-700"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 className="text-lg font-semibold text-white mb-3">
+                {modalIsencao.novoIsento ? 'Isentar jogador' : 'Remover isenção'}
+              </h2>
+
+              <p className="text-gray-300 text-sm mb-4">
+                {modalIsencao.novoIsento
+                  ? `Deseja ISENTAR o jogador "${modalIsencao.jogador.nome}" de todas as mensalidades do ano? O status financeiro será definido como Adimplente.`
+                  : `Deseja REMOVER A ISENÇÃO do jogador "${modalIsencao.jogador.nome}"? O status financeiro será recalculado com base nos pagamentos.`}
+              </p>
+
+              <div className="flex justify-end gap-3 mt-4">
+                <button
+                  onClick={fecharModalIsencao}
+                  className="px-4 py-2 text-sm rounded-lg bg-gray-700 text-gray-200 hover:bg-gray-600"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmarIsencao}
+                  className={`px-4 py-2 text-sm rounded-lg text-white ${modalIsencao.novoIsento ? 'bg-blue-600 hover:bg-blue-700' : 'bg-yellow-600 hover:bg-yellow-700'}`}
                 >
                   Confirmar
                 </button>
@@ -1038,6 +1120,25 @@ export default function ListaJogadores({
                               
                               <td className="px-4 py-4 whitespace-nowrap text-sm font-medium sm:px-6">
                                 <div className="flex gap-2 sm:gap-3">
+                                  {/* Isentar Jogador */}
+                                  <motion.button
+                                    onClick={() => {
+                                      const isIsento = jogador.pagamentos?.every(p => p.isento);
+                                      setModalIsencao({
+                                        aberto: true,
+                                        jogador,
+                                        novoIsento: !isIsento,
+                                      });
+                                    }}
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    className={jogador.pagamentos?.every(p => p.isento) ? 'text-yellow-400 hover:text-yellow-300' : 'text-gray-400 hover:text-gray-300'}
+                                    title={jogador.pagamentos?.every(p => p.isento) ? 'Remover Isenção' : 'Isentar de Mensalidades'}
+                                  >
+                                    <FaFileContract className="text-sm sm:text-base" />
+                                  </motion.button>
+
+
                                   {/* Bloquear / Desbloquear antes do botão Editar */}
                                   <motion.button
                                     onClick={() => {

@@ -120,19 +120,19 @@ export default function Financeiro() {
       const transacoesData = transacoesRes.data?.data || transacoesRes.data || [];
 
       // Processa os jogadores
-      const jogadoresProcessados = jogadoresData.map(jogador => {
-        // Converte os pagamentos do formato do backend para o formato do frontend
-        const pagamentos = Array(12).fill(false);
+      const jogadoresProcessados = jogadoresData.map(jogador => {        
+        const pagamentos = Array(12).fill({ pago: false, isento: false });
         if (jogador.pagamentos && Array.isArray(jogador.pagamentos)) {
-          jogador.pagamentos.forEach((pagamento, index) => {
-            if (typeof pagamento === 'object' && pagamento !== null) {
-              pagamentos[index] = pagamento.pago || false;
+          for (let i = 0; i < 12; i++) {
+            const p = jogador.pagamentos[i];
+            if (p && typeof p === 'object') {
+              pagamentos[i] = { pago: !!p.pago, isento: !!p.isento };
             } else {
-              pagamentos[index] = pagamento || false;
+              // Legado: se for booleano, assume que é 'pago'
+              pagamentos[i] = { pago: !!p, isento: false };
             }
-          });
+          }
         }
-
         return {
           ...jogador,
           pagamentos: pagamentos,
@@ -191,7 +191,7 @@ export default function Financeiro() {
           .reduce((acc, t) => acc + (Number(t.valor) || 0), 0);
 
         const pagamentosPendentes = jogadores.reduce((total, jogador) => {
-          return total + (jogador.pagamentos || []).filter(p => !p).length;
+          return total + (jogador.pagamentos || []).filter(p => !p.pago && !p.isento).length;
         }, 0);
 
         setEstatisticas(prev => ({
@@ -309,31 +309,34 @@ export default function Financeiro() {
       return;
     }
 
+    // Não permite alterar manualmente um pagamento isento
+    if (jogadorAtual.pagamentos[mesIndex].isento) {
+      toast.info('Este jogador é isento para este mês. A alteração manual não é permitida.');
+      return;
+    }
+
+    const originalPagamentos = JSON.parse(JSON.stringify(jogadorAtual.pagamentos));
+
     try {
       // Atualização otimista - atualiza o estado imediatamente
-      const updatedPagamentos = [...jogadorAtual.pagamentos];
-      updatedPagamentos[mesIndex] = !updatedPagamentos[mesIndex];
+      const updatedPagamentos = [...originalPagamentos];
+      updatedPagamentos[mesIndex].pago = !updatedPagamentos[mesIndex].pago;
 
       // Atualiza o estado local primeiro
       setJogadores(prevJogadores => {
         const updatedJogadores = prevJogadores.map(j => {
           if (j._id === jogadorId) {
-            return {
-              ...j,
-              pagamentos: updatedPagamentos
-            };
+            return { ...j, pagamentos: updatedPagamentos };
           }
           return j;
         });
 
         // Atualiza o localStorage em batch
-        requestAnimationFrame(() => {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify({
-            jogadoresCache: updatedJogadores,
-            transacoesCache: transacoes,
-            lastUpdate: new Date().toISOString()
-          }));
-        });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          jogadoresCache: updatedJogadores,
+          transacoesCache: transacoes,
+          lastUpdate: new Date().toISOString()
+        }));
 
         return updatedJogadores;
       });
@@ -341,42 +344,36 @@ export default function Financeiro() {
       // Prepara o payload para a API
       const payload = {
         mes: mesIndex,
-        pago: updatedPagamentos[mesIndex],
-        isento: false,
-        dataPagamento: updatedPagamentos[mesIndex] ? new Date() : null,
-        dataLimite: new Date(new Date().getFullYear(), mesIndex, 20)
+        pago: updatedPagamentos[mesIndex].pago,
+        isento: false, // A isenção é tratada em outra rota
       };
 
       // Atualiza no banco de dados
       const response = await api.post(`/jogadores/${jogadorId}/pagamentos`, payload);
 
-      if (!response.data) {
+      if (!response.data || !response.data.data.jogador) {
         throw new Error('Resposta inválida do servidor');
       }
 
       // Atualiza o cache com os dados mais recentes
       const updatedJogador = response.data.data.jogador;
-      if (updatedJogador) {
-        setJogadores(prevJogadores => {
-          const newJogadores = prevJogadores.map(j => 
-            j._id === jogadorId ? {
-              ...j,
-              pagamentos: updatedJogador.pagamentos.map(p => p.pago)
-            } : j
-          );
+      setJogadores(prevJogadores => {
+        const newJogadores = prevJogadores.map(j => 
+          j._id === jogadorId ? {
+            ...j,
+            pagamentos: updatedJogador.pagamentos, // Usa o array de objetos completo do backend
+            statusFinanceiro: updatedJogador.statusFinanceiro
+          } : j
+        );
 
-          // Atualiza o localStorage em batch
-          requestAnimationFrame(() => {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify({
-              jogadoresCache: newJogadores,
-              transacoesCache: transacoes,
-              lastUpdate: new Date().toISOString()
-            }));
-          });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          jogadoresCache: newJogadores,
+          transacoesCache: transacoes,
+          lastUpdate: new Date().toISOString()
+        }));
 
-          return newJogadores;
-        });
-      }
+        return newJogadores;
+      });
 
     } catch (error) {
       console.error("Erro ao atualizar pagamento:", error);
@@ -387,21 +384,18 @@ export default function Financeiro() {
         const revertedJogadores = prevJogadores.map(j => {
           if (j._id === jogadorId) {
             return {
-              ...j,
-              pagamentos: jogadorAtual.pagamentos
+              ...j, pagamentos: originalPagamentos
             };
           }
           return j;
         });
 
         // Atualiza o localStorage em batch
-        requestAnimationFrame(() => {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify({
-            jogadoresCache: revertedJogadores,
-            transacoesCache: transacoes,
-            lastUpdate: new Date().toISOString()
-          }));
-        });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          jogadoresCache: revertedJogadores,
+          transacoesCache: transacoes,
+          lastUpdate: new Date().toISOString()
+        }));
 
         return revertedJogadores;
       });
@@ -653,11 +647,11 @@ export default function Financeiro() {
     labels: ['Pagamentos em dia', 'Pagamentos pendentes'],
     datasets: [{
       data: [
-        jogadores.reduce((total, jogador) => 
-          total + jogador.pagamentos.filter(pago => pago).length, 0
+        jogadores.reduce((total, jogador) =>
+          total + jogador.pagamentos.filter(p => p.pago || p.isento).length, 0
         ),
-        jogadores.reduce((total, jogador) => 
-          total + jogador.pagamentos.filter(pago => !pago).length, 0
+        jogadores.reduce((total, jogador) =>
+          total + jogador.pagamentos.filter(p => !p.pago && !p.isento).length, 0
         )
       ],
       backgroundColor: ['#4ade80', '#f87171'],
@@ -1754,20 +1748,29 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                       {jogador.statusFinanceiro || 'Inadimplente'}
                     </motion.button>
                   </td>
-                  {jogador.pagamentos.map((pago, i) => (
+                  {jogador.pagamentos.map((pagamento, i) => (
                     <td key={i} className="px-1 sm:px-2 py-2 sm:py-3 whitespace-nowrap text-center">
-                      <motion.button
-                        onClick={() => togglePagamento(jogador._id, i)}
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        className={`
-                          w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center
-                          ${pago ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}
-                        `}
-                        title={pago ? "Mensalidade paga" : "Mensalidade pendente"}
-                      >
-                        {pago ? <FaCheck size={8} className="sm:text-xs" /> : <FaTimes size={8} className="sm:text-xs" />}
-                      </motion.button>
+                      {pagamento.isento ? (
+                        <div
+                          className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center bg-yellow-400/30 text-yellow-300 cursor-help"
+                          title="Isento"
+                        >
+                          <FaCheck size={8} className="sm:text-xs" />
+                        </div>
+                      ) : (
+                        <motion.button
+                          onClick={() => togglePagamento(jogador._id, i)}
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          className={`
+                            w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center
+                            ${pagamento.pago ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}
+                          `}
+                          title={pagamento.pago ? "Mensalidade paga" : "Mensalidade pendente"}
+                        >
+                          {pagamento.pago ? <FaCheck size={8} className="sm:text-xs" /> : <FaTimes size={8} className="sm:text-xs" />}
+                        </motion.button>
+                      )}
                     </td>
                   ))}
                 </tr>
