@@ -255,7 +255,7 @@ export default function ConfirmarPresenca() {
               onClick={() => setModo('admin')}
               className={`flex-1 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all ${
                 modo === 'admin'
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-indigo-400 text-white'
                   : 'text-gray-300 hover:text-white'
               }`}
             >
