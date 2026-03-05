@@ -221,12 +221,16 @@ export default function SorteioTimes() {
         minute: '2-digit'
       });
 
-      const mensagem = `⚽ Confirmação de Presença - Fut de domingo!\n\n` +
-        `Fala galera! Chegou a hora de confirmar presença para o nosso fut!\n\n` +
-        `🗓 Data: ${dataFormatada}\n\n` +
-        `📲 Confirme sua presença acessando:\n\n` +
+      // Capitaliza a primeira letra da data para ficar mais elegante
+      const dataFinal = dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1);
+
+      const mensagem = `⚽ *CONVOCAÇÃO GERAL* ⚽\n\n` +
+        `Fala galera! A lista de presença está liberada! 🔥\n` +
+        `Quem vai pro jogo? Confirma aí pra gente fechar os times!\n\n` +
+        `🗓 *Data:* ${dataFinal}\n\n` +
+        `📲 *Link para confirmação:* 👇\n` +
         `${linkCompleto}\n\n` +
-        `Clique no link acima para confirmar sua participação.`;
+        `_Bora pro jogo!_ 🏃💨`;
 
       if (navigator.share) {
         await navigator.share({
@@ -1130,5 +1134,3 @@ const TimeSorteado = ({ time, index }) => {
     </div>
   );
 }
-
-
