@@ -233,8 +233,8 @@ export default function SorteioTimes() {
         `Confirme sua participação e garanta sua vaga para mais uma grande partida.\n` +
         `Vamos fechar os times e fazer aquele baba de respeito! 💪⚽\n\n` +
         `🗓 *Data:* ${dataFinal} às ${horaFormatada}\n\n` +
-        `*Confirme sua presença clicando no link abaixo:*\n` +
-        `👇\n` +
+        `*Confirme sua presença clicando no link abaixo:*\n` + `👇\n` +
+        
         ` 🔗  ${linkCompleto}\n\n` +
         `🔥 _Bora pro jogo!_ 🏃⚽`;
       
