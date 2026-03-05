@@ -255,7 +255,7 @@ export default function ConfirmarPresenca() {
               onClick={() => setModo('admin')}
               className={`flex-1 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all ${
                 modo === 'admin'
-                  ? 'bg-indigo-400 text-white'
+                  ? 'bg-amber-600 text-white'
                   : 'text-gray-300 hover:text-white'
               }`}
             >
@@ -424,21 +424,21 @@ export default function ConfirmarPresenca() {
                 >
                   <div className="space-y-2">
                     <label className="text-gray-300 text-sm font-medium flex items-center gap-2">
-                      <FaUserShield className="text-indigo-500" /> Usuário Admin
+                      <FaUserShield className="text-amber-500" /> Usuário Admin
                     </label>
                     <input
                       type="text"
                       value={adminForm.username}
                       onChange={(e) => setAdminForm({ ...adminForm, username: e.target.value })}
                       placeholder="Usuário admin"
-                      className="w-full bg-gray-700 border border-gray-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                      className="w-full bg-gray-700 border border-gray-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
                       required
                     />
                   </div>
 
                   <div className="space-y-2">
                     <label className="text-gray-300 text-sm font-medium flex items-center gap-2">
-                      <FaLock className="text-indigo-500" /> Senha Admin
+                      <FaLock className="text-amber-500" /> Senha Admin
                     </label>
                     <div className="relative">
                       <input
@@ -446,7 +446,7 @@ export default function ConfirmarPresenca() {
                         value={adminForm.password}
                         onChange={(e) => setAdminForm({ ...adminForm, password: e.target.value })}
                         placeholder="Senha admin"
-                        className="w-full bg-gray-700 border border-gray-600 rounded-xl px-4 py-3 pr-10 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                        className="w-full bg-gray-700 border border-gray-600 rounded-xl px-4 py-3 pr-10 text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
                         required
                       />
                       <button
@@ -463,7 +463,7 @@ export default function ConfirmarPresenca() {
                   <button
                     type="submit"
                     disabled={submetendo}
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-800 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-600/20 transition-all transform active:scale-95 flex items-center justify-center gap-2"
+                    className="w-full bg-amber-600 hover:bg-amber-700 disabled:bg-amber-800 text-white font-bold py-3 rounded-xl shadow-lg shadow-amber-600/20 transition-all transform active:scale-95 flex items-center justify-center gap-2"
                   >
                     {submetendo ? (
                       <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
@@ -481,7 +481,7 @@ export default function ConfirmarPresenca() {
                 >
                   <div className="flex items-center justify-between">
                     <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                      <FaUserShield className="text-indigo-400" /> Painel Admin - Presenças
+                      <FaUserShield className="text-amber-400" /> Painel Admin - Presenças
                     </h2>
                     <button
                       onClick={() => {
