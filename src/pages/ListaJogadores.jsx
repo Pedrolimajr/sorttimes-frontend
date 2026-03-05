@@ -1094,28 +1094,40 @@ export default function ListaJogadores({
                               </td>
                               
                               <td className="px-4 py-4 whitespace-nowrap sm:px-6">
-                                <motion.button
-                                  onClick={() => toggleStatus(jogador._id)}
-                                  whileHover={{ scale: 1.05 }}
-                                  whileTap={{ scale: 0.95 }}
-                                  className={`px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all duration-300 ${
-                                    jogador.statusFinanceiro === 'Adimplente' ?
-                                      'bg-green-500/20 text-green-400 hover:bg-green-500/30' :
-                                      'bg-red-500/20 text-red-400 hover:bg-red-500/30'
-                                  }`}
-                                >
-                                  {jogador.statusFinanceiro === 'Adimplente' ? (
-                                    <>
-                                      <FaCheck className="text-xs" />
-                                      <span>Adimplente</span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <FaTimes className="text-xs" />
-                                      <span>Inadimplente</span>
-                                    </>
-                                  )}
-                                </motion.button>
+                                {jogador.ativo === false ? (
+                                  <div className="px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 bg-red-500/20 text-red-400 w-fit cursor-not-allowed">
+                                    <FaBan className="text-xs" />
+                                    <span>Bloqueado</span>
+                                  </div>
+                                ) : jogador.pagamentos?.every(p => p.isento) ? (
+                                  <div className="px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 bg-orange-500/20 text-orange-400 w-fit cursor-help" title="Jogador isento de mensalidades">
+                                    <FaAward className="text-xs" />
+                                    <span>Isento</span>
+                                  </div>
+                                ) : (
+                                  <motion.button
+                                    onClick={() => toggleStatus(jogador._id)}
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    className={`px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all duration-300 ${
+                                      jogador.statusFinanceiro === 'Adimplente' ?
+                                        'bg-green-500/20 text-green-400 hover:bg-green-500/30' :
+                                        'bg-red-500/20 text-red-400 hover:bg-red-500/30'
+                                    }`}
+                                  >
+                                    {jogador.statusFinanceiro === 'Adimplente' ? (
+                                      <>
+                                        <FaCheck className="text-xs" />
+                                        <span>Adimplente</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <FaTimes className="text-xs" />
+                                        <span>Inadimplente</span>
+                                      </>
+                                    )}
+                                  </motion.button>
+                                )}
                               </td>
                               
                               <td className="px-4 py-4 whitespace-nowrap text-sm font-medium sm:px-6">
