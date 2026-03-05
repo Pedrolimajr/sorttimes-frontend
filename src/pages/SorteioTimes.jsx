@@ -255,6 +255,13 @@ export default function SorteioTimes() {
 
       toast.dismiss(toastId);
 
+      // Copia a mensagem para a área de transferência preventivamente
+      try {
+        await navigator.clipboard.writeText(mensagem);
+      } catch (err) {
+        console.error('Erro ao copiar para clipboard:', err);
+      }
+
       if (navigator.share) {
         const shareData = {
           title: 'Convocação SortTimes',
@@ -267,6 +274,9 @@ export default function SorteioTimes() {
 
         try {
           await navigator.share(shareData);
+          if (file) {
+            toast.success('Convite gerado! Se o texto não aparecer, ele já foi copiado. É só colar! 📋');
+          }
         } catch (shareError) {
           // Se falhar com arquivo (alguns browsers desktop), tenta só texto
           if (file) {
@@ -275,7 +285,6 @@ export default function SorteioTimes() {
           }
         }
       } else {
-        await navigator.clipboard.writeText(mensagem);
         toast.success('Link copiado para área de transferência!');
       }
     } catch (error) {
