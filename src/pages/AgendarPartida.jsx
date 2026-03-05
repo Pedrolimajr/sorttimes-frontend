@@ -155,7 +155,7 @@ export default function AgendarPartida() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 px-4 py-8 sm:px-6 lg:px-8 flex items-center">
+    <div className="min-h-screen bg-gray-900 px-4 py-8 sm:px-6 lg:px-8 flex flex-col justify-center">
       {/* Efeito de partículas */}
       <div className="fixed inset-0 overflow-hidden -z-10 opacity-20">
         {[...Array(15)].map((_, i) => (
@@ -185,7 +185,7 @@ export default function AgendarPartida() {
         ))}
       </div>
 
-      <div className="max-w-6xl mx-auto w-full">
+      <div className="max-w-7xl mx-auto w-full">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -220,7 +220,7 @@ export default function AgendarPartida() {
                 transition={{ delay: 0.1 }}
                 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300"
               >
-                {modoEdicao ? 'Editar Partida' : 'Agendar Partida'}
+                Painel da Partida
               </motion.h1>
             </div>
 
@@ -230,84 +230,169 @@ export default function AgendarPartida() {
               transition={{ delay: 0.2 }}
               className="text-gray-400 text-sm sm:text-base"
             >
-              {modoEdicao ? 'Atualize os dados da partida' : 'Preencha os dados para agendar uma nova partida'}
+              Gerencie o agendamento e a convocação do time
             </motion.p>
           </div>
         </motion.div>
 
-        {/* Conteúdo do formulário */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3 }}
-        >
-          {error && (
-            <motion.div 
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-red-800/50 backdrop-blur-sm text-white p-4 rounded-lg mb-6 border border-red-700/50"
-            >
-              {error}
-            </motion.div>
-          )}
-
-          <motion.form
-            onSubmit={handleSubmit}
-            className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-6 rounded-xl shadow-xl border border-gray-700"
+        {error && (
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-red-800/50 backdrop-blur-sm text-white p-4 rounded-lg mb-6 border border-red-700/50"
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="text-gray-300 mb-2 flex items-center gap-2"><FaCalendarAlt /> Data</label>
-                <input type="date" value={formData.data} onChange={(e) => setFormData({...formData, data: e.target.value})} required className="w-full p-2 rounded bg-gray-700 text-white border border-gray-600" />
-              </div>
-              <div>
-                <label className="text-gray-300 mb-2 flex items-center gap-2"><FaClock /> Horário</label>
-                <input type="time" value={formData.horario} onChange={(e) => setFormData({...formData, horario: e.target.value})} required className="w-full p-2 rounded bg-gray-700 text-white border border-gray-600" />
-              </div>
-            </div>
-            <div className="mb-4">
-              <label className="text-gray-300 mb-2 flex items-center gap-2"><FaMapMarkerAlt /> Local</label>
-              <input type="text" value={formData.local} onChange={(e) => setFormData({...formData, local: e.target.value})} required className="w-full p-2 rounded bg-gray-700 text-white border border-gray-600" placeholder="Ex: Quadra A" />
-            </div>
-            <div className="mb-6">
-              <label className="text-gray-300 mb-2">Observações</label>
-              <textarea value={formData.observacoes} onChange={(e) => setFormData({...formData, observacoes: e.target.value})} className="w-full p-2 rounded bg-gray-700 text-white border border-gray-600 h-24" placeholder="Detalhes adicionais..." />
-            </div>
+            {error}
+          </motion.div>
+        )}
 
-            <div className="flex flex-col sm:flex-row gap-4">
-              <motion.button 
-                type="button"
-                onClick={gerarLinkPresenca}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium shadow-lg transition-all duration-300 flex items-center justify-center gap-2"
-              >
-                <FaShare className="text-lg" />
-                Gerar Convite
-              </motion.button>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* FORMULÁRIO 1: Agendar Partida (Ocupa 2 colunas) */}
+          <motion.div
+            className="lg:col-span-2"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-6 rounded-xl shadow-xl border border-gray-700 h-full">
+              <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2 border-b border-gray-700 pb-4">
+                <FaCalendarAlt className="text-blue-400" />
+                {modoEdicao ? 'Editar Detalhes' : 'Agendar Partida'}
+              </h2>
 
-              <motion.button 
-                type="submit"
-                disabled={loading}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="flex-[2] bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white py-3 rounded-lg font-medium shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {loading ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>Salvando...</span>
-                  </>
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div>
+                    <label className="text-gray-300 mb-2 flex items-center gap-2 text-sm font-medium">
+                      <FaCalendarAlt className="text-blue-400" /> Data
+                    </label>
+                    <input 
+                      type="date" 
+                      value={formData.data} 
+                      onChange={(e) => setFormData({...formData, data: e.target.value})} 
+                      required 
+                      className="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
+                    />
+                  </div>
+                  <div>
+                    <label className="text-gray-300 mb-2 flex items-center gap-2 text-sm font-medium">
+                      <FaClock className="text-blue-400" /> Horário
+                    </label>
+                    <input 
+                      type="time" 
+                      value={formData.horario} 
+                      onChange={(e) => setFormData({...formData, horario: e.target.value})} 
+                      required 
+                      className="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-gray-300 mb-2 flex items-center gap-2 text-sm font-medium">
+                    <FaMapMarkerAlt className="text-blue-400" /> Local
+                  </label>
+                  <input 
+                    type="text" 
+                    value={formData.local} 
+                    onChange={(e) => setFormData({...formData, local: e.target.value})} 
+                    required 
+                    className="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
+                    placeholder="Ex: Arena Society" 
+                  />
+                </div>
+
+                <div>
+                  <label className="text-gray-300 mb-2 flex items-center gap-2 text-sm font-medium">
+                    <FaStickyNote className="text-blue-400" /> Observações
+                  </label>
+                  <textarea 
+                    value={formData.observacoes} 
+                    onChange={(e) => setFormData({...formData, observacoes: e.target.value})} 
+                    className="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 h-32 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none" 
+                    placeholder="Detalhes adicionais..." 
+                  />
+                </div>
+
+                <div className="pt-4">
+                  <motion.button 
+                    type="submit"
+                    disabled={loading}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white py-3.5 rounded-lg font-bold shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {loading ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <span>Salvando...</span>
+                      </>
+                    ) : (
+                      <>
+                        <FaSave className="text-lg" />
+                        {modoEdicao ? 'Salvar Alterações' : 'Confirmar Agendamento'}
+                      </>
+                    )}
+                  </motion.button>
+                </div>
+              </form>
+            </div>
+          </motion.div>
+
+          {/* FORMULÁRIO 2: Gerar Link de Presença (Ocupa 1 coluna) */}
+          <motion.div
+            className="lg:col-span-1"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+          >
+            <div className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-6 rounded-xl shadow-xl border border-gray-700 h-full flex flex-col">
+              <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2 border-b border-gray-700 pb-4">
+                <FaBullhorn className="text-green-400" />
+                Convocação
+              </h2>
+
+              <div className="flex-grow flex flex-col items-center justify-center text-center space-y-6 py-4">
+                <div className="w-24 h-24 bg-gray-700/50 rounded-full flex items-center justify-center border-2 border-gray-600">
+                  <FaLink className="text-4xl text-blue-400" />
+                </div>
+                
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold text-white">Link de Presença</h3>
+                  <p className="text-gray-400 text-sm">
+                    Gere um link automático para compartilhar no WhatsApp e permitir que os jogadores confirmem presença.
+                  </p>
+                </div>
+
+                {(formData.data && formData.horario) ? (
+                  <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-3 w-full">
+                    <p className="text-green-400 text-xs font-bold uppercase mb-1">Dados para o convite</p>
+                    <p className="text-white font-medium">
+                      {new Date(formData.data + 'T12:00:00').toLocaleDateString('pt-BR')} às {formData.horario}
+                    </p>
+                  </div>
                 ) : (
-                  <>
-                    <FaSave className="text-lg" />
-                    {modoEdicao ? 'Atualizar Partida' : 'Agendar Partida'}
-                  </>
+                  <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-3 w-full">
+                    <p className="text-yellow-400 text-xs">Preencha data e horário para habilitar</p>
+                  </div>
                 )}
-              </motion.button>
+              </div>
+
+              <div className="mt-auto pt-4">
+                <motion.button 
+                  type="button"
+                  onClick={gerarLinkPresenca}
+                  disabled={!formData.data || !formData.horario}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed text-white py-3.5 rounded-lg font-bold shadow-lg transition-all duration-300 flex items-center justify-center gap-2"
+                >
+                  <FaShare className="text-lg" />
+                  Gerar e Compartilhar
+                </motion.button>
+              </div>
             </div>
-          </motion.form>
-        </motion.div>
+          </motion.div>
+        </div>
       </div>
     </div>
   );
