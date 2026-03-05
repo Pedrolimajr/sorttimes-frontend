@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { 
   FaRandom, FaUser, FaTshirt, FaBalanceScale, FaCheck, FaTimes, 
   FaSync, FaArrowLeft, FaHistory, FaEdit, FaShare, FaSave, 
-  FaTrash, FaUserCheck, FaUserTimes, FaLink, FaRegCalendarAlt, FaSearch 
+  FaTrash, FaUserCheck, FaUserTimes, FaSearch 
 } from "react-icons/fa";
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { GiSoccerKick } from "react-icons/gi";
@@ -70,7 +70,6 @@ export default function SorteioTimes() {
   const [carregandoJogadores, setCarregandoJogadores] = useState(false);
   const [modoEdicao, setModoEdicao] = useState(false);
   const [filtroPosicao, setFiltroPosicao] = useState('');
-  const [dataJogo, setDataJogo] = useState('');
   const [filtroJogadoresSelecionados, setFiltroJogadoresSelecionados] = useState('');
 
   // Carrega dados do localStorage ao montar o componente
@@ -186,76 +185,8 @@ export default function SorteioTimes() {
 }, []); // Dependências vazias para executar apenas no mount/unmount
 
   /**
-   * Gera um link para confirmação de presença e compartilha via WhatsApp
+   * Compartilha a lista de jogadores selecionados
    */
-  const gerarLinkPresenca = async () => {
-    if (!dataJogo) {
-      toast.warning('Por favor, selecione a data do jogo!');
-      return;
-    }
-
-    const toastId = toast.loading("Gerando link...");
-
-    try {
-      const response = await api.post('/gerar-link-presenca', {
-        jogadores: jogadoresSelecionados.map(j => ({
-          id: j._id,
-          nome: j.nome,
-          presente: j.presente
-        })),
-        dataJogo
-      });
-
-      const linkId = response.data?.linkId;
-      if (!linkId) throw new Error('Não foi possível gerar link');
-
-      localStorage.setItem('linkPresencaId', linkId);
-
-      const linkCompleto = `${window.location.origin}/confirmar-presenca/${linkId}`;
-      
-      const dataFormatada = new Date(dataJogo).toLocaleString('pt-BR', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long'
-      });
-      
-      const horaFormatada = new Date(dataJogo).toLocaleString('pt-BR', {
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-
-      // Capitaliza a primeira letra da data para ficar mais elegante
-      const dataFinal = dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1);
-
-      const mensagem = `📢 *CONVOCAÇÃO GERAL* ⚽\n\n` +
-        `Atenção, boleiros!\n` +
-        `A lista de presença já está liberada! 🔥\n\n` +
-        `Confirme sua participação e garanta sua vaga para mais uma grande partida.\n` +
-        `Vamos fechar os times e fazer aquele baba de respeito! 💪⚽\n\n` +
-        `🗓 *Data:* ${dataFinal} às ${horaFormatada}\n\n` +
-        `*Confirme sua presença clicando no link abaixo:*\n` + `👇\n` +
-        
-        ` 🔗  ${linkCompleto}\n\n` +
-        `🔥 _Bora pro jogo!_ 🏃⚽`;
-      
-      toast.dismiss(toastId);
-
-      if (navigator.share) {
-        await navigator.share({
-          title: 'Convocação SortTimes',
-          text: mensagem,
-        });
-      } else {
-        await navigator.clipboard.writeText(mensagem);
-        toast.success('Link de presença copiado para a área de transferência!');
-      }
-    } catch (error) {
-      toast.dismiss(toastId);
-      console.error('Erro ao gerar link:', error);
-      toast.error('Erro ao gerar link de presença');
-    }
-  };
-
   const compartilharJogadoresSelecionados = () => {
   const jogadoresPresentes = jogadoresSelecionados.filter(j => j.presente);
 
@@ -859,50 +790,6 @@ const TimeSorteado = ({ time, index }) => {
           className="bg-gray-800 bg-opacity-50 backdrop-blur-sm rounded-xl shadow-xl border border-gray-700 overflow-hidden mb-6"
         >
          <div className="p-4 sm:p-10">
-  {/* Controles de data e compartilhamento */}
-<div className="flex justify-start max-sm:justify-center mb-4 w-full">
-  {/* Container centralizador */}
-  <div className="flex items-center gap-4 max-sm:gap-2 max-sm:flex-wrap w-full max-sm:justify-center">
-    
-    {/* Input com ícone e campo */}
-    <FaRegCalendarAlt className="text-blue-400 w-4 h-4 flex-shrink-0" />
-    <div className="flex items-center gap-1.5 bg-gray-700 rounded-lg border border-gray-600 focus-within:border-blue-500 pl-2 pr-2 
-                    h-8 max-sm:h-7 
-                    max-sm:flex-1 w-auto">
-      
-      <input
-        type="datetime-local"
-        value={dataJogo}
-        onChange={(e) => setDataJogo(e.target.value)}
-        className="px-0 py-0.5 bg-transparent text-white focus:outline-none text-xs 
-                   h-full w-[140px] max-sm:w-full"
-      />
-    </div>
-
-    {/* Botão "Compartilhar" */}
-    <div className="relative inline-flex max-sm:flex-1 w-auto">
-      <button
-        onClick={gerarLinkPresenca}
-        className="group relative bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg transition-all duration-300 
-                   flex items-center justify-center gap-1.5 
-                   text-sm max-sm:text-xs w-full h-8 max-sm:h-7
-                   hover:shadow-[0_2px_10px_rgba(59,130,246,0.5)]"
-      >
-        <FaLink className="w-4 h-4" />
-        <span>Compartilhar</span>
-
-        {/* Tooltip responsivo */}
-        <span className="absolute left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-lg z-50 pointer-events-none
-          sm:-top-8 sm:bottom-auto
-          max-sm:top-full max-sm:mt-1">
-          Compartilhar link de Presença
-        </span>
-      </button>
-    </div>
-
-  </div>
-</div>
-
             {/* Filtro de posição */}
             <div className="mb-4 flex flex-col sm:flex-row gap-4 items-end">
     <div className="flex-1 max-sm:w-full">

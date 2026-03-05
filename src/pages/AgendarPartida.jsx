@@ -1,9 +1,9 @@
 // src/pages/AgendarPartida.jsx
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FaCalendarAlt, FaClock, FaMapMarkerAlt, FaArrowLeft, FaSave } from "react-icons/fa";
+import { FaCalendarAlt, FaClock, FaMapMarkerAlt, FaArrowLeft, FaSave, FaShare, FaLink } from "react-icons/fa";
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
-import axios from 'axios';
+import api from '../services/api';
 import { toast } from 'react-toastify';
 import { motion } from "framer-motion";
 
@@ -17,18 +17,12 @@ export default function AgendarPartida() {
     observacoes: ""
   });
   const [loading, setLoading] = useState(false);
+  const [jogadores, setJogadores] = useState([]);
   const [error, setError] = useState(null);
   const [modoEdicao, setModoEdicao] = useState(false);
   const [editandoId, setEditandoId] = useState(null);
 
-  const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000',
-    headers: {
-      'Authorization': `Bearer ${localStorage.getItem('token')}`,
-      'Content-Type': 'application/json'
-    }
-  });
-
+  // Carrega dados da partida para edição
   useEffect(() => {
     if (location.state?.partidaParaEditar) {
       const partida = location.state.partidaParaEditar;
@@ -45,6 +39,88 @@ export default function AgendarPartida() {
       setEditandoId(partida._id);
     }
   }, [location.state]);
+
+  // Carrega jogadores para o link de presença
+  useEffect(() => {
+    const fetchJogadores = async () => {
+      try {
+        const response = await api.get('/jogadores');
+        setJogadores(response.data?.data || []);
+      } catch (error) {
+        console.error("Erro ao carregar jogadores", error);
+      }
+    };
+    fetchJogadores();
+  }, []);
+
+  const gerarLinkPresenca = async () => {
+    if (!formData.data || !formData.horario) {
+      toast.warning('Preencha a data e o horário para gerar o convite!');
+      return;
+    }
+
+    const toastId = toast.loading("Gerando convite...");
+
+    try {
+      // Combina data e hora para o formato esperado
+      const dataJogo = `${formData.data}T${formData.horario}`;
+
+      const response = await api.post('/gerar-link-presenca', {
+        jogadores: jogadores.map(j => ({
+          id: j._id,
+          nome: j.nome,
+          presente: false // Inicialmente ninguém confirmou
+        })),
+        dataJogo
+      });
+
+      const linkId = response.data?.linkId;
+      if (!linkId) throw new Error('Não foi possível gerar link');
+
+      localStorage.setItem('linkPresencaId', linkId);
+
+      const linkCompleto = `${window.location.origin}/confirmar-presenca/${linkId}`;
+      
+      const dataObj = new Date(dataJogo);
+      const dataFormatada = dataObj.toLocaleString('pt-BR', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long'
+      });
+      
+      const horaFormatada = formData.horario;
+
+      // Capitaliza a primeira letra da data
+      const dataFinal = dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1);
+
+      const mensagem = `📢 *CONVOCAÇÃO GERAL* ⚽\n\n` +
+        `Atenção, boleiros!\n` +
+        `A lista de presença já está liberada! 🔥\n\n` +
+        `Confirme sua participação e garanta sua vaga para mais uma grande partida.\n` +
+        `Vamos fechar os times e fazer aquele baba de respeito! 💪⚽\n\n` +
+        `🗓 *Data:* ${dataFinal} às ${horaFormatada}\n\n` +
+        `🔗 *Confirme sua presença clicando no link abaixo:*\n` +
+        `👇\n` +
+        `${linkCompleto}\n\n` +
+        `🔥 _Bora pro jogo!_ 🏃⚽`;
+      
+      toast.dismiss(toastId);
+
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Convocação SortTimes',
+          text: mensagem,
+        });
+      } else {
+        await navigator.clipboard.writeText(mensagem);
+        toast.success('Link de presença copiado para a área de transferência!');
+      }
+    } catch (error) {
+      toast.dismiss(toastId);
+      console.error('Erro ao gerar link:', error);
+      toast.error('Erro ao gerar link de presença');
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -197,25 +273,39 @@ export default function AgendarPartida() {
               <label className="text-gray-300 mb-2">Observações</label>
               <textarea value={formData.observacoes} onChange={(e) => setFormData({...formData, observacoes: e.target.value})} className="w-full p-2 rounded bg-gray-700 text-white border border-gray-600 h-24" placeholder="Detalhes adicionais..." />
             </div>
-            <motion.button 
-              type="submit"
-              disabled={loading}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white py-3 rounded-lg font-medium shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>Salvando...</span>
-                </>
-              ) : (
-                <>
-                  <FaSave className="text-lg" />
-                  {modoEdicao ? 'Atualizar Partida' : 'Agendar Partida'}
-                </>
-              )}
-            </motion.button>
+
+            <div className="flex flex-col sm:flex-row gap-4">
+              <motion.button 
+                type="button"
+                onClick={gerarLinkPresenca}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium shadow-lg transition-all duration-300 flex items-center justify-center gap-2"
+              >
+                <FaShare className="text-lg" />
+                Gerar Convite
+              </motion.button>
+
+              <motion.button 
+                type="submit"
+                disabled={loading}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="flex-[2] bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white py-3 rounded-lg font-medium shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Salvando...</span>
+                  </>
+                ) : (
+                  <>
+                    <FaSave className="text-lg" />
+                    {modoEdicao ? 'Atualizar Partida' : 'Agendar Partida'}
+                  </>
+                )}
+              </motion.button>
+            </div>
           </motion.form>
         </motion.div>
       </div>
