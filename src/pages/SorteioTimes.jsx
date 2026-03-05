@@ -196,7 +196,7 @@ export default function SorteioTimes() {
       return;
     }
 
-    const toastId = toast.loading("Gerando convite...");
+    const toastId = toast.loading("Gerando link...");
 
     try {
       const response = await api.post('/gerar-link-presenca', {
@@ -229,7 +229,7 @@ export default function SorteioTimes() {
       // Capitaliza a primeira letra da data para ficar mais elegante
       const dataFinal = dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1);
 
-      const mensagem = ` *CONVOCAÇÃO GERAL* ⚽\n\n` +
+      const mensagem = `📢 *CONVOCAÇÃO GERAL* ⚽\n\n` +
         `Atenção, boleiros!\n` +
         `A lista de presença já está liberada! 🔥\n\n` +
         `Confirme sua participação e garanta sua vaga para mais uma grande partida.\n` +
@@ -238,56 +238,17 @@ export default function SorteioTimes() {
         `🔗 *Confirme sua presença:*\n` +
         `${linkCompleto}\n\n` +
         `🔥 _Bora pro jogo!_ 🏃⚽`;
-
-      // Gerar imagem do card
-      let file = null;
-      const cardElement = document.getElementById('card-convocacao');
-      if (cardElement) {
-        try {
-          const { toBlob } = await import('html-to-image');
-          const blob = await toBlob(cardElement, {
-            quality: 0.95,
-            backgroundColor: '#111827'
-          });
-          file = new File([blob], 'convite.png', { type: 'image/png' });
-        } catch (imgError) {
-          console.error('Erro ao gerar imagem:', imgError);
-        }
-      }
-
+      
       toast.dismiss(toastId);
 
-      // Copia a mensagem para a área de transferência preventivamente
-      try {
-        await navigator.clipboard.writeText(mensagem);
-      } catch (err) {
-        console.error('Erro ao copiar para clipboard:', err);
-      }
-
       if (navigator.share) {
-        const shareData = {
+        await navigator.share({
           title: 'Convocação SortTimes',
-          text: mensagem
-        };
-
-        if (file) {
-          shareData.files = [file];
-        }
-
-        try {
-          await navigator.share(shareData);
-          if (file) {
-            toast.success('Convite gerado! Se o texto não aparecer, ele já foi copiado. É só colar! 📋');
-          }
-        } catch (shareError) {
-          // Se falhar com arquivo (alguns browsers desktop), tenta só texto
-          if (file) {
-            delete shareData.files;
-            await navigator.share(shareData);
-          }
-        }
+          text: mensagem,
+        });
       } else {
-        toast.success('Link copiado para área de transferência!');
+        await navigator.clipboard.writeText(mensagem);
+        toast.success('Link de presença copiado para a área de transferência!');
       }
     } catch (error) {
       toast.dismiss(toastId);
