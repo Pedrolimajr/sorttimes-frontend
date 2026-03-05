@@ -1,7 +1,7 @@
 // src/pages/AgendarPartida.jsx
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FaCalendarAlt, FaClock, FaMapMarkerAlt, FaArrowLeft, FaSave, FaShare, FaLink } from "react-icons/fa";
+import { FaCalendarAlt, FaClock, FaMapMarkerAlt, FaStickyNote, FaSave, FaShare, FaLink, FaBullhorn } from "react-icons/fa";
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import api from '../services/api';
 import { toast } from 'react-toastify';
@@ -155,7 +155,7 @@ export default function AgendarPartida() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 px-4 py-8 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-900 px-4 py-8 sm:px-6 lg:px-8 flex items-center">
       {/* Efeito de partículas */}
       <div className="fixed inset-0 overflow-hidden -z-10 opacity-20">
         {[...Array(15)].map((_, i) => (
@@ -185,7 +185,7 @@ export default function AgendarPartida() {
         ))}
       </div>
 
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto w-full">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
