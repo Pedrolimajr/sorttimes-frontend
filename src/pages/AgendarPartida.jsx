@@ -5,7 +5,7 @@ import { FaCalendarAlt, FaClock, FaMapMarkerAlt, FaStickyNote, FaSave, FaShare, 
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import api from '../services/api';
 import { toast } from 'react-toastify';
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function AgendarPartida() {
   const navigate = useNavigate();
@@ -124,9 +124,9 @@ export default function AgendarPartida() {
         `Confirme sua participação e garanta sua vaga para mais uma grande partida.\n` +
         `Vamos fechar os times e fazer aquele baba de respeito! 💪⚽\n\n` +
         `🗓 *Data:* ${dataFinal} às ${horaFormatada}\n\n` +
-        `🔗 *Confirme sua presença clicando no link abaixo:*\n` +
+        ` *Confirme sua presença clicando no link abaixo:*\n` +
         `👇\n` +
-        `${linkCompleto}\n\n` +
+        `🔗 ${linkCompleto}\n\n` +
         `🔥 _Bora pro jogo!_ 🏃⚽`;
       
       toast.dismiss(toastId);
