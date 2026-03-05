@@ -1,5 +1,3 @@
-
-
 // SorteioTimes.jsx
 import { useState, useEffect } from "react";
 import { 
@@ -16,6 +14,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import socket from '../services/socket';
 import usePersistedState from '../hooks/usePersistedState';
 import api from '../services/api';
+import domtoimage from 'dom-to-image';
 // Constantes para organizar os valores fixos
 const POSICOES = {
   GOLEIRO: "Goleiro",
@@ -198,6 +197,8 @@ export default function SorteioTimes() {
       return;
     }
 
+    const toastId = toast.loading("Gerando convite...");
+
     try {
       const response = await api.post('/gerar-link-presenca', {
         jogadores: jogadoresSelecionados.map(j => ({
@@ -218,7 +219,10 @@ export default function SorteioTimes() {
       const dataFormatada = new Date(dataJogo).toLocaleString('pt-BR', {
         weekday: 'long',
         day: 'numeric',
-        month: 'long',
+        month: 'long'
+      });
+      
+      const horaFormatada = new Date(dataJogo).toLocaleString('pt-BR', {
         hour: '2-digit',
         minute: '2-digit'
       });
@@ -226,24 +230,67 @@ export default function SorteioTimes() {
       // Capitaliza a primeira letra da data para ficar mais elegante
       const dataFinal = dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1);
 
-      const mensagem = `⚽ *CONVOCAÇÃO GERAL* ⚽\n\n` +
-        `Fala galera! A lista de presença está liberada! 🔥\n` +
-        `Quem vai pro jogo? Confirma aí pra gente fechar os times!\n\n` +
-        `🗓 *Data:* ${dataFinal}\n\n` +
-        `📲 *Link para confirmação:* 👇\n` +
+      const mensagem = ` *CONVOCAÇÃO GERAL* ⚽\n\n` +
+        `Atenção, boleiros!\n` +
+        `A lista de presença já está liberada! 🔥\n\n` +
+        `Confirme sua participação e garanta sua vaga para mais uma grande partida.\n` +
+        `Vamos fechar os times e fazer aquele jogo de respeito! 💪⚽\n\n` +
+        `🗓 *Data:* ${dataFinal} às ${horaFormatada}\n\n` +
+        `🔗 *Confirme sua presença:*\n` +
         `${linkCompleto}\n\n` +
-        `_Bora pro jogo!_ 🏃💨`;
+        `🔥 _Bora pro jogo!_ 🏃⚽`;
+
+      // Gerar imagem do card
+      let file = null;
+      const cardElement = document.getElementById('card-convocacao');
+      if (cardElement) {
+        try {
+          const blob = await domtoimage.toBlob(cardElement, {
+            quality: 0.95,
+            bgcolor: '#111827'
+          });
+          file = new File([blob], 'convite.png', { type: 'image/png' });
+        } catch (imgError) {
+          console.error('Erro ao gerar imagem:', imgError);
+        }
+      }
+
+      toast.dismiss(toastId);
+
+      // Copia a mensagem para a área de transferência preventivamente
+      try {
+        await navigator.clipboard.writeText(mensagem);
+      } catch (err) {
+        console.error('Erro ao copiar para clipboard:', err);
+      }
 
       if (navigator.share) {
-        await navigator.share({
-          title: 'Confirmação de Presença',
+        const shareData = {
+          title: 'Convocação SortTimes',
           text: mensagem
-        });
+        };
+
+        if (file) {
+          shareData.files = [file];
+        }
+
+        try {
+          await navigator.share(shareData);
+          if (file) {
+            toast.success('Convite gerado! Se o texto não aparecer, ele já foi copiado. É só colar! 📋');
+          }
+        } catch (shareError) {
+          // Se falhar com arquivo (alguns browsers desktop), tenta só texto
+          if (file) {
+            delete shareData.files;
+            await navigator.share(shareData);
+          }
+        }
       } else {
-        await navigator.clipboard.writeText(mensagem);
         toast.success('Link copiado para área de transferência!');
       }
     } catch (error) {
+      toast.dismiss(toastId);
       console.error('Erro ao gerar link:', error);
       toast.error('Erro ao gerar link de presença');
     }
@@ -313,6 +360,7 @@ export default function SorteioTimes() {
 
 //Carregar estado salvo
 // Carrega estado salvo ao iniciar
+
 
 //Evitar repetição de código
 const parseNivel = (nivelStr) => {
@@ -1138,9 +1186,65 @@ const TimeSorteado = ({ time, index }) => {
             </div>
           </motion.div>
         )}
+
+        {/* Card Oculto para Geração de Imagem (Convite) */}
+        <div
+          id="card-convocacao"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: '-9999px', // Mantém fora da tela
+            width: '600px',
+            height: '600px',
+            background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontFamily: 'Arial, sans-serif',
+            color: 'white',
+            padding: '40px',
+            zIndex: -1000
+          }}
+        >
+          {/* Elementos decorativos de fundo (Glow) */}
+          <div style={{ position: 'absolute', top: '-50px', left: '-50px', width: '250px', height: '250px', background: 'rgba(59, 130, 246, 0.15)', borderRadius: '50%', filter: 'blur(80px)' }} />
+          <div style={{ position: 'absolute', bottom: '-50px', right: '-50px', width: '250px', height: '250px', background: 'rgba(168, 85, 247, 0.15)', borderRadius: '50%', filter: 'blur(80px)' }} />
+
+          {/* Cabeçalho */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px', background: 'rgba(255,255,255,0.05)', padding: '10px 30px', borderRadius: '50px', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <GiSoccerKick size={40} color="#60a5fa" />
+            <h1 style={{ fontSize: '32px', fontWeight: '800', margin: 0, background: 'linear-gradient(to right, #60a5fa, #22d3ee)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              SortTimes
+            </h1>
+          </div>
+
+          <h2 style={{ fontSize: '48px', fontWeight: '900', margin: '0 0 10px 0', textTransform: 'uppercase', letterSpacing: '2px', textAlign: 'center', textShadow: '0 4px 10px rgba(0,0,0,0.3)' }}>
+            CONVOCAÇÃO
+          </h2>
+          <p style={{ fontSize: '22px', color: '#9ca3af', margin: '0 0 40px 0' }}>A lista de presença está aberta!</p>
+
+          {/* Box de Data e Hora */}
+          <div style={{ width: '100%', background: 'rgba(17, 24, 39, 0.6)', border: '2px solid #3b82f6', borderRadius: '25px', padding: '30px', textAlign: 'center', boxShadow: '0 10px 30px -5px rgba(59, 130, 246, 0.25)', backdropFilter: 'blur(10px)' }}>
+            <div style={{ fontSize: '16px', color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '10px', fontWeight: 'bold' }}>
+              Data do Jogo
+            </div>
+            <div style={{ fontSize: '48px', fontWeight: 'bold', color: 'white', lineHeight: '1.1', marginBottom: '5px' }}>
+              {dataJogo ? new Date(dataJogo).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : '--/--'}
+            </div>
+            <div style={{ fontSize: '18px', color: '#d1d5db', textTransform: 'uppercase', marginBottom: '15px' }}>
+              {dataJogo ? new Date(dataJogo).toLocaleDateString('pt-BR', { weekday: 'long' }) : 'Dia da semana'}
+            </div>
+            <div style={{ fontSize: '56px', fontWeight: 'bold', color: '#fbbf24', lineHeight: '1', textShadow: '0 2px 10px rgba(251, 191, 36, 0.3)' }}>
+              {dataJogo ? new Date(dataJogo).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+            </div>
+          </div>
+
+          <div style={{ marginTop: '40px', textAlign: 'center' }}>
+            <p style={{ fontSize: '18px', color: '#e5e7eb' }}>Clique no link da mensagem para confirmar 👇</p>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
-
-
