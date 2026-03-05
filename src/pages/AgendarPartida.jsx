@@ -137,10 +137,10 @@ export default function AgendarPartida() {
       };
 
       if (modoEdicao) {
-        await api.put(`/api/agenda/${editandoId}`, dadosParaEnviar);
+        await api.put(`/agenda/${editandoId}`, dadosParaEnviar);
         toast.success('Partida atualizada com sucesso!');
       } else {
-        await api.post('/api/agenda', dadosParaEnviar);
+        await api.post('/agenda', dadosParaEnviar);
         toast.success('Partida agendada com sucesso!');
       }
       navigate('/partidas-agendadas');
