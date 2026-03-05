@@ -1681,6 +1681,7 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
         <option value="">Todos</option>
         <option value="Adimplente">Adimplente</option>
         <option value="Inadimplente">Inadimplente</option>
+        <option value="Isento">Isento</option>
       </select>
 
       <motion.button
@@ -1724,11 +1725,31 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
           </thead>
           <tbody className="divide-y divide-gray-700">
             {jogadores
-              .filter(jogador =>
-                jogador.nivel === 'Associado' &&
-                jogador.nome.toLowerCase().includes(filtroJogador.toLowerCase()) &&
-                (filtroStatusFinanceiro === '' || jogador.statusFinanceiro === filtroStatusFinanceiro)
-              )
+              .filter(jogador => {
+                const isAssociado = jogador.nivel === 'Associado';
+                const matchesNome = jogador.nome.toLowerCase().includes(filtroJogador.toLowerCase());
+                
+                if (!isAssociado || !matchesNome) {
+                  return false;
+                }
+
+                if (filtroStatusFinanceiro === '') {
+                  return true;
+                }
+
+                const isTotalmenteIsento = jogador.pagamentos?.every(p => p.isento);
+
+                if (filtroStatusFinanceiro === 'Isento') {
+                  return isTotalmenteIsento;
+                }
+
+                if (filtroStatusFinanceiro === 'Adimplente') {
+                  // Mostra adimplentes que não são totalmente isentos
+                  return jogador.statusFinanceiro === 'Adimplente' && !isTotalmenteIsento;
+                }
+
+                return jogador.statusFinanceiro === filtroStatusFinanceiro;
+              })
               .map((jogador) => (
                 <tr key={jogador._id} className="hover:bg-gray-700/50">
                   <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium text-white">
