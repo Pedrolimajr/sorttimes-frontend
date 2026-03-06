@@ -220,10 +220,20 @@ export default function ConfirmarPresenca() {
     }
 
     const listaNomes = confirmados
-      .map((j, i) => `${i + 1}. ${j.nome}`)
+      .map((j, i) => `${i + 1}. ${j.nome} ⚽`)
       .join('\n');
 
-    const texto = `✅ *Lista de Confirmados:*\n\n${listaNomes}\n\nTotal: ${confirmados.length}`;
+    // Capitaliza a primeira letra da data se existir
+    const dataFormatada = eventoData ? eventoData.charAt(0).toUpperCase() + eventoData.slice(1) : '';
+    const linhaData = dataFormatada ? `🗓 *Data:* ${dataFormatada}\n` : '';
+
+    const texto = `📋 *LISTA DE CONFIRMADOS* ✅\n\n` +
+                  `${linhaData}` +
+                  `👥 *Total:* ${confirmados.length} Jogadores\n` +
+                  `━━━━━━━━━━━━━━━━━━\n` +
+                  `${listaNomes}\n` +
+                  `━━━━━━━━━━━━━━━━━━\n` +
+                  `🚀 _Bora pro jogo!_`;
 
     if (navigator.share) {
       navigator.share({
@@ -531,19 +541,17 @@ export default function ConfirmarPresenca() {
                         {jogadoresAdmin.length}
                       </p>
                     </div>
-                    <div className="bg-green-900/40 rounded-xl p-3 border border-green-600/40 relative">
-                      <button
-                        onClick={compartilharConfirmados}
-                        className="absolute top-2 right-2 text-green-400 hover:text-green-200 transition-colors p-1"
-                        title="Compartilhar lista de confirmados"
-                      >
-                        <FaShare size={12} />
-                      </button>
-                      <p className="text-green-300">Confirmados</p>
+                    <motion.div 
+                      whileTap={{ scale: 0.95 }}
+                      onClick={compartilharConfirmados}
+                      className="bg-green-900/40 rounded-xl p-3 border border-green-600/40 cursor-pointer hover:bg-green-900/50 transition-colors"
+                      title="Clique para compartilhar a lista"
+                    >
+                      <p className="text-green-300 flex items-center justify-center gap-1">Confirmados <FaShare size={10} /></p>
                       <p className="text-lg font-bold text-green-400">
                         {jogadoresAdmin.filter(j => j.presente).length}
                       </p>
-                    </div>
+                    </motion.div>
                     <div className="bg-red-900/40 rounded-xl p-3 border border-red-600/40">
                       <p className="text-red-300">Não confirmados</p>
                       <p className="text-lg font-bold text-red-400">
