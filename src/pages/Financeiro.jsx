@@ -20,7 +20,8 @@ import {
   FaUsers,
   FaTimesCircle,
   FaShare,
-  FaSearch
+  FaSearch,
+  FaAward
 } from "react-icons/fa";
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { motion, AnimatePresence } from "framer-motion";
@@ -1758,21 +1759,32 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                   <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap">
                     {jogador.pagamentos?.every(p => p.isento) ? (
                       <span
-                        className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-400 cursor-default"
+                        className="px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 bg-orange-500/20 text-orange-400 w-fit cursor-help"
                         title="Este jogador está isento de todas as mensalidades."
                       >
-                        Isento
+                        <FaAward className="text-xs" />
+                        <span>Isento</span>
                       </span>
                     ) : (
                       <motion.button
                         onClick={() => toggleStatus(jogador._id)}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          jogador.statusFinanceiro === 'Adimplente' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                        className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all duration-300 ${
+                          jogador.statusFinanceiro === 'Adimplente' ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30' : 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
                         }`}
                       >
-                        {jogador.statusFinanceiro || 'Inadimplente'}
+                        {jogador.statusFinanceiro === 'Adimplente' ? (
+                          <>
+                            <FaCheck className="text-xs" />
+                            <span>Adimplente</span>
+                          </>
+                        ) : (
+                          <>
+                            <FaTimes className="text-xs" />
+                            <span>Inadimplente</span>
+                          </>
+                        )}
                       </motion.button>
                     )}
                   </td>
@@ -1780,10 +1792,10 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                     <td key={i} className="px-1 sm:px-2 py-2 sm:py-3 whitespace-nowrap text-center">
                       {pagamento.isento ? (
                         <div
-                          className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center bg-yellow-400/30 text-yellow-300 cursor-help"
+                          className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center bg-orange-500/20 text-orange-400 cursor-help"
                           title="Isento"
                         >
-                          <FaCheck size={8} className="sm:text-xs" />
+                          <FaAward size={8} className="sm:text-xs" />
                         </div>
                       ) : (
                         <motion.button
