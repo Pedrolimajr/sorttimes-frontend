@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 import api from '../services/api';
 import { GiSoccerKick } from 'react-icons/gi';
-import { FaUser, FaLock, FaCalendarAlt, FaUserShield, FaEye, FaEyeSlash, FaSignOutAlt } from 'react-icons/fa';
+import { FaUser, FaLock, FaCalendarAlt, FaUserShield, FaEye, FaEyeSlash, FaSignOutAlt, FaShare } from 'react-icons/fa';
 
 export default function ConfirmarPresenca() {
   const { linkId } = useParams();
@@ -208,6 +208,31 @@ export default function ConfirmarPresenca() {
       toast.error(error.response?.data?.message || 'Erro ao atualizar presença');
     } finally {
       setSubmetendo(false);
+    }
+  };
+
+  const compartilharConfirmados = () => {
+    const confirmados = jogadoresAdmin.filter(j => j.presente);
+
+    if (confirmados.length === 0) {
+      toast.info("Nenhum jogador confirmado.");
+      return;
+    }
+
+    const listaNomes = confirmados
+      .map((j, i) => `${i + 1}. ${j.nome}`)
+      .join('\n');
+
+    const texto = `✅ *Lista de Confirmados:*\n\n${listaNomes}\n\nTotal: ${confirmados.length}`;
+
+    if (navigator.share) {
+      navigator.share({
+        title: 'Jogadores Confirmados',
+        text: texto
+      }).catch(err => console.error('Erro ao compartilhar:', err));
+    } else {
+      navigator.clipboard.writeText(texto);
+      toast.success("Lista copiada!");
     }
   };
 
@@ -506,7 +531,14 @@ export default function ConfirmarPresenca() {
                         {jogadoresAdmin.length}
                       </p>
                     </div>
-                    <div className="bg-green-900/40 rounded-xl p-3 border border-green-600/40">
+                    <div className="bg-green-900/40 rounded-xl p-3 border border-green-600/40 relative">
+                      <button
+                        onClick={compartilharConfirmados}
+                        className="absolute top-2 right-2 text-green-400 hover:text-green-200 transition-colors p-1"
+                        title="Compartilhar lista de confirmados"
+                      >
+                        <FaShare size={12} />
+                      </button>
                       <p className="text-green-300">Confirmados</p>
                       <p className="text-lg font-bold text-green-400">
                         {jogadoresAdmin.filter(j => j.presente).length}
