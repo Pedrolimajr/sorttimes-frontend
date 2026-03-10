@@ -1,0 +1,53 @@
+:root {
+  --neon: #00d1ff;
+  --danger: #ff6b6b;
+  --success: #00e676;
+}
+
+/* Container */
+.Toastify__toast-container {
+  z-index: 9999;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Base Toast Style */
+.Toastify__toast {
+  padding: 14px 18px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(0,209,255,0.1), rgba(0,120,255,0.05));
+  border: 1px solid rgba(0,209,255,0.2);
+  color: var(--neon);
+  font-size: 0.9rem;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(0,209,255,0.15);
+  margin-bottom: 0; /* Controlado pelo gap do container */
+  font-family: inherit;
+}
+
+/* Success Variant */
+.Toastify__toast--success {
+  background: linear-gradient(135deg, rgba(0,230,118,0.1), rgba(0,200,100,0.05));
+  border-color: rgba(0,230,118,0.2);
+  color: var(--success);
+}
+
+/* Error Variant */
+.Toastify__toast--error {
+  background: linear-gradient(135deg, rgba(255,107,107,0.1), rgba(255,107,107,0.05));
+  border-color: rgba(255,107,107,0.2);
+  color: var(--danger);
+}
+
+/* Elements */
+.Toastify__close-button {
+  color: currentColor;
+  opacity: 0.7;
+}
+
+.Toastify__progress-bar {
+  background: currentColor;
+  opacity: 0.3;
+}
