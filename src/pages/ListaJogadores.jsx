@@ -257,8 +257,19 @@ export default function ListaJogadores({
     if (formData.statusFinanceiro) formDataToSend.append('statusFinanceiro', formData.statusFinanceiro);
 
     // Adiciona as datas, convertendo para o formato ISO
-    if (formData.dataNascimento) formDataToSend.append('dataNascimento', new Date(formData.dataNascimento + 'T12:00:00').toISOString());
-    if (formData.dataIngresso) formDataToSend.append('dataIngresso', new Date(formData.dataIngresso + 'T12:00:00').toISOString());
+    // Trata o caso de limpar o campo de data.
+    // Se a data existir, formata. Senão, envia uma string vazia para o backend interpretar como nulo.
+    if (formData.dataNascimento) {
+      formDataToSend.append('dataNascimento', new Date(formData.dataNascimento + 'T12:00:00').toISOString());
+    } else {
+      formDataToSend.append('dataNascimento', '');
+    }
+
+    if (formData.dataIngresso) {
+      formDataToSend.append('dataIngresso', new Date(formData.dataIngresso + 'T12:00:00').toISOString());
+    } else {
+      formDataToSend.append('dataIngresso', '');
+    }
 
     // Adiciona a foto somente se for um arquivo novo (não uma URL)
     if (formData.foto && formData.foto instanceof File) {
