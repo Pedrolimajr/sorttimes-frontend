@@ -12,8 +12,7 @@ import {
 } from 'react-icons/fa';
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { useNavigate } from 'react-router-dom';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast, ToastContainer } from "react-toastify";
 import ConfirmModal from '../components/ConfirmModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../services/api';
@@ -654,24 +653,17 @@ export default function InformacoesPartida() {
         onCancel={cancelarExportarImagem}
       />
 
-      <ToastContainer 
-        position="bottom-right"
-        autoClose={2000}
-        hideProgressBar={true}
-        closeOnClick={true}
-        pauseOnHover={false}
-        draggable={false}
-        closeButton={false}
-        style={{
-          background: '#1F2937',
-          color: '#fff',
-          fontSize: '0.875rem',
-          padding: '0.5rem 1rem',
-          borderRadius: '0.5rem',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-          maxWidth: '300px',
-          margin: '0.5rem'
-        }}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
       />
     </div>
   );

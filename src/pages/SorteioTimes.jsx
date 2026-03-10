@@ -9,8 +9,7 @@ import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { GiSoccerKick } from "react-icons/gi";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast, ToastContainer } from 'react-toastify';
 import socket from '../services/socket';
 import usePersistedState from '../hooks/usePersistedState';
 import api from '../services/api';
@@ -1035,6 +1034,18 @@ const TimeSorteado = ({ time, index }) => {
           </motion.div>
         )}
       </div>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
     </div>
   );
 }

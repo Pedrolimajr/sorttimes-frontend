@@ -4,7 +4,7 @@ import { FaKey, FaEnvelope } from "react-icons/fa";
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { useNavigate } from "react-router-dom";
 import { authService } from "../services/authService";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import { useAuth } from "../context/AuthContext";
 
 export default function ConfiguracoesConta() {
@@ -292,6 +292,18 @@ export default function ConfiguracoesConta() {
           </motion.form>
         </div>
       </div>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
     </div>
   );
 }

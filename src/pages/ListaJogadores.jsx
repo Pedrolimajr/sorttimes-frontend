@@ -8,8 +8,7 @@ import {
 } from 'react-icons/fa';
 import { RiArrowLeftDoubleLine } from 'react-icons/ri';
 import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast, ToastContainer } from 'react-toastify';
 import { useJogadores } from '../context/JogadoresContext';
 import { calcularIdade } from '../utils/dateUtils';
 import api from '../services/api';
@@ -528,6 +527,18 @@ export default function ListaJogadores({
         cancelLabel="Cancelar"
         onConfirm={() => confirmDeleteJogador.jogador && performDeleteJogador(confirmDeleteJogador.jogador._id)}
         onCancel={() => setConfirmDeleteJogador({ open: false, jogador: null })}
+      />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
       />
 
       {!modoSelecao && (

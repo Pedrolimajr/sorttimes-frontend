@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { authService } from "../services/authService";
 import { useAuth } from "../context/AuthContext";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 
 export default function Login() {
@@ -231,6 +231,18 @@ export default function Login() {
             </div>
           </form>
         </motion.div>
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="dark"
+        />
       </div>
     </div>
   );

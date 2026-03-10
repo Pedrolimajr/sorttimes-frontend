@@ -14,7 +14,7 @@ import {
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../services/api';
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 
 const PartidasAgendadas = () => {
   const navigate = useNavigate();
@@ -338,6 +338,19 @@ const PartidasAgendadas = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
 
     </div>
   );

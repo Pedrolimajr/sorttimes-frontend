@@ -6,8 +6,7 @@ import {
 } from 'react-icons/fa';
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast, ToastContainer } from 'react-toastify';
 import api from '../services/api';
 
 export default function CadastroJogadores() {
@@ -515,6 +514,18 @@ export default function CadastroJogadores() {
           </div>
         </motion.form>
       </motion.div>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
     </div>
   );
 }

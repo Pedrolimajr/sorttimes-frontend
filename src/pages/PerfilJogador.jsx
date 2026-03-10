@@ -5,8 +5,7 @@ import {
   FaMapMarkerAlt, FaTshirt, FaFutbol, FaMoneyBillWave
 } from 'react-icons/fa';
 import { motion } from 'framer-motion';
-import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast, ToastContainer } from 'react-toastify';
 import api from '../services/api';
 import { calcularIdade } from '../utils/dateUtils';
 
@@ -181,6 +180,18 @@ export default function PerfilJogador() {
           </div>
         </motion.div>
       </div>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
     </div>
   );
 }

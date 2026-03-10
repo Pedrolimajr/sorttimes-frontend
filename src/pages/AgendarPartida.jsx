@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { FaCalendarAlt, FaClock, FaMapMarkerAlt, FaStickyNote, FaSave, FaShare, FaLink, FaBullhorn, FaTimes, FaCheck } from "react-icons/fa";
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import api from '../services/api';
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function AgendarPartida() {
@@ -529,6 +529,18 @@ export default function AgendarPartida() {
           </motion.div>
         )}
       </AnimatePresence>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
     </div>
   );
 }
