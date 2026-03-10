@@ -242,25 +242,28 @@ export default function ListaJogadores({
 
   const handleSubmit = async (e) => {
   e.preventDefault();
+
   try {
     const formDataToSend = new FormData();
-    
-    if (formData.dataNascimento) {
-      const nascimento = new Date(formData.dataNascimento + 'T12:00:00');
-      formDataToSend.append('dataNascimento', nascimento.toISOString());
-    }
 
-    if (formData.dataIngresso) {
-      const ingresso = new Date(formData.dataIngresso + 'T12:00:00');
-      formDataToSend.append('dataIngresso', ingresso.toISOString());
-    }
+    // Adiciona todos os campos de texto explicitamente
+    formDataToSend.append('nome', formData.nome);
+    formDataToSend.append('posicao', formData.posicao);
+    formDataToSend.append('nivel', formData.nivel);
+    if (formData.telefone) formDataToSend.append('telefone', formData.telefone);
+    if (formData.email) formDataToSend.append('email', formData.email);
+    if (formData.endereco) formDataToSend.append('endereco', formData.endereco);
+    if (formData.numeroCamisa) formDataToSend.append('numeroCamisa', formData.numeroCamisa);
+    if (formData.statusFinanceiro) formDataToSend.append('statusFinanceiro', formData.statusFinanceiro);
 
-    Object.keys(formData).forEach(key => {
-      if (key !== 'dataNascimento' && key !== 'dataIngresso' && 
-          formData[key] !== null && formData[key] !== undefined) {
-        formDataToSend.append(key, formData[key]);
-      }
-    });
+    // Adiciona as datas, convertendo para o formato ISO
+    if (formData.dataNascimento) formDataToSend.append('dataNascimento', new Date(formData.dataNascimento + 'T12:00:00').toISOString());
+    if (formData.dataIngresso) formDataToSend.append('dataIngresso', new Date(formData.dataIngresso + 'T12:00:00').toISOString());
+
+    // Adiciona a foto somente se for um arquivo novo (não uma URL)
+    if (formData.foto && formData.foto instanceof File) {
+      formDataToSend.append('foto', formData.foto);
+    }
 
     if (editando) {
       formDataToSend.append('id', editando);
