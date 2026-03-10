@@ -5,8 +5,6 @@ import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { useNavigate } from "react-router-dom";
 import { authService } from "../services/authService";
 import { toast } from "react-toastify";
-import 'react-toastify/dist/ReactToastify.css';
-import '../ToastStyles.css';
 import { useAuth } from "../context/AuthContext";
 
 export default function ConfiguracoesConta() {

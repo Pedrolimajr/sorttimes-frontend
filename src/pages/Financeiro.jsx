@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import '../ToastStyles.css';
 import {
   FaMoneyBillWave,
   FaArrowUp,

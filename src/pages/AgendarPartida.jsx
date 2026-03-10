@@ -5,8 +5,6 @@ import { FaCalendarAlt, FaClock, FaMapMarkerAlt, FaStickyNote, FaSave, FaShare, 
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import api from '../services/api';
 import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import '../ToastStyles.css';
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function AgendarPartida() {

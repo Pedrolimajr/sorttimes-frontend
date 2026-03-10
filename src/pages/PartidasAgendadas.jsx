@@ -15,8 +15,6 @@ import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../services/api';
 import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import '../ToastStyles.css';
 
 const PartidasAgendadas = () => {
   const navigate = useNavigate();

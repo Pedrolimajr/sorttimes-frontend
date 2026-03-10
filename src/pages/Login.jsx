@@ -5,8 +5,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { authService } from "../services/authService";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "react-toastify";
-import 'react-toastify/dist/ReactToastify.css';
-import '../ToastStyles.css';
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 
 export default function Login() {
