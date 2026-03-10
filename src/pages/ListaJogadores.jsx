@@ -10,6 +10,7 @@ import { RiArrowLeftDoubleLine } from 'react-icons/ri';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import '../styles/ToastStyles.css';
 import { useJogadores } from '../context/JogadoresContext';
 import { calcularIdade } from '../utils/dateUtils';
 import api from '../services/api';

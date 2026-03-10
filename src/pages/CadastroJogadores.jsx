@@ -8,6 +8,7 @@ import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import '../styles/ToastStyles.css';
 import api from '../services/api';
 
 export default function CadastroJogadores() {
