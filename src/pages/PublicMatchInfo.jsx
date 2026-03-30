@@ -44,7 +44,7 @@ export default function PublicMatchInfo() {
   const salvarDestaques = async (e) => {
     const { name, value } = e.target;
     try {
-      const novosDestaques = { ...partida.destaques, [name]: value };
+      const novosDestaques = { ...(partida.destaques || {}), [name]: value };
       const res = await api.patch(`/partida-publica/${linkId}/destaques`, novosDestaques);
       setPartida(res.data.data);
       toast.success("Destaque atualizado!");
