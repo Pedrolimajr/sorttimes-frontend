@@ -250,9 +250,16 @@ export default function InformacoesPartida() {
     if (!partidaSelecionada) return toast.warn("Selecione uma partida agendada!");
     try {
       setCarregando(true);
+      // Limpa os links anteriores antes de gerar novos
+      setLinkGeradoPartida('');
+      setLinkVotacao('');
+
       const res = await api.post(`/partida-publica/gerar-link/${partidaSelecionada._id}`);
-      const urlEventos = `${window.location.origin}/partida-publica/${res.data.linkId}`;
-      const urlVotacao = `${window.location.origin}/votar-partida/${res.data.linkId}`;
+      const linkId = res.data?.linkId || res.data?.data?.linkId;
+      
+      const urlEventos = `${window.location.origin}/partida-publica/${linkId}`;
+      const urlVotacao = `${window.location.origin}/votar-partida/${linkId}`;
+
       setLinkGeradoPartida(urlEventos);
       setLinkVotacao(urlVotacao);
       toast.success("Links da partida gerados com sucesso!");
