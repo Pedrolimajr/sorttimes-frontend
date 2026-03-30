@@ -150,9 +150,9 @@ export default function PublicMatchInfo() {
         {/* Seção de Cartões (Grid Rápido) */}
         <section className="grid grid-cols-3 gap-3">
           {[
-            { tipo: 'amarelo', cor: 'bg-yellow-400', label: 'Amarelo' },
-            { tipo: 'vermelho', cor: 'bg-red-500', label: 'Vermelho' },
-            { tipo: 'azul', cor: 'bg-blue-500', label: 'Azul' }
+            { tipo: 'amarelo', cor: 'bg-yellow-400', field: 'cartoesAmarelos' },
+            { tipo: 'vermelho', cor: 'bg-red-500', field: 'cartoesVermelhos' },
+            { tipo: 'azul', cor: 'bg-blue-500', field: 'cartoesAzuis' }
           ].map(card => (
             <div key={card.tipo} className="bg-gray-800 p-3 rounded-2xl border border-gray-700 text-center flex flex-col items-center">
               <div className={`w-6 h-8 ${card.cor} rounded-sm mb-2 shadow-lg mx-auto`} />
@@ -172,6 +172,15 @@ export default function PublicMatchInfo() {
               >
                 REGISTRAR
               </button>
+
+              {/* Lista de jogadores com este cartão */}
+              <div className="mt-3 w-full space-y-1">
+                {partida[card.field]?.map((nome, idx) => (
+                  <div key={idx} className="text-[9px] bg-gray-900 text-gray-300 py-1 px-2 rounded border border-gray-700 truncate">
+                    {nome}
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </section>

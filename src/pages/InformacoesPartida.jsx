@@ -717,23 +717,47 @@ export default function InformacoesPartida() {
                   </button>
                 </div>
 
-                {linkGeradoPartida && (
-                  <motion.div 
+                <AnimatePresence>
+                  {(linkGeradoPartida || linkVotacao) && (
+                    <motion.div 
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mt-6 bg-blue-500/10 border border-blue-500/30 p-4 rounded-xl flex flex-col sm:flex-row items-center gap-4"
-                  >
-                    <div className="flex-1 text-xs font-mono text-blue-300 break-all bg-gray-900 p-3 rounded-lg border border-blue-900/50">
-                      {linkGeradoPartida}
-                    </div>
-                    <button 
-                      onClick={copiarLinkPartida}
-                      className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-bold flex items-center gap-2"
+                    className="mt-6 space-y-4"
                     >
-                      <FaCopy /> Copiar
-                    </button>
-                  </motion.div>
-                )}
+                      {/* Card do Link de Eventos */}
+                      <div className="bg-blue-500/10 border border-blue-500/30 p-4 rounded-xl flex flex-col sm:flex-row items-center gap-4">
+                        <div className="flex-1">
+                          <p className="text-[10px] font-bold text-blue-400 uppercase mb-1">Link de Eventos (Gols e Cartões)</p>
+                          <div className="text-xs font-mono text-blue-300 break-all bg-gray-900 p-3 rounded-lg border border-blue-900/50">
+                            {linkGeradoPartida}
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => { navigator.clipboard.writeText(linkGeradoPartida); toast.info("Link de Eventos copiado!"); }}
+                          className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-bold flex items-center gap-2 w-full sm:w-auto"
+                        >
+                          <FaCopy /> Copiar
+                        </button>
+                      </div>
+
+                      {/* Card do Link de Votação */}
+                      <div className="bg-purple-500/10 border border-purple-500/30 p-4 rounded-xl flex flex-col sm:flex-row items-center gap-4">
+                        <div className="flex-1">
+                          <p className="text-[10px] font-bold text-purple-400 uppercase mb-1">Link de Votação para Atletas</p>
+                          <div className="text-xs font-mono text-purple-300 break-all bg-gray-900 p-3 rounded-lg border border-purple-900/50">
+                            {linkVotacao}
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => { navigator.clipboard.writeText(linkVotacao); toast.info("Link de Votação copiado!"); }}
+                          className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg font-bold flex items-center gap-2 w-full sm:w-auto"
+                        >
+                          <FaCopy /> Copiar
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {partidaSelecionada && (
