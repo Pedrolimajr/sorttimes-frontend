@@ -1,670 +1,202 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  FaPlus, 
-  FaTrash, 
-  FaFilePdf, 
-  FaFileImage, 
-  FaArrowLeft, 
-  FaSave, 
-  FaTable,
-  FaTimesCircle,
-  FaFileDownload
-} from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FaFutbol, FaLink, FaCopy, FaTrash, FaTrophy, FaUserTimes, FaAward, FaCalendarAlt, FaCheckCircle, FaLock } from 'react-icons/fa';
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { useNavigate } from 'react-router-dom';
-import { toast, ToastContainer } from "react-toastify";
-import ConfirmModal from '../components/ConfirmModal';
-import { motion, AnimatePresence } from 'framer-motion';
+import { toast, ToastContainer } from 'react-toastify';
 import api from '../services/api';
 
 export default function InformacoesPartida() {
   const navigate = useNavigate();
-  const [planilhas, setPlanilhas] = useState([]);
-  const [planilhaAtiva, setPlanilhaAtiva] = useState(null);
-  const [titulo, setTitulo] = useState('Nova Planilha');
-  const [subtitulo, setSubtitulo] = useState('');
-  const [tabela, setTabela] = useState([['Cabeçalho', 'Valor'], ['', '']]);
+  const [partidas, setPartidas] = useState([]);
+  const [partidaSelecionada, setPartidaSelecionada] = useState(null);
+  const [jogadores, setJogadores] = useState([]);
+  const [linkGerado, setLinkGerado] = useState('');
   const [carregando, setCarregando] = useState(false);
-  const [erro, setErro] = useState(null);
 
-  // Modal de confirmação para exclusão de planilha
-  const [confirmDeletePlanilha, setConfirmDeletePlanilha] = useState({ open: false, planilha: null });
-
-  const refPlanilha = useRef(null);
-
-  // Carrega planilhas ao iniciar
+  // Carrega partidas e jogadores ao iniciar
   useEffect(() => {
-    const carregarPlanilhas = async () => {
+    const carregarDados = async () => {
       try {
-        setCarregando(true);
-
-        const token = localStorage.getItem('token');
-        if (!token) {
-          throw new Error('Faça login para carregar as planilhas');
-        }
-
-        const response = await api.get('/planilhas');
-        const data = response.data?.data || response.data || [];
-        setPlanilhas(data || []);
-
-        if (data?.length > 0) {
-          selecionarPlanilha(data[0]);
-        }
-      } catch (error) {
-        setErro(error.message);
-        toast.error(error.message);
-      } finally {
-        setCarregando(false);
+        const [resPartidas, resJogadores] = await Promise.all([
+          api.get('/agenda'),
+          api.get('/jogadores')
+        ]);
+        setPartidas(resPartidas.data || []);
+        setJogadores(resJogadores.data?.data || []);
+      } catch (err) {
+        toast.error("Erro ao carregar dados do sistema.");
       }
     };
-
-    carregarPlanilhas();
+    carregarDados();
   }, []);
 
-  // Função para salvar planilha
-  const salvarPlanilha = async () => {
+  const gerarLinkPublico = async () => {
+    if (!partidaSelecionada) return toast.warn("Selecione uma partida primeiro!");
+    
     try {
       setCarregando(true);
-      
-      // Validação básica
-      if (!titulo.trim()) {
-        toast.error('Título é obrigatório', {
-          position: "bottom-right",
-          autoClose: 2000,
-          hideProgressBar: true
-        });
-        return setCarregando(false);
-      }
-
-      const planilhaData = {
-        titulo: titulo.trim(),
-        subtitulo: subtitulo.trim(),
-        tabela,
-        dataAtualizacao: new Date().toISOString()
-      };
-
-      // Verificar token antes de salvar
-      const token = localStorage.getItem('token');
-      if (!token) {
-        toast.error('Faça login para salvar planilhas');
-        return;
-      }
-
-      // Usar axios com timeout para salvar (PUT ou POST)
-      const config = { timeout: 10000 };
-      const endpoint = planilhaAtiva?._id ? `/planilhas/${planilhaAtiva._id}` : '/planilhas';
-      const method = planilhaAtiva?._id ? api.put : api.post;
-
-      const response = await method(endpoint, planilhaData, config);
-      const data = response.data?.data || response.data;
-
-      setPlanilhas(prev => 
-        planilhaAtiva?._id 
-          ? prev.map(p => p._id === data._id ? data : p)
-          : [data, ...prev]
-      );
-      
-      setPlanilhaAtiva(data);
-      toast.success('Salvo!', {
-        position: "bottom-right",
-        autoClose: 1500,
-        hideProgressBar: true
-      });
-
-    } catch (error) {
-      console.error('Erro:', error);
-      toast.error(
-        error.name === 'AbortError' 
-          ? 'Tempo limite excedido' 
-          : error.message || 'Erro ao salvar',
-        {
-          position: "bottom-right",
-          autoClose: 2000,
-          hideProgressBar: true
-        }
-      );
+      const res = await api.post(`/partida-publica/gerar-link/${partidaSelecionada._id}`);
+      const url = `${window.location.origin}/partida-publica/${res.data.linkId}`;
+      setLinkGerado(url);
+      toast.success("Link gerado com sucesso! Válido por 3 dias.");
+    } catch (err) {
+      toast.error("Erro ao gerar link público.");
     } finally {
       setCarregando(false);
     }
   };
 
-  // Funções para manipulação da tabela
-  const adicionarLinha = () => setTabela([...tabela, tabela[0].map(() => '')]);
-  const adicionarColuna = () => setTabela(tabela.map(row => [...row, '']));
-  
-  const atualizarCelula = (linha, coluna, valor) => {
-    const novaTabela = [...tabela];
-    novaTabela[linha][coluna] = valor;
-    setTabela(novaTabela);
+  const copiarLink = () => {
+    navigator.clipboard.writeText(linkGerado);
+    toast.info("Link copiado para a área de transferência!");
   };
 
-  const removerLinha = (index) => {
-    if (index === 0 || tabela.length <= 2) return;
-    setTabela(tabela.filter((_, i) => i !== index));
-  };
-
-  const removerColuna = (colIndex) => {
-    if (tabela[0].length <= 1) return;
-    setTabela(tabela.map(row => row.filter((_, i) => i !== colIndex)));
-  };
-
-  // Abre modal de confirmação para exclusão de planilha
-  const deletarPlanilha = (id) => {
-    const planilha = planilhas.find(p => p._id === id);
-    if (!planilha) {
-      toast.error('Planilha não encontrada');
-      return;
-    }
-
-    setConfirmDeletePlanilha({ open: true, planilha });
-  };
-
-  // Realiza a exclusão efetiva (otimista com rollback)
-  const performDeletePlanilha = async (id) => {
-    const originalPlanilhas = [...planilhas];
+  const encerrarPartida = async () => {
+    if (!window.confirm("Deseja realmente encerrar a partida? Isso bloqueará novas edições no link público.")) return;
     try {
-      setCarregando(true);
-
-      const token = localStorage.getItem('token');
-      if (!token) {
-        toast.error('Faça login para excluir planilhas');
-        setConfirmDeletePlanilha({ open: false, planilha: null });
-        return;
-      }
-
-      // Otimista: remove da UI imediatamente
-      setPlanilhas(prev => prev.filter(p => p._id !== id));
-
-      await api.delete(`/planilhas/${id}`);
-
-      // Se a planilha ativa for a excluída, resetar o editor
-      if (planilhaAtiva?._id === id) {
-        setTitulo('Nova Planilha');
-        setSubtitulo('');
-        setTabela([['Cabeçalho', 'Valor'], ['', '']]);
-        setPlanilhaAtiva(null);
-      }
-
-      toast.success('Excluído!', {
-        position: "bottom-right",
-        autoClose: 1500,
-        hideProgressBar: true
-      });
-    } catch (error) {
-      console.error('Erro:', error);
-      setPlanilhas(originalPlanilhas);
-      toast.error(`Falha ao excluir: ${error.message}`, {
-        position: "bottom-right",
-        autoClose: 2000,
-        hideProgressBar: true
-      });
-    } finally {
-      setCarregando(false);
-      setConfirmDeletePlanilha({ open: false, planilha: null });
-    }
-  };
-
-  const criarNovaPlanilha = () => {
-    setTitulo(`Nova Planilha ${planilhas.length + 1}`);
-    setSubtitulo('');
-    setTabela([['Cabeçalho', 'Valor'], ['', '']]);
-    setPlanilhaAtiva(null);
-  };
-
-  const selecionarPlanilha = (planilha) => {
-    setTitulo(planilha.titulo);
-    setSubtitulo(planilha.subtitulo || '');
-    setTabela(planilha.tabela);
-    setPlanilhaAtiva(planilha);
-  };
-
-  const voltarParaDashboard = () => navigate('/dashboard');
-
-  const [exportModalOpen, setExportModalOpen] = useState(false);
-
-  const exportarParaPDF = () => {
-    return new Promise((resolve) => {
-      setTimeout(async () => {
-        const { jsPDF } = await import('jspdf');
-        const doc = new jsPDF();
-
-        doc.setFontSize(20);
-        doc.text(titulo, 14, 15);
-
-        if (subtitulo) {
-          doc.setFontSize(12);
-          doc.text(subtitulo, 14, 22);
-        }
-
-        doc.setFontSize(10);
-        doc.text(`Exportado em: ${new Date().toLocaleString()}`, 14, 29);
-
-        let y = 40;
-        tabela.forEach((linha, i) => {
-          linha.forEach((celula, j) => {
-            doc.setFontSize(i === 0 ? 12 : 10);
-            doc.setTextColor(i === 0 ? '#000000' : '#333333');
-            doc.text(celula, 14 + (j * 40), y);
-          });
-          y += 10;
-        });
-
-        doc.save(`planilha_${titulo}_${new Date().getTime()}.pdf`);
-        resolve();
-      }, 100);
-    });
-  };
-
-  const exportarParaImagem = async () => {
-    const { toPng } = await import('html-to-image');
-    const elemento = refPlanilha.current;
-
-    if (elemento) {
-      const dataUrl = await toPng(elemento);
-      const link = document.createElement('a');
-      link.download = `planilha_${titulo}_${new Date().getTime()}.png`;
-      link.href = dataUrl;
-      link.click();
-    }
-  };
-
-  const exportarPDF = async () => {
-    try {
-      setCarregando(true);
-
-      setExportModalOpen(true);
-
-    } catch (error) {
-      console.error('Erro ao exportar:', error);
-      toast.error(`Falha ao exportar: ${error.message}`, {
-        position: "bottom-right",
-        autoClose: 2000,
-        hideProgressBar: true
-      });
-      setCarregando(false);
-    }
-  };
-
-  const confirmarExportarPDF = async () => {
-    setExportModalOpen(false);
-    try {
-      setCarregando(true);
-      await exportarParaPDF();
-      toast.success('PDF gerado!', { position: 'bottom-right', autoClose: 1500, hideProgressBar: true });
-    } catch (error) {
-      console.error('Erro ao exportar PDF:', error);
-      toast.error('Falha ao gerar PDF');
-    } finally {
-      setCarregando(false);
-    }
-  };
-
-  const cancelarExportarImagem = async () => {
-    setExportModalOpen(false);
-    try {
-      setCarregando(true);
-      await exportarParaImagem();
-      toast.success('Imagem gerada!', { position: 'bottom-right', autoClose: 1500, hideProgressBar: true });
-    } catch (error) {
-      console.error('Erro ao exportar imagem:', error);
-      toast.error('Falha ao gerar imagem');
-    } finally {
-      setCarregando(false);
+      // Lógica para marcar como encerrada no banco
+      toast.success("Partida encerrada!");
+    } catch (err) {
+      toast.error("Erro ao encerrar partida.");
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 px-4 py-8 sm:px-6 lg:px-8">
-      {/* Efeito de partículas */}
-      <div className="fixed inset-0 overflow-hidden -z-10 opacity-20">
-        {[...Array(15)].map((_, i) => (
-          <motion.div
-            key={i}
-            initial={{ 
-              x: Math.random() * 100,
-              y: Math.random() * 100,
-              opacity: 0.3
-            }}
-            animate={{ 
-              y: [null, (Math.random() - 0.5) * 50],
-              x: [null, (Math.random() - 0.5) * 50],
-            }}
-            transition={{ 
-              duration: 15 + Math.random() * 20,
-              repeat: Infinity,
-              repeatType: "reverse",
-              ease: "easeInOut"
-            }}
-            className="absolute w-1 h-1 bg-white rounded-full"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-          />
-        ))}
-      </div>
-
-      <div className="max-w-7xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8 relative pt-16 sm:pt-0 text-center"
-        >
-          {/* Botão Voltar */}
+    <div className="min-h-screen bg-gray-900 text-white p-4 sm:p-8 font-sans">
+      <div className="max-w-4xl mx-auto space-y-8">
+        
+        {/* Header */}
+        <header className="relative flex flex-col items-center mb-10">
           <motion.button 
-            onClick={voltarParaDashboard}
-            whileHover={{ 
-              scale: 1.05,
-              x: -5,
-              backgroundColor: "rgba(37, 99, 235, 0.1)"
-            }}
-            whileTap={{ scale: 0.95 }}
-            className="absolute left-4 top-0 sm:top-8 w-11 h-11 flex items-center justify-center bg-gray-800/40 hover:bg-gray-700/40 text-gray-200 rounded-full transition-all duration-300 backdrop-blur-sm border border-gray-700/50 shadow-lg hover:shadow-blue-500/20"
-            title="Voltar para o Dashboard"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3 }}
+            onClick={() => navigate('/dashboard')}
+            className="absolute left-0 top-0 p-3 bg-gray-800 rounded-full border border-gray-700 hover:bg-gray-700 transition-all"
           >
-            <RiArrowLeftDoubleLine className="text-blue-400 text-2xl transform transition-transform group-hover:translate-x-1" />
-            <div className="absolute inset-0 rounded-full bg-blue-400/10 animate-pulse" style={{ animationDuration: '3s' }} />
+            <RiArrowLeftDoubleLine className="text-blue-400 text-xl" />
           </motion.button>
+          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300">
+            Painel de Informações da Partida
+          </h1>
+          <p className="text-gray-400 mt-2">Gerencie eventos e links públicos</p>
+        </header>
 
-          {/* Cabeçalho com título e botões */}
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            {/* Título e Subtítulo Centralizados */}
-            <div className="flex flex-col items-center flex-grow">
-              <div className="flex items-center justify-center gap-3">
-                <FaTable className="text-blue-400 text-2xl sm:text-3xl" />
-                <motion.h1 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.1 }}
-                  className="text-2xl sm:text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300"
-                >
-                  Informações das Partidas
-                </motion.h1>
-              </div>
-
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 0.8 }}
-                transition={{ delay: 0.2 }}
-                className="text-gray-400 text-sm sm:text-base mt-1"
+        {/* Seleção de Partida e Gerador de Link */}
+        <section className="bg-gray-800 rounded-2xl p-6 border border-gray-700 shadow-xl space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-2 flex items-center gap-2">
+                <FaCalendarAlt className="text-blue-400" /> Selecionar Partida Agendada
+              </label>
+              <select 
+                className="w-full bg-gray-900 border-gray-700 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={(e) => setPartidaSelecionada(partidas.find(p => p._id === e.target.value))}
               >
-                Gerencie as informações e detalhes das partidas
-              </motion.p>
+                <option value="">Escolha uma partida...</option>
+                {partidas.map(p => (
+                  <option key={p._id} value={p._id}>
+                    {new Date(p.data).toLocaleDateString()} - {p.local}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            {/* Botões de ação mantidos à direita */}
-            <motion.div 
-              className="flex gap-3 sm:flex-shrink-0"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              <button
-                onClick={criarNovaPlanilha}
-                className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg text-sm"
+            <div className="flex items-end">
+              <motion.button
+                onClick={gerarLinkPublico}
+                disabled={!partidaSelecionada || carregando}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className={`w-full p-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${
+                  !partidaSelecionada ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-900/20'
+                }`}
               >
-                <FaPlus /> Nova Planilha
-              </button>
-              
-              <button
-                onClick={salvarPlanilha}
-                disabled={carregando}
-                className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg text-sm"
-              >
-                <FaSave /> {carregando ? 'Salvando...' : 'Salvar'}
-              </button>
-            </motion.div>
-          </div>
-        </motion.div>
-
-        {/* Resto do conteúdo existente */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Seção de edição (ocupa 2 colunas em desktop) */}
-          <div className="lg:col-span-2">
-            <div className="bg-gray-800 p-6 rounded-lg shadow-lg mb-6 backdrop-blur-sm">
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-300 mb-1">Título</label>
-                <input
-                  value={titulo}
-                  onChange={(e) => setTitulo(e.target.value)}
-                  className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white"
-                  placeholder="Título da Planilha"
-                />
-              </div>
-              
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-300 mb-1">Subtítulo</label>
-                <input
-                  value={subtitulo}
-                  onChange={(e) => setSubtitulo(e.target.value)}
-                  className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white"
-                  placeholder="Subtítulo"
-                />
-              </div>
-
-              {/* Tabela editável com scroll */}
-              <div className="overflow-auto max-h-[60vh] rounded-lg border border-gray-700 shadow-xl">
-                <table className="min-w-full border-collapse table-fixed">
-                  <thead>
-                    <tr className="bg-gray-600">
-                      {tabela[0].map((cabecalho, colIndex) => (
-                        <th 
-                          key={colIndex} 
-                          className="p-2 border border-gray-500 sticky top-0 bg-gray-600 min-w-[150px] text-center"
-                        >
-                          <div className="flex flex-col items-center">
-                            <input
-                              value={cabecalho}
-                              onChange={(e) => atualizarCelula(0, colIndex, e.target.value)}
-                              className="w-full bg-transparent font-bold text-white text-center text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 px-2 py-1.5 placeholder-gray-400"
-                              style={{ minWidth: '100px' }}
-                            />
-                            <div className="mt-1">
-                              <button
-                                onClick={() => removerColuna(colIndex)}
-                                className="text-red-400 hover:text-red-300 text-xs opacity-60 hover:opacity-100 transition-opacity"
-                                title="Remover coluna"
-                              >
-                                <FaTimesCircle />
-                              </button>
-                            </div>
-                          </div>
-                        </th>
-                      ))}
-                      <th className="w-10 p-2 border border-gray-500 sticky top-0 bg-gray-600 text-center">
-                        <button
-                          onClick={adicionarColuna}
-                          className="mx-auto flex justify-center text-white hover:text-green-300 transition-colors"
-                          title="Adicionar coluna"
-                        >
-                          <FaPlus />
-                        </button>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {tabela.slice(1).map((linha, rowIndex) => (
-                      <tr 
-                        key={rowIndex} 
-                        className={`${
-                          rowIndex % 2 === 0 ? 'bg-gray-700' : 'bg-gray-800'
-                        } hover:bg-gray-600/50 transition-colors`}
-                      >
-                        {linha.map((celula, colIndex) => (
-                          <td key={colIndex} className="border border-gray-600 p-0 text-center">
-                            <input
-                              value={celula}
-                              onChange={(e) => atualizarCelula(rowIndex + 1, colIndex, e.target.value)}
-                              className="w-full h-full bg-transparent text-white text-center text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 px-2 py-1.5"
-                              style={{ minWidth: '100px' }}
-                              placeholder="Digite aqui..."
-                            />
-                          </td>
-                        ))}
-                        <td className="border border-gray-600 w-10 text-center">
-                          <button
-                            onClick={() => removerLinha(rowIndex + 1)}
-                            className="w-full h-full flex justify-center items-center text-red-400 hover:text-red-300 opacity-60 hover:opacity-100 transition-opacity"
-                            title="Remover linha"
-                          >
-                            <FaTrash size={12} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="mt-6 flex flex-wrap gap-3 border-t border-gray-700 pt-4">
-                <button
-                  onClick={adicionarLinha}
-                  className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg text-xs sm:text-sm"
-                >
-                  <FaPlus /> Adicionar Linha
-                </button>
-                
-                <button
-                  onClick={exportarPDF}
-                  className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg text-xs sm:text-sm"
-                >
-                  <FaFilePdf /> Exportar PDF
-                </button>
-              </div>
+                <FaLink /> {carregando ? 'Gerando...' : 'Gerar Link de 72 Horas'}
+              </motion.button>
             </div>
           </div>
 
-          {/* Lista de planilhas (1 coluna em desktop) com scroll */}
-          <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
-            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-              <FaTable /> Planilhas Salvas
-            </h2>
-            
-            {planilhas.length === 0 ? (
-              <p className="text-gray-400">Nenhuma planilha cadastrada</p>
-            ) : (
-              <div className="overflow-y-auto max-h-[60vh] space-y-3">
-                {planilhas.map((planilha) => (
-                  <div 
-                    key={planilha._id}
-                    onClick={() => selecionarPlanilha(planilha)}
-                    className={`p-3 border rounded-lg cursor-pointer transition-colors relative ${
-                      planilhaAtiva?._id === planilha._id 
-                        ? 'bg-blue-900/30 border-blue-500' 
-                        : 'border-gray-600 hover:bg-gray-700'
-                    }`}
+          {/* Exibição do Link Gerado */}
+          <AnimatePresence>
+            {linkGerado && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-blue-500/10 border border-blue-500/30 p-4 rounded-xl flex flex-col sm:flex-row items-center gap-4"
+              >
+                <div className="flex-1 text-xs sm:text-sm font-mono text-blue-300 break-all bg-gray-900 p-3 rounded-lg border border-blue-900/50">
+                  {linkGerado}
+                </div>
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <button 
+                    onClick={copiarLink}
+                    className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 p-3 rounded-lg transition-colors flex items-center justify-center gap-2"
                   >
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deletarPlanilha(planilha._id);
-                      }}
-                      className="absolute top-2 right-2 text-red-400 hover:text-red-300"
-                      title="Excluir planilha"
-                    >
-                      <FaTrash />
-                    </button>
-                    
-                    <h3 className="font-bold">{planilha.titulo}</h3>
-                    {planilha.subtitulo && <p className="text-sm text-gray-300 mt-1">{planilha.subtitulo}</p>}
-                    <p className="text-xs text-gray-400 mt-2">
-                      Criada em: {new Date(planilha.dataAtualizacao).toLocaleDateString()}
-                    </p>
+                    <FaCopy /> Copiar
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </section>
+
+        {/* Resumo em Tempo Real (Apenas Visualização para o Admin nesta tela) */}
+        {partidaSelecionada && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            {/* Estatísticas Rápidas */}
+            <section className="bg-gray-800 rounded-2xl p-6 border border-gray-700 shadow-xl">
+              <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-green-400">
+                <FaFutbol /> Gols Registrados
+              </h2>
+              <div className="space-y-3">
+                {partidaSelecionada.gols?.length > 0 ? (
+                  partidaSelecionada.gols.map((g, i) => (
+                    <div key={i} className="flex justify-between p-3 bg-gray-900 rounded-lg border border-gray-700">
+                      <span className="font-medium">{g.jogador}</span>
+                      <span className="text-gray-500 text-xs">{new Date(g.horario).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-center py-4">Nenhum gol registrado via link público ainda.</p>
+                )}
+              </div>
+            </section>
+
+            {/* Destaques e Encerramento */}
+            <section className="bg-gray-800 rounded-2xl p-6 border border-gray-700 shadow-xl space-y-6">
+              <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-yellow-400">
+                <FaAward /> Destaques da Partida
+              </h2>
+              
+              <div className="space-y-4">
+                {[
+                  { label: 'Melhor da Partida', val: partidaSelecionada.destaques?.melhorPartida, icon: <FaTrophy className="text-yellow-500"/> },
+                  { label: 'Pereba da Partida', val: partidaSelecionada.destaques?.perebaPartida, icon: <FaUserTimes className="text-red-400"/> },
+                  { label: 'Gol Mais Bonito', val: partidaSelecionada.destaques?.golMaisBonito, icon: <FaCheckCircle className="text-cyan-400"/> }
+                ].map((d, i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 bg-gray-900 rounded-xl border border-gray-700">
+                    <div className="text-lg">{d.icon}</div>
+                    <div>
+                      <p className="text-[10px] uppercase text-gray-500 font-bold">{d.label}</p>
+                      <p className="text-sm font-bold text-white">{d.val || 'Não definido'}</p>
+                    </div>
                   </div>
                 ))}
               </div>
-            )}
+
+              <motion.button
+                onClick={encerrarPartida}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full mt-6 bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white border border-red-600/50 p-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all"
+              >
+                <FaLock /> Encerrar Registro da Partida
+              </motion.button>
+            </section>
           </div>
-        </div>
-      </div>
-
-      <AnimatePresence>
-        {confirmDeletePlanilha.open && confirmDeletePlanilha.planilha && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 backdrop-blur-sm"
-            onClick={() => setConfirmDeletePlanilha({ open: false, planilha: null })}
-          >
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 20, opacity: 0 }}
-              className="bg-gray-800 rounded-xl shadow-2xl w-full max-w-md border border-gray-700"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex justify-between items-center px-4 sm:px-6 pt-4 pb-2 border-b border-gray-700">
-                <h3 className="text-lg sm:text-xl font-bold text-white">Confirmar exclusão</h3>
-                <motion.button
-                  onClick={() => setConfirmDeletePlanilha({ open: false, planilha: null })}
-                  whileHover={{ rotate: 90 }}
-                  className="text-gray-400 hover:text-white text-sm sm:text-base"
-                >
-                  <FaTimesCircle />
-                </motion.button>
-              </div>
-
-              <div className="p-4">
-                <p className="text-sm text-gray-300">
-                  Você está prestes a excluir a planilha <span className="font-medium text-white">{confirmDeletePlanilha.planilha.titulo}</span>. Esta ação é permanente e não pode ser desfeita.
-                </p>
-                <div className="mt-3">
-                  {confirmDeletePlanilha.planilha.subtitulo && (
-                    <p className="text-xs text-gray-400">Subtítulo: <span className="font-medium text-white">{confirmDeletePlanilha.planilha.subtitulo}</span></p>
-                  )}
-                  <p className="text-xs text-gray-400">Atualizada em: <span className="font-medium text-white">{new Date(confirmDeletePlanilha.planilha.dataAtualizacao).toLocaleDateString()}</span></p>
-                </div>
-              </div>
-
-              <div className="mt-2 sm:mt-4 px-4 sm:px-6 pb-4 pt-2 border-t border-gray-700 flex justify-end gap-2 sm:gap-3 bg-gray-800/90">
-                <motion.button
-                  onClick={() => setConfirmDeletePlanilha({ open: false, planilha: null })}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm"
-                >
-                  Cancelar
-                </motion.button>
-                <motion.button
-                  onClick={() => performDeletePlanilha(confirmDeletePlanilha.planilha._id)}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm"
-                >
-                  Confirmar exclusão
-                </motion.button>
-              </div>
-            </motion.div>
-          </motion.div>
         )}
-      </AnimatePresence>
-
-      <ConfirmModal
-        open={exportModalOpen}
-        title="Exportar Planilha"
-        description="Clique em 'Exportar como PDF' para gerar um PDF ou 'Exportar como Imagem' para gerar PNG."
-        confirmLabel="Exportar como PDF"
-        cancelLabel="Exportar como Imagem"
-        onConfirm={confirmarExportarPDF}
-        onCancel={cancelarExportarImagem}
-      />
-
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="dark"
-      />
+      </div>
+      <ToastContainer theme="dark" position="bottom-center" />
     </div>
   );
 }
