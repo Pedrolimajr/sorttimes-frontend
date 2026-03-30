@@ -18,6 +18,7 @@ export default function VotacaoPartida() {
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [adminCreds, setAdminCreds] = useState({ username: '', password: '' });
+  const [mostrarSenhaAdminCred, setMostrarSenhaAdminCred] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -95,18 +96,19 @@ export default function VotacaoPartida() {
     }
   };
 
-  const compartilharResultados = () => {
-    const apurar = (cat) => {
-      const vts = partida.votos?.filter(v => v.categoria === cat) || [];
-      if (vts.length === 0) return 'Ninguém';
-      const contagem = vts.reduce((acc, v) => { acc[v.jogador] = (acc[v.jogador] || 0) + 1; return acc; }, {});
-      return Object.entries(contagem).sort((a,b) => b[1] - a[1])[0][0];
-    };
+  const apurarVencedor = (cat) => {
+    const vts = partida?.votos?.filter(v => v.categoria === cat) || [];
+    if (vts.length === 0) return { nome: 'Ninguém', votos: 0 };
+    const contagem = vts.reduce((acc, v) => { acc[v.jogador] = (acc[v.jogador] || 0) + 1; return acc; }, {});
+    const sorted = Object.entries(contagem).sort((a, b) => b[1] - a[1]);
+    return { nome: sorted[0][0], votos: sorted[0][1] };
+  };
 
+  const compartilharResultados = () => {
     const msg = `🏆 *RESULTADOS DA PARTIDA* 🏆\n\n` +
-                `🌟 Melhor da Partida: ${apur('melhorPartida')}\n` +
-                `🐢 Pereba da Partida: ${apur('perebaPartida')}\n` +
-                `⚽ Gol Mais Bonito: ${apur('golMaisBonito')}\n\n` +
+                `🌟 Melhor da Partida: ${apurarVencedor('melhorPartida').nome}\n` +
+                `🐢 Pereba da Partida: ${apurarVencedor('perebaPartida').nome}\n` +
+                `⚽ Gol Mais Bonito: ${apurarVencedor('golMaisBonito').nome}\n\n` +
                 `*Universo Cajazeiras*`;
     
     navigator.clipboard.writeText(msg);
@@ -215,12 +217,24 @@ export default function VotacaoPartida() {
                 <FaChartBar /> Apuração em Tempo Real
               </h2>
               <div className="space-y-4">
-                {['melhorPartida', 'perebaPartida', 'golMaisBonito'].map(cat => {
-                  const vts = partida.votos?.filter(v => v.categoria === cat) || [];
+                {[
+                  { id: 'melhorPartida', label: 'Melhor da Partida', icon: <FaTrophy className="text-yellow-500" /> },
+                  { id: 'perebaPartida', label: 'Pereba da Partida', icon: <FaUserTimes className="text-red-400" /> },
+                  { id: 'golMaisBonito', label: 'Gol Mais Bonito', icon: <FaCrown className="text-cyan-400" /> }
+                ].map(cat => {
+                  const vencedor = apurarVencedor(cat.id);
+                  const totalVotosCat = partida.votos?.filter(v => v.categoria === cat.id).length || 0;
                   return (
-                    <div key={cat} className="bg-gray-900 p-4 rounded-2xl border border-gray-700">
-                      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">{cat.replace('Partida', '')}</p>
-                      <p className="text-lg font-black text-white">{vts.length} votos totais</p>
+                    <div key={cat.id} className="bg-gray-900 p-4 rounded-2xl border border-gray-700">
+                      <div className="flex justify-between items-start mb-1">
+                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{cat.label}</p>
+                        <span className="text-[10px] bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-full font-bold">
+                          {totalVotosCat} votos
+                        </span>
+                      </div>
+                      <p className="text-base font-black text-white flex items-center gap-2">
+                        {cat.icon} {vencedor.nome}
+                      </p>
                     </div>
                   );
                 })}
@@ -276,14 +290,23 @@ export default function VotacaoPartida() {
                     onChange={(e) => setAdminCreds({...adminCreds, username: e.target.value})}
                     required
                   />
-                  <input 
-                    type="password" 
-                    placeholder="Senha"
-                    className="w-full bg-gray-900 border-none rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-purple-500"
-                    value={adminCreds.password}
-                    onChange={(e) => setAdminCreds({...adminCreds, password: e.target.value})}
-                    required
-                  />
+                  <div className="relative">
+                    <input 
+                      type={mostrarSenhaAdminCred ? "text" : "password"} 
+                      placeholder="Senha"
+                      className="w-full bg-gray-900 border-none rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-purple-500 pr-10"
+                      value={adminCreds.password}
+                      onChange={(e) => setAdminCreds({...adminCreds, password: e.target.value})}
+                      required
+                    />
+                    <button 
+                      type="button" 
+                      onClick={() => setMostrarSenhaAdminCred(!mostrarSenhaAdminCred)} 
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                    >
+                      {mostrarSenhaAdminCred ? <FaEyeSlash /> : <FaEye />}
+                    </button>
+                  </div>
                   <div className="flex gap-3 pt-2">
                     <button 
                       type="button" 
