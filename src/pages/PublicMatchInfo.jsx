@@ -223,7 +223,7 @@ export default function PublicMatchInfo() {
                       <FaTrash size={16} />
                     </button>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </AnimatePresence>
           </div>
