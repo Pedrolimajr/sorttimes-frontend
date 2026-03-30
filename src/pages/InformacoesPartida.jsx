@@ -279,18 +279,23 @@ export default function InformacoesPartida() {
     const p = partidaSelecionada;
     if (!p) return;
     
-    // Lógica simples para contar votos
-    const contarVotos = (categoria) => {
+    // Lógica para apurar vencedor e votos
+    const apurar = (categoria) => {
       const vts = p.votos?.filter(v => v.categoria === categoria) || [];
-      if (vts.length === 0) return 'Sem votos';
+      if (vts.length === 0) return { nome: 'Ninguém', votos: 0 };
       const contagem = vts.reduce((acc, v) => { acc[v.jogador] = (acc[v.jogador] || 0) + 1; return acc; }, {});
-      return Object.entries(contagem).sort((a,b) => b[1] - a[1])[0][0];
+      const sorted = Object.entries(contagem).sort((a,b) => b[1] - a[1]);
+      return { nome: sorted[0][0], votos: sorted[0][1] };
     };
 
+    const melhor = apurar('melhorPartida');
+    const pereba = apurar('perebaPartida');
+    const gol = apurar('golMaisBonito');
+
     const msg = `🏆 *RESULTADOS DA PARTIDA* 🏆\n\n` +
-                `🌟 Melhor: ${contarVotos('melhorPartida')}\n` +
-                `🐢 Pereba: ${contarVotos('perebaPartida')}\n` +
-                `⚽ Golaço: ${contarVotos('golMaisBonito')}\n\n` +
+                `🌟 Melhor: ${melhor.nome} (${melhor.votos} votos)\n` +
+                `🐢 Pereba: ${pereba.nome} (${pereba.votos} votos)\n` +
+                `⚽ Golaço: ${gol.nome} (${gol.votos} votos)\n\n` +
                 `Parabéns aos envolvidos! 🔥`;
     
     navigator.clipboard.writeText(msg);

@@ -105,10 +105,14 @@ export default function VotacaoPartida() {
   };
 
   const compartilharResultados = () => {
+    const melhor = apurarVencedor('melhorPartida');
+    const pereba = apurarVencedor('perebaPartida');
+    const gol = apurarVencedor('golMaisBonito');
+
     const msg = `🏆 *RESULTADOS DA PARTIDA* 🏆\n\n` +
-                `🌟 Melhor da Partida: ${apurarVencedor('melhorPartida').nome}\n` +
-                `🐢 Pereba da Partida: ${apurarVencedor('perebaPartida').nome}\n` +
-                `⚽ Gol Mais Bonito: ${apurarVencedor('golMaisBonito').nome}\n\n` +
+                `🌟 Melhor da Partida: ${melhor.nome} (${melhor.votos} votos)\n` +
+                `🐢 Pereba da Partida: ${pereba.nome} (${pereba.votos} votos)\n` +
+                `⚽ Gol Mais Bonito: ${gol.nome} (${gol.votos} votos)\n\n` +
                 `*Universo Cajazeiras*`;
     
     navigator.clipboard.writeText(msg);
