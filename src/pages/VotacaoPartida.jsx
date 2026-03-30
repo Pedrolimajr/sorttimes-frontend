@@ -16,6 +16,8 @@ export default function VotacaoPartida() {
   const [votos, setVotos] = useState({ melhorPartida: '', perebaPartida: '', golMaisBonito: '' });
   const [carregando, setCarregando] = useState(true);
   const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [showAdminModal, setShowAdminModal] = useState(false);
+  const [adminCreds, setAdminCreds] = useState({ username: '', password: '' });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -56,21 +58,23 @@ export default function VotacaoPartida() {
     }
   };
 
-  const handleAdminLogin = async () => {
-    const user = prompt("Usuário Admin:");
-    const pass = prompt("Senha Admin:");
-    
+  const handleAdminLogin = async (e) => {
+    e.preventDefault();
     try {
+      setCarregando(true);
       const res = await api.post(`/partida-publica/${linkId}/auth-admin`, {
-        username: user,
-        password: pass
+        username: adminCreds.username,
+        password: adminCreds.password
       });
       if (res.data.success) {
         setIsAdmin(true);
         setAba('admin');
+        setShowAdminModal(false);
       }
     } catch (err) {
       toast.error("Acesso negado.");
+    } finally {
+      setCarregando(false);
     }
   };
 
@@ -155,7 +159,7 @@ export default function VotacaoPartida() {
               <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 py-4 rounded-2xl font-black transition-all shadow-lg">
                 ACESSAR VOTAÇÃO
               </button>
-              <button type="button" onClick={handleAdminLogin} className="w-full text-[10px] text-gray-600 font-bold uppercase tracking-widest hover:text-gray-400">
+              <button type="button" onClick={() => setShowAdminModal(true)} className="w-full text-[10px] text-gray-600 font-bold uppercase tracking-widest hover:text-gray-400">
                 Acesso Administrativo
               </button>
             </motion.form>
@@ -236,6 +240,67 @@ export default function VotacaoPartida() {
               <FaCheckCircle className="text-6xl text-green-500 mx-auto animate-bounce" />
               <h1 className="text-2xl font-black">Voto Registrado!</h1>
               <p className="text-gray-400 text-sm">Obrigado por participar. O resultado será compartilhado em breve pelo administrador.</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Modal de Login Administrativo */}
+        <AnimatePresence>
+          {showAdminModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+            >
+              <motion.div
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.9, y: 20 }}
+                className="bg-gray-800 border border-gray-700 p-6 rounded-3xl w-full max-w-sm shadow-2xl space-y-6"
+              >
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <FaLock className="text-purple-400" />
+                  </div>
+                  <h3 className="text-xl font-black text-white">Login Admin</h3>
+                  <p className="text-xs text-gray-400">Acesso restrito para apuração</p>
+                </div>
+
+                <form onSubmit={handleAdminLogin} className="space-y-4">
+                  <input 
+                    type="text" 
+                    placeholder="Usuário"
+                    className="w-full bg-gray-900 border-none rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-purple-500"
+                    value={adminCreds.username}
+                    onChange={(e) => setAdminCreds({...adminCreds, username: e.target.value})}
+                    required
+                  />
+                  <input 
+                    type="password" 
+                    placeholder="Senha"
+                    className="w-full bg-gray-900 border-none rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-purple-500"
+                    value={adminCreds.password}
+                    onChange={(e) => setAdminCreds({...adminCreds, password: e.target.value})}
+                    required
+                  />
+                  <div className="flex gap-3 pt-2">
+                    <button 
+                      type="button" 
+                      onClick={() => setShowAdminModal(false)}
+                      className="flex-1 bg-gray-700 hover:bg-gray-600 py-3 rounded-xl font-bold text-xs"
+                    >
+                      CANCELAR
+                    </button>
+                    <button 
+                      type="submit" 
+                      className="flex-1 bg-purple-600 hover:bg-purple-700 py-3 rounded-xl font-bold text-xs"
+                    >
+                      ENTRAR
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
