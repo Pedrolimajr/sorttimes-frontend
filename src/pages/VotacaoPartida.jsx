@@ -15,7 +15,6 @@ export default function VotacaoPartida() {
   const [credenciais, setCredenciais] = useState({ nome: '', senha: '' });
   const [votos, setVotos] = useState({ melhorPartida: '', perebaPartida: '', golMaisBonito: '' });
   const [carregando, setCarregando] = useState(true);
-  const [mostrarSenha, setMostrarSenha] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -39,7 +38,7 @@ export default function VotacaoPartida() {
     try {
       const payload = Object.entries(votos).map(([categoria, jogador]) => ({ categoria, jogador }));
       await api.post(`/partida-publica/${linkId}/votar`, { votos: payload });
-      setEnviado(true);
+      setAba('enviado'); // Define a etapa como 'enviado'
       toast.success("Votos enviados com sucesso!");
     } catch (err) {
       toast.error("Erro ao enviar votação.");
