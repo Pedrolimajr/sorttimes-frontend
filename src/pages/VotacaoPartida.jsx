@@ -135,13 +135,13 @@ export default function VotacaoPartida() {
               <div className="text-center space-y-2 mb-4">
                 <FaLock className="mx-auto text-3xl text-gray-600" />
                 <h2 className="text-lg font-bold">Identifique-se</h2>
-                <p className="text-xs text-gray-500">Use seu nome de cadastro e data de nascimento</p>
+                <p className="text-xs text-gray-500">Nome (ou sobrenome) e data de nascimento</p>
               </div>
               <div className="space-y-4">
                 <div className="relative">
                   <FaUser className="absolute left-4 top-4 text-gray-500" />
                   <input 
-                    type="text" placeholder="Seu nome completo" required
+                    type="text" placeholder="Nome e primeiro sobrenome" required
                     className="w-full bg-gray-900 border-none rounded-2xl p-4 pl-12 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                     onChange={(e) => setCredenciais({...credenciais, nome: e.target.value})}
                   />
