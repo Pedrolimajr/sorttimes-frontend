@@ -142,6 +142,29 @@ export default function PublicMatchInfo() {
     return vencedores.length === 1 ? vencedores[0][0] : null;
   };
 
+  // Lógica para agrupar gols por jogador e somar as quantidades
+  const getGolsAgrupados = () => {
+    const agrupados = [];
+    if (!partida?.gols) return agrupados;
+    
+    partida.gols.forEach((g, idx) => {
+      const indexAgrupado = agrupados.findIndex(item => item.jogador === g.jogador);
+      if (indexAgrupado > -1) {
+        agrupados[indexAgrupado].total += 1;
+        agrupados[indexAgrupado].ultimoIndex = idx; // Mantém o índice mais recente para edição/exclusão
+      } else {
+        agrupados.push({
+          jogador: g.jogador,
+          total: 1,
+          time: g.time,
+          ultimoIndex: idx
+        });
+      }
+    });
+    return agrupados.sort((a, b) => b.total - a.total);
+  };
+
+  const golsAgrupados = getGolsAgrupados();
   const vencedorCoroa = getVencedorCoroa();
 
   return (
@@ -199,9 +222,9 @@ export default function PublicMatchInfo() {
             </h3>
             
             <AnimatePresence>
-              {partida.gols?.map((g, idx) => (
+              {golsAgrupados.map((g) => (
                 <motion.div
-                  key={`${g.jogador}-${idx}`}
+                  key={g.jogador}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, scale: 0.9 }}
@@ -217,20 +240,20 @@ export default function PublicMatchInfo() {
                         {g.jogador}
                       </p>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="bg-green-600 text-white text-[10px] font-black px-2 py-0.5 rounded shadow-sm border border-green-500/50 uppercase">1 GOL</span>
+                        <span className="bg-green-600 text-white text-[10px] font-black px-2 py-0.5 rounded shadow-sm border border-green-500/50 uppercase">{g.total} {g.total > 1 ? 'GOLS' : 'GOL'}</span>
                         <span className="text-[10px] text-gray-500 font-bold uppercase">• TIME {g.time?.toUpperCase()}</span>
                       </div>
                     </div>
                   </div>
                   <div className="flex gap-1">
                     <button 
-                      onClick={() => handleEditarClick('gol', idx, g.jogador)}
+                      onClick={() => handleEditarClick('gol', g.ultimoIndex, g.jogador)}
                       className="p-3 text-blue-400 hover:bg-blue-400/10 rounded-xl transition-all"
                     >
                       <FaEdit size={16} />
                     </button>
                     <button 
-                      onClick={() => handleRemoverClick('gol', idx, g.jogador)}
+                      onClick={() => handleRemoverClick('gol', g.ultimoIndex, g.jogador)}
                       className="p-3 text-red-400 hover:bg-red-400/10 rounded-xl transition-all"
                     >
                       <FaTrash size={16} />
@@ -305,8 +328,8 @@ export default function PublicMatchInfo() {
           {jogadores.map(nome => <option key={nome} value={nome} />)}
         </datalist>
 
-        <footer className="text-center text-[11px] text-gray-500 pb-10 space-y-2 mt-10">
-          <p>© 2026 SortTimes • Todos os direitos reservados</p>
+        <footer className="text-center text-[11px] text-gray-500 pb-10 space-y-1 mt-10">
+          <p>© 2026 SortTimes•Todos os direitos reservados</p>
           <p className="font-black text-gray-400 uppercase tracking-tighter">Desenvolvido por Pedro Júnior</p>
         </footer>
       </div>
