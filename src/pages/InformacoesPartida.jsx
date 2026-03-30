@@ -251,9 +251,11 @@ export default function InformacoesPartida() {
     try {
       setCarregando(true);
       const res = await api.post(`/partida-publica/gerar-link/${partidaSelecionada._id}`);
-      const url = `${window.location.origin}/partida-publica/${res.data.linkId}`;
-      setLinkGeradoPartida(url);
-      toast.success("Link de 72 horas gerado com sucesso!");
+      const urlEventos = `${window.location.origin}/partida-publica/${res.data.linkId}`;
+      const urlVotacao = `${window.location.origin}/votar-partida/${res.data.linkId}`;
+      setLinkGeradoPartida(urlEventos);
+      setLinkVotacao(urlVotacao);
+      toast.success("Links da partida gerados com sucesso!");
     } catch (error) {
       toast.error("Erro ao gerar link público.");
     } finally {
@@ -720,6 +722,7 @@ export default function InformacoesPartida() {
                 <AnimatePresence>
                   {(linkGeradoPartida || linkVotacao) && (
                     <motion.div 
+                    key="links-container"
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="mt-6 space-y-4"
@@ -777,6 +780,58 @@ export default function InformacoesPartida() {
                       ) : (
                         <p className="text-gray-500 text-sm italic">Nenhum evento registrado ainda.</p>
                       )}
+                    </div>
+                  </div>
+
+                  {/* Resumo de Cartões no Painel Admin */}
+                  <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 shadow-xl">
+                    <h3 className="text-lg font-bold mb-4 text-orange-400 flex items-center gap-2">
+                      <FaTable /> Resumo de Cartões
+                    </h3>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { label: 'Amarelo', field: 'cartoesAmarelos', bg: 'bg-yellow-400' },
+                        { label: 'Vermelho', field: 'cartoesVermelhos', bg: 'bg-red-500' },
+                        { label: 'Azul', field: 'cartoesAzuis', bg: 'bg-blue-500' }
+                      ].map(card => (
+                        <div key={card.field} className="text-center">
+                          <div className={`w-4 h-6 ${card.bg} rounded-sm mx-auto mb-1 shadow-sm`}></div>
+                          <p className="text-[10px] text-gray-400 font-bold uppercase">{card.label}</p>
+                          <div className="mt-2 space-y-1">
+                            {partidaSelecionada[card.field]?.length > 0 ? 
+                              partidaSelecionada[card.field].map((nome, i) => (
+                                <p key={i} className="text-[9px] text-white truncate bg-gray-900 px-1 py-0.5 rounded border border-gray-700">{nome}</p>
+                              )) : <p className="text-[9px] text-gray-600">-</p>
+                            }
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Card de Apuração de Votos (Visível apenas para Admin) */}
+                  <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 shadow-xl">
+                    <h3 className="text-lg font-bold mb-4 text-purple-400 flex items-center gap-2">
+                      <FaAward /> Apuração de Votos
+                    </h3>
+                    <div className="space-y-4">
+                      {[
+                        { id: 'melhorPartida', label: 'Melhor da Partida' },
+                        { id: 'perebaPartida', label: 'Pereba da Partida' },
+                        { id: 'golMaisBonito', label: 'Gol Mais Bonito' }
+                      ].map(cat => {
+                        const votosCat = partidaSelecionada.votos?.filter(v => v.categoria === cat.id) || [];
+                        return (
+                          <div key={cat.id} className="bg-gray-900 p-3 rounded-xl border border-gray-700">
+                            <p className="text-[10px] font-bold text-gray-500 uppercase mb-2">{cat.label}</p>
+                            {votosCat.length > 0 ? (
+                              <p className="text-sm font-bold text-purple-300">{votosCat.length} votos registrados</p>
+                            ) : (
+                              <p className="text-xs text-gray-600 italic">Nenhum voto ainda</p>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
 
