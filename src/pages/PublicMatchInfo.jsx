@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaFutbol, FaIdCard, FaTrophy, FaUserTimes, FaAward, FaCrown, FaClock, FaCircle, FaUser, FaTrash, FaEdit, FaCheck, FaTimes, FaExclamationTriangle } from 'react-icons/fa';
+import { FaFutbol, FaIdCard, FaTrophy, FaUserTimes, FaAward, FaCrown, FaClock, FaCircle, FaUser, FaTrash, FaEdit, FaCheck, FaTimes, FaExclamationTriangle, FaStickyNote } from 'react-icons/fa';
 import { toast, ToastContainer } from 'react-toastify';
 import api from '../services/api';
 
@@ -101,6 +101,16 @@ export default function PublicMatchInfo() {
       toast.error("Erro ao atualizar");
     } finally {
       setModalEdit({ ...modalEdit, aberto: false });
+    }
+  };
+
+  const salvarNotas = async (valor) => {
+    try {
+      const res = await api.patch(`/partida-publica/${linkId}/notas`, { notas: valor });
+      setPartida(res.data.data);
+      toast.success("Anotações salvas!");
+    } catch (err) {
+      toast.error("Erro ao salvar anotações");
     }
   };
 
@@ -206,7 +216,10 @@ export default function PublicMatchInfo() {
                         {g.jogador === vencedorCoroa && <FaCrown className="text-yellow-500 drop-shadow-glow" />}
                         {g.jogador}
                       </p>
-                      <p className="text-[10px] text-gray-500 font-bold uppercase">1 GOL • TIME {g.time?.toUpperCase()}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="bg-green-600 text-white text-[10px] font-black px-2 py-0.5 rounded shadow-sm border border-green-500/50 uppercase">1 GOL</span>
+                        <span className="text-[10px] text-gray-500 font-bold uppercase">• TIME {g.time?.toUpperCase()}</span>
+                      </div>
                     </div>
                   </div>
                   <div className="flex gap-1">
@@ -226,6 +239,23 @@ export default function PublicMatchInfo() {
                 </motion.div>
               ))}
             </AnimatePresence>
+          </div>
+        </section>
+
+        {/* Seção de Anotações do Juiz */}
+        <section className="bg-gray-800/50 backdrop-blur-sm rounded-3xl p-4 sm:p-6 border border-gray-700 shadow-2xl">
+          <h2 className="flex items-center gap-2 text-lg font-bold mb-4 text-blue-400">
+            <FaStickyNote /> Anotações do Juiz
+          </h2>
+          <textarea
+            value={partida?.observacoes || ''}
+            onChange={(e) => setPartida({ ...partida, observacoes: e.target.value })}
+            onBlur={(e) => salvarNotas(e.target.value)}
+            placeholder="Clique aqui para escrever observações sobre a partida (ex: conduta, clima, incidentes)..."
+            className="w-full bg-gray-900 border border-gray-700 rounded-2xl p-4 text-sm text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none h-32 placeholder:text-gray-600 shadow-inner"
+          />
+          <div className="mt-2 text-[10px] text-gray-500 italic text-right">
+            * As anotações são salvas automaticamente quando você clica fora da caixa.
           </div>
         </section>
 
