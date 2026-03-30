@@ -174,7 +174,7 @@ export default function PublicMatchInfo() {
                 </label>
                 <select 
                   name={premio.id}
-                  value={partida.destaques?.[premio.id] || ''}
+                  value={(partida.destaques && partida.destaques[premio.id]) || ''}
                   onChange={salvarDestaques}
                   className="w-full bg-gray-900 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none appearance-none"
                 >
