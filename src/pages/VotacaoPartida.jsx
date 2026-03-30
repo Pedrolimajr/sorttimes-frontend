@@ -15,6 +15,7 @@ export default function VotacaoPartida() {
   const [credenciais, setCredenciais] = useState({ nome: '', senha: '' });
   const [votos, setVotos] = useState({ melhorPartida: '', perebaPartida: '', golMaisBonito: '' });
   const [carregando, setCarregando] = useState(true);
+  const [mostrarSenha, setMostrarSenha] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -31,13 +32,58 @@ export default function VotacaoPartida() {
     fetchData();
   }, [linkId]);
 
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      setCarregando(true);
+      const res = await api.post(`/partida-publica/${linkId}/auth-jogador`, {
+        nome: credenciais.nome,
+        password: credenciais.senha
+      });
+      
+      if (res.data.jaVotou) {
+        toast.info("Você já realizou sua votação nesta partida!");
+        setAba('enviado');
+      } else {
+        setJogadorAutenticado(res.data.jogador);
+        setAba('votacao');
+        toast.success(`Bem-vindo, ${res.data.jogador.nome}`);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Erro ao autenticar.");
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  const handleAdminLogin = async () => {
+    const user = prompt("Usuário Admin:");
+    const pass = prompt("Senha Admin:");
+    
+    try {
+      const res = await api.post(`/partida-publica/${linkId}/auth-admin`, {
+        username: user,
+        password: pass
+      });
+      if (res.data.success) {
+        setIsAdmin(true);
+        setAba('admin');
+      }
+    } catch (err) {
+      toast.error("Acesso negado.");
+    }
+  };
+
   const submeterVotacao = async () => {
     if (!votos.melhorPartida || !votos.perebaPartida || !votos.golMaisBonito) {
       return toast.warn("Por favor, vote em todas as categorias.");
     }
     try {
       const payload = Object.entries(votos).map(([categoria, jogador]) => ({ categoria, jogador }));
-      await api.post(`/partida-publica/${linkId}/votar`, { votos: payload });
+      await api.post(`/partida-publica/${linkId}/votar`, { 
+        votos: payload, 
+        jogadorId: jogadorAutenticado.id 
+      });
       setAba('enviado'); // Define a etapa como 'enviado'
       toast.success("Votos enviados com sucesso!");
     } catch (err) {
@@ -45,14 +91,25 @@ export default function VotacaoPartida() {
     }
   };
 
-  if (carregando) return <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">Carregando formulário...</div>;
-  if (enviado) return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-6 text-center">
-      <FaCheckCircle className="text-6xl text-green-500 mb-4" />
-      <h1 className="text-2xl font-bold">Votação Enviada!</h1>
-      <p className="text-gray-400 mt-2">Obrigado por participar. Os resultados serão divulgados em breve pelo administrador.</p>
-    </div>
-  );
+  const compartilharResultados = () => {
+    const apurar = (cat) => {
+      const vts = partida.votos?.filter(v => v.categoria === cat) || [];
+      if (vts.length === 0) return 'Ninguém';
+      const contagem = vts.reduce((acc, v) => { acc[v.jogador] = (acc[v.jogador] || 0) + 1; return acc; }, {});
+      return Object.entries(contagem).sort((a,b) => b[1] - a[1])[0][0];
+    };
+
+    const msg = `🏆 *RESULTADOS DA PARTIDA* 🏆\n\n` +
+                `🌟 Melhor da Partida: ${apur('melhorPartida')}\n` +
+                `🐢 Pereba da Partida: ${apur('perebaPartida')}\n` +
+                `⚽ Gol Mais Bonito: ${apur('golMaisBonito')}\n\n` +
+                `*Universo Cajazeiras*`;
+    
+    navigator.clipboard.writeText(msg);
+    toast.success("Resultados copiados para o WhatsApp!");
+  };
+
+  if (carregando && etapa === 'login') return <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div></div>;
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4 font-sans">
@@ -62,37 +119,130 @@ export default function VotacaoPartida() {
           <p className="text-gray-500 text-xs font-bold">VOTAÇÃO DOS ATLETAS</p>
         </header>
 
-        <div className="bg-gray-800 rounded-3xl p-6 border border-gray-700 shadow-2xl space-y-8">
-          {[
-            { id: 'melhorPartida', label: 'Melhor da Partida', icon: <FaTrophy className="text-yellow-500" /> },
-            { id: 'perebaPartida', label: 'Pereba da Partida', icon: <FaUserTimes className="text-red-400" /> },
-            { id: 'golMaisBonito', label: 'Gol Mais Bonito', icon: <FaCrown className="text-cyan-400" /> }
-          ].map(premio => (
-            <div key={premio.id} className="space-y-3">
-              <label className="text-sm font-bold text-gray-300 flex items-center gap-2">
-                {premio.icon} {premio.label}
-              </label>
-              <select 
-                value={votos[premio.id]}
-                onChange={(e) => setVotos({...votos, [premio.id]: e.target.value})}
-                className="w-full bg-gray-900 border border-gray-700 rounded-xl p-4 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Selecione um jogador...</option>
-                {jogadores.map(nome => <option key={nome} value={nome}>{nome}</option>)}
-                <option value="Convidado">Convidado / Outro</option>
-              </select>
-            </div>
-          ))}
+        <AnimatePresence mode="wait">
+          {etapa === 'login' && (
+            <motion.form 
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+              onSubmit={handleLogin}
+              className="bg-gray-800 rounded-3xl p-8 border border-gray-700 shadow-2xl space-y-6"
+            >
+              <div className="text-center space-y-2 mb-4">
+                <FaLock className="mx-auto text-3xl text-gray-600" />
+                <h2 className="text-lg font-bold">Identifique-se</h2>
+                <p className="text-xs text-gray-500">Use seu nome de cadastro e data de nascimento</p>
+              </div>
+              <div className="space-y-4">
+                <div className="relative">
+                  <FaUser className="absolute left-4 top-4 text-gray-500" />
+                  <input 
+                    type="text" placeholder="Seu nome completo" required
+                    className="w-full bg-gray-900 border-none rounded-2xl p-4 pl-12 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => setCredenciais({...credenciais, nome: e.target.value})}
+                  />
+                </div>
+                <div className="relative">
+                  <FaLock className="absolute left-4 top-4 text-gray-500" />
+                  <input 
+                    type={mostrarSenha ? "text" : "password"} placeholder="Data de Nasc. (Ex: 10051990)" required
+                    className="w-full bg-gray-900 border-none rounded-2xl p-4 pl-12 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => setCredenciais({...credenciais, senha: e.target.value.replace(/\D/g, '')})}
+                  />
+                  <button type="button" onClick={() => setMostrarSenha(!mostrarSenha)} className="absolute right-4 top-4 text-gray-500">
+                    {mostrarSenha ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
+              </div>
+              <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 py-4 rounded-2xl font-black transition-all shadow-lg">
+                ACESSAR VOTAÇÃO
+              </button>
+              <button type="button" onClick={handleAdminLogin} className="w-full text-[10px] text-gray-600 font-bold uppercase tracking-widest hover:text-gray-400">
+                Acesso Administrativo
+              </button>
+            </motion.form>
+          )}
 
-          <motion.button 
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={submeterVotacao}
-            className="w-full bg-blue-600 hover:bg-blue-700 py-4 rounded-2xl font-black text-lg transition-all shadow-lg mt-4"
-          >
-            CONFIRMAR MEUS VOTOS
-          </motion.button>
-        </div>
+          {etapa === 'votacao' && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+              className="bg-gray-800 rounded-3xl p-6 border border-gray-700 shadow-2xl space-y-8"
+            >
+              <div className="border-b border-gray-700 pb-4">
+                <p className="text-xs text-blue-400 font-bold">LOGADO COMO:</p>
+                <p className="text-lg font-black">{jogadorAutenticado?.nome}</p>
+              </div>
+
+              {[
+                { id: 'melhorPartida', label: 'Melhor da Partida', icon: <FaTrophy className="text-yellow-500" /> },
+                { id: 'perebaPartida', label: 'Pereba da Partida', icon: <FaUserTimes className="text-red-400" /> },
+                { id: 'golMaisBonito', label: 'Gol Mais Bonito', icon: <FaCrown className="text-cyan-400" /> }
+              ].map(premio => (
+                <div key={premio.id} className="space-y-3">
+                  <label className="text-sm font-bold text-gray-300 flex items-center gap-2">
+                    {premio.icon} {premio.label}
+                  </label>
+                  <select 
+                    value={votos[premio.id]}
+                    onChange={(e) => setVotos({...votos, [premio.id]: e.target.value})}
+                    className="w-full bg-gray-900 border border-gray-700 rounded-xl p-4 text-sm outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
+                  >
+                    <option value="">Selecione um jogador...</option>
+                    {jogadores.map(nome => <option key={nome} value={nome}>{nome}</option>)}
+                    <option value="Convidado">Convidado / Outro</option>
+                  </select>
+                </div>
+              ))}
+
+              <motion.button 
+                whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                onClick={submeterVotacao}
+                className="w-full bg-green-600 hover:bg-green-700 py-4 rounded-2xl font-black text-lg transition-all shadow-lg mt-4"
+              >
+                CONFIRMAR MEUS VOTOS
+              </motion.button>
+            </motion.div>
+          )}
+
+          {etapa === 'admin' && (
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              className="bg-gray-800 rounded-3xl p-6 border border-gray-700 shadow-2xl space-y-6"
+            >
+              <h2 className="text-xl font-black text-center text-purple-400 flex items-center justify-center gap-2">
+                <FaChartBar /> Apuração em Tempo Real
+              </h2>
+              <div className="space-y-4">
+                {['melhorPartida', 'perebaPartida', 'golMaisBonito'].map(cat => {
+                  const vts = partida.votos?.filter(v => v.categoria === cat) || [];
+                  return (
+                    <div key={cat} className="bg-gray-900 p-4 rounded-2xl border border-gray-700">
+                      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">{cat.replace('Partida', '')}</p>
+                      <p className="text-lg font-black text-white">{vts.length} votos totais</p>
+                    </div>
+                  );
+                })}
+              </div>
+              <button onClick={compartilharResultados} className="w-full bg-purple-600 hover:bg-purple-700 py-4 rounded-2xl font-black flex items-center justify-center gap-2 transition-all">
+                <FaShareAlt /> COMPARTILHAR RESULTADOS
+              </button>
+              <button onClick={() => setAba('login')} className="w-full text-xs text-gray-500">Sair do Modo Admin</button>
+            </motion.div>
+          )}
+
+          {etapa === 'enviado' && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
+              className="bg-gray-800 rounded-3xl p-10 border border-gray-700 shadow-2xl text-center space-y-4"
+            >
+              <FaCheckCircle className="text-6xl text-green-500 mx-auto animate-bounce" />
+              <h1 className="text-2xl font-black">Voto Registrado!</h1>
+              <p className="text-gray-400 text-sm">Obrigado por participar. O resultado será compartilhado em breve pelo administrador.</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <footer className="text-center text-[10px] text-gray-600 py-10 uppercase tracking-widest font-bold">
+          SortTimes &copy; {new Date().getFullYear()} - Profissionalismo no Futebol
+        </footer>
       </div>
       <ToastContainer theme="dark" position="bottom-center" />
     </div>
