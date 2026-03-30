@@ -16,6 +16,7 @@ import InformacoesPartida from "../pages/InformacoesPartida";
 import ConfiguracoesConta from "../pages/ConfiguracoesConta";
 import ConfirmarPresenca from '../pages/ConfirmarPresenca';
 import PublicMatchInfo from '../pages/PublicMatchInfo';
+import VotacaoPartida from '../pages/VotacaoPartida';
 import PrivateRoute from './PrivateRoute';
 
 function AppRoutes() {
@@ -32,6 +33,7 @@ function AppRoutes() {
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/confirmar-presenca/:linkId" element={<ConfirmarPresenca />} />
         <Route path="/partida-publica/:linkId" element={<PublicMatchInfo />} />
+        <Route path="/votar-partida/:linkId" element={<VotacaoPartida />} />
 
         {/* Rotas protegidas */}
         <Route path="/dashboard" element={

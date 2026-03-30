@@ -43,6 +43,7 @@ export default function InformacoesPartida() {
   const [partidas, setPartidas] = useState([]);
   const [partidaSelecionada, setPartidaSelecionada] = useState(null);
   const [linkGeradoPartida, setLinkGeradoPartida] = useState('');
+  const [linkVotacao, setLinkVotacao] = useState('');
 
   // Modal de confirmação para exclusão de planilha
   const [confirmDeletePlanilha, setConfirmDeletePlanilha] = useState({ open: false, planilha: null });
@@ -263,6 +264,28 @@ export default function InformacoesPartida() {
   const copiarLinkPartida = () => {
     navigator.clipboard.writeText(linkGeradoPartida);
     toast.info("Link copiado!");
+  };
+
+  const compartilharResultados = () => {
+    const p = partidaSelecionada;
+    if (!p) return;
+    
+    // Lógica simples para contar votos
+    const contarVotos = (categoria) => {
+      const vts = p.votos?.filter(v => v.categoria === categoria) || [];
+      if (vts.length === 0) return 'Sem votos';
+      const contagem = vts.reduce((acc, v) => { acc[v.jogador] = (acc[v.jogador] || 0) + 1; return acc; }, {});
+      return Object.entries(contagem).sort((a,b) => b[1] - a[1])[0][0];
+    };
+
+    const msg = `🏆 *RESULTADOS DA PARTIDA* 🏆\n\n` +
+                `🌟 Melhor: ${contarVotos('melhorPartida')}\n` +
+                `🐢 Pereba: ${contarVotos('perebaPartida')}\n` +
+                `⚽ Golaço: ${contarVotos('golMaisBonito')}\n\n` +
+                `Parabéns aos envolvidos! 🔥`;
+    
+    navigator.clipboard.writeText(msg);
+    toast.success("Resumo copiado para compartilhar!");
   };
 
   const voltarParaDashboard = () => navigate('/dashboard');

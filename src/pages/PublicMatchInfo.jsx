@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaFutbol, FaIdCard, FaTrophy, FaUserTimes, FaAward, FaCrown, FaClock } from 'react-icons/fa';
+import { FaFutbol, FaIdCard, FaTrophy, FaUserTimes, FaAward, FaCrown, FaClock, FaCircle } from 'react-icons/fa';
 import { toast, ToastContainer } from 'react-toastify';
 import api from '../services/api';
 
@@ -28,11 +28,11 @@ export default function PublicMatchInfo() {
     fetchPublicData();
   }, [linkId]);
 
-  const registrarEvento = async (tipo, jogador) => {
+  const registrarEvento = async (tipo, jogador, time = null) => {
     if (!jogador || jogador.trim() === '') return toast.warn("Digite o nome do jogador");
     
     try {
-      const res = await api.post(`/partida-publica/${linkId}/evento`, { tipo, jogador });
+      const res = await api.post(`/partida-publica/${linkId}/evento`, { tipo, jogador, time });
       setPartida(res.data.data);
       toast.success("Evento registrado com sucesso!");
       if (tipo === 'gol') setInputGol('');
@@ -103,12 +103,24 @@ export default function PublicMatchInfo() {
               placeholder="Nome do artilheiro..."
               className="flex-1 bg-gray-900 border-none rounded-2xl p-4 text-sm focus:ring-2 focus:ring-green-500 outline-none"
             />
-            <button 
-              onClick={() => registrarEvento('gol', inputGol)}
-              className="bg-green-600 hover:bg-green-700 active:scale-95 px-5 rounded-2xl font-black transition-all shadow-lg"
+          </div>
+          <div className="flex gap-4 mt-4 justify-center">
+            <motion.button 
+              whileTap={{ scale: 0.9 }}
+              onClick={() => registrarEvento('gol', inputGol, 'Preto')}
+              className="flex flex-col items-center gap-1 group"
             >
-              GOL
-            </button>
+              <FaCircle className="text-4xl text-black border-2 border-gray-600 rounded-full group-hover:scale-110 transition-transform" />
+              <span className="text-[10px] font-bold text-gray-400">TIME PRETO</span>
+            </motion.button>
+            <motion.button 
+              whileTap={{ scale: 0.9 }}
+              onClick={() => registrarEvento('gol', inputGol, 'Amarelo')}
+              className="flex flex-col items-center gap-1 group"
+            >
+              <FaCircle className="text-4xl text-yellow-400 group-hover:scale-110 transition-transform" />
+              <span className="text-[10px] font-bold text-gray-400">TIME AMARELO</span>
+            </motion.button>
           </div>
 
           {/* Lista de Gols / Ranking */}
@@ -123,6 +135,9 @@ export default function PublicMatchInfo() {
                 <span className="flex items-center gap-2 text-sm font-medium">
                   {idx === 0 && <FaCrown className="text-yellow-500" />}
                   {nome}
+                  {partida.gols.find(g => g.jogador === nome)?.time && (
+                    <FaCircle className={`text-[8px] ${partida.gols.find(g => g.jogador === nome).time === 'Amarelo' ? 'text-yellow-400' : 'text-black'}`} />
+                  )}
                 </span>
                 <span className="bg-gray-900 px-3 py-1 rounded-full text-xs font-bold text-green-400">
                   {qtd} {qtd > 1 ? 'Gols' : 'Gol'}
@@ -139,54 +154,26 @@ export default function PublicMatchInfo() {
             { tipo: 'vermelho', cor: 'bg-red-500', label: 'Vermelho' },
             { tipo: 'azul', cor: 'bg-blue-500', label: 'Azul' }
           ].map(card => (
-            <div key={card.tipo} className="bg-gray-800 p-3 rounded-2xl border border-gray-700 text-center">
+            <div key={card.tipo} className="bg-gray-800 p-3 rounded-2xl border border-gray-700 text-center flex flex-col items-center">
               <div className={`w-6 h-8 ${card.cor} rounded-sm mb-2 shadow-lg mx-auto`} />
               <input 
+                id={`input-${card.tipo}`}
                 list="lista-jogadores"
                 placeholder="Nome..."
                 className="w-full bg-gray-900 border-none rounded-lg p-2 text-[10px] outline-none mb-1"
-                onKeyDown={(e) => {
-                  if(e.key === 'Enter') {
-                    registrarEvento(card.tipo, e.target.value);
-                    e.target.value = '';
-                  }
-                }}
               />
-              <p className="text-[8px] text-gray-500 uppercase font-bold">Enter p/ add</p>
+              <button 
+                onClick={() => {
+                  const inp = document.getElementById(`input-${card.tipo}`);
+                  registrarEvento(card.tipo, inp.value);
+                  inp.value = '';
+                }}
+                className="bg-gray-700 hover:bg-gray-600 text-[10px] font-bold px-2 py-1 rounded w-full"
+              >
+                REGISTRAR
+              </button>
             </div>
           ))}
-        </section>
-
-        {/* Seção de Destaques (Selects) */}
-        <section className="bg-gray-800 rounded-3xl p-5 border border-gray-700 shadow-2xl">
-          <h2 className="flex items-center gap-2 text-lg font-bold mb-6 text-blue-400">
-            <FaAward /> Premiações
-          </h2>
-          <div className="space-y-6">
-            {[
-              { id: 'melhorPartida', label: 'Melhor da Partida', icon: <FaTrophy className="text-yellow-500" /> },
-              { id: 'perebaPartida', label: 'Pereba da Partida', icon: <FaUserTimes className="text-red-400" /> },
-              { id: 'golMaisBonito', label: 'Gol Mais Bonito', icon: <FaCrown className="text-cyan-400" /> }
-            ].map(premio => (
-              <div key={premio.id} className="relative">
-                <label className="text-xs font-bold text-gray-400 mb-2 flex items-center gap-2 uppercase tracking-widest">
-                  {premio.icon} {premio.label}
-                </label>
-                <select 
-                  name={premio.id}
-                  value={(partida?.destaques && partida.destaques[premio.id]) || ''}
-                  onChange={salvarDestaques}
-                  className="w-full bg-gray-900 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none appearance-none"
-                >
-                  <option value="">Selecione...</option>
-                  {jogadores.map(nome => (
-                    <option key={nome} value={nome}>{nome}</option>
-                  ))}
-                  <option value="Convidado" className="italic text-gray-500">Convidado / Outro</option>
-                </select>
-              </div>
-            ))}
-          </div>
         </section>
 
         {/* Lista de Sugestão Oculta */}
