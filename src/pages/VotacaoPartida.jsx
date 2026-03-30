@@ -63,8 +63,8 @@ export default function VotacaoPartida() {
     try {
       setCarregando(true);
       const res = await api.post(`/partida-publica/${linkId}/auth-admin`, {
-        username: adminCreds.username,
-        password: adminCreds.password
+        username: adminCreds.username.trim(),
+        password: adminCreds.password.trim()
       });
       if (res.data.success) {
         setIsAdmin(true);
