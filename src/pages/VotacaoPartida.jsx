@@ -1,21 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { FaTrophy, FaUserTimes, FaCrown, FaCheckCircle } from 'react-icons/fa';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FaTrophy, FaUserTimes, FaCrown, FaCheckCircle, FaLock, FaUser, FaChartBar, FaShareAlt, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { toast, ToastContainer } from 'react-toastify';
 import api from '../services/api';
 
 export default function VotacaoPartida() {
   const { linkId } = useParams();
+  const [etapa, setAba] = useState('login'); // login | votacao | admin | enviado
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [partida, setPartida] = useState(null);
   const [jogadores, setJogadores] = useState([]);
+  const [jogadorAutenticado, setJogadorAutenticado] = useState(null);
+  const [credenciais, setCredenciais] = useState({ nome: '', senha: '' });
   const [votos, setVotos] = useState({ melhorPartida: '', perebaPartida: '', golMaisBonito: '' });
   const [carregando, setCarregando] = useState(true);
-  const [enviado, setEnviado] = useState(false);
+  const [mostrarSenha, setMostrarSenha] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const res = await api.get(`/partida-publica/${linkId}`);
+        setPartida(res.data.data);
         setJogadores(res.data.jogadores || []);
       } catch (err) {
         toast.error("Link de votação expirado.");
