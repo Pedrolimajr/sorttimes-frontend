@@ -331,10 +331,6 @@ export default function VotacaoPartida() {
             </motion.div>
           )}
         </AnimatePresence>
-
-        <footer className="text-center text-[10px] text-gray-600 py-10 uppercase tracking-widest font-bold">
-          SortTimes &copy; {new Date().getFullYear()} - Profissionalismo no Futebol
-        </footer>
       </div>
       <ToastContainer theme="dark" position="bottom-center" />
     </div>

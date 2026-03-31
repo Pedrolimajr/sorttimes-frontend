@@ -327,11 +327,6 @@ export default function PublicMatchInfo() {
         <datalist id="lista-jogadores">
           {jogadores.map(nome => <option key={nome} value={nome} />)}
         </datalist>
-
-        <footer className="text-center text-[11px] text-gray-500 pb-10 space-y-1 mt-10">
-          <p>© 2026 SortTimes•Todos os direitos reservados</p>
-          <p className="font-black text-gray-400 uppercase tracking-tighter">Desenvolvido por Pedro Júnior</p>
-        </footer>
       </div>
 
       {/* Modal de Confirmação */}
