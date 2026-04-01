@@ -200,6 +200,7 @@ export default function PublicMatchInfo() {
               <div className="w-14 h-14 bg-gray-700 rounded-full flex items-center justify-center border-2 border-gray-500 group-hover:border-white transition-all">
                 <FaUser className="text-2xl text-black" />
               </div>
+              <span className="text-[10px] font-bold text-gray-400">TIME PRETO</span>
             </motion.button>
             <motion.button 
               whileTap={{ scale: 0.9 }}
@@ -209,6 +210,7 @@ export default function PublicMatchInfo() {
               <div className="w-14 h-14 bg-yellow-400/20 rounded-full flex items-center justify-center border-2 border-yellow-500/50 group-hover:border-yellow-400 transition-all">
                 <FaUser className="text-2xl text-yellow-400" />
               </div>
+              <span className="text-[10px] font-bold text-gray-400">TIME AMARELO</span>
             </motion.button>
           </div>
 
@@ -239,7 +241,7 @@ export default function PublicMatchInfo() {
                       </p>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="bg-green-600 text-white text-[10px] font-black px-2 py-0.5 rounded shadow-sm border border-green-500/50 uppercase">{g.total} {g.total > 1 ? 'GOLS' : 'GOL'}</span>
-                        <FaUser size={12} className={g.time === 'Amarelo' ? 'text-yellow-400' : 'text-gray-400'} />
+                        <span className="text-[10px] text-gray-500 font-bold uppercase">• TIME {g.time?.toUpperCase()}</span>
                       </div>
                     </div>
                   </div>
