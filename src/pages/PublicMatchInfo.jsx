@@ -238,10 +238,8 @@ export default function PublicMatchInfo() {
                         {g.jogador}
                       </p>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="bg-green-600 text-white text-[10px] font-black px-2 py-0.5 rounded shadow-sm border border-green-500/50 uppercase flex items-center gap-1">
-                          {g.total} <FaFutbol size={10} />
-                        </span>
-                        <span className="text-[10px] text-gray-500 font-bold uppercase">• TIME {g.time?.toUpperCase()}</span>
+                        <span className="bg-green-600 text-white text-[10px] font-black px-2 py-0.5 rounded shadow-sm border border-green-500/50 uppercase">{g.total} {g.total > 1 ? 'GOLS' : 'GOL'}</span>
+                        <FaUser size={12} className={g.time === 'Amarelo' ? 'text-yellow-400' : 'text-gray-400'} />
                       </div>
                     </div>
                   </div>
