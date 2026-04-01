@@ -20,8 +20,7 @@ import {
   FaCheckCircle,
   FaLock,
   FaUserTimes,
-  FaUser,
-  FaShareAlt
+  FaUser
 } from 'react-icons/fa';
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { useNavigate } from 'react-router-dom';
