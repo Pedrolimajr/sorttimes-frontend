@@ -172,6 +172,20 @@ export default function InformacoesPartida() {
     return { nome: ordenado[0][0], total: ordenado[0][1] };
   };
 
+  // Função para pegar a lista completa de votos por categoria
+  const getTodosOsVotos = (categoriaId) => {
+    if (!partidaSelecionada?.votos) return [];
+    const votosCat = partidaSelecionada.votos.filter(v => v.categoria === categoriaId);
+    if (votosCat.length === 0) return [];
+
+    const contagem = votosCat.reduce((acc, v) => {
+      acc[v.jogador] = (acc[v.jogador] || 0) + 1;
+      return acc;
+    }, {});
+
+    return Object.entries(contagem).sort((a, b) => b[1] - a[1]);
+  };
+
   // Função para agrupar gols por jogador e mostrar o time
   const getGolsAgrupados = () => {
     const agrupados = [];
@@ -904,17 +918,20 @@ export default function InformacoesPartida() {
                         { id: 'perebaPartida', label: 'Pereba da Partida' },
                         { id: 'golMaisBonito', label: 'Gol Mais Bonito' }
                       ].map(cat => {
-                        const votosCat = partidaSelecionada.votos?.filter(v => v.categoria === cat.id) || [];
-                        const lider = getLiderVotacao(cat.id);
+                        const listaVotos = getTodosOsVotos(cat.id);
                         return (
                           <div key={cat.id} className="bg-gray-900 p-3 rounded-xl border border-gray-700">
                             <p className="text-[10px] font-bold text-gray-500 uppercase mb-2">{cat.label}</p>
-                            {lider ? (
-                              <div className="flex justify-between items-center">
-                                <p className="text-sm font-bold text-purple-300">{lider.nome}</p>
-                                <span className="text-[10px] bg-purple-900/50 text-purple-400 px-2 py-0.5 rounded border border-purple-500/30">
-                                  {lider.total} {lider.total === 1 ? 'voto' : 'votos'}
-                                </span>
+                            {listaVotos.length > 0 ? (
+                              <div className="space-y-2">
+                                {listaVotos.map(([nome, total], idx) => (
+                                  <div key={idx} className="flex justify-between items-center text-xs">
+                                    <span className={idx === 0 ? "font-bold text-purple-300" : "text-gray-400"}>
+                                      {idx === 0 && "⭐ "}{nome}
+                                    </span>
+                                    <span className="text-[10px] text-gray-500">{total} {total === 1 ? 'voto' : 'votos'}</span>
+                                  </div>
+                                ))}
                               </div>
                             ) : (
                               <p className="text-xs text-gray-600 italic">Nenhum voto ainda</p>
