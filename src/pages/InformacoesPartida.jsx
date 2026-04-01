@@ -157,6 +157,21 @@ export default function InformacoesPartida() {
     }
   };
 
+  // Função para calcular o vencedor de cada categoria em tempo real
+  const getLiderVotacao = (categoriaId) => {
+    if (!partidaSelecionada?.votos) return null;
+    const votosCat = partidaSelecionada.votos.filter(v => v.categoria === categoriaId);
+    if (votosCat.length === 0) return null;
+
+    const contagem = votosCat.reduce((acc, v) => {
+      acc[v.jogador] = (acc[v.jogador] || 0) + 1;
+      return acc;
+    }, {});
+
+    const ordenado = Object.entries(contagem).sort((a, b) => b[1] - a[1]);
+    return { nome: ordenado[0][0], total: ordenado[0][1] };
+  };
+
   // Função para agrupar gols por jogador e mostrar o time
   const getGolsAgrupados = () => {
     const agrupados = [];
@@ -890,11 +905,17 @@ export default function InformacoesPartida() {
                         { id: 'golMaisBonito', label: 'Gol Mais Bonito' }
                       ].map(cat => {
                         const votosCat = partidaSelecionada.votos?.filter(v => v.categoria === cat.id) || [];
+                        const lider = getLiderVotacao(cat.id);
                         return (
                           <div key={cat.id} className="bg-gray-900 p-3 rounded-xl border border-gray-700">
                             <p className="text-[10px] font-bold text-gray-500 uppercase mb-2">{cat.label}</p>
-                            {votosCat.length > 0 ? (
-                              <p className="text-sm font-bold text-purple-300">{votosCat.length} votos registrados</p>
+                            {lider ? (
+                              <div className="flex justify-between items-center">
+                                <p className="text-sm font-bold text-purple-300">{lider.nome}</p>
+                                <span className="text-[10px] bg-purple-900/50 text-purple-400 px-2 py-0.5 rounded border border-purple-500/30">
+                                  {lider.total} {lider.total === 1 ? 'voto' : 'votos'}
+                                </span>
+                              </div>
                             ) : (
                               <p className="text-xs text-gray-600 italic">Nenhum voto ainda</p>
                             )}
@@ -910,16 +931,21 @@ export default function InformacoesPartida() {
                     </h3>
                     <div className="space-y-3">
                       {[
-                        { label: 'Melhor', val: partidaSelecionada.destaques?.melhorPartida, icon: <FaTrophy className="text-yellow-500"/> },
-                        { label: 'Pereba', val: partidaSelecionada.destaques?.perebaPartida, icon: <FaUserTimes className="text-red-400"/> },
-                        { label: 'Gol Bonito', val: partidaSelecionada.destaques?.golMaisBonito, icon: <FaCheckCircle className="text-cyan-400"/> }
-                      ].map((d, i) => (
-                        <div key={i} className="flex items-center gap-3 p-2 bg-gray-900 rounded-lg text-sm border border-gray-700">
-                          {d.icon}
-                          <span className="font-bold text-gray-400">{d.label}:</span>
-                          <span className="text-white">{d.val || '-'}</span>
-                        </div>
-                      ))}
+                        { id: 'melhorPartida', label: 'Melhor', icon: <FaTrophy className="text-yellow-500"/> },
+                        { id: 'perebaPartida', label: 'Pereba', icon: <FaUserTimes className="text-red-400"/> },
+                        { id: 'golMaisBonito', label: 'Gol Bonito', icon: <FaCheckCircle className="text-cyan-400"/> }
+                      ].map((d) => {
+                        const lider = getLiderVotacao(d.id);
+                        const valorOficial = partidaSelecionada.destaques?.[d.id];
+                        
+                        return (
+                          <div key={d.id} className="flex items-center gap-3 p-2 bg-gray-900 rounded-lg text-sm border border-gray-700">
+                            {d.icon}
+                            <span className="font-bold text-gray-400">{d.label}:</span>
+                            <span className="text-white">{lider ? lider.nome : (valorOficial || '-')}</span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
