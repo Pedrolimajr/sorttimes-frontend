@@ -972,9 +972,9 @@ export default function InformacoesPartida() {
                     <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                       <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
                       {[
-                        { id: 'melhorPartida', label: 'Melhor da Partida', icon: <FaCrown className="text-yellow-400" /> },
-                        { id: 'perebaPartida', label: 'Pereba da Partida', icon: <FaSkull className="text-orange-600" /> },
-                        { id: 'golMaisBonito', label: 'Gol Mais Bonito', icon: <FaMagic className="text-pink-400" /> }
+                        { id: 'melhorPartida', label: 'Melhor da Partida', icon: <FaTrophy className="text-yellow-500" /> },
+                        { id: 'perebaPartida', label: 'Pereba da Partida', icon: <FaUserTimes className="text-red-500" /> },
+                        { id: 'golMaisBonito', label: 'Gol Mais Bonito', icon: <FaAward className="text-cyan-400" /> }
                       ].map(cat => {
                         const listaVotos = getTodosOsVotos(cat.id);
                         const totalCat = listaVotos.reduce((acc, v) => acc + v[1], 0);
@@ -1020,9 +1020,9 @@ export default function InformacoesPartida() {
                     </div>
                     <div className="space-y-3">
                       {[
-                        { id: 'melhorPartida', label: 'Melhor', icon: <FaCrown className="text-yellow-400"/> },
-                        { id: 'perebaPartida', label: 'Pereba', icon: <FaSkull className="text-orange-600"/> },
-                        { id: 'golMaisBonito', label: 'Gol Bonito', icon: <FaMagic className="text-pink-400"/> }
+                        { id: 'melhorPartida', label: 'Melhor', icon: <FaTrophy className="text-yellow-500"/> },
+                        { id: 'perebaPartida', label: 'Pereba', icon: <FaUserTimes className="text-red-500"/> },
+                        { id: 'golMaisBonito', label: 'Gol Bonito', icon: <FaAward className="text-cyan-400"/> }
                       ].map((d) => {
                         const lider = getLiderVotacao(d.id);
                         const valorOficial = partidaSelecionada.destaques?.[d.id];
