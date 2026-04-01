@@ -18,7 +18,8 @@ import {
   FaTrophy,
   FaCheckCircle,
   FaLock,
-  FaUserTimes
+  FaUserTimes,
+  FaUser // Adicione FaUser aqui
 } from 'react-icons/fa';
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { useNavigate } from 'react-router-dom';
