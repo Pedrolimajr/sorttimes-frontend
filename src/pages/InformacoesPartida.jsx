@@ -20,10 +20,7 @@ import {
   FaCheckCircle,
   FaLock,
   FaUserTimes,
-  FaUser,
-  FaCrown,
-  FaSkull,
-  FaMagic
+  FaUser
 } from 'react-icons/fa';
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { useNavigate } from 'react-router-dom';
@@ -173,13 +170,7 @@ export default function InformacoesPartida() {
     }, {});
 
     const ordenado = Object.entries(contagem).sort((a, b) => b[1] - a[1]);
-
-    // Só destaca se o primeiro tiver estritamente mais votos que o segundo (se existir)
-    if (ordenado.length > 1 && ordenado[0][1] === ordenado[1][1]) {
-      return { nome: 'Empate', total: ordenado[0][1], empate: true };
-    }
-
-    return { nome: ordenado[0][0], total: ordenado[0][1], empate: false };
+    return { nome: ordenado[0][0], total: ordenado[0][1] };
   };
 
   // Função para pegar a lista completa de votos por categoria
@@ -972,28 +963,24 @@ export default function InformacoesPartida() {
                     <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                       <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
                       {[
-                        { id: 'melhorPartida', label: 'Melhor da Partida', icon: <FaCrown className="text-yellow-400" /> },
-                        { id: 'perebaPartida', label: 'Pereba da Partida', icon: <FaSkull className="text-orange-600" /> },
-                        { id: 'golMaisBonito', label: 'Gol Mais Bonito', icon: <FaMagic className="text-pink-400" /> }
+                        { id: 'melhorPartida', label: 'Melhor da Partida' },
+                        { id: 'perebaPartida', label: 'Pereba da Partida' },
+                        { id: 'golMaisBonito', label: 'Gol Mais Bonito' }
                       ].map(cat => {
                         const listaVotos = getTodosOsVotos(cat.id);
                         const totalCat = listaVotos.reduce((acc, v) => acc + v[1], 0);
-                        const lider = getLiderVotacao(cat.id);
                         return (
                           <div key={cat.id} className="bg-gray-900 p-3 rounded-xl border border-gray-700">
                             <div className="flex justify-between items-center mb-2">
-                              <div className="flex items-center gap-2">
-                                {cat.icon}
-                                <p className="text-[10px] font-bold text-gray-500 uppercase">{cat.label}</p>
-                              </div>
+                              <p className="text-[10px] font-bold text-gray-500 uppercase">{cat.label}</p>
                               <span className="text-[9px] font-black text-purple-500/80">{totalCat} VOTOS</span>
                             </div>
                             {listaVotos.length > 0 ? (
                               <div className="space-y-2">
                                 {listaVotos.map(([nome, total], idx) => (
                                   <div key={idx} className="flex justify-between items-center text-xs">
-                                    <span className={(idx === 0 && !lider?.empate) ? "font-bold text-purple-300" : "text-gray-400"}>
-                                      {(idx === 0 && !lider?.empate) && "⭐ "}{nome}
+                                    <span className={idx === 0 ? "font-bold text-purple-300" : "text-gray-400"}>
+                                      {idx === 0 && "⭐ "}{nome}
                                     </span>
                                     <span className="text-[10px] text-gray-500">{total} {total === 1 ? 'voto' : 'votos'}</span>
                                   </div>
@@ -1019,21 +1006,18 @@ export default function InformacoesPartida() {
                     </div>
                     <div className="space-y-3">
                       {[
-                        { id: 'melhorPartida', label: 'Melhor', icon: <FaCrown className="text-yellow-400"/> },
-                        { id: 'perebaPartida', label: 'Pereba', icon: <FaSkull className="text-orange-600"/> },
-                        { id: 'golMaisBonito', label: 'Gol Bonito', icon: <FaMagic className="text-pink-400"/> }
+                        { id: 'melhorPartida', label: 'Melhor', icon: <FaTrophy className="text-yellow-500"/> },
+                        { id: 'perebaPartida', label: 'Pereba', icon: <FaUserTimes className="text-red-400"/> },
+                        { id: 'golMaisBonito', label: 'Gol Bonito', icon: <FaCheckCircle className="text-cyan-400"/> }
                       ].map((d) => {
                         const lider = getLiderVotacao(d.id);
                         const valorOficial = partidaSelecionada.destaques?.[d.id];
-                        const displayNome = lider?.empate ? "Houve um Empate" : (lider ? lider.nome : (valorOficial || '-'));
                         
                         return (
                           <div key={d.id} className="flex items-center gap-3 p-2 bg-gray-900 rounded-lg text-sm border border-gray-700">
                             {d.icon}
                             <span className="font-bold text-gray-400">{d.label}:</span>
-                            <span className={`${lider?.empate ? 'text-gray-500 italic' : 'text-white font-medium'}`}>
-                              {displayNome}
-                            </span>
+                            <span className="text-white">{lider ? lider.nome : (valorOficial || '-')}</span>
                           </div>
                         );
                       })}
@@ -1134,3 +1118,4 @@ export default function InformacoesPartida() {
     </div>
   );
 }
+
