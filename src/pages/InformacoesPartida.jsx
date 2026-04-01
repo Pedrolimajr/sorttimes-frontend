@@ -972,24 +972,28 @@ export default function InformacoesPartida() {
                     <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                       <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
                       {[
-                        { id: 'melhorPartida', label: 'Melhor da Partida' },
-                        { id: 'perebaPartida', label: 'Pereba da Partida' },
-                        { id: 'golMaisBonito', label: 'Gol Mais Bonito' }
+                        { id: 'melhorPartida', label: 'Melhor da Partida', icon: <FaCrown className="text-yellow-400" /> },
+                        { id: 'perebaPartida', label: 'Pereba da Partida', icon: <FaSkull className="text-orange-600" /> },
+                        { id: 'golMaisBonito', label: 'Gol Mais Bonito', icon: <FaMagic className="text-pink-400" /> }
                       ].map(cat => {
                         const listaVotos = getTodosOsVotos(cat.id);
                         const totalCat = listaVotos.reduce((acc, v) => acc + v[1], 0);
+                        const lider = getLiderVotacao(cat.id);
                         return (
                           <div key={cat.id} className="bg-gray-900 p-3 rounded-xl border border-gray-700">
                             <div className="flex justify-between items-center mb-2">
-                              <p className="text-[10px] font-bold text-gray-500 uppercase">{cat.label}</p>
+                              <div className="flex items-center gap-2">
+                                {cat.icon}
+                                <p className="text-[10px] font-bold text-gray-500 uppercase">{cat.label}</p>
+                              </div>
                               <span className="text-[9px] font-black text-purple-500/80">{totalCat} VOTOS</span>
                             </div>
                             {listaVotos.length > 0 ? (
                               <div className="space-y-2">
                                 {listaVotos.map(([nome, total], idx) => (
                                   <div key={idx} className="flex justify-between items-center text-xs">
-                                    <span className={idx === 0 ? "font-bold text-purple-300" : "text-gray-400"}>
-                                      {idx === 0 && "⭐ "}{nome}
+                                    <span className={(idx === 0 && !lider?.empate) ? "font-bold text-purple-300" : "text-gray-400"}>
+                                      {(idx === 0 && !lider?.empate) && "⭐ "}{nome}
                                     </span>
                                     <span className="text-[10px] text-gray-500">{total} {total === 1 ? 'voto' : 'votos'}</span>
                                   </div>
