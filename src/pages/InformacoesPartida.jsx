@@ -954,17 +954,17 @@ export default function InformacoesPartida() {
                     </div>
                   </div>
 
-                  {/* Card de Apuração de Votos (Visível apenas para Admin) */}
+                  {/* Card de Acesso Restrito: Apuração (Votação dos Atletas) */}
                   <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 shadow-xl">
                     <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-lg font-bold text-cyan-400 flex items-center gap-2">
-                        <FaAward /> Apuração de Votos
+                      <h3 className="text-lg font-bold bg-gradient-to-r from-yellow-400 to-amber-600 bg-clip-text text-transparent flex items-center gap-2">
+                        <FaLock className="text-amber-500 size-4" /> Votação dos Atletas (Apuração)
                       </h3>
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-2 py-1 rounded-lg">
+                        <span className="text-[10px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20 px-2 py-1 rounded-lg">
                           {partidaSelecionada.votos?.length || 0} TOTAL
                         </span>
-                        <button onClick={compartilharApuracao} className="p-2 text-cyan-400 hover:bg-cyan-400/10 rounded-lg transition-all" title="Compartilhar Apuração">
+                        <button onClick={compartilharApuracao} className="p-2 text-amber-500 hover:bg-amber-500/10 rounded-lg transition-all" title="Compartilhar Apuração">
                           <FaShareAlt size={16} />
                         </button>
                       </div>
@@ -972,9 +972,9 @@ export default function InformacoesPartida() {
                     <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                       <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
                       {[
-                        { id: 'melhorPartida', label: 'Melhor da Partida', icon: <FaTrophy className="text-yellow-500" /> },
+                        { id: 'melhorPartida', label: 'Melhor da Partida', icon: <FaAward className="text-yellow-500" /> },
                         { id: 'perebaPartida', label: 'Pereba da Partida', icon: <FaUserTimes className="text-red-500" /> },
-                        { id: 'golMaisBonito', label: 'Gol Mais Bonito', icon: <FaAward className="text-cyan-400" /> }
+                        { id: 'golMaisBonito', label: 'Gol Mais Bonito', icon: <FaFutbol className="text-blue-400" /> }
                       ].map(cat => {
                         const listaVotos = getTodosOsVotos(cat.id);
                         const totalCat = listaVotos.reduce((acc, v) => acc + v[1], 0);
@@ -987,14 +987,14 @@ export default function InformacoesPartida() {
                                 {cat.icon}
                                 <p className="text-[10px] font-bold text-gray-500 uppercase">{cat.label}</p>
                               </div>
-                              <span className="text-[9px] font-black text-cyan-500/80">{totalCat} VOTOS</span>
+                              <span className="text-[9px] font-black text-amber-500/80">{totalCat} VOTOS</span>
                             </div>
                             {listaVotos.length > 0 ? (
                               <div className="space-y-2">
                                 {listaVotos.map(([nome, total], idx) => (
                                   <div key={idx} className="flex justify-between items-center text-xs">
-                                    <span className={(idx === 0 && !lider?.empate) ? "font-bold text-cyan-300 flex items-center gap-1" : "text-gray-400"}>
-                                      {(idx === 0 && !lider?.empate) && cat.icon} {nome}
+                                    <span className={(idx === 0 && !lider?.empate) ? "font-bold text-amber-400 flex items-center gap-1" : "text-gray-400"}>
+                                      {(idx === 0 && !lider?.empate) && <div className="w-1 h-1 bg-amber-500 rounded-full animate-pulse" />} {nome}
                                     </span>
                                     <span className="text-[10px] text-gray-500">{total} {total === 1 ? 'voto' : 'votos'}</span>
                                   </div>
@@ -1012,7 +1012,7 @@ export default function InformacoesPartida() {
                   <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-lg font-bold text-yellow-400 flex items-center gap-2">
-                        <FaAward /> Destaques Atuais
+                        <FaTrophy /> Premiações da Partida
                       </h3>
                       <button onClick={compartilharDestaques} className="p-2 text-yellow-400 hover:bg-yellow-400/10 rounded-lg transition-all" title="Compartilhar Destaques">
                         <FaShareAlt size={16} />
@@ -1020,21 +1020,28 @@ export default function InformacoesPartida() {
                     </div>
                     <div className="space-y-3">
                       {[
-                        { id: 'melhorPartida', label: 'Melhor', icon: <FaTrophy className="text-yellow-500"/> },
+                        { id: 'melhorPartida', label: 'Melhor', icon: <FaAward className="text-yellow-500"/> },
                         { id: 'perebaPartida', label: 'Pereba', icon: <FaUserTimes className="text-red-500"/> },
-                        { id: 'golMaisBonito', label: 'Gol Bonito', icon: <FaAward className="text-cyan-400"/> }
+                        { id: 'golMaisBonito', label: 'Gol Bonito', icon: <FaFutbol className="text-blue-400"/> }
                       ].map((d) => {
                         const lider = getLiderVotacao(d.id);
                         const valorOficial = partidaSelecionada.destaques?.[d.id];
                         const displayNome = lider?.empate ? "Houve um Empate" : (lider ? lider.nome : (valorOficial || '-'));
                         
                         return (
-                          <div key={d.id} className="flex items-center gap-3 p-2 bg-gray-900 rounded-lg text-sm border border-gray-700">
-                            {d.icon}
-                            <span className="font-bold text-gray-400">{d.label}:</span>
-                            <span className={`${lider?.empate ? 'text-gray-500 italic' : 'text-white font-medium'}`}>
-                              {displayNome}
-                            </span>
+                          <div key={d.id} className="flex items-center justify-between p-3 bg-gray-900 rounded-xl text-sm border border-gray-700 shadow-inner">
+                            <div className="flex items-center gap-3">
+                              {d.icon}
+                              <span className="font-bold text-gray-500 text-[10px] uppercase tracking-wider">{d.label}:</span>
+                              <span className={`${lider?.empate ? 'text-gray-500 italic text-xs' : 'text-white font-bold'}`}>
+                                {displayNome}
+                              </span>
+                            </div>
+                            {lider && !lider.empate && (
+                              <span className="text-[10px] font-black bg-gray-800 text-yellow-500 px-2 py-1 rounded-lg border border-gray-700">
+                                {lider.total} {lider.total === 1 ? 'VOTO' : 'VOTOS'}
+                              </span>
+                            )}
                           </div>
                         );
                       })}
