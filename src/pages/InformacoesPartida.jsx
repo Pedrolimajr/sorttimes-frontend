@@ -10,6 +10,7 @@ import {
   FaTimesCircle,
   FaFileDownload,
   FaLink,
+  FaSync,
   FaCopy,
   FaCalendarAlt,
   FaFutbol,
@@ -150,6 +151,43 @@ export default function InformacoesPartida() {
           hideProgressBar: true
         }
       );
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  // Função para agrupar gols por jogador e mostrar o time
+  const getGolsAgrupados = () => {
+    const agrupados = [];
+    if (!partidaSelecionada?.gols) return agrupados;
+    
+    partidaSelecionada.gols.forEach((g) => {
+      const indexAgrupado = agrupados.findIndex(item => item.jogador === g.jogador);
+      if (indexAgrupado > -1) {
+        agrupados[indexAgrupado].total += 1;
+      } else {
+        agrupados.push({
+          jogador: g.jogador,
+          total: 1,
+          time: g.time
+        });
+      }
+    });
+    return agrupados.sort((a, b) => b.total - a.total);
+  };
+
+  const atualizarDadosPartida = async () => {
+    if (!partidaSelecionada) return;
+    try {
+      setCarregando(true);
+      const res = await api.get('/agenda');
+      const todas = res.data?.data || res.data || [];
+      setPartidas(todas);
+      const atualizada = todas.find(p => p._id === partidaSelecionada._id);
+      if (atualizada) setPartidaSelecionada(atualizada);
+      toast.success("Informações atualizadas!");
+    } catch (error) {
+      toast.error("Erro ao atualizar dados da partida.");
     } finally {
       setCarregando(false);
     }
@@ -776,17 +814,35 @@ export default function InformacoesPartida() {
               </div>
 
               {partidaSelecionada && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center bg-gray-900/50 p-3 rounded-xl border border-gray-700">
+                    <span className="text-xs font-bold text-blue-400 flex items-center gap-2">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" /> MONITORAMENTO LIVE
+                    </span>
+                    <button 
+                      onClick={atualizarDadosPartida}
+                      className="text-xs flex items-center gap-2 text-gray-400 hover:text-white transition-all bg-gray-800 px-3 py-1.5 rounded-lg border border-gray-700"
+                    >
+                      <FaSync className={carregando ? 'animate-spin' : ''} /> Atualizar Placar
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
                     <h3 className="text-lg font-bold mb-4 text-green-400 flex items-center gap-2">
                       <FaFutbol /> Resumo de Gols
                     </h3>
                     <div className="space-y-2">
-                      {partidaSelecionada.gols?.length > 0 ? (
-                        partidaSelecionada.gols.map((g, i) => (
-                          <div key={i} className="flex justify-between p-2 bg-gray-900 rounded-lg text-sm border border-gray-700">
-                            <span>{g.jogador}</span>
-                            <span className="text-gray-500">{new Date(g.horario).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                      {getGolsAgrupados().length > 0 ? (
+                        getGolsAgrupados().map((g, i) => (
+                          <div key={i} className="flex justify-between items-center p-3 bg-gray-900 rounded-xl text-sm border border-gray-700">
+                            <span className="font-bold text-white">{g.jogador}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="bg-green-600/20 text-green-400 text-[10px] font-black px-2 py-0.5 rounded border border-green-500/30 uppercase">{g.total} {g.total > 1 ? 'GOLS' : 'GOL'}</span>
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${g.time === 'Amarelo' ? 'bg-yellow-400/10 text-yellow-400 border-yellow-500/30' : 'bg-gray-700/40 text-gray-300 border-gray-600'}`}>
+                                {g.time?.toUpperCase() || 'N/A'}
+                              </span>
+                            </div>
                           </div>
                         ))
                       ) : (
@@ -865,6 +921,7 @@ export default function InformacoesPartida() {
                       ))}
                     </div>
                   </div>
+                </div>
                 </div>
               )}
             </motion.div>
