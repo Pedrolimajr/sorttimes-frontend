@@ -314,7 +314,6 @@ export default function PublicMatchInfo() {
                   <div key={`${nome}-${idx}`} className="text-sm bg-gray-900/80 text-gray-200 py-3 px-2 rounded-xl border border-gray-700 flex justify-between items-center">
                     <span className="truncate flex-1 text-left">{nome}</span>
                     <div className="flex gap-1">
-                      <button onClick={() => handleEditarClick(card.tipo, idx, nome)} className="text-blue-500 p-1"><FaEdit size={12}/></button>
                       <button onClick={() => handleRemoverClick(card.tipo, idx, nome)} className="text-red-500 p-1"><FaTrash size={12}/></button>
                     </div>
                   </div>
