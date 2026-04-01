@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaTrophy, FaUserTimes, FaCrown, FaCheckCircle, FaLock, FaUser, FaChartBar, FaShareAlt, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaTrophy, FaUserTimes, FaAward, FaFutbol, FaCheckCircle, FaLock, FaUser, FaChartBar, FaShareAlt, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { toast, ToastContainer } from 'react-toastify';
 import api from '../services/api';
 
@@ -182,9 +182,9 @@ export default function VotacaoPartida() {
               </div>
 
               {[
-                { id: 'melhorPartida', label: 'Melhor da Partida', icon: <FaTrophy className="text-yellow-500" /> },
+                { id: 'melhorPartida', label: 'Melhor da Partida', icon: <FaAward className="text-yellow-500" /> },
                 { id: 'perebaPartida', label: 'Pereba da Partida', icon: <FaUserTimes className="text-red-400" /> },
-                { id: 'golMaisBonito', label: 'Gol Mais Bonito', icon: <FaCrown className="text-cyan-400" /> }
+                { id: 'golMaisBonito', label: 'Gol Mais Bonito', icon: <FaFutbol className="text-blue-400" /> }
               ].map(premio => (
                 <div key={premio.id} className="space-y-3">
                   <label className="text-sm font-bold text-gray-300 flex items-center gap-2">
