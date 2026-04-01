@@ -20,7 +20,10 @@ import {
   FaCheckCircle,
   FaLock,
   FaUserTimes,
-  FaUser
+  FaUser,
+  FaCrown,
+  FaSkull,
+  FaMagic
 } from 'react-icons/fa';
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { useNavigate } from 'react-router-dom';
@@ -170,7 +173,13 @@ export default function InformacoesPartida() {
     }, {});
 
     const ordenado = Object.entries(contagem).sort((a, b) => b[1] - a[1]);
-    return { nome: ordenado[0][0], total: ordenado[0][1] };
+
+    // Só destaca se o primeiro tiver estritamente mais votos que o segundo (se existir)
+    if (ordenado.length > 1 && ordenado[0][1] === ordenado[1][1]) {
+      return { nome: 'Empate', total: ordenado[0][1], empate: true };
+    }
+
+    return { nome: ordenado[0][0], total: ordenado[0][1], empate: false };
   };
 
   // Função para pegar a lista completa de votos por categoria
@@ -1006,18 +1015,21 @@ export default function InformacoesPartida() {
                     </div>
                     <div className="space-y-3">
                       {[
-                        { id: 'melhorPartida', label: 'Melhor', icon: <FaTrophy className="text-yellow-500"/> },
-                        { id: 'perebaPartida', label: 'Pereba', icon: <FaUserTimes className="text-red-400"/> },
-                        { id: 'golMaisBonito', label: 'Gol Bonito', icon: <FaCheckCircle className="text-cyan-400"/> }
+                        { id: 'melhorPartida', label: 'Melhor', icon: <FaCrown className="text-yellow-400"/> },
+                        { id: 'perebaPartida', label: 'Pereba', icon: <FaSkull className="text-orange-600"/> },
+                        { id: 'golMaisBonito', label: 'Gol Bonito', icon: <FaMagic className="text-pink-400"/> }
                       ].map((d) => {
                         const lider = getLiderVotacao(d.id);
                         const valorOficial = partidaSelecionada.destaques?.[d.id];
+                        const displayNome = lider?.empate ? "Houve um Empate" : (lider ? lider.nome : (valorOficial || '-'));
                         
                         return (
                           <div key={d.id} className="flex items-center gap-3 p-2 bg-gray-900 rounded-lg text-sm border border-gray-700">
                             {d.icon}
                             <span className="font-bold text-gray-400">{d.label}:</span>
-                            <span className="text-white">{lider ? lider.nome : (valorOficial || '-')}</span>
+                            <span className={`${lider?.empate ? 'text-gray-500 italic' : 'text-white font-medium'}`}>
+                              {displayNome}
+                            </span>
                           </div>
                         );
                       })}
