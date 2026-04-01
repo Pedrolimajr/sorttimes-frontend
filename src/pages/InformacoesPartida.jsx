@@ -11,6 +11,7 @@ import {
   FaFileDownload,
   FaLink,
   FaSync,
+  FaShareAlt,
   FaCopy,
   FaCalendarAlt,
   FaFutbol,
@@ -19,7 +20,8 @@ import {
   FaCheckCircle,
   FaLock,
   FaUserTimes,
-  FaUser // Adicione FaUser aqui
+  FaUser,
+  FaShareAlt
 } from 'react-icons/fa';
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { useNavigate } from 'react-router-dom';
@@ -344,30 +346,57 @@ export default function InformacoesPartida() {
   };
 
   const compartilharResultados = () => {
-    const p = partidaSelecionada;
-    if (!p) return;
-    
-    // Lógica para apurar vencedor e votos
-    const apurar = (categoria) => {
-      const vts = p.votos?.filter(v => v.categoria === categoria) || [];
-      if (vts.length === 0) return { nome: 'Ninguém', votos: 0 };
-      const contagem = vts.reduce((acc, v) => { acc[v.jogador] = (acc[v.jogador] || 0) + 1; return acc; }, {});
-      const sorted = Object.entries(contagem).sort((a,b) => b[1] - a[1]);
-      return { nome: sorted[0][0], votos: sorted[0][1] };
-    };
+    compartilharDestaques();
+  };
 
-    const melhor = apurar('melhorPartida');
-    const pereba = apurar('perebaPartida');
-    const gol = apurar('golMaisBonito');
-
-    const msg = `🏆 *RESULTADOS DA PARTIDA* 🏆\n\n` +
-                `🌟 Melhor: ${melhor.nome} (${melhor.votos} votos)\n` +
-                `🐢 Pereba: ${pereba.nome} (${pereba.votos} votos)\n` +
-                `⚽ Golaço: ${gol.nome} (${gol.votos} votos)\n\n` +
-                `Parabéns aos envolvidos! 🔥`;
-    
+  const compartilharGols = () => {
+    const gols = getGolsAgrupados();
+    if (gols.length === 0) return toast.info("Nenhum gol registrado.");
+    const texto = gols.map(g => `⚽ ${g.jogador}: ${g.total} ${g.total > 1 ? 'GOLS' : 'GOL'} (${g.time})`).join('\n');
+    const msg = `🔥 *RESUMO DE GOLS - SORT TIMES* 🔥\n\n${texto}`;
     navigator.clipboard.writeText(msg);
-    toast.success("Resumo copiado para compartilhar!");
+    toast.success("Resumo de gols copiado!");
+  };
+
+  const compartilharCartoes = () => {
+    const p = partidaSelecionada;
+    let texto = '';
+    if (p.cartoesAmarelos?.length) texto += `🟨 Amarelos: ${p.cartoesAmarelos.join(', ')}\n`;
+    if (p.cartoesVermelhos?.length) texto += `🟥 Vermelhos: ${p.cartoesVermelhos.join(', ')}\n`;
+    if (p.cartoesAzuis?.length) texto += `🟦 Azuis: ${p.cartoesAzuis.join(', ')}\n`;
+    if (!texto) return toast.info("Nenhum cartão registrado.");
+    const msg = `⚠️ *RESUMO DE CARTÕES - SORT TIMES* ⚠️\n\n${texto}`;
+    navigator.clipboard.writeText(msg);
+    toast.success("Resumo de cartões copiado!");
+  };
+
+  const compartilharApuracao = () => {
+    const p = partidaSelecionada;
+    if (!p.votos?.length) return toast.info("Nenhum voto registrado ainda.");
+    const cats = [
+      { id: 'melhorPartida', label: 'Melhor' },
+      { id: 'perebaPartida', label: 'Pereba' },
+      { id: 'golMaisBonito', label: 'Golaço' }
+    ];
+    const texto = cats.map(c => {
+      const lider = getLiderVotacao(c.id);
+      return `${c.label}: ${lider ? `${lider.nome} (${lider.total} votos)` : '-'}`;
+    }).join('\n');
+    const msg = `🗳️ *APURAÇÃO DE VOTOS - SORT TIMES* 🗳️\n\n${texto}\n\nTotal de Participações: ${p.votos.length}`;
+    navigator.clipboard.writeText(msg);
+    toast.success("Resumo da apuração copiado!");
+  };
+
+  const compartilharDestaques = () => {
+    const cats = [
+      { id: 'melhorPartida', label: '🏆 Melhor' },
+      { id: 'perebaPartida', label: '🐢 Pereba' },
+      { id: 'golMaisBonito', label: '⚽ Golaço' }
+    ];
+    const texto = cats.map(d => `${d.label}: ${getLiderVotacao(d.id)?.nome || '-'}`).join('\n');
+    const msg = `🌟 *DESTAQUES DA PARTIDA* 🌟\n\n${texto}`;
+    navigator.clipboard.writeText(msg);
+    toast.success("Destaques copiados!");
   };
 
   const voltarParaDashboard = () => navigate('/dashboard');
@@ -859,9 +888,14 @@ export default function InformacoesPartida() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
-                    <h3 className="text-lg font-bold mb-4 text-green-400 flex items-center gap-2">
-                      <FaFutbol /> Resumo de Gols
-                    </h3>
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-bold text-green-400 flex items-center gap-2">
+                        <FaFutbol /> Resumo de Gols
+                      </h3>
+                      <button onClick={compartilharGols} className="p-2 text-green-400 hover:bg-green-400/10 rounded-lg transition-all" title="Compartilhar Gols">
+                        <FaShareAlt size={16} />
+                      </button>
+                    </div>
                     <div className="space-y-2">
                       {getGolsAgrupados().length > 0 ? (
                         getGolsAgrupados().map((g, i) => (
@@ -883,9 +917,14 @@ export default function InformacoesPartida() {
 
                   {/* Resumo de Cartões no Painel Admin */}
                   <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 shadow-xl">
-                    <h3 className="text-lg font-bold mb-4 text-orange-400 flex items-center gap-2">
-                      <FaTable /> Resumo de Cartões
-                    </h3>
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-bold text-orange-400 flex items-center gap-2">
+                        <FaTable /> Resumo de Cartões
+                      </h3>
+                      <button onClick={compartilharCartoes} className="p-2 text-orange-400 hover:bg-orange-400/10 rounded-lg transition-all" title="Compartilhar Cartões">
+                        <FaShareAlt size={16} />
+                      </button>
+                    </div>
                     <div className="grid grid-cols-3 gap-2">
                       {[
                         { label: 'Amarelo', field: 'cartoesAmarelos', bg: 'bg-yellow-400' },
@@ -909,19 +948,34 @@ export default function InformacoesPartida() {
 
                   {/* Card de Apuração de Votos (Visível apenas para Admin) */}
                   <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 shadow-xl">
-                    <h3 className="text-lg font-bold mb-4 text-purple-400 flex items-center gap-2">
-                      <FaAward /> Apuração de Votos
-                    </h3>
-                    <div className="space-y-4">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-bold text-purple-400 flex items-center gap-2">
+                        <FaAward /> Apuração de Votos
+                      </h3>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-1 rounded-lg">
+                          {partidaSelecionada.votos?.length || 0} TOTAL
+                        </span>
+                        <button onClick={compartilharApuracao} className="p-2 text-purple-400 hover:bg-purple-400/10 rounded-lg transition-all" title="Compartilhar Apuração">
+                          <FaShareAlt size={16} />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                      <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
                       {[
                         { id: 'melhorPartida', label: 'Melhor da Partida' },
                         { id: 'perebaPartida', label: 'Pereba da Partida' },
                         { id: 'golMaisBonito', label: 'Gol Mais Bonito' }
                       ].map(cat => {
                         const listaVotos = getTodosOsVotos(cat.id);
+                        const totalCat = listaVotos.reduce((acc, v) => acc + v[1], 0);
                         return (
                           <div key={cat.id} className="bg-gray-900 p-3 rounded-xl border border-gray-700">
-                            <p className="text-[10px] font-bold text-gray-500 uppercase mb-2">{cat.label}</p>
+                            <div className="flex justify-between items-center mb-2">
+                              <p className="text-[10px] font-bold text-gray-500 uppercase">{cat.label}</p>
+                              <span className="text-[9px] font-black text-purple-500/80">{totalCat} VOTOS</span>
+                            </div>
                             {listaVotos.length > 0 ? (
                               <div className="space-y-2">
                                 {listaVotos.map(([nome, total], idx) => (
@@ -943,9 +997,14 @@ export default function InformacoesPartida() {
                   </div>
 
                   <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
-                    <h3 className="text-lg font-bold mb-4 text-yellow-400 flex items-center gap-2">
-                      <FaAward /> Destaques Atuais
-                    </h3>
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-bold text-yellow-400 flex items-center gap-2">
+                        <FaAward /> Destaques Atuais
+                      </h3>
+                      <button onClick={compartilharDestaques} className="p-2 text-yellow-400 hover:bg-yellow-400/10 rounded-lg transition-all" title="Compartilhar Destaques">
+                        <FaShareAlt size={16} />
+                      </button>
+                    </div>
                     <div className="space-y-3">
                       {[
                         { id: 'melhorPartida', label: 'Melhor', icon: <FaTrophy className="text-yellow-500"/> },
