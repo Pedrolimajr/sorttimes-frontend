@@ -217,14 +217,14 @@ export default function VotacaoPartida() {
               initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               className="bg-gray-800 rounded-3xl p-6 border border-gray-700 shadow-2xl space-y-6"
             >
-              <h2 className="text-xl font-black text-center text-purple-400 flex items-center justify-center gap-2">
-                <FaChartBar /> Apuração em Tempo Real
+              <h2 className="text-xl font-black text-center bg-gradient-to-r from-yellow-400 to-amber-600 bg-clip-text text-transparent flex items-center justify-center gap-2">
+                <FaChartBar className="text-amber-500" /> Apuração em Tempo Real
               </h2>
               <div className="space-y-4">
                 {[
-                  { id: 'melhorPartida', label: 'Melhor da Partida', icon: <FaTrophy className="text-yellow-500" /> },
+                  { id: 'melhorPartida', label: 'Melhor da Partida', icon: <FaAward className="text-yellow-500" /> },
                   { id: 'perebaPartida', label: 'Pereba da Partida', icon: <FaUserTimes className="text-red-400" /> },
-                  { id: 'golMaisBonito', label: 'Gol Mais Bonito', icon: <FaCrown className="text-cyan-400" /> }
+                  { id: 'golMaisBonito', label: 'Gol Mais Bonito', icon: <FaFutbol className="text-blue-400" /> }
                 ].map(cat => {
                   const vencedor = apurarVencedor(cat.id);
                   const totalVotosCat = partida.votos?.filter(v => v.categoria === cat.id).length || 0;
@@ -232,18 +232,25 @@ export default function VotacaoPartida() {
                     <div key={cat.id} className="bg-gray-900 p-4 rounded-2xl border border-gray-700">
                       <div className="flex justify-between items-start mb-1">
                         <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{cat.label}</p>
-                        <span className="text-[10px] bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-full font-bold">
-                          {totalVotosCat} votos
+                        <span className="text-[10px] bg-amber-500/10 text-amber-500 px-2 py-0.5 rounded-full font-bold border border-amber-500/20">
+                          {totalVotosCat} votos no total
                         </span>
                       </div>
-                      <p className="text-base font-black text-white flex items-center gap-2">
-                        {cat.icon} {vencedor.nome}
-                      </p>
+                      <div className="flex justify-between items-center">
+                        <p className="text-base font-black text-white flex items-center gap-2">
+                          {cat.icon} {vencedor.nome}
+                        </p>
+                        {vencedor.votos > 0 && (
+                          <span className="text-xs font-black text-yellow-500">
+                            {vencedor.votos} {vencedor.votos === 1 ? 'VOTO' : 'VOTOS'}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   );
                 })}
               </div>
-              <button onClick={compartilharResultados} className="w-full bg-purple-600 hover:bg-purple-700 py-4 rounded-2xl font-black flex items-center justify-center gap-2 transition-all">
+              <button onClick={compartilharResultados} className="w-full bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 py-4 rounded-2xl font-black flex items-center justify-center gap-2 transition-all shadow-lg">
                 <FaShareAlt /> COMPARTILHAR RESULTADOS
               </button>
               <button onClick={() => setAba('login')} className="w-full text-xs text-gray-500">Sair do Modo Admin</button>
@@ -278,10 +285,10 @@ export default function VotacaoPartida() {
                 className="bg-gray-800 border border-gray-700 p-6 rounded-3xl w-full max-w-sm shadow-2xl space-y-6"
               >
                 <div className="text-center">
-                  <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <FaLock className="text-purple-400" />
+                  <div className="w-12 h-12 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-3 border border-amber-500/30">
+                    <FaLock className="text-amber-500" />
                   </div>
-                  <h3 className="text-xl font-black text-white">Login Admin</h3>
+                  <h3 className="text-xl font-black bg-gradient-to-r from-yellow-400 to-amber-600 bg-clip-text text-transparent">Login Admin</h3>
                   <p className="text-xs text-gray-400">Acesso restrito para apuração</p>
                 </div>
 
@@ -289,7 +296,7 @@ export default function VotacaoPartida() {
                   <input 
                     type="text" 
                     placeholder="Usuário"
-                    className="w-full bg-gray-900 border-none rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full bg-gray-900 border-none rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-yellow-500"
                     value={adminCreds.username}
                     onChange={(e) => setAdminCreds({...adminCreds, username: e.target.value})}
                     required
@@ -298,7 +305,7 @@ export default function VotacaoPartida() {
                     <input 
                       type={mostrarSenhaAdminCred ? "text" : "password"} 
                       placeholder="Senha"
-                      className="w-full bg-gray-900 border-none rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-purple-500 pr-10"
+                      className="w-full bg-gray-900 border-none rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-yellow-500 pr-10"
                       value={adminCreds.password}
                       onChange={(e) => setAdminCreds({...adminCreds, password: e.target.value})}
                       required
@@ -321,7 +328,7 @@ export default function VotacaoPartida() {
                     </button>
                     <button 
                       type="submit" 
-                      className="flex-1 bg-purple-600 hover:bg-purple-700 py-3 rounded-xl font-bold text-xs"
+                      className="flex-1 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 py-3 rounded-xl font-bold text-xs text-white"
                     >
                       ENTRAR
                     </button>
