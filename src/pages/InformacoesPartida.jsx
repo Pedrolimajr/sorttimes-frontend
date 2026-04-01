@@ -861,16 +861,16 @@ export default function InformacoesPartida() {
                       </div>
 
                       {/* Card do Link de Votação */}
-                      <div className="bg-purple-500/10 border border-purple-500/30 p-4 rounded-xl flex flex-col sm:flex-row items-center gap-4">
+                      <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-xl flex flex-col sm:flex-row items-center gap-4">
                         <div className="flex-1">
-                          <p className="text-[10px] font-bold text-purple-400 uppercase mb-1">Link de Votação para Atletas</p>
-                          <div className="text-xs font-mono text-purple-300 break-all bg-gray-900 p-3 rounded-lg border border-purple-900/50">
+                          <p className="text-[10px] font-bold text-amber-500 uppercase mb-1">Link de Votação para Atletas</p>
+                          <div className="text-xs font-mono text-amber-400 break-all bg-gray-900 p-3 rounded-lg border border-amber-900/50">
                             {linkVotacao}
                           </div>
                         </div>
                         <button 
                           onClick={() => { navigator.clipboard.writeText(linkVotacao); toast.info("Link de Votação copiado!"); }}
-                          className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg font-bold flex items-center gap-2 w-full sm:w-auto"
+                          className="bg-amber-600 hover:bg-amber-700 px-6 py-3 rounded-lg font-bold flex items-center gap-2 w-full sm:w-auto text-white"
                         >
                           <FaCopy /> Copiar
                         </button>
