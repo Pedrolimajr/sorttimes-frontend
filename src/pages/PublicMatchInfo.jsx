@@ -277,6 +277,9 @@ export default function PublicMatchInfo() {
         </section>
 
         {/* Seção de Cartões (Grid Rápido) */}
+    <h2 className="flex items-center gap-2 text-lg font-bold mb-4 text-orange-400">
+      <FaIdCard /> Cartões da Partida
+    </h2>
         <section className="grid grid-cols-3 gap-3">
           {[
             { tipo: 'amarelo', cor: 'bg-yellow-400', field: 'cartoesAmarelos', label: 'AMARELO' },
