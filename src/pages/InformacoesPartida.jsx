@@ -838,6 +838,19 @@ export default function InformacoesPartida() {
                         </option>
                       ))}
                     </select>
+                    {partidaSelecionada && (
+                      <div className="mt-2 flex items-center gap-2">
+                        {partidaSelecionada.participantes?.length > 0 ? (
+                          <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-1 rounded-full border border-green-500/30 flex items-center gap-1">
+                            <FaCheckCircle /> Sorteio Realizado ({partidaSelecionada.participantes.length} atletas)
+                          </span>
+                        ) : (
+                          <span className="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-1 rounded-full border border-amber-500/30 flex items-center gap-1">
+                            <FaExclamationTriangle /> Sorteio não vinculado. Votação bloqueada.
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                     <div className="flex flex-col sm:flex-row gap-2">
                       <button
