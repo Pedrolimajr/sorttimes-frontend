@@ -818,7 +818,11 @@ export default function InformacoesPartida() {
                     <label className="block text-sm font-medium text-gray-400 mb-2">Selecionar Partida Agendada</label>
                     <select 
                       className="w-full bg-gray-900 border-gray-700 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                      onChange={(e) => setPartidaSelecionada(partidas.find(p => p._id === e.target.value))}
+                      onChange={(e) => {
+                        setPartidaSelecionada(partidas.find(p => p._id === e.target.value));
+                        setLinkGeradoPartida('');
+                        setLinkVotacao('');
+                      }}
                     >
                       <option value="">Escolha uma partida...</option>
                       {partidas.map(p => (
@@ -855,7 +859,8 @@ export default function InformacoesPartida() {
                     className="mt-6 space-y-4"
                     >
                       {/* Card do Link de Eventos */}
-                      <div className="bg-blue-500/10 border border-blue-500/30 p-4 rounded-xl flex flex-col sm:flex-row items-center gap-4">
+                      {linkGeradoPartida && (
+                        <div className="bg-blue-500/10 border border-blue-500/30 p-4 rounded-xl flex flex-col sm:flex-row items-center gap-4">
                         <div className="flex-1">
                           <p className="text-[10px] font-bold text-blue-400 uppercase mb-1">Link de Eventos (Gols e Cartões)</p>
                           <div className="text-xs font-mono text-blue-300 break-all bg-gray-900 p-3 rounded-lg border border-blue-900/50">
@@ -869,9 +874,11 @@ export default function InformacoesPartida() {
                           <FaCopy /> Copiar
                         </button>
                       </div>
+                      )}
 
                       {/* Card do Link de Votação */}
-                      <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-xl flex flex-col sm:flex-row items-center gap-4">
+                      {linkVotacao && (
+                        <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-xl flex flex-col sm:flex-row items-center gap-4">
                         <div className="flex-1">
                           <p className="text-[10px] font-bold text-amber-500 uppercase mb-1">Link de Votação para Atletas</p>
                           <div className="text-xs font-mono text-amber-400 break-all bg-gray-900 p-3 rounded-lg border border-amber-900/50">
@@ -885,6 +892,7 @@ export default function InformacoesPartida() {
                           <FaCopy /> Copiar
                         </button>
                       </div>
+                      )}
                     </motion.div>
                   )}
                 </AnimatePresence>
