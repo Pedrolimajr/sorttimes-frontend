@@ -328,7 +328,6 @@ export default function AgendarPartida() {
                     type="text" 
                     value={formData.local} 
                     onChange={(e) => setFormData({...formData, local: e.target.value})} 
-                    required 
                     className="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
                     placeholder="Ex: Arena Society" 
                   />
