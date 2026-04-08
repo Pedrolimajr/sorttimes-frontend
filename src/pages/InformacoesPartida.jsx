@@ -27,7 +27,7 @@ import {
   FaExclamationTriangle
 } from 'react-icons/fa';
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { toast, ToastContainer } from "react-toastify";
 import ConfirmModal from '../components/ConfirmModal';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -35,6 +35,7 @@ import api from '../services/api';
 
 export default function InformacoesPartida() {
   const navigate = useNavigate();
+  const { id: partidaIdUrl } = useParams();
   const [abaAtiva, setAbaAtiva] = useState('planilhas'); // 'planilhas' ou 'partida'
   
   // Estados da Planilha (Existentes)
@@ -94,6 +95,14 @@ export default function InformacoesPartida() {
     carregarPlanilhas();
     carregarPartidasAgendadas();
   }, []);
+
+  // Efeito para selecionar automaticamente a partida se vier via URL
+  useEffect(() => {
+    if (partidaIdUrl && partidas.length > 0) {
+      const encontrada = partidas.find(p => p._id === partidaIdUrl);
+      if (encontrada) setPartidaSelecionada(encontrada);
+    }
+  }, [partidaIdUrl, partidas]);
 
   // Função para salvar planilha
   const salvarPlanilha = async () => {
@@ -221,7 +230,7 @@ export default function InformacoesPartida() {
     if (!partidaSelecionada) return;
     try {
       setCarregando(true);
-      const res = await api.get('/agenda');
+      const res = await api.get('/agenda?populate=participantes');
       const todas = res.data?.data || res.data || [];
       setPartidas(todas);
       const atualizada = todas.find(p => p._id === partidaSelecionada._id);
@@ -826,6 +835,7 @@ export default function InformacoesPartida() {
                     <label className="block text-sm font-medium text-gray-400 mb-2">Selecionar Partida Agendada</label>
                     <select 
                       className="w-full bg-gray-900 border-gray-700 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                      value={partidaSelecionada?._id || ""}
                       onChange={(e) => {
                         setPartidaSelecionada(partidas.find(p => p._id === e.target.value));
                         setLinkGeradoPartida('');
