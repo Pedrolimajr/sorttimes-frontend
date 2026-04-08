@@ -23,7 +23,8 @@ import {
   FaUser,
   FaCrown,
   FaSkull,
-  FaMagic
+  FaMagic,
+  FaExclamationTriangle
 } from 'react-icons/fa';
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { useNavigate } from 'react-router-dom';
