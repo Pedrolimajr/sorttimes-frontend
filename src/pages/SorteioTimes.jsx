@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { 
   FaRandom, FaUser, FaTshirt, FaBalanceScale, FaCheck, FaTimes, 
   FaSync, FaArrowLeft, FaHistory, FaEdit, FaShare, FaSave, 
-  FaTrash, FaUserCheck, FaUserTimes, FaSearch 
+  FaTrash, FaUserCheck, FaUserTimes, FaSearch, FaCalendarAlt 
 } from "react-icons/fa";
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { GiSoccerKick } from "react-icons/gi";
@@ -70,6 +70,8 @@ export default function SorteioTimes() {
   const [modoEdicao, setModoEdicao] = useState(false);
   const [filtroPosicao, setFiltroPosicao] = useState('');
   const [filtroJogadoresSelecionados, setFiltroJogadoresSelecionados] = useState('');
+  const [partidasAgenda, setPartidasAgenda] = useState([]);
+  const [partidaVinculadaId, setPartidaVinculadaId] = useState('');
 
   // Carrega dados do localStorage ao montar o componente
   useEffect(() => {
@@ -212,6 +214,18 @@ export default function SorteioTimes() {
 };
 
   // Carrega jogadores do backend ao montar o componente
+  useEffect(() => {
+    const carregarPartidas = async () => {
+      try {
+        const res = await api.get('/agenda');
+        setPartidasAgenda(res.data?.data || res.data || []);
+      } catch (err) {
+        console.error("Erro ao carregar agenda");
+      }
+    };
+    carregarPartidas();
+  }, []);
+
   useEffect(() => {
   const carregarJogadores = async () => {
     setCarregandoJogadores(true);
@@ -398,6 +412,17 @@ const aplicarFiltroPosicao = () => {
     }));
 
     setTimes(timesComIds);
+
+    // Vincular participantes à partida agendada para permitir votação restrita
+    if (partidaVinculadaId) {
+      try {
+        const participantesIds = jogadoresPresentes.map(j => j._id);
+        await api.post(`/partida-publica/vincular-participantes/${partidaVinculadaId}`, { participantes: participantesIds });
+        toast.success("Lista de participantes vinculada à partida!");
+      } catch (err) {
+        console.error("Erro ao vincular participantes:", err);
+      }
+    }
 
     const novoSorteio = {
       times: timesComIds,
@@ -790,6 +815,24 @@ const TimeSorteado = ({ time, index }) => {
         >
          <div className="p-4 sm:p-10">
             {/* Filtro de posição */}
+            <div className="mb-6 p-4 bg-blue-900/20 border border-blue-500/30 rounded-xl">
+              <label className="text-xs sm:text-sm font-medium text-blue-300 mb-2 flex items-center gap-2">
+                <FaCalendarAlt /> Vincular este Sorteio a uma Partida Agendada
+              </label>
+              <select
+                value={partidaVinculadaId}
+                onChange={(e) => setPartidaVinculadaId(e.target.value)}
+                className="w-full p-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              >
+                <option value="">Selecione a partida da agenda...</option>
+                {partidasAgenda.map(p => (
+                  <option key={p._id} value={p._id}>
+                    {new Date(p.data).toLocaleDateString()} - {p.local}
+                  </option>
+                ))}
+              </select>
+              <p className="text-[10px] text-gray-500 mt-1">* Necessário para que apenas quem jogou possa votar depois.</p>
+            </div>
             <div className="mb-4 flex flex-col sm:flex-row gap-4 items-end">
     <div className="flex-1 max-sm:w-full">
       <label className="text-xs sm:text-sm font-medium text-gray-400 mb-1 flex items-center gap-2">

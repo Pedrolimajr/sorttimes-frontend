@@ -324,23 +324,24 @@ export default function InformacoesPartida() {
   };
 
   // Funções para Geração de Link de Partida
-  const gerarLinkPublicoPartida = async () => {
+  const gerarLinkPublicoPartida = async (tipo = 'eventos') => {
     if (!partidaSelecionada) return toast.warn("Selecione uma partida agendada!");
     try {
       setCarregando(true);
-      // Limpa os links anteriores antes de gerar novos
-      setLinkGeradoPartida('');
-      setLinkVotacao('');
-
-      const res = await api.post(`/partida-publica/gerar-link/${partidaSelecionada._id}`);
+      
+      const res = await api.post(`/partida-publica/gerar-link/${partidaSelecionada._id}`, { tipo });
       const linkId = res.data?.linkId || res.data?.data?.linkId;
       
-      const urlEventos = `${window.location.origin}/partida-publica/${linkId}`;
-      const urlVotacao = `${window.location.origin}/votar-partida/${linkId}`;
+      const url = tipo === 'eventos' 
+        ? `${window.location.origin}/partida-publica/${linkId}`
+        : `${window.location.origin}/votar-partida/${linkId}`;
 
-      setLinkGeradoPartida(urlEventos);
-      setLinkVotacao(urlVotacao);
-      toast.success("Links da partida gerados com sucesso!");
+      if (tipo === 'eventos') {
+        setLinkGeradoPartida(url);
+      } else {
+        setLinkVotacao(url);
+      }
+      toast.success(`Link de ${tipo === 'eventos' ? 'Eventos' : 'Votação'} gerado com sucesso!`);
     } catch (error) {
       toast.error("Erro ao gerar link público.");
     } finally {
@@ -827,13 +828,22 @@ export default function InformacoesPartida() {
                       ))}
                     </select>
                   </div>
-                  <button
-                    onClick={gerarLinkPublicoPartida}
-                    disabled={!partidaSelecionada || carregando}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50"
-                  >
-                    <FaLink /> {carregando ? 'Gerando...' : 'Gerar Link de Informações'}
-                  </button>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <button
+                        onClick={() => gerarLinkPublicoPartida('eventos')}
+                        disabled={!partidaSelecionada || carregando}
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50 text-xs"
+                      >
+                        <FaLink /> Link de Eventos (Pré-Jogo)
+                      </button>
+                      <button
+                        onClick={() => gerarLinkPublicoPartida('votacao')}
+                        disabled={!partidaSelecionada || carregando}
+                        className="flex-1 bg-amber-600 hover:bg-amber-700 text-white p-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50 text-xs"
+                      >
+                        <FaAward /> Link de Votação (Pós-Jogo)
+                      </button>
+                    </div>
                 </div>
 
                 <AnimatePresence>
