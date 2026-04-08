@@ -870,7 +870,7 @@ export default function InformacoesPartida() {
                         disabled={!partidaSelecionada || carregando}
                         className="flex-1 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50 text-xs"
                       >
-                        <FaLink /> Link de Eventos (Pré-Jogo)
+                        <FaLink /> Link de Eventos (Gols e Cartões)
                       </button>
                       <button
                         onClick={() => gerarLinkPublicoPartida('votacao')}
