@@ -418,6 +418,7 @@ const aplicarFiltroPosicao = () => {
       try {
         // Filtra IDs válidos para evitar erros no MongoDB
         const participantesIds = jogadoresPresentes.map(j => j._id).filter(id => id);
+        console.log("[FRONTEND - SORTEIOTIMES] Enviando participantes para vincular:", participantesIds);
         await api.post(`/partida-publica/vincular-participantes/${partidaVinculadaId}`, { participantes: participantesIds });
         toast.success("Lista de participantes vinculada à partida!");
       } catch (err) {

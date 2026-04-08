@@ -84,7 +84,7 @@ export default function InformacoesPartida() {
 
     const carregarPartidasAgendadas = async () => {
       try {
-        const res = await api.get('/agenda');
+        const res = await api.get('/agenda?populate=participantes'); // Solicita a população dos participantes
         setPartidas(res.data?.data || res.data || []);
       } catch (error) {
         console.error("Erro ao carregar agenda", error);
@@ -839,6 +839,7 @@ export default function InformacoesPartida() {
                         </option>
                       ))}
                     </select>
+                    {partidaSelecionada && console.log("[FRONTEND - INFO PARTIDA] Partida Selecionada Participantes:", partidaSelecionada.participantes)}
                     {partidaSelecionada && (
                       <div className="mt-2 flex items-center gap-2">
                         {partidaSelecionada.participantes?.length > 0 ? (
