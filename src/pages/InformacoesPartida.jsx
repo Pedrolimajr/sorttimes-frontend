@@ -329,6 +329,10 @@ export default function InformacoesPartida() {
     try {
       setCarregando(true);
       
+      // Limpa os links anteriores para garantir que não apareçam juntos
+      setLinkGeradoPartida('');
+      setLinkVotacao('');
+
       const res = await api.post(`/partida-publica/gerar-link/${partidaSelecionada._id}`, { tipo });
       const linkId = res.data?.linkId || res.data?.data?.linkId;
       
