@@ -19,6 +19,8 @@ export default function VotacaoPartida() {
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [adminCreds, setAdminCreds] = useState({ username: '', password: '' });
   const [mostrarSenhaAdminCred, setMostrarSenhaAdminCred] = useState(false);
+  const [expireAt, setExpireAt] = useState(null);
+  const [countdown, setCountdown] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -26,6 +28,7 @@ export default function VotacaoPartida() {
         const res = await api.get(`/partida-publica/${linkId}`);
         setPartida(res.data.data);
         setJogadores(res.data.jogadores || []);
+        setExpireAt(res.data.expireAt);
       } catch (err) {
         toast.error("Link de votação expirado.");
       } finally {
@@ -34,6 +37,33 @@ export default function VotacaoPartida() {
     };
     fetchData();
   }, [linkId]);
+
+  // Efeito para contagem regressiva
+  useEffect(() => {
+    if (!expireAt) return;
+
+    const updateCountdown = () => {
+      const now = new Date();
+      const expiration = new Date(expireAt);
+      const diff = expiration.getTime() - now.getTime();
+
+      if (diff <= 0) {
+        setCountdown('Expirado!');
+        return;
+      }
+
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      setCountdown(`${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`);
+    };
+
+    updateCountdown();
+    const intervalId = setInterval(updateCountdown, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [expireAt]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -104,6 +134,13 @@ export default function VotacaoPartida() {
     return { nome: sorted[0][0], votos: sorted[0][1] };
   };
 
+  // Função auxiliar para encontrar a foto do atleta pelo nome
+  const getFotoJogador = (nome) => {
+    if (!nome || nome === 'Ninguém') return null;
+    const p = partida?.participantes?.find(atleta => atleta.nome === nome);
+    return p?.foto || null;
+  };
+
   const compartilharResultados = () => {
     const melhor = apurarVencedor('melhorPartida');
     const pereba = apurarVencedor('perebaPartida');
@@ -127,6 +164,11 @@ export default function VotacaoPartida() {
         <header className="text-center py-6">
           <h1 className="text-2xl font-black text-blue-400 uppercase tracking-tighter">Premiações da Partida</h1>
           <p className="text-gray-500 text-xs font-bold">VOTAÇÃO DOS ATLETAS</p>
+          {countdown && (
+            <div className="mt-2 inline-block px-3 py-1 bg-red-500/10 border border-red-500/20 rounded-full">
+              <p className="text-[10px] text-red-400 font-bold">O formulário expira em: {countdown}</p>
+            </div>
+          )}
         </header>
 
         <AnimatePresence mode="wait">
@@ -188,7 +230,16 @@ export default function VotacaoPartida() {
               ].map(premio => (
                 <div key={premio.id} className="space-y-3">
                   <label className="text-sm font-bold text-gray-300 flex items-center gap-2">
-                    {premio.icon} {premio.label}
+                    {votos[premio.id] && getFotoJogador(votos[premio.id]) ? (
+                      <img 
+                        src={getFotoJogador(votos[premio.id])} 
+                        alt="Foto" 
+                        className="w-6 h-6 rounded-full object-cover border border-blue-500/50 shadow-sm" 
+                      />
+                    ) : (
+                      premio.icon
+                    )} 
+                    {premio.label}
                   </label>
                   <select 
                     value={votos[premio.id]}
@@ -236,8 +287,19 @@ export default function VotacaoPartida() {
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <p className="text-base font-black text-white flex items-center gap-2">
-                          {cat.icon} {vencedor.nome}
+                        <p className="text-base font-black text-white flex items-center gap-3">
+                          {vencedor.nome !== 'Ninguém' && getFotoJogador(vencedor.nome) ? (
+                            <img 
+                              src={getFotoJogador(vencedor.nome)} 
+                              alt={vencedor.nome} 
+                              className="w-10 h-10 rounded-full object-cover border-2 border-amber-500/50 shadow-lg shadow-amber-500/20" 
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 text-lg">
+                              {cat.icon}
+                            </div>
+                          )}
+                          {vencedor.nome}
                         </p>
                         {vencedor.votos > 0 && (
                           <span className="text-xs font-black text-yellow-500">

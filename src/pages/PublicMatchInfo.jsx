@@ -11,6 +11,8 @@ export default function PublicMatchInfo() {
   const [jogadores, setJogadores] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [inputGol, setInputGol] = useState('');
+  const [expireAt, setExpireAt] = useState(null);
+  const [countdown, setCountdown] = useState('');
 
   // Estados para Modais
   const [modalConfirm, setModalConfirm] = useState({ aberto: false, tipo: '', index: null, titulo: '', msg: '' });
@@ -26,6 +28,7 @@ export default function PublicMatchInfo() {
         const res = await api.get(`/partida-publica/${linkId}`);
         setPartida(res.data.data);
         setJogadores(res.data.jogadores || []);
+        setExpireAt(res.data.expireAt);
       } catch (err) {
         toast.error("Este link expirou ou não existe.");
       } finally {
@@ -34,6 +37,33 @@ export default function PublicMatchInfo() {
     };
     fetchPublicData();
   }, [linkId]);
+
+  // Efeito para contagem regressiva
+  useEffect(() => {
+    if (!expireAt) return;
+
+    const updateCountdown = () => {
+      const now = new Date();
+      const expiration = new Date(expireAt);
+      const diff = expiration.getTime() - now.getTime();
+
+      if (diff <= 0) {
+        setCountdown('Expirado!');
+        return;
+      }
+
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      setCountdown(`${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`);
+    };
+
+    updateCountdown();
+    const intervalId = setInterval(updateCountdown, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [expireAt]);
 
   const registrarEvento = async (tipo, jogador, time = null) => {
     if (!jogador || jogador.trim() === '') return toast.warn("Digite o nome do jogador");
@@ -175,6 +205,11 @@ export default function PublicMatchInfo() {
             Informações da Partida
           </h1>
           <p className="text-gray-500 text-xs font-bold">UNIVERSO CAJAZEIRAS</p>
+          {countdown && (
+            <div className="mt-2 inline-block px-3 py-1 bg-red-500/10 border border-red-500/20 rounded-full">
+              <p className="text-[10px] text-red-400 font-bold">Este link expira em: {countdown}</p>
+            </div>
+          )}
         </header>
 
         {/* Seção de Gols */}

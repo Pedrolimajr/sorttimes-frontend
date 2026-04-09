@@ -877,7 +877,7 @@ export default function InformacoesPartida() {
             >
               <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 shadow-xl">
                 <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                  <FaLink className="text-blue-400" /> Gerador de Link Público (72 Horas)
+                  <FaLink className="text-blue-400" /> Gerador de Link Público (48 Horas)
                 </h2>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
@@ -1139,7 +1139,11 @@ export default function InformacoesPartida() {
                         return (
                           <div key={d.id} className="flex items-center justify-between p-3 bg-gray-900 rounded-xl text-sm border border-gray-700 shadow-inner">
                             <div className="flex items-center gap-3">
-                              {d.icon}
+                              {lider && !lider.empate && partidaSelecionada.participantes?.find(p => p.nome === lider.nome)?.foto ? (
+                                <img src={partidaSelecionada.participantes.find(p => p.nome === lider.nome).foto} className="w-6 h-6 rounded-full object-cover border border-yellow-500/50" alt="" />
+                              ) : (
+                                d.icon
+                              )}
                               <span className="font-bold text-gray-500 text-[10px] uppercase tracking-wider">{d.label}:</span>
                               <span className={`${lider?.empate ? 'text-gray-500 italic text-xs' : 'text-white font-bold'}`}>
                                 {displayNome}
