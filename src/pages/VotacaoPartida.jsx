@@ -197,7 +197,6 @@ export default function VotacaoPartida() {
                   >
                     <option value="">Selecione um jogador...</option>
                     {jogadores.map(nome => <option key={nome} value={nome}>{nome}</option>)}
-                    <option value="Convidado">Convidado / Outro</option>
                   </select>
                 </div>
               ))}
