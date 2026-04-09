@@ -281,7 +281,9 @@ export default function VotacaoPartida() {
                   return (
                     <div key={cat.id} className="bg-gray-900 p-4 rounded-2xl border border-gray-700">
                       <div className="flex justify-between items-start mb-1">
-                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{cat.label}</p>
+                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1">
+                          {cat.icon} {cat.label}
+                        </p>
                         <span className="text-[10px] bg-amber-500/10 text-amber-500 px-2 py-0.5 rounded-full font-bold border border-amber-500/20">
                           {totalVotosCat} votos no total
                         </span>
