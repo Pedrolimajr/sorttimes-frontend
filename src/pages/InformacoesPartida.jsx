@@ -51,7 +51,11 @@ export default function InformacoesPartida() {
   const [partidas, setPartidas] = useState([]);
   const [partidaSelecionada, setPartidaSelecionada] = useState(null);
   const [linkGeradoPartida, setLinkGeradoPartida] = useState('');
+  const [linkGeradoPartidaExpireAt, setLinkGeradoPartidaExpireAt] = useState(null);
   const [linkVotacao, setLinkVotacao] = useState('');
+  const [linkVotacaoExpireAt, setLinkVotacaoExpireAt] = useState(null);
+  const [countdownEventos, setCountdownEventos] = useState('');
+  const [countdownVotacao, setCountdownVotacao] = useState('');
 
   // Modal de confirmação para exclusão de planilha
   const [confirmDeletePlanilha, setConfirmDeletePlanilha] = useState({ open: false, planilha: null });
@@ -333,6 +337,46 @@ export default function InformacoesPartida() {
     setPlanilhaAtiva(planilha);
   };
 
+  // Função auxiliar para formatar o tempo restante
+  const formatTimeRemaining = (expireDate) => {
+    if (!expireDate) return '';
+    const now = new Date();
+    const expiration = new Date(expireDate);
+    const diff = expiration.getTime() - now.getTime();
+
+    if (diff <= 0) {
+      return 'Expirado!';
+    }
+
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    return `${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
+  };
+
+  // Efeito para contagem regressiva do link de Eventos
+  useEffect(() => {
+    let intervalIdEventos;
+    if (linkGeradoPartidaExpireAt) {
+      intervalIdEventos = setInterval(() => {
+        setCountdownEventos(formatTimeRemaining(linkGeradoPartidaExpireAt));
+      }, 1000);
+    }
+    return () => clearInterval(intervalIdEventos);
+  }, [linkGeradoPartidaExpireAt]);
+
+  // Efeito para contagem regressiva do link de Votação
+  useEffect(() => {
+    let intervalIdVotacao;
+    if (linkVotacaoExpireAt) {
+      intervalIdVotacao = setInterval(() => {
+        setCountdownVotacao(formatTimeRemaining(linkVotacaoExpireAt));
+      }, 1000);
+    }
+    return () => clearInterval(intervalIdVotacao);
+  }, [linkVotacaoExpireAt]);
+
   // Funções para Geração de Link de Partida
   const gerarLinkPublicoPartida = async (tipo = 'eventos') => {
     if (!partidaSelecionada) return toast.warn("Selecione uma partida agendada!");
@@ -341,7 +385,9 @@ export default function InformacoesPartida() {
       
       // Reset de estados para garantir separação total
       if (tipo === 'eventos') {
+        setLinkGeradoPartidaExpireAt(null);
         setLinkVotacao('');
+        setLinkVotacaoExpireAt(null);
       } else {
         setLinkGeradoPartida('');
       }
@@ -349,14 +395,18 @@ export default function InformacoesPartida() {
       const res = await api.post(`/partida-publica/gerar-link/${partidaSelecionada._id}`, { tipo });
       const linkId = res.data?.linkId || res.data?.data?.linkId;
       
+      const expireAt = res.data?.expireAt; // Captura a data de expiração do backend
+
       const url = tipo === 'eventos' 
         ? `${window.location.origin}/partida-publica/${linkId}`
         : `${window.location.origin}/votar-partida/${linkId}`;
 
       if (tipo === 'eventos') {
         setLinkGeradoPartida(url);
+        setLinkGeradoPartidaExpireAt(expireAt); // Armazena a data de expiração
       } else {
         setLinkVotacao(url);
+        setLinkVotacaoExpireAt(expireAt); // Armazena a data de expiração
       }
       toast.success(`Link de ${tipo === 'eventos' ? 'Eventos' : 'Votação'} gerado com sucesso!`);
     } catch (error) {
@@ -830,7 +880,7 @@ export default function InformacoesPartida() {
                   <FaLink className="text-blue-400" /> Gerador de Link Público (72 Horas)
                 </h2>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                   <div>
                     <label className="block text-sm font-medium text-gray-400 mb-2">Selecionar Partida Agendada</label>
                     <select 
@@ -839,7 +889,9 @@ export default function InformacoesPartida() {
                       onChange={(e) => {
                         setPartidaSelecionada(partidas.find(p => p._id === e.target.value));
                         setLinkGeradoPartida('');
+                        setLinkGeradoPartidaExpireAt(null);
                         setLinkVotacao('');
+                        setLinkVotacaoExpireAt(null);
                       }}
                     >
                       <option value="">Escolha uma partida...</option>
@@ -898,6 +950,9 @@ export default function InformacoesPartida() {
                           <div className="text-xs font-mono text-blue-300 break-all bg-gray-900 p-3 rounded-lg border border-blue-900/50">
                             {linkGeradoPartida}
                           </div>
+                          {countdownEventos && (
+                            <p className="text-xs text-gray-400 mt-2">Expira em: <span className="font-bold text-white">{countdownEventos}</span></p>
+                          )}
                         </div>
                         <button 
                           onClick={() => { navigator.clipboard.writeText(linkGeradoPartida); toast.info("Link de Eventos copiado!"); }}
@@ -916,6 +971,9 @@ export default function InformacoesPartida() {
                           <div className="text-xs font-mono text-amber-400 break-all bg-gray-900 p-3 rounded-lg border border-amber-900/50">
                             {linkVotacao}
                           </div>
+                          {countdownVotacao && (
+                            <p className="text-xs text-gray-400 mt-2">Expira em: <span className="font-bold text-white">{countdownVotacao}</span></p>
+                          )}
                         </div>
                         <button 
                           onClick={() => { navigator.clipboard.writeText(linkVotacao); toast.info("Link de Votação copiado!"); }}
