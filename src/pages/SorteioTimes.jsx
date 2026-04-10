@@ -59,7 +59,7 @@ export default function SorteioTimes() {
   LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS,
   []
 );
-  const [times, setTimes] = useState([]);
+  const [times, setTimes] = usePersistedState("drawnTimes", []);
   const [balanceamento, setBalanceamento] = useState(TIPOS_BALANCEAMENTO.POSICAO);
   const [carregando, setCarregando] = useState(false);
   const [historico, setHistorico] = useState(() => {
@@ -71,7 +71,7 @@ export default function SorteioTimes() {
   const [filtroPosicao, setFiltroPosicao] = useState('');
   const [filtroJogadoresSelecionados, setFiltroJogadoresSelecionados] = useState('');
   const [partidasAgenda, setPartidasAgenda] = useState([]);
-  const [partidaVinculadaId, setPartidaVinculadaId] = useState('');
+  const [partidaVinculadaId, setPartidaVinculadaId] = usePersistedState("linkedPartidaId", "");
 
   // Carrega dados do localStorage ao montar o componente
   useEffect(() => {
@@ -403,13 +403,18 @@ const aplicarFiltroPosicao = () => {
     });
 
     // Monta o objeto de times para o restante do código
-    const timesComIds = times.map((jogadores, idx) => ({
-      nome: idx === 0 ? "Time (Preto)" : "Time (Amarelo)",
-      jogadores: jogadores.map(j => ({
-        ...j,
-        id: j._id || Math.random().toString(36).substr(2, 9),
-      }))
-    }));
+    const timesComIds = times.map((jogadores, idx) => {
+      const nivelTotal = jogadores.reduce((sum, j) => sum + (Number(j.nivel) || 0), 0);
+      const nivelMedio = jogadores.length > 0 ? parseFloat((nivelTotal / jogadores.length).toFixed(2)) : 0;
+      return {
+        nome: idx === 0 ? "Time (Preto)" : "Time (Amarelo)",
+        jogadores: jogadores.map(j => ({
+          ...j,
+          id: j._id || Math.random().toString(36).substr(2, 9),
+        })),
+        nivelMedio
+      };
+    });
 
     setTimes(timesComIds);
 
@@ -513,9 +518,20 @@ const aplicarFiltroPosicao = () => {
     const jogador = jogadoresSelecionados.find(j => j._id === jogadorId);
     if (!jogador) return;
 
-    // 1. Atualiza os times localmente
-    const novosTimes = [...times];
-    novosTimes[timeIdx].jogadores.push({ ...jogador, id: jogador._id });
+    // 1. Atualiza os times localmente de forma imutável para garantir persistência
+    const novosTimes = times.map((t, idx) => {
+      if (idx === timeIdx) {
+        const novosJogadores = [...t.jogadores, { ...jogador, id: jogador._id }];
+        // Recalcula o nível médio do time atualizado
+        const nivelTotal = novosJogadores.reduce((sum, j) => sum + (Number(j.nivel) || 0), 0);
+        const novoNivelMedio = novosJogadores.length > 0 
+          ? parseFloat((nivelTotal / novosJogadores.length).toFixed(2)) 
+          : 0;
+
+        return { ...t, jogadores: novosJogadores, nivelMedio: novoNivelMedio };
+      }
+      return t;
+    });
     setTimes(novosTimes);
 
     // 2. Marca como presente na lista principal
@@ -530,8 +546,9 @@ const aplicarFiltroPosicao = () => {
         await api.post(`/partida-publica/vincular-participantes/${partidaVinculadaId}`, { 
           participantes: todosParticipantes 
         });
-        toast.success(`${jogador.nome} adicionado e sincronizado com a votação!`);
+        toast.success(`${jogador.nome} adicionado e liberado para votação!`);
       } catch (err) {
+        console.error("Erro na sincronização:", err);
         toast.error("Erro ao sincronizar com o servidor de votação.");
       }
     }
