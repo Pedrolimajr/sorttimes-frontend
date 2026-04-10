@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { 
   FaRandom, FaUser, FaTshirt, FaBalanceScale, FaCheck, FaTimes, 
   FaSync, FaArrowLeft, FaHistory, FaEdit, FaShare, FaSave, 
-  FaTrash, FaUserCheck, FaUserTimes, FaSearch, FaCalendarAlt, FaPlus 
+  FaTrash, FaUserCheck, FaUserTimes, FaSearch, FaCalendarAlt 
 } from "react-icons/fa";
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { GiSoccerKick } from "react-icons/gi";
@@ -59,7 +59,7 @@ export default function SorteioTimes() {
   LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS,
   []
 );
-  const [times, setTimes] = usePersistedState("drawnTimes", []);
+  const [times, setTimes] = useState([]);
   const [balanceamento, setBalanceamento] = useState(TIPOS_BALANCEAMENTO.POSICAO);
   const [carregando, setCarregando] = useState(false);
   const [historico, setHistorico] = useState(() => {
@@ -71,7 +71,7 @@ export default function SorteioTimes() {
   const [filtroPosicao, setFiltroPosicao] = useState('');
   const [filtroJogadoresSelecionados, setFiltroJogadoresSelecionados] = useState('');
   const [partidasAgenda, setPartidasAgenda] = useState([]);
-  const [partidaVinculadaId, setPartidaVinculadaId] = usePersistedState("linkedPartidaId", "");
+  const [partidaVinculadaId, setPartidaVinculadaId] = useState('');
 
   // Carrega dados do localStorage ao montar o componente
   useEffect(() => {
@@ -403,18 +403,13 @@ const aplicarFiltroPosicao = () => {
     });
 
     // Monta o objeto de times para o restante do código
-    const timesComIds = times.map((jogadores, idx) => {
-      const nivelTotal = jogadores.reduce((sum, j) => sum + (Number(j.nivel) || 0), 0);
-      const nivelMedio = jogadores.length > 0 ? parseFloat((nivelTotal / jogadores.length).toFixed(2)) : 0;
-      return {
-        nome: idx === 0 ? "Time (Preto)" : "Time (Amarelo)",
-        jogadores: jogadores.map(j => ({
-          ...j,
-          id: j._id || Math.random().toString(36).substr(2, 9),
-        })),
-        nivelMedio
-      };
-    });
+    const timesComIds = times.map((jogadores, idx) => ({
+      nome: idx === 0 ? "Time (Preto)" : "Time (Amarelo)",
+      jogadores: jogadores.map(j => ({
+        ...j,
+        id: j._id || Math.random().toString(36).substr(2, 9),
+      }))
+    }));
 
     setTimes(timesComIds);
 
@@ -507,51 +502,6 @@ const aplicarFiltroPosicao = () => {
       
       return novosTimes;
     });
-  };
-
-  /**
-   * Adiciona um jogador que chegou depois diretamente a um time
-   */
-  const adicionarJogadorAoTime = async (timeIdx, jogadorId) => {
-    if (!jogadorId) return;
-    
-    const jogador = jogadoresSelecionados.find(j => j._id === jogadorId);
-    if (!jogador) return;
-
-    // 1. Atualiza os times localmente de forma imutável para garantir persistência
-    const novosTimes = times.map((t, idx) => {
-      if (idx === timeIdx) {
-        const novosJogadores = [...t.jogadores, { ...jogador, id: jogador._id }];
-        // Recalcula o nível médio do time atualizado
-        const nivelTotal = novosJogadores.reduce((sum, j) => sum + (Number(j.nivel) || 0), 0);
-        const novoNivelMedio = novosJogadores.length > 0 
-          ? parseFloat((nivelTotal / novosJogadores.length).toFixed(2)) 
-          : 0;
-
-        return { ...t, jogadores: novosJogadores, nivelMedio: novoNivelMedio };
-      }
-      return t;
-    });
-    setTimes(novosTimes);
-
-    // 2. Marca como presente na lista principal
-    setJogadoresSelecionados(prev => 
-      prev.map(j => j._id === jogadorId ? { ...j, presente: true } : j)
-    );
-
-    // 3. Sincroniza com a partida vinculada para a votação
-    if (partidaVinculadaId) {
-      try {
-        const todosParticipantes = novosTimes.flatMap(t => t.jogadores.map(j => j.id || j._id));
-        await api.post(`/partida-publica/vincular-participantes/${partidaVinculadaId}`, { 
-          participantes: todosParticipantes 
-        });
-        toast.success(`${jogador.nome} adicionado e liberado para votação!`);
-      } catch (err) {
-        console.error("Erro na sincronização:", err);
-        toast.error("Erro ao sincronizar com o servidor de votação.");
-      }
-    }
   };
 
   /**
@@ -650,12 +600,6 @@ const aplicarFiltroPosicao = () => {
 const TimeSorteado = ({ time, index }) => {
   const isTimeAmarelo = index === 1;
   const nomeTime = index === 0 ? "Time (Preto)" : isTimeAmarelo ? "Time (Amarelo)" : time.nome;
-  const [showAddPlayer, setShowAddPlayer] = useState(false);
-
-  // Filtra jogadores que não estão em NENHUM time para o select de inclusão rápida
-  const jogadoresDisponiveisParaInclusao = jogadoresSelecionados.filter(j => 
-    !times.some(t => t.jogadores.some(pj => (pj.id || pj._id) === j._id))
-  );
 
   return (
     <div
@@ -664,45 +608,19 @@ const TimeSorteado = ({ time, index }) => {
         modoEdicao ? 'border-dashed border-yellow-400' : 'border-gray-700'
       } ${isTimeAmarelo ? 'bg-[#efdf8e] text-black' : 'bg-gray-800/30 text-white'}`}
     >
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-base sm:text-lg font-bold flex items-center gap-2">
-          <div
-            className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 ${
-              index === 0 ? 'bg-gray-300 border-gray-400' : 'bg-yellow-500 border-yellow-400'
-            }`}
-          ></div>
-          {nomeTime}
-          <span className={`text-xs sm:text-sm font-normal ${
-            isTimeAmarelo ? 'text-gray-800' : 'text-gray-400'
-          }`}>
-            (<span className="text-yellow-600">{time.nivelMedio}</span>)
-          </span>
-        </h3>
-
-        <div className="flex gap-1">
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setShowAddPlayer(!showAddPlayer)}
-            className={`p-1.5 rounded-lg transition-colors ${
-              isTimeAmarelo ? 'hover:bg-yellow-600/30 text-gray-800' : 'hover:bg-gray-700 text-gray-400'
-            }`}
-            title="Incluir jogador atrasado"
-          >
-            <FaPlus size={14} />
-          </motion.button>
-          <button 
-            onClick={() => setModoEdicao(!modoEdicao)}
-            className={`p-1.5 rounded-lg transition-colors ${isTimeAmarelo ? 'hover:bg-yellow-600/30 text-gray-800' : 'hover:bg-gray-700 text-gray-400'}`}>
-            <FaEdit size={14} />
-          </button>
-          <button 
-            onClick={compartilharTimes}
-            className={`p-1.5 rounded-lg transition-colors ${isTimeAmarelo ? 'hover:bg-yellow-600/30 text-gray-800' : 'hover:bg-gray-700 text-gray-400'}`}>
-            <FaShare size={14} />
-          </button>
-        </div>
-      </div>
+      <h3 className="text-base sm:text-lg font-bold text-center mb-3 sm:mb-4 flex items-center justify-center gap-2">
+        <div
+          className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 ${
+            index === 0 ? 'bg-gray-300 border-gray-400' : 'bg-yellow-500 border-yellow-400'
+          }`}
+        ></div>
+        {nomeTime}
+        <span className={`text-xs sm:text-sm font-normal ${
+          isTimeAmarelo ? 'text-gray-800' : 'text-gray-400'
+        }`}>
+          (Nível: <span className="text-yellow-600">{time.nivelMedio}</span>)
+        </span>
+      </h3>
 
       <ul className="space-y-2 sm:space-y-3">
         {time.jogadores.map((jogador, idx) => (
@@ -735,41 +653,6 @@ const TimeSorteado = ({ time, index }) => {
           </motion.li>
         ))}
       </ul>
-
-      {/* Inclusão rápida de jogador pós-sorteio */}
-      <AnimatePresence>
-        {showAddPlayer && (
-          <motion.div 
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="mt-4 pt-4 border-t border-gray-700/50 overflow-hidden"
-          >
-            <p className={`text-[10px] font-bold uppercase mb-2 ${isTimeAmarelo ? 'text-gray-700' : 'text-gray-400'}`}>
-              Incluir jogador atrasado:
-            </p>
-            <div className="flex gap-2">
-              <select
-                onChange={(e) => {
-                  adicionarJogadorAoTime(index, e.target.value);
-                  e.target.value = ""; // Reset do select
-                  setShowAddPlayer(false); // Fecha o campo após adicionar
-                }}
-                className={`flex-1 text-xs p-2 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 ${
-                  isTimeAmarelo 
-                    ? 'bg-yellow-100 border-yellow-600/30 text-black' 
-                    : 'bg-gray-900 border-gray-600 text-white'
-                }`}
-              >
-                <option value="">Selecionar jogador...</option>
-                {jogadoresDisponiveisParaInclusao.map(j => (
-                  <option key={j._id} value={j._id}>{j.nome}</option>
-                ))}
-              </select>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       <div className={`mt-3 text-center text-xs sm:text-sm ${
         isTimeAmarelo ? 'text-gray-800' : 'text-gray-400'
