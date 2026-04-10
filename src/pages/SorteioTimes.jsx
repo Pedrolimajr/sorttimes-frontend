@@ -60,7 +60,6 @@ export default function SorteioTimes() {
   []
 );
   const [times, setTimes] = usePersistedState("timesSorteados", []);
-  const [exibirResultados, setExibirResultados] = useState(false);
   const [showModalAddJogador, setShowModalAddJogador] = useState(false);
   const [timeIndexAlvo, setTimeIndexAlvo] = useState(null);
   const [termoBuscaAdicao, setTermoBuscaAdicao] = useState("");
@@ -131,7 +130,6 @@ export default function SorteioTimes() {
         socket.on('times-atualizados', (novosTimes) => {
           if (isMounted) {
             setTimes(novosTimes);
-            setExibirResultados(true);
           }
         });
 
@@ -480,7 +478,6 @@ const aplicarFiltroPosicao = () => {
     }));
 
     setTimes(timesComIds);
-    setExibirResultados(true);
 
     // Vincular participantes à partida agendada para permitir votação restrita
     if (partidaVinculadaId) {
@@ -580,7 +577,6 @@ const aplicarFiltroPosicao = () => {
   const restaurarSorteio = (sorteio) => {
     setTimes(sorteio.times);
     setBalanceamento(sorteio.balanceamento);
-    setExibirResultados(true);
     toast.success('Sorteio restaurado!');
   };
 
@@ -687,6 +683,11 @@ const TimeSorteado = ({ time, index, onAddPlayer }) => {
             }`}
           ></div>
           {nomeTime}
+          <span className={`text-xs sm:text-sm font-normal ${
+            isTimeAmarelo ? 'text-gray-800' : 'text-gray-400'
+          }`}>
+            (Nível: <span className="text-yellow-600">{time.nivelMedio}</span>)
+          </span>
         </h3>
         <div className="flex-1 flex justify-end">
           <motion.button
@@ -1088,7 +1089,7 @@ const TimeSorteado = ({ time, index, onAddPlayer }) => {
         </motion.div>
 
         {/* Seção de times sorteados */}
-        {times.length > 0 && exibirResultados && (
+        {times.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
