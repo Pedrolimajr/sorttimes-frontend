@@ -445,7 +445,7 @@ export default function ConfirmarPresenca() {
                     )}
                     <div>
                       <p className="text-xl font-black text-white">Olá, {jogadorLogado.nome}!</p>
-                      <p className="text-xs text-blue-400 font-bold uppercase tracking-wider">Sua presença está liberada</p>
+                      <p className="text-xs text-blue-400 font-bold uppercase tracking-wider">Confirme sua presença</p>
                     </div>
                   </div>
 
