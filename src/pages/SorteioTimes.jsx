@@ -695,7 +695,7 @@ const TimeSorteado = ({ time, index }) => {
         }`}>
           (Nível: <span className="text-yellow-600">{time.nivelMedio}</span>)
         </span>
-      </h3>
+      </div>
 
       <ul className="space-y-2 sm:space-y-3">
         {time.jogadores.map((jogador, idx) => (
