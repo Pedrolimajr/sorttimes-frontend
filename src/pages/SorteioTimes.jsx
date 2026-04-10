@@ -60,6 +60,7 @@ export default function SorteioTimes() {
   []
 );
   const [times, setTimes] = usePersistedState("timesSorteados", []);
+  const [exibirResultados, setExibirResultados] = useState(false); // Estado para controlar a visibilidade dos resultados
   const [showModalAddJogador, setShowModalAddJogador] = useState(false);
   const [timeIndexAlvo, setTimeIndexAlvo] = useState(null);
   const [termoBuscaAdicao, setTermoBuscaAdicao] = useState("");
@@ -130,6 +131,7 @@ export default function SorteioTimes() {
         socket.on('times-atualizados', (novosTimes) => {
           if (isMounted) {
             setTimes(novosTimes);
+            setExibirResultados(true); // Exibe os resultados quando atualizados via socket
           }
         });
 
@@ -189,93 +191,99 @@ export default function SorteioTimes() {
 }, []); // Dependências vazias para executar apenas no mount/unmount
 
   /**
-   * Compartilha a lista de jogadores selecionados
+   * Carrega partidas agendadas do backend, incluindo participantes para contagem.
    */
-  const compartilharJogadoresSelecionados = () => {
-  const jogadoresPresentes = jogadoresSelecionados.filter(j => j.presente);
-
-  if (jogadoresPresentes.length === 0) {
-    toast.info("Nenhum jogador marcado como presente.");
-    return;
-  }
-
-  const listaNomes = jogadoresPresentes
-    .map((j, i) => `${i + 1}. ${j.nome}`)
-    .join('\n');
-
-  const texto = `✅ *Lista dos Jogadores Confirmados:*\n\n${listaNomes}\n\nVamos com tudo pra mais um jogão! ⚽`;
-
-  if (navigator.share) {
-    navigator.share({
-      title: 'Jogadores Confirmados',
-      text: texto
-    }).catch(err => console.error('Erro ao compartilhar:', err));
-  } else {
-    navigator.clipboard.writeText(texto);
-    toast.success("Lista copiada para área de transferência!");
-  }
-};
-
-  // Carrega jogadores do backend ao montar o componente
-  useEffect(() => {
-    const carregarPartidas = async () => {
-      try {
-        const res = await api.get('/agenda');
-        setPartidasAgenda(res.data?.data || res.data || []);
-      } catch (err) {
-        console.error("Erro ao carregar agenda");
-      }
-    };
-    carregarPartidas();
-  }, []);
-
-  useEffect(() => {
-  const carregarJogadores = async () => {
-    setCarregandoJogadores(true);
+  const carregarPartidasAgenda = async () => {
     try {
-      const response = await api.get('/jogadores');
-      const apiData = response.data;
-      const jogadores = Array.isArray(apiData?.data) ? apiData.data : [];
-
-      setJogadoresCadastrados(jogadores);
-      setJogadoresSelecionados(prev => {
-        // Mantém os estados existentes e adiciona novos jogadores
-        return jogadores.map(jogador => {
-          const existente = prev.find(j => j._id === jogador._id);
-          return {
-            ...jogador,
-            presente: existente ? existente.presente : false, // Mantém o valor salvo
-            posicao: existente?.posicao || jogador.posicao || POSICOES.MEIA,
-            posicaoOriginal: jogador.posicao || POSICOES.MEIA,
-            nivel: parseNivel(jogador.nivel)
-          };
-        });
-      });
-    } catch (error) {
-      console.error("Erro ao carregar jogadores:", error);
-      if (error.response?.status === 401) {
-        toast.error('Sessão expirada. Faça login novamente.');
-      } else {
-        toast.error("Erro ao carregar jogadores");
-      }
-    } finally {
-      setCarregandoJogadores(false);
+      const res = await api.get('/agenda?populate=participantes'); // MODIFICAÇÃO: Adicionar populate=participantes
+      setPartidasAgenda(res.data?.data || res.data || []);
+    } catch (err) {
+      console.error("Erro ao carregar agenda", err);
+      toast.error("Erro ao carregar partidas agendadas.");
     }
   };
 
-  carregarJogadores();
-}, []); // Executa apenas uma vez ao montar
+  // Carrega partidas do backend ao montar o componente
+  useEffect(() => {
+    carregarPartidasAgenda();
+  }, []);
 
-//Carregar estado salvo
-// Carrega estado salvo ao iniciar
+  /**
+   * Compartilha a lista de jogadores selecionados que estão presentes.
+   */
+  const compartilharJogadoresSelecionados = () => {
+    const jogadoresPresentes = jogadoresSelecionados.filter(j => j.presente);
+
+    if (jogadoresPresentes.length === 0) {
+      toast.info("Nenhum jogador marcado como presente.");
+      return;
+    }
+
+    const listaNomes = jogadoresPresentes
+      .map((j, i) => `${i + 1}. ${j.nome}`)
+      .join('\n');
+
+    const texto = `✅ *Lista dos Jogadores Confirmados:*\n\n${listaNomes}\n\nVamos com tudo pra mais um jogão! ⚽`;
+
+    if (navigator.share) {
+      navigator.share({
+        title: 'Jogadores Confirmados',
+        text: texto
+      }).catch(err => console.error('Erro ao compartilhar:', err));
+    } else {
+      navigator.clipboard.writeText(texto);
+      toast.success("Lista copiada para área de transferência!");
+    }
+  };
+
+  // Carrega jogadores do backend ao montar o componente
+  useEffect(() => {
+    const carregarJogadores = async () => {
+      setCarregandoJogadores(true);
+      try {
+        const response = await api.get('/jogadores');
+        const apiData = response.data;
+        const jogadores = Array.isArray(apiData?.data) ? apiData.data : [];
+
+        setJogadoresCadastrados(jogadores);
+        setJogadoresSelecionados(prev => {
+          // Mantém os estados existentes e adiciona novos jogadores
+          return jogadores.map(jogador => {
+            const existente = prev.find(j => j._id === jogador._id);
+            return {
+              ...jogador,
+              presente: existente ? existente.presente : false, // Mantém o valor salvo
+              posicao: existente?.posicao || jogador.posicao || POSICOES.MEIA,
+              posicaoOriginal: jogador.posicao || POSICOES.MEIA,
+              nivel: parseNivel(jogador.nivel)
+            };
+          });
+        });
+      } catch (error) {
+        console.error("Erro ao carregar jogadores:", error);
+        if (error.response?.status === 401) {
+          toast.error('Sessão expirada. Faça login novamente.');
+        } else {
+          toast.error("Erro ao carregar jogadores");
+        }
+      } finally {
+        setCarregandoJogadores(false);
+      }
+    };
+
+    carregarJogadores();
+  }, []); // Executa apenas uma vez ao montar
+
+  // Carregar estado salvo
+  // Carrega estado salvo ao iniciar
 
 
-//Evitar repetição de código
-const parseNivel = (nivelStr) => {
-  return nivelStr === 'Associado' ? NIVEL_JOGADOR.ASSOCIADO : 
-         nivelStr === 'Convidado' ? NIVEL_JOGADOR.CONVIDADO : 
-         NIVEL_JOGADOR.INICIANTE;
-};
+  // Evitar repetição de código
+  const parseNivel = (nivelStr) => {
+    return nivelStr === 'Associado' ? NIVEL_JOGADOR.ASSOCIADO :
+      nivelStr === 'Convidado' ? NIVEL_JOGADOR.CONVIDADO :
+      NIVEL_JOGADOR.INICIANTE;
+  };
 
   // Persiste o histórico no localStorage
   useEffect(() => {
@@ -286,55 +294,55 @@ const parseNivel = (nivelStr) => {
    * Alterna o estado de presença de um jogador
    * @param {string} id - ID do jogador
    */
-const alternarPresenca = async (jogadorId) => {
-  const linkId = localStorage.getItem('linkPresencaId');
+  const alternarPresenca = async (jogadorId) => {
+    const linkId = localStorage.getItem('linkPresencaId');
 
-  const jogador = jogadoresSelecionados.find(j => j._id === jogadorId);
-  if (!jogador) return;
+    const jogador = jogadoresSelecionados.find(j => j._id === jogadorId);
+    if (!jogador) return;
 
-  const novoEstado = !jogador.presente;
+    const novoEstado = !jogador.presente;
 
-  // Atualiza imediatamente localmente para feedback visual
-  setJogadoresSelecionados(prev =>
-    prev.map(j => j._id === jogadorId ? { ...j, presente: novoEstado } : j)
-  );
+    // Atualiza imediatamente localmente para feedback visual
+    setJogadoresSelecionados(prev =>
+      prev.map(j => j._id === jogadorId ? { ...j, presente: novoEstado } : j)
+    );
 
-  if (!linkId) {
-    console.warn("Sem linkId encontrado, presença alterada apenas localmente.");
-    return;
-  }
-
-  try {
-    const response = await api.post(`/presenca/${linkId}/confirmar`, {
-      jogadorId,
-      presente: novoEstado
-    });
-
-    if (!response.data || !response.data.success) {
-      throw new Error(response.data?.message || 'Erro ao confirmar presença');
+    if (!linkId) {
+      console.warn("Sem linkId encontrado, presença alterada apenas localmente.");
+      return;
     }
 
-    toast.success(novoEstado ? '✅ Presença confirmada!' : '❌ Presença desmarcada!');
-  } catch (error) {
-    console.error('Erro ao atualizar presença:', error);
-    toast.error('Erro ao comunicar com o servidor.');
-  }
-};
+    try {
+      const response = await api.post(`/presenca/${linkId}/confirmar`, {
+        jogadorId,
+        presente: novoEstado
+      });
 
- 
+      if (!response.data || !response.data.success) {
+        throw new Error(response.data?.message || 'Erro ao confirmar presença');
+      }
 
-useEffect(() => {
-  const salvarAutomaticamente = setTimeout(() => {
-    if (jogadoresSelecionados.length > 0) {
-      localStorage.setItem(
-        LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS,
-        JSON.stringify(jogadoresSelecionados)
-      );
+      toast.success(novoEstado ? '✅ Presença confirmada!' : '❌ Presença desmarcada!');
+    } catch (error) {
+      console.error('Erro ao atualizar presença:', error);
+      toast.error('Erro ao comunicar com o servidor.');
     }
-  }, 1000); // Debounce de 1 segundo
+  };
 
-  return () => clearTimeout(salvarAutomaticamente);
-}, [jogadoresSelecionados]);
+
+
+  useEffect(() => {
+    const salvarAutomaticamente = setTimeout(() => {
+      if (jogadoresSelecionados.length > 0) {
+        localStorage.setItem(
+          LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS,
+          JSON.stringify(jogadoresSelecionados)
+        );
+      }
+    }, 1000); // Debounce de 1 segundo
+
+    return () => clearTimeout(salvarAutomaticamente);
+  }, [jogadoresSelecionados]);
 
   /**
    * Abre o modal para incluir um jogador atrasado em um time específico
@@ -386,6 +394,8 @@ useEffect(() => {
       try {
         await api.post(`/partida-publica/vincular-participantes/${partidaVinculadaId}`, { participantes: participantesIds });
         toast.success(`${jogador.nome} incluído no ${novosTimes[timeIndexAlvo].nome} e na votação!`);
+        // MODIFICAÇÃO: Re-carregar partidas agenda para atualizar a contagem de atletas
+        carregarPartidasAgenda();
       } catch (err) {
         console.error("Erro ao sincronizar participantes:", err);
         toast.error("Jogador incluído no time, mas erro ao atualizar lista de votação.");
@@ -403,150 +413,153 @@ useEffect(() => {
    * @param {string} novaPosicao - Nova posição do jogador
    */
   const atualizarPosicao = (id, novaPosicao) => {
-    setJogadoresSelecionados(jogadoresSelecionados.map(jogador => 
-      jogador._id === id ? { 
-        ...jogador, 
+    setJogadoresSelecionados(jogadoresSelecionados.map(jogador =>
+      jogador._id === id ? {
+        ...jogador,
         posicao: novaPosicao,
         posicaoOriginal: novaPosicao
       } : jogador
     ));
   };
-  
+
   /**
    * Aplica a mesma posição para todos os jogadores
    */
-const aplicarFiltroPosicao = () => {
-  setJogadoresSelecionados(prev => 
-    prev.map(jogador => ({
-      ...jogador,
-      posicao: filtroPosicao ? filtroPosicao : jogador.posicaoOriginal,
-      // NÃO altera posicaoOriginal aqui
-    }))
-  );
-  toast.info(`Todos os jogadores definidos como ${filtroPosicao || 'posição original'}`);
-};
+  const aplicarFiltroPosicao = () => {
+    setJogadoresSelecionados(prev =>
+      prev.map(jogador => ({
+        ...jogador,
+        posicao: filtroPosicao ? filtroPosicao : jogador.posicaoOriginal,
+        // NÃO altera posicaoOriginal aqui
+      }))
+    );
+    toast.info(`Todos os jogadores definidos como ${filtroPosicao || 'posição original'}`);
+  };
 
-  
+
   /**
    * Realiza o sorteio dos times com base nos jogadores selecionados
    */
-  
-   const sortearTimes = async () => {
-  const jogadoresPresentes = jogadoresSelecionados.filter(j => j.presente);
 
-  if (jogadoresPresentes.length < 2) {
-    toast.error("Mínimo de 2 jogadores necessários");
-    return;
-  }
+  const sortearTimes = async () => {
+    const jogadoresPresentes = jogadoresSelecionados.filter(j => j.presente);
 
-  setCarregando(true);
-  try {
-    // Identifica a posição mais comum (posição padrão)
-    const posicoes = jogadoresPresentes.map(j => j.posicao);
-    const posicaoMaisComum = posicoes.sort((a,b) =>
-      posicoes.filter(p => p === a).length - posicoes.filter(p => p === b).length
-    ).pop();
-
-    // Separa jogadores com posição diferente da mais comum
-    const jogadoresDiferentes = jogadoresPresentes.filter(j => j.posicao !== posicaoMaisComum);
-    const jogadoresPadrao = jogadoresPresentes.filter(j => j.posicao === posicaoMaisComum);
-
-    // Embaralha os jogadores padrão
-    const embaralhar = arr => arr.sort(() => Math.random() - 0.5);
-    const jogadoresPadraoEmbaralhados = embaralhar([...jogadoresPadrao]);
-
-    // Cria os times e garante que jogadores diferentes fiquem em times opostos
-    let times = [[], []];
-
-    // Distribui jogadores diferentes (um para cada time)
-    jogadoresDiferentes.forEach((jogador, idx) => {
-      times[idx % 2].push(jogador);
-    });
-
-    // Distribui o restante dos jogadores
-    jogadoresPadraoEmbaralhados.forEach((jogador, idx) => {
-      times[idx % 2].push(jogador);
-    });
-
-    // Monta o objeto de times para o restante do código
-    const timesComIds = times.map((jogadores, idx) => ({
-      nome: idx === 0 ? "Time (Preto)" : "Time (Amarelo)",
-      jogadores: jogadores.map(j => ({
-        ...j,
-        id: j._id || Math.random().toString(36).substr(2, 9),
-      }))
-    }));
-
-    setTimes(timesComIds);
-
-    // Vincular participantes à partida agendada para permitir votação restrita
-    if (partidaVinculadaId) {
-      try {
-        // Filtra IDs válidos para evitar erros no MongoDB
-        const participantesIds = jogadoresPresentes.map(j => j._id).filter(id => id);
-        console.log("[FRONTEND - SORTEIOTIMES] Enviando participantes para vincular:", participantesIds);
-        await api.post(`/partida-publica/vincular-participantes/${partidaVinculadaId}`, { participantes: participantesIds });
-        toast.success("Lista de participantes vinculada à partida!");
-      } catch (err) {
-        console.error("Erro ao vincular participantes:", err);
-      }
+    if (jogadoresPresentes.length < 2) {
+      toast.error("Mínimo de 2 jogadores necessários");
+      return;
     }
 
-    const novoSorteio = {
-      times: timesComIds,
-      data: new Date(),
-      jogadoresPresentes: jogadoresPresentes.length,
-      balanceamento,
-      posicaoUnica: filtroPosicao
-    };
+    setCarregando(true);
+    try {
+      // Identifica a posição mais comum (posição padrão)
+      const posicoes = jogadoresPresentes.map(j => j.posicao);
+      const posicaoMaisComum = posicoes.sort((a, b) =>
+        posicoes.filter(p => p === a).length - posicoes.filter(p => p === b).length
+      ).pop();
 
-    // Adiciona ao histórico mantendo apenas os 5 últimos
-    setHistorico(prev => [novoSorteio, ...prev].slice(0, 5));
-    toast.success(`Times sorteados com sucesso! ${timesComIds.length} times formados`);
-  } catch (error) {
-    console.error("Erro ao sortear times:", error);
-    toast.error(error.message || 'Erro ao sortear times');
-  } finally {
-    setCarregando(false);
-  }
-};
+      // Separa jogadores com posição diferente da mais comum
+      const jogadoresDiferentes = jogadoresPresentes.filter(j => j.posicao !== posicaoMaisComum);
+      const jogadoresPadrao = jogadoresPresentes.filter(j => j.posicao === posicaoMaisComum);
+
+      // Embaralha os jogadores padrão
+      const embaralhar = arr => arr.sort(() => Math.random() - 0.5);
+      const jogadoresPadraoEmbaralhados = embaralhar([...jogadoresPadrao]);
+
+      // Cria os times e garante que jogadores diferentes fiquem em times opostos
+      let times = [[], []];
+
+      // Distribui jogadores diferentes (um para cada time)
+      jogadoresDiferentes.forEach((jogador, idx) => {
+        times[idx % 2].push(jogador);
+      });
+
+      // Distribui o restante dos jogadores
+      jogadoresPadraoEmbaralhados.forEach((jogador, idx) => {
+        times[idx % 2].push(jogador);
+      });
+
+      // Monta o objeto de times para o restante do código
+      const timesComIds = times.map((jogadores, idx) => ({
+        nome: idx === 0 ? "Time (Preto)" : "Time (Amarelo)",
+        jogadores: jogadores.map(j => ({
+          ...j,
+          id: j._id || Math.random().toString(36).substr(2, 9),
+        }))
+      }));
+
+      setTimes(timesComIds);
+      setExibirResultados(true); // Exibe os resultados após o sorteio
+
+      // Vincular participantes à partida agendada para permitir votação restrita
+      if (partidaVinculadaId) {
+        try {
+          // Filtra IDs válidos para evitar erros no MongoDB
+          const participantesIds = jogadoresPresentes.map(j => j._id).filter(id => id);
+          console.log("[FRONTEND - SORTEIOTIMES] Enviando participantes para vincular:", participantesIds);
+          await api.post(`/partida-publica/vincular-participantes/${partidaVinculadaId}`, { participantes: participantesIds });
+          toast.success("Lista de participantes vinculada à partida!");
+          // MODIFICAÇÃO: Re-carregar partidas agenda para atualizar a contagem de atletas
+          carregarPartidasAgenda();
+        } catch (err) {
+          console.error("Erro ao vincular participantes:", err);
+        }
+      }
+
+      const novoSorteio = {
+        times: timesComIds,
+        data: new Date(),
+        jogadoresPresentes: jogadoresPresentes.length,
+        balanceamento,
+        posicaoUnica: filtroPosicao
+      };
+
+      // Adiciona ao histórico mantendo apenas os 5 últimos
+      setHistorico(prev => [novoSorteio, ...prev].slice(0, 5));
+      toast.success(`Times sorteados com sucesso! ${timesComIds.length} times formados`);
+    } catch (error) {
+      console.error("Erro ao sortear times:", error);
+      toast.error(error.message || 'Erro ao sortear times');
+    } finally {
+      setCarregando(false);
+    }
+  };
   /**
    * Recarrega a lista de jogadores do servidor
    */
   const recarregarJogadores = async () => {
-  setCarregandoJogadores(true);
-  try {
-    const response = await api.get('/jogadores');
-    const apiData = response.data;
-    const jogadores = Array.isArray(apiData?.data) ? apiData.data : [];
+    setCarregandoJogadores(true);
+    try {
+      const response = await api.get('/jogadores');
+      const apiData = response.data;
+      const jogadores = Array.isArray(apiData?.data) ? apiData.data : [];
 
-    setJogadoresCadastrados(jogadores);
-    
-    setJogadoresSelecionados(jogadores.map(jogador => {
-      const existente = jogadoresSelecionados.find(j => j._id === jogador._id);
-      return {
-        ...jogador,
-        posicaoOriginal: jogador.posicao || POSICOES.MEIA,
-        presente: existente ? existente.presente : false,
-        posicao: existente?.posicao || jogador.posicao || POSICOES.MEIA,
-        nivel: jogador.nivel === 'Associado' ? NIVEL_JOGADOR.ASSOCIADO : 
-              jogador.nivel === 'Convidado' ? NIVEL_JOGADOR.CONVIDADO : 
-              NIVEL_JOGADOR.INICIANTE
-      };
-    }));
-    
-    toast.success('Jogadores atualizados com sucesso');
-  } catch (error) {
-    console.error("Erro:", error);
-    if (error.response?.status === 401) {
-      toast.error('Sessão expirada. Faça login novamente.');
-    } else {
-      toast.error(error.message || 'Erro ao atualizar jogadores');
+      setJogadoresCadastrados(jogadores);
+
+      setJogadoresSelecionados(jogadores.map(jogador => {
+        const existente = jogadoresSelecionados.find(j => j._id === jogador._id);
+        return {
+          ...jogador,
+          posicaoOriginal: jogador.posicao || POSICOES.MEIA,
+          presente: existente ? existente.presente : false,
+          posicao: existente?.posicao || jogador.posicao || POSICOES.MEIA,
+          nivel: jogador.nivel === 'Associado' ? NIVEL_JOGADOR.ASSOCIADO :
+            jogador.nivel === 'Convidado' ? NIVEL_JOGADOR.CONVIDADO :
+            NIVEL_JOGADOR.INICIANTE
+        };
+      }));
+
+      toast.success('Jogadores atualizados com sucesso');
+    } catch (error) {
+      console.error("Erro:", error);
+      if (error.response?.status === 401) {
+        toast.error('Sessão expirada. Faça login novamente.');
+      } else {
+        toast.error(error.message || 'Erro ao atualizar jogadores');
+      }
+    } finally {
+      setCarregandoJogadores(false);
     }
-  } finally {
-    setCarregandoJogadores(false);
-  }
-};
+  };
 
   /**
    * Move um jogador entre times no modo de edição
@@ -556,16 +569,16 @@ const aplicarFiltroPosicao = () => {
    */
   const moverJogador = (deTimeIdx, paraTimeIdx, jogadorId) => {
     if (!modoEdicao) return;
-    
+
     setTimes(prevTimes => {
       const novosTimes = [...prevTimes];
       const jogador = novosTimes[deTimeIdx].jogadores.find(j => j.id === jogadorId);
-      
+
       if (!jogador) return prevTimes;
-      
+
       novosTimes[deTimeIdx].jogadores = novosTimes[deTimeIdx].jogadores.filter(j => j.id !== jogadorId);
       novosTimes[paraTimeIdx].jogadores.push(jogador);
-      
+
       return novosTimes;
     });
   };
@@ -592,7 +605,7 @@ const aplicarFiltroPosicao = () => {
   /**
    * Compartilha os times sorteados
    */
-   const compartilharTimes = () => {
+  const compartilharTimes = () => {
     const texto = times.map((time, idx) => {
       let nomeTime;
       if (idx === 0) nomeTime = "Time (Preto)";
@@ -601,7 +614,7 @@ const aplicarFiltroPosicao = () => {
       // Aqui faz a numeração dos jogadores
       return `${nomeTime}:\n${time.jogadores.map((j, i) => `${i + 1}. ${j.nome} (${j.posicao})`).join('\n')}`;
     }).join('\n\n');
-    
+
     if (navigator.share) {
       navigator.share({
         title: 'Times Sorteados',
@@ -621,8 +634,8 @@ const aplicarFiltroPosicao = () => {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 20 }}
       className={`p-2 sm:p-3 rounded-md flex justify-between items-center mb-1 sm:mb-2 transition-colors ${
-        jogador.presente 
-          ? 'bg-gray-700 hover:bg-gray-600 border border-gray-600' 
+        jogador.presente
+          ? 'bg-gray-700 hover:bg-gray-600 border border-gray-600'
           : 'bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700'
       }`}
     >
@@ -648,8 +661,8 @@ const aplicarFiltroPosicao = () => {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           className={`p-2 rounded-lg transition-all duration-300 ${
-            jogador.presente 
-              ? 'bg-green-900/30 text-green-400 hover:bg-green-800/40' 
+            jogador.presente
+              ? 'bg-green-900/30 text-green-400 hover:bg-green-800/40'
               : 'bg-red-900/30 text-red-400 hover:bg-red-800/40'
           }`}
           title={jogador.presente ? 'Presente' : 'Ausente'}
@@ -663,87 +676,82 @@ const aplicarFiltroPosicao = () => {
   );
 
   // Componente para exibir um time sorteado
-const TimeSorteado = ({ time, index, onAddPlayer }) => {
-  const isTimeAmarelo = index === 1;
-  const nomeTime = index === 0 ? "Time (Preto)" : isTimeAmarelo ? "Time (Amarelo)" : time.nome;
+  const TimeSorteado = ({ time, index, onAddPlayer }) => {
+    const isTimeAmarelo = index === 1;
+    const nomeTime = index === 0 ? "Time (Preto)" : isTimeAmarelo ? "Time (Amarelo)" : time.nome;
 
-  return (
-    <div
-      key={index}
-      className={`border p-4 rounded-lg ${
-        modoEdicao ? 'border-dashed border-yellow-400' : 'border-gray-700'
-      } ${isTimeAmarelo ? 'bg-[#efdf8e] text-black' : 'bg-gray-800/30 text-white'}`}
-    >
-      <div className="flex justify-between items-center mb-3 sm:mb-4">
-        <div className="flex-1"></div>
-        <h3 className="text-base sm:text-lg font-bold text-center flex items-center justify-center gap-2">
-          <div
-            className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 ${
-              index === 0 ? 'bg-gray-300 border-gray-400' : 'bg-yellow-500 border-yellow-400'
-            }`}
-          ></div>
-          {nomeTime}
-          <span className={`text-xs sm:text-sm font-normal ${
-            isTimeAmarelo ? 'text-gray-800' : 'text-gray-400'
-          }`}>
-            (Nível: <span className="text-yellow-600">{time.nivelMedio}</span>)
-          </span>
-        </h3>
-        <div className="flex-1 flex justify-end">
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={() => onAddPlayer(index)}
-            className={`p-1.5 rounded-lg transition-colors ${
-              isTimeAmarelo ? 'bg-black/10 hover:bg-black/20 text-black' : 'bg-white/10 hover:bg-white/20 text-white'
-            }`}
-            title="Incluir Jogador Atrasado"
-          >
-            <FaUserPlus size={14} />
-          </motion.button>
+    return (
+      <div
+        key={index}
+        className={`border p-4 rounded-lg ${
+          modoEdicao ? 'border-dashed border-yellow-400' : 'border-gray-700'
+        } ${isTimeAmarelo ? 'bg-[#efdf8e] text-black' : 'bg-gray-800/30 text-white'}`}
+      >
+        <div className="flex justify-between items-center mb-3 sm:mb-4">
+          <div className="flex-1"></div>
+          <h3 className="text-base sm:text-lg font-bold text-center flex items-center justify-center gap-2">
+            <div
+              className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 ${
+                index === 0 ? 'bg-gray-300 border-gray-400' : 'bg-yellow-500 border-yellow-400'
+              }`}
+            ></div>
+            {nomeTime}
+          </h3>
+          <div className="flex-1 flex justify-end">
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => onAddPlayer(index)}
+              className={`p-1.5 rounded-lg transition-colors ${
+                isTimeAmarelo ? 'bg-black/10 hover:bg-black/20 text-black' : 'bg-white/10 hover:bg-white/20 text-white'
+              }`}
+              title="Incluir Jogador Atrasado"
+            >
+              <FaUserPlus size={14} />
+            </motion.button>
+          </div>
+        </div>
+
+        <ul className="space-y-2 sm:space-y-3">
+          {time.jogadores.map((jogador, idx) => (
+            <motion.li
+              key={jogador.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.1 }}
+              className={`p-2 sm:p-3 rounded-md border bg-[#111827] hover:bg-[#1f2937] ${
+                modoEdicao
+                  ? 'cursor-move border-dashed border-gray-500'
+                  : 'border-gray-600'
+              } transition-colors`}
+              draggable={modoEdicao}
+              onDragStart={(e) => e.dataTransfer.setData('jogadorId', jogador.id)}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                const jogadorId = e.dataTransfer.getData('jogadorId');
+                moverJogador(index, index, jogadorId);
+              }}
+            >
+              <div className="flex justify-between items-center">
+                <span className="text-white text-sm sm:text-base">{jogador.nome}</span>
+                <span className="text-yellow-400 text-xs sm:text-sm">{jogador.nivel} ⭐</span>
+              </div>
+              <div className="text-xs text-gray-300 mt-0.5 sm:mt-1">
+                Posição: {jogador.posicao}
+              </div>
+            </motion.li>
+          ))}
+        </ul>
+
+        <div className={`mt-3 text-center text-xs sm:text-sm ${
+          isTimeAmarelo ? 'text-gray-800' : 'text-gray-400'
+        }`}>
+          Total de jogadores: <strong>{time.jogadores.length}</strong>
         </div>
       </div>
-
-      <ul className="space-y-2 sm:space-y-3">
-        {time.jogadores.map((jogador, idx) => (
-          <motion.li
-            key={jogador.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.1 }}
-            className={`p-2 sm:p-3 rounded-md border bg-[#111827] hover:bg-[#1f2937] ${
-              modoEdicao
-                ? 'cursor-move border-dashed border-gray-500'
-                : 'border-gray-600'
-            } transition-colors`}
-            draggable={modoEdicao}
-            onDragStart={(e) => e.dataTransfer.setData('jogadorId', jogador.id)}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => {
-              e.preventDefault();
-              const jogadorId = e.dataTransfer.getData('jogadorId');
-              moverJogador(index, index, jogadorId);
-            }}
-          >
-            <div className="flex justify-between items-center">
-              <span className="text-white text-sm sm:text-base">{jogador.nome}</span>
-              <span className="text-yellow-400 text-xs sm:text-sm">{jogador.nivel} ⭐</span>
-            </div>
-            <div className="text-xs text-gray-300 mt-0.5 sm:mt-1">
-              Posição: {jogador.posicao}
-            </div>
-          </motion.li>
-        ))}
-      </ul>
-
-      <div className={`mt-3 text-center text-xs sm:text-sm ${
-        isTimeAmarelo ? 'text-gray-800' : 'text-gray-400'
-      }`}>
-        Total de jogadores: <strong>{time.jogadores.length}</strong>
-      </div>
-    </div>
-  );
-};
+    );
+  };
 
   // Componente para exibir um item do histórico
   const HistoricoItem = ({ sorteio, index }) => (
@@ -774,7 +782,7 @@ const TimeSorteado = ({ time, index, onAddPlayer }) => {
           <FaTrash size={14} />
         </button>
       </div>
-      
+
       <div className="grid grid-cols-2 gap-3 sm:gap-4">
         {sorteio.times.map((time, i) => (
           <div key={i}>
@@ -819,24 +827,24 @@ const TimeSorteado = ({ time, index, onAddPlayer }) => {
         {[...Array(20)].map((_, i) => (
           <motion.div
             key={i}
-            initial={{ 
-              x: Math.random() * 100, 
-              y: Math.random() * 100, 
-              opacity: 0.3 
+            initial={{
+              x: Math.random() * 100,
+              y: Math.random() * 100,
+              opacity: 0.3
             }}
-            animate={{ 
-              y: [null, (Math.random() - 0.5) * 50], 
-              x: [null, (Math.random() - 0.5) * 50] 
+            animate={{
+              y: [null, (Math.random() - 0.5) * 50],
+              x: [null, (Math.random() - 0.5) * 50]
             }}
-            transition={{ 
-              duration: 15 + Math.random() * 20, 
-              repeat: Infinity, 
-              repeatType: "reverse" 
+            transition={{
+              duration: 15 + Math.random() * 20,
+              repeat: Infinity,
+              repeatType: "reverse"
             }}
             className="absolute w-1 h-1 bg-white rounded-full"
-            style={{ 
-              left: `${Math.random() * 100}%`, 
-              top: `${Math.random() * 100}%` 
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
             }}
           />
         ))}
@@ -849,9 +857,9 @@ const TimeSorteado = ({ time, index, onAddPlayer }) => {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8 relative pt-16 sm:pt-0 text-center"
         >
-          <motion.button 
+          <motion.button
             onClick={() => navigate('/dashboard')}
-            whileHover={{ 
+            whileHover={{
               scale: 1.05,
               x: -5,
               backgroundColor: "rgba(37, 99, 235, 0.1)"
@@ -870,7 +878,7 @@ const TimeSorteado = ({ time, index, onAddPlayer }) => {
           <div className="flex flex-col items-center gap-2">
             <div className="flex items-center justify-center gap-3">
               <FaRandom className="text-blue-400 text-2xl sm:text-3xl" />
-              <motion.h1 
+              <motion.h1
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.1 }}
@@ -897,7 +905,7 @@ const TimeSorteado = ({ time, index, onAddPlayer }) => {
           animate={{ opacity: 1, scale: 1 }}
           className="bg-gray-800 bg-opacity-50 backdrop-blur-sm rounded-xl shadow-xl border border-gray-700 overflow-hidden mb-6"
         >
-         <div className="p-4 sm:p-10">
+          <div className="p-4 sm:p-10">
             {/* Filtro de posição */}
             <div className="mb-6 p-4 bg-blue-900/20 border border-blue-500/30 rounded-xl">
               <label className="text-xs sm:text-sm font-medium text-blue-300 mb-2 flex items-center gap-2">
@@ -911,79 +919,79 @@ const TimeSorteado = ({ time, index, onAddPlayer }) => {
                 <option value="">Selecione a partida da agenda...</option>
                 {partidasAgenda.map(p => (
                   <option key={p._id} value={p._id}>
-                    {new Date(p.data).toLocaleDateString()} - {p.local}
+                    {new Date(p.data).toLocaleDateString()} - {p.local} {p.participantes && p.participantes.length > 0 && ` (${p.participantes.length} atletas)`}
                   </option>
                 ))}
               </select>
               <p className="text-[10px] text-gray-500 mt-1">* Necessário para que apenas quem jogou possa votar depois.</p>
             </div>
             <div className="mb-4 flex flex-col sm:flex-row gap-4 items-end">
-    <div className="flex-1 max-sm:w-full">
-      <label className="text-xs sm:text-sm font-medium text-gray-400 mb-1 flex items-center gap-2">
-        <FaTshirt className="text-blue-400" /> Definir mesma posição para todos
-      </label>
-      <div className="flex gap-2 max-sm:flex-col">
-        <select
-          value={filtroPosicao}
-          onChange={(e) => setFiltroPosicao(e.target.value)}
-          className="flex-1 p-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm max-sm:w-full"
-        >
-          <option value="">Posição original</option>
-          {POSICOES_ARRAY.map(pos => (
-            <option key={pos} value={pos}>{pos}</option>
-          ))}
-        </select>
+              <div className="flex-1 max-sm:w-full">
+                <label className="text-xs sm:text-sm font-medium text-gray-400 mb-1 flex items-center gap-2">
+                  <FaTshirt className="text-blue-400" /> Definir mesma posição para todos
+                </label>
+                <div className="flex gap-2 max-sm:flex-col">
+                  <select
+                    value={filtroPosicao}
+                    onChange={(e) => setFiltroPosicao(e.target.value)}
+                    className="flex-1 p-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm max-sm:w-full"
+                  >
+                    <option value="">Posição original</option>
+                    {POSICOES_ARRAY.map(pos => (
+                      <option key={pos} value={pos}>{pos}</option>
+                    ))}
+                  </select>
                   <motion.button
-                   onClick={aplicarFiltroPosicao}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-4 py-2 rounded-lg text-xs sm:text-sm shadow-lg transition-all duration-300 flex items-center gap-2 max-sm:w-full max-sm:justify-center"
-        >
-          <FaCheck className="text-xs sm:text-sm" />
-          Aplicar
+                    onClick={aplicarFiltroPosicao}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-4 py-2 rounded-lg text-xs sm:text-sm shadow-lg transition-all duration-300 flex items-center gap-2 max-sm:w-full max-sm:justify-center"
+                  >
+                    <FaCheck className="text-xs sm:text-sm" />
+                    Aplicar
                   </motion.button>
                 </div>
               </div>
             </div>
 
             {/* Lista de jogadores */}
-            
-<div className="mb-4">
+
+            <div className="mb-4">
               <label className="text-xs sm:text-sm font-medium text-gray-400 mb-1 sm:mb-2 flex items-center gap-2">
                 <FaUser className="text-blue-400 text-sm sm:text-base" /> Jogadores Disponíveis
               </label>
 
-  {/* Botões */}
-  <div className="flex flex-row gap-2 w-full sm:w-auto">
-    <motion.button
-      onClick={recarregarJogadores}
-      disabled={carregandoJogadores}
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      className="w-1/2 sm:flex-1 flex items-center justify-center gap-1 text-xs sm:text-sm bg-gray-700 hover:bg-gray-600 text-gray-200 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg transition-all"
-    >
-      <FaSync className={carregandoJogadores ? "animate-spin w-3 h-3 sm:w-4 sm:h-4" : "w-3 h-3 sm:w-4 sm:h-4"} />
-      <span>Atualizar</span>
-    </motion.button>
+              {/* Botões */}
+              <div className="flex flex-row gap-2 w-full sm:w-auto">
+                <motion.button
+                  onClick={recarregarJogadores}
+                  disabled={carregandoJogadores}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-1/2 sm:flex-1 flex items-center justify-center gap-1 text-xs sm:text-sm bg-gray-700 hover:bg-gray-600 text-gray-200 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg transition-all"
+                >
+                  <FaSync className={carregandoJogadores ? "animate-spin w-3 h-3 sm:w-4 sm:h-4" : "w-3 h-3 sm:w-4 sm:h-4"} />
+                  <span>Atualizar</span>
+                </motion.button>
 
-    <motion.button
-  onClick={() => {
-    const todosPresentes = jogadoresSelecionados.every(j => j.presente);
-    setJogadoresSelecionados(jogadoresSelecionados.map(j => ({
-      ...j,
-      presente: !todosPresentes
-    })));
-    toast.info(todosPresentes ? 'Todos os jogadores desmarcados' : 'Todos os jogadores marcados');
-  }}
-  whileHover={{ scale: 1.02 }}
-  whileTap={{ scale: 0.98 }}
-  className="w-1/2 sm:flex-1 flex items-center justify-center gap-1 text-xs sm:text-sm bg-gray-700 hover:bg-gray-600 text-gray-200 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg transition-all"
->
-  <FaCheck className="w-3 h-3 sm:w-4 sm:h-4" />
-  <span>{jogadoresSelecionados.every(j => j.presente) ? 'Desmarcar Todos' : 'Marcar Todos'}</span>
-</motion.button>
-  </div>
-</div>
+                <motion.button
+                  onClick={() => {
+                    const todosPresentes = jogadoresSelecionados.every(j => j.presente);
+                    setJogadoresSelecionados(jogadoresSelecionados.map(j => ({
+                      ...j,
+                      presente: !todosPresentes
+                    })));
+                    toast.info(todosPresentes ? 'Todos os jogadores desmarcados' : 'Todos os jogadores marcados');
+                  }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-1/2 sm:flex-1 flex items-center justify-center gap-1 text-xs sm:text-sm bg-gray-700 hover:bg-gray-600 text-gray-200 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg transition-all"
+                >
+                  <FaCheck className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span>{jogadoresSelecionados.every(j => j.presente) ? 'Desmarcar Todos' : 'Marcar Todos'}</span>
+                </motion.button>
+              </div>
+            </div>
 
             {/* Seletor de balanceamento */}
             <div className="mb-4">
@@ -1049,7 +1057,7 @@ const TimeSorteado = ({ time, index, onAddPlayer }) => {
                       </div>
                     ) : (
                       jogadoresSelecionados
-                        .filter(jogador => 
+                        .filter(jogador =>
                           jogador.nome.toLowerCase().includes(filtroJogadoresSelecionados.toLowerCase())
                         )
                         .map((jogador) => (
@@ -1100,12 +1108,12 @@ const TimeSorteado = ({ time, index, onAddPlayer }) => {
                 <h2 className="text-lg sm:text-xl font-bold text-white">
                   Times Sorteados
                   <span className="block text-xs sm:text-sm font-normal text-gray-400 mt-1">
-                    {balanceamento === TIPOS_BALANCEAMENTO.ALEATORIO ? "Aleatório" : 
-                     balanceamento === TIPOS_BALANCEAMENTO.NIVEL ? "Por Nível" : 
-                     balanceamento === TIPOS_BALANCEAMENTO.POSICAO ? "Por Posição" : "Misto"}
+                    {balanceamento === TIPOS_BALANCEAMENTO.ALEATORIO ? "Aleatório" :
+                      balanceamento === TIPOS_BALANCEAMENTO.NIVEL ? "Por Nível" :
+                      balanceamento === TIPOS_BALANCEAMENTO.POSICAO ? "Por Posição" : "Misto"}
                   </span>
                 </h2>
-                
+
                 <div className="flex gap-2">
                   <motion.button
                     onClick={() => setModoEdicao(!modoEdicao)}
@@ -1116,7 +1124,7 @@ const TimeSorteado = ({ time, index, onAddPlayer }) => {
                   >
                     {modoEdicao ? <FaSave size={14} /> : <FaEdit size={14} />}
                   </motion.button>
-                  
+
                   <motion.button
                     onClick={() => abrirModalAddJogador(0)}
                     whileHover={{ scale: 1.05 }}
@@ -1138,7 +1146,7 @@ const TimeSorteado = ({ time, index, onAddPlayer }) => {
                   </motion.button>
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 {times.map((time, index) => (
                   <TimeSorteado key={index} time={time} index={index} onAddPlayer={abrirModalAddJogador} />
@@ -1161,7 +1169,7 @@ const TimeSorteado = ({ time, index, onAddPlayer }) => {
                   <FaHistory className="text-blue-400" /> Últimos Sorteios
                 </h3>
               </div>
-              
+
               <div className="space-y-3 sm:space-y-4 max-h-96 overflow-y-auto pr-2">
                 {historico.map((sorteio, idx) => (
                   <HistoricoItem key={idx} sorteio={sorteio} index={idx} />
@@ -1213,7 +1221,7 @@ const TimeSorteado = ({ time, index, onAddPlayer }) => {
 
                 <div className="max-h-64 overflow-y-auto space-y-2 custom-scrollbar pr-1">
                   {jogadoresCadastrados
-                    .filter(j => 
+                    .filter(j =>
                       j.nome.toLowerCase().includes(termoBuscaAdicao.toLowerCase()) &&
                       !times.some(t => t.jogadores.some(pj => (pj._id || pj.id) === j._id))
                     )
@@ -1230,7 +1238,7 @@ const TimeSorteado = ({ time, index, onAddPlayer }) => {
                         <FaCheck className="text-green-500 opacity-0 group-hover:opacity-100" />
                       </button>
                     ))}
-                  {termoBuscaAdicao && jogadoresCadastrados.filter(j => 
+                  {termoBuscaAdicao && jogadoresCadastrados.filter(j =>
                     j.nome.toLowerCase().includes(termoBuscaAdicao.toLowerCase()) &&
                     !times.some(t => t.jogadores.some(pj => (pj._id || pj.id) === j._id))
                   ).length === 0 && (
