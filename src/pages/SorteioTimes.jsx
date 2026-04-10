@@ -73,6 +73,7 @@ export default function SorteioTimes() {
   // Estados para inclusão manual de jogadores pós-sorteio
   const [modalAddPlayer, setModalAddPlayer] = useState({ open: false, teamIndex: null });
   const [nomeNovoJogador, setNomeNovoJogador] = useState("");
+  const [sugestoes, setSugestoes] = useState([]);
 
   // Carrega dados do localStorage ao montar o componente
   useEffect(() => {
@@ -381,6 +382,21 @@ const aplicarFiltroPosicao = () => {
       }
     } catch (err) {
       console.error("Erro ao sincronizar participantes:", err);
+    }
+  };
+
+  // Função para filtrar sugestões de jogadores ao digitar no modal
+  const lidarMudancaNome = (valor) => {
+    setNomeNovoJogador(valor);
+    if (valor.trim().length > 1) {
+      const jaEstaoNosTimes = times.flatMap(t => t.jogadores.map(j => j._id || j.id));
+      const filtrados = jogadoresSelecionados.filter(j => 
+        j.nome.toLowerCase().includes(valor.toLowerCase()) &&
+        !jaEstaoNosTimes.includes(j._id)
+      ).slice(0, 5);
+      setSugestoes(filtrados);
+    } else {
+      setSugestoes([]);
     }
   };
 
