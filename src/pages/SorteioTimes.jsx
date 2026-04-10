@@ -701,14 +701,6 @@ const TimeSorteado = ({ time, index }) => {
         </div>
       </div>
 
-      <div className="text-center mb-3">
-        <span className={`text-xs sm:text-sm font-normal ${
-          isTimeAmarelo ? 'text-gray-800' : 'text-gray-400'
-        }`}>
-          (Nível: <span className="text-yellow-600">{time.nivelMedio}</span>)
-        </span>
-      </div>
-
       <ul className="space-y-2 sm:space-y-3">
         {time.jogadores.map((jogador, idx) => (
           <motion.li
