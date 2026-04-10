@@ -431,8 +431,25 @@ export default function ConfirmarPresenca() {
                   animate={{ opacity: 1, scale: 1 }}
                   className="space-y-6 text-center"
                 >
+                  <div className="flex items-center gap-4 bg-gray-900/50 p-4 rounded-2xl border border-gray-700/50 mb-2 text-left">
+                    {jogadorLogado.foto ? (
+                      <img 
+                        src={jogadorLogado.foto} 
+                        alt={jogadorLogado.nome} 
+                        className="w-16 h-16 rounded-full object-cover border-2 border-blue-500 shadow-lg shadow-blue-500/20"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-full bg-gray-700 flex items-center justify-center border-2 border-gray-600">
+                        <FaUser className="text-gray-400 text-2xl" />
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-xl font-black text-white">Olá, {jogadorLogado.nome}!</p>
+                      <p className="text-xs text-blue-400 font-bold uppercase tracking-wider">Sua presença está liberada</p>
+                    </div>
+                  </div>
+
                   <div className="space-y-3">
-                    <h2 className="text-2xl font-bold text-white">{jogadorLogado.nome}</h2>
                     <p className="text-sm text-gray-400">Sua presença para o jogo está:</p>
                     <motion.div
                       layout
@@ -621,10 +638,23 @@ export default function ConfirmarPresenca() {
                               : 'bg-gray-800/40 border-gray-700 hover:border-gray-600'
                           }`}
                         >
-                          <div className="flex items-center gap-3">
-                            <div className={`w-1.5 h-1.5 rounded-full transition-colors duration-300 ${
-                              jogador.presente ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]' : 'bg-red-400'
-                            }`} />
+                          <div className="flex items-center gap-4">
+                            <div className="relative">
+                              {jogador.foto ? (
+                                <img 
+                                  src={jogador.foto} 
+                                  alt={jogador.nome} 
+                                  className="w-10 h-10 rounded-full object-cover border border-gray-600"
+                                />
+                              ) : (
+                                <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center border border-gray-600">
+                                  <FaUser className="text-gray-500 text-xs" />
+                                </div>
+                              )}
+                              <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-gray-800 transition-colors duration-300 ${
+                                jogador.presente ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]' : 'bg-red-400'
+                              }`} />
+                            </div>
                             <div>
                               <p className={`font-medium text-sm transition-colors ${
                                 jogador.presente ? 'text-white' : 'text-gray-300'

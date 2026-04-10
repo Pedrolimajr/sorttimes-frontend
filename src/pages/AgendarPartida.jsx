@@ -94,6 +94,7 @@ export default function AgendarPartida() {
         jogadores: jogadores.map(j => ({
           id: j._id,
           nome: j.nome,
+          foto: j.foto,
           presente: false // Inicialmente ninguém confirmou
         })),
         dataJogo
