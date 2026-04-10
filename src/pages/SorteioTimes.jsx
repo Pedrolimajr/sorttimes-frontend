@@ -46,6 +46,131 @@ const LOCAL_STORAGE_KEYS = {
   HISTORICO_SORTEIOS: "historicoSorteios"
   
 };
+
+// --- Sub-componentes movidos para fora para evitar re-montagens desnecessárias ---
+
+const JogadorItem = ({ jogador, onAlternarPresenca, onAtualizarPosicao }) => (
+  <motion.div
+    key={jogador._id}
+    initial={{ opacity: 0, x: -20 }}
+    animate={{ opacity: 1, x: 0 }}
+    exit={{ opacity: 0, x: 20 }}
+    className={`p-2 sm:p-3 rounded-md flex justify-between items-center mb-1 sm:mb-2 transition-colors ${
+      jogador.presente 
+        ? 'bg-gray-700 hover:bg-gray-600 border border-gray-600' 
+        : 'bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700'
+    }`}
+  >
+    <div className="flex items-center gap-2">
+      <span className={`text-sm sm:text-base ${jogador.presente ? "font-medium text-white" : "text-gray-400"}`}>
+        {jogador.nome}
+      </span>
+      <span className="text-xs text-yellow-400">{jogador.nivel} ⭐</span>
+    </div>
+    <div className="flex items-center gap-1 sm:gap-2">
+      <select
+        value={jogador.posicao}
+        onChange={(e) => onAtualizarPosicao(jogador._id, e.target.value)}
+        className="bg-gray-700 text-white text-xs p-1 rounded border border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
+      >
+        {POSICOES_ARRAY.map(pos => (
+          <option key={pos} value={pos} className="bg-gray-800">{pos}</option>
+        ))}
+      </select>
+
+      <motion.button
+        onClick={() => onAlternarPresenca(jogador._id)}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        className={`p-2 rounded-lg transition-all duration-300 ${
+          jogador.presente 
+            ? 'bg-green-900/30 text-green-400 hover:bg-green-800/40' 
+            : 'bg-red-900/30 text-red-400 hover:bg-red-800/40'
+        }`}
+        title={jogador.presente ? 'Presente' : 'Ausente'}
+      >
+        <GiSoccerKick className={`text-sm sm:text-base transform transition-all duration-300 ${
+          jogador.presente ? 'rotate-0' : 'rotate-45 opacity-50'
+        }`} />
+      </motion.button>
+    </div>
+  </motion.div>
+);
+
+const TimeSorteado = ({ time, index, modoEdicao, onAddPlayer, onMoverJogador }) => {
+  const isTimeAmarelo = index === 1;
+  const nomeTime = index === 0 ? "Time (Preto)" : isTimeAmarelo ? "Time (Amarelo)" : time.nome;
+
+  return (
+    <div
+      className={`border p-4 rounded-lg ${
+        modoEdicao ? 'border-dashed border-yellow-400' : 'border-gray-700'
+      } ${isTimeAmarelo ? 'bg-[#efdf8e] text-black' : 'bg-gray-800/30 text-white'}`}
+    >
+      <div className="flex justify-between items-center mb-3 sm:mb-4 px-1">
+        <div className="w-10"></div>
+        <h3 className="text-base sm:text-lg font-bold flex items-center justify-center gap-2">
+          <div
+            className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 ${
+              index === 0 ? 'bg-gray-300 border-gray-400' : 'bg-yellow-500 border-yellow-400'
+            }`}
+          ></div>
+          {nomeTime}
+        </h3>
+        <div className="flex gap-2">
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => onAddPlayer(index)}
+            className={`p-1.5 rounded transition-colors ${isTimeAmarelo ? 'bg-black/10 hover:bg-black/20 text-black' : 'bg-white/10 hover:bg-white/20 text-white'}`}
+            title="Incluir jogador neste time"
+          >
+            <FaUserPlus size={14} />
+          </motion.button>
+        </div>
+      </div>
+
+      <ul className="space-y-2 sm:space-y-3">
+        {time.jogadores.map((jogador, idx) => (
+          <motion.li
+            key={jogador.id}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.1 }}
+            className={`p-2 sm:p-3 rounded-md border bg-[#111827] hover:bg-[#1f2937] ${
+              modoEdicao
+                ? 'cursor-move border-dashed border-gray-500'
+                : 'border-gray-600'
+            } transition-colors`}
+            draggable={modoEdicao}
+            onDragStart={(e) => e.dataTransfer.setData('jogadorId', jogador.id)}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault();
+              const jogadorId = e.dataTransfer.getData('jogadorId');
+              onMoverJogador(index, index, jogadorId);
+            }}
+          >
+            <div className="flex justify-between items-center">
+              <span className="text-white text-sm sm:text-base">{jogador.nome}</span>
+              <span className="text-yellow-400 text-xs sm:text-sm">{jogador.nivel} ⭐</span>
+            </div>
+            <div className="text-xs text-gray-300 mt-0.5 sm:mt-1">
+              Posição: {jogador.posicao}
+            </div>
+          </motion.li>
+        ))}
+      </ul>
+
+      <div className={`mt-3 text-center text-xs sm:text-sm ${
+        isTimeAmarelo ? 'text-gray-800' : 'text-gray-400'
+      }`}>
+        Total de jogadores: <strong>{time.jogadores.length}</strong>
+      </div>
+    </div>
+  );
+};
+
 /**
  * Componente principal para sorteio de times de futebol
  * Permite selecionar jogadores, definir posições e balancear times de diferentes formas
@@ -633,191 +758,6 @@ const aplicarFiltroPosicao = () => {
     }
   };
 
-  // Componente para exibir um jogador na lista
-  const JogadorItem = ({ jogador }) => (
-    <motion.div
-      key={jogador._id}
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 20 }}
-      className={`p-2 sm:p-3 rounded-md flex justify-between items-center mb-1 sm:mb-2 transition-colors ${
-        jogador.presente 
-          ? 'bg-gray-700 hover:bg-gray-600 border border-gray-600' 
-          : 'bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700'
-      }`}
-    >
-      <div className="flex items-center gap-2">
-        <span className={`text-sm sm:text-base ${jogador.presente ? "font-medium text-white" : "text-gray-400"}`}>
-          {jogador.nome}
-        </span>
-        <span className="text-xs text-yellow-400">{jogador.nivel} ⭐</span>
-      </div>
-      <div className="flex items-center gap-1 sm:gap-2">
-        <select
-          value={jogador.posicao}
-          onChange={(e) => atualizarPosicao(jogador._id, e.target.value)}
-          className="bg-gray-700 text-white text-xs p-1 rounded border border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        >
-          {POSICOES_ARRAY.map(pos => (
-            <option key={pos} value={pos} className="bg-gray-800">{pos}</option>
-          ))}
-        </select>
-
-        <motion.button
-          onClick={() => alternarPresenca(jogador._id)}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          className={`p-2 rounded-lg transition-all duration-300 ${
-            jogador.presente 
-              ? 'bg-green-900/30 text-green-400 hover:bg-green-800/40' 
-              : 'bg-red-900/30 text-red-400 hover:bg-red-800/40'
-          }`}
-          title={jogador.presente ? 'Presente' : 'Ausente'}
-        >
-          <GiSoccerKick className={`text-sm sm:text-base transform transition-all duration-300 ${
-            jogador.presente ? 'rotate-0' : 'rotate-45 opacity-50'
-          }`} />
-        </motion.button>
-      </div>
-    </motion.div>
-  );
-
-  // Componente para exibir um time sorteado
-const TimeSorteado = ({ time, index }) => {
-  const isTimeAmarelo = index === 1;
-  const nomeTime = index === 0 ? "Time (Preto)" : isTimeAmarelo ? "Time (Amarelo)" : time.nome;
-
-  return (
-    <div
-      key={index}
-      className={`border p-4 rounded-lg ${
-        modoEdicao ? 'border-dashed border-yellow-400' : 'border-gray-700'
-      } ${isTimeAmarelo ? 'bg-[#efdf8e] text-black' : 'bg-gray-800/30 text-white'}`}
-    >
-      <div className="flex justify-between items-center mb-3 sm:mb-4 px-1">
-        <div className="w-10"></div> {/* Spacer lateral */}
-        <h3 className="text-base sm:text-lg font-bold flex items-center justify-center gap-2">
-          <div
-            className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 ${
-              index === 0 ? 'bg-gray-300 border-gray-400' : 'bg-yellow-500 border-yellow-400'
-            }`}
-          ></div>
-          {nomeTime}
-        </h3>
-        <div className="flex gap-2">
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setModalAddPlayer({ open: true, teamIndex: index })}
-            className={`p-1.5 rounded transition-colors ${isTimeAmarelo ? 'bg-black/10 hover:bg-black/20 text-black' : 'bg-white/10 hover:bg-white/20 text-white'}`}
-            title="Incluir jogador neste time"
-          >
-            <FaUserPlus size={14} />
-          </motion.button>
-        </div>
-      </div>
-
-      <ul className="space-y-2 sm:space-y-3">
-        {time.jogadores.map((jogador, idx) => (
-          <motion.li
-            key={jogador.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.1 }}
-            className={`p-2 sm:p-3 rounded-md border bg-[#111827] hover:bg-[#1f2937] ${
-              modoEdicao
-                ? 'cursor-move border-dashed border-gray-500'
-                : 'border-gray-600'
-            } transition-colors`}
-            draggable={modoEdicao}
-            onDragStart={(e) => e.dataTransfer.setData('jogadorId', jogador.id)}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => {
-              e.preventDefault();
-              const jogadorId = e.dataTransfer.getData('jogadorId');
-              moverJogador(index, index, jogadorId);
-            }}
-          >
-            <div className="flex justify-between items-center">
-              <span className="text-white text-sm sm:text-base">{jogador.nome}</span>
-              <span className="text-yellow-400 text-xs sm:text-sm">{jogador.nivel} ⭐</span>
-            </div>
-            <div className="text-xs text-gray-300 mt-0.5 sm:mt-1">
-              Posição: {jogador.posicao}
-            </div>
-          </motion.li>
-        ))}
-      </ul>
-
-      <div className={`mt-3 text-center text-xs sm:text-sm ${
-        isTimeAmarelo ? 'text-gray-800' : 'text-gray-400'
-      }`}>
-        Total de jogadores: <strong>{time.jogadores.length}</strong>
-      </div>
-    </div>
-  );
-};
-
-  // Componente para exibir um item do histórico
-  const HistoricoItem = ({ sorteio, index }) => (
-    <motion.div
-      key={index}
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1 }}
-      className="bg-gray-700/30 p-3 sm:p-4 rounded-md border border-gray-700 hover:bg-gray-700/50 transition-colors"
-    >
-      <div className="flex justify-between items-start mb-2">
-        <div>
-          <div className="text-xs text-gray-400">
-            {new Date(sorteio.data).toLocaleString()}
-          </div>
-          <div className="text-xs text-gray-500">
-            {sorteio.jogadoresPresentes} jogadores • {sorteio.times.length} times
-          </div>
-        </div>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            excluirDoHistorico(index);
-          }}
-          className="text-red-400 hover:text-red-300 p-1"
-          title="Excluir sorteio"
-        >
-          <FaTrash size={14} />
-        </button>
-      </div>
-      
-      <div className="grid grid-cols-2 gap-3 sm:gap-4">
-        {sorteio.times.map((time, i) => (
-          <div key={i}>
-            <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">
-              {time.nome} ({time.jogadores.length})
-            </h4>
-            <ul className="text-xs sm:text-sm space-y-1 text-gray-400">
-              {time.jogadores.slice(0, 3).map((j, jIdx) => (
-                <li key={jIdx} className="truncate">
-                  {j.nome} <span className="text-gray-500 text-xs">({j.posicao})</span>
-                </li>
-              ))}
-              {time.jogadores.length > 3 && (
-                <li className="text-gray-500 text-xs">+{time.jogadores.length - 3} mais...</li>
-              )}
-            </ul>
-          </div>
-        ))}
-      </div>
-      <div className="mt-2 flex justify-end">
-        <button
-          onClick={() => restaurarSorteio(sorteio)}
-          className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
-        >
-          Restaurar
-        </button>
-      </div>
-    </motion.div>
-  );
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 px-4 py-8 sm:px-6 lg:px-8 relative">
       {/* Efeitos de luz de fundo (Glow) */}
@@ -1066,7 +1006,11 @@ const TimeSorteado = ({ time, index }) => {
                           jogador.nome.toLowerCase().includes(filtroJogadoresSelecionados.toLowerCase())
                         )
                         .map((jogador) => (
-                          <JogadorItem key={jogador._id} jogador={jogador} />
+                          <JogadorItem 
+                            key={jogador._id} 
+                            jogador={jogador} 
+                            onAlternarPresenca={alternarPresenca}
+                            onAtualizarPosicao={atualizarPosicao} />
                         ))
                     )}
                   </AnimatePresence>
@@ -1102,7 +1046,7 @@ const TimeSorteado = ({ time, index }) => {
         </motion.div>
 
         {/* Seção de times sorteados */}
-        {times.length > 0 && (
+        {partidaVinculadaId && times.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1144,7 +1088,13 @@ const TimeSorteado = ({ time, index }) => {
               
               <div className="space-y-4">
                 {times.map((time, index) => (
-                  <TimeSorteado key={index} time={time} index={index} />
+                  <TimeSorteado 
+                    key={index} 
+                    time={time} 
+                    index={index} 
+                    modoEdicao={modoEdicao} 
+                    onAddPlayer={(idx) => setModalAddPlayer({ open: true, teamIndex: idx })} 
+                    onMoverJogador={moverJogador} />
                 ))}
               </div>
             </div>
@@ -1167,7 +1117,48 @@ const TimeSorteado = ({ time, index }) => {
               
               <div className="space-y-3 sm:space-y-4 max-h-96 overflow-y-auto pr-2">
                 {historico.map((sorteio, idx) => (
-                  <HistoricoItem key={idx} sorteio={sorteio} index={idx} />
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-gray-700/30 p-3 sm:p-4 rounded-md border border-gray-700 hover:bg-gray-700/50 transition-colors"
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <div className="text-xs text-gray-400">{new Date(sorteio.data).toLocaleString()}</div>
+                        <div className="text-xs text-gray-500">{sorteio.jogadoresPresentes} jogadores • {sorteio.times.length} times</div>
+                      </div>
+                      <button onClick={() => excluirDoHistorico(idx)} className="text-red-400 hover:text-red-300 p-1"><FaTrash size={14} /></button>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                      {sorteio.times.map((time, i) => (
+                        <div key={i}>
+                          <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">
+                            {i === 0 ? "Time (Preto)" : i === 1 ? "Time (Amarelo)" : (time.nome || `Time ${i + 1}`)} ({time.jogadores.length})
+                          </h4>
+                          <ul className="text-xs sm:text-sm space-y-1 text-gray-400">
+                            {time.jogadores.slice(0, 3).map((j, jIdx) => (
+                              <li key={jIdx} className="truncate">
+                                {j.nome} <span className="text-gray-500 text-xs">({j.posicao})</span>
+                              </li>
+                            ))}
+                            {time.jogadores.length > 3 && (
+                              <li className="text-gray-500 text-xs">+{time.jogadores.length - 3} mais...</li>
+                            )}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-2 flex justify-end">
+                      <button
+                        onClick={() => restaurarSorteio(sorteio)}
+                        className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
+                      >
+                        Restaurar
+                      </button>
+                    </div>
+                  </motion.div>
                 ))}
               </div>
             </div>
