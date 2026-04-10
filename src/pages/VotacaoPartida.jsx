@@ -218,9 +218,22 @@ export default function VotacaoPartida() {
               initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
               className="bg-gray-800 rounded-3xl p-6 border border-gray-700 shadow-2xl space-y-8"
             >
-              <div className="border-b border-gray-700 pb-4">
-                <p className="text-xs text-blue-400 font-bold">LOGADO COMO:</p>
-                <p className="text-lg font-black">{jogadorAutenticado?.nome}</p>
+              <div className="border-b border-gray-700 pb-4 flex items-center gap-4">
+                {getFotoJogador(jogadorAutenticado?.nome) ? (
+                  <img 
+                    src={getFotoJogador(jogadorAutenticado?.nome)} 
+                    alt={jogadorAutenticado?.nome} 
+                    className="w-14 h-14 rounded-full object-cover border-2 border-blue-500 shadow-lg shadow-blue-500/20"
+                  />
+                ) : (
+                  <div className="w-14 h-14 rounded-full bg-gray-700 flex items-center justify-center border-2 border-gray-600">
+                    <FaUser className="text-gray-400 text-2xl" />
+                  </div>
+                )}
+                <div>
+                  <p className="text-xl font-black">Olá, {jogadorAutenticado?.nome}!</p>
+                  <p className="text-xs text-blue-400 font-bold uppercase tracking-wider">Sua votação está liberada</p>
+                </div>
               </div>
 
               {[
