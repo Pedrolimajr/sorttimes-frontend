@@ -505,6 +505,39 @@ const aplicarFiltroPosicao = () => {
   };
 
   /**
+   * Adiciona um jogador que chegou depois diretamente a um time
+   */
+  const adicionarJogadorAoTime = async (timeIdx, jogadorId) => {
+    if (!jogadorId) return;
+    
+    const jogador = jogadoresSelecionados.find(j => j._id === jogadorId);
+    if (!jogador) return;
+
+    // 1. Atualiza os times localmente
+    const novosTimes = [...times];
+    novosTimes[timeIdx].jogadores.push({ ...jogador, id: jogador._id });
+    setTimes(novosTimes);
+
+    // 2. Marca como presente na lista principal
+    setJogadoresSelecionados(prev => 
+      prev.map(j => j._id === jogadorId ? { ...j, presente: true } : j)
+    );
+
+    // 3. Sincroniza com a partida vinculada para a votação
+    if (partidaVinculadaId) {
+      try {
+        const todosParticipantes = novosTimes.flatMap(t => t.jogadores.map(j => j.id || j._id));
+        await api.post(`/partida-publica/vincular-participantes/${partidaVinculadaId}`, { 
+          participantes: todosParticipantes 
+        });
+        toast.success(`${jogador.nome} adicionado e sincronizado com a votação!`);
+      } catch (err) {
+        toast.error("Erro ao sincronizar com o servidor de votação.");
+      }
+    }
+  };
+
+  /**
    * Restaura um sorteio do histórico
    * @param {object} sorteio - Objeto contendo os times do sorteio
    */
@@ -601,6 +634,11 @@ const TimeSorteado = ({ time, index }) => {
   const isTimeAmarelo = index === 1;
   const nomeTime = index === 0 ? "Time (Preto)" : isTimeAmarelo ? "Time (Amarelo)" : time.nome;
 
+  // Filtra jogadores que não estão em NENHUM time para o select de inclusão rápida
+  const jogadoresDisponiveisParaInclusao = jogadoresSelecionados.filter(j => 
+    !times.some(t => t.jogadores.some(pj => (pj.id || pj._id) === j._id))
+  );
+
   return (
     <div
       key={index}
@@ -653,6 +691,31 @@ const TimeSorteado = ({ time, index }) => {
           </motion.li>
         ))}
       </ul>
+
+      {/* Inclusão rápida de jogador pós-sorteio */}
+      <div className="mt-4 pt-4 border-t border-gray-700/50">
+        <p className={`text-[10px] font-bold uppercase mb-2 ${isTimeAmarelo ? 'text-gray-700' : 'text-gray-400'}`}>
+          Incluir jogador atrasado:
+        </p>
+        <div className="flex gap-2">
+          <select
+            onChange={(e) => {
+              adicionarJogadorAoTime(index, e.target.value);
+              e.target.value = ""; // Reset do select
+            }}
+            className={`flex-1 text-xs p-2 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 ${
+              isTimeAmarelo 
+                ? 'bg-yellow-100 border-yellow-600/30 text-black' 
+                : 'bg-gray-900 border-gray-600 text-white'
+            }`}
+          >
+            <option value="">Selecionar jogador...</option>
+            {jogadoresDisponiveisParaInclusao.map(j => (
+              <option key={j._id} value={j._id}>{j.nome}</option>
+            ))}
+          </select>
+        </div>
+      </div>
 
       <div className={`mt-3 text-center text-xs sm:text-sm ${
         isTimeAmarelo ? 'text-gray-800' : 'text-gray-400'
