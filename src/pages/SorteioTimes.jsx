@@ -633,6 +633,7 @@ const aplicarFiltroPosicao = () => {
 const TimeSorteado = ({ time, index }) => {
   const isTimeAmarelo = index === 1;
   const nomeTime = index === 0 ? "Time (Preto)" : isTimeAmarelo ? "Time (Amarelo)" : time.nome;
+  const [showAddPlayer, setShowAddPlayer] = useState(false);
 
   // Filtra jogadores que não estão em NENHUM time para o select de inclusão rápida
   const jogadoresDisponiveisParaInclusao = jogadoresSelecionados.filter(j => 
@@ -646,19 +647,45 @@ const TimeSorteado = ({ time, index }) => {
         modoEdicao ? 'border-dashed border-yellow-400' : 'border-gray-700'
       } ${isTimeAmarelo ? 'bg-[#efdf8e] text-black' : 'bg-gray-800/30 text-white'}`}
     >
-      <h3 className="text-base sm:text-lg font-bold text-center mb-3 sm:mb-4 flex items-center justify-center gap-2">
-        <div
-          className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 ${
-            index === 0 ? 'bg-gray-300 border-gray-400' : 'bg-yellow-500 border-yellow-400'
-          }`}
-        ></div>
-        {nomeTime}
-        <span className={`text-xs sm:text-sm font-normal ${
-          isTimeAmarelo ? 'text-gray-800' : 'text-gray-400'
-        }`}>
-          (Nível: <span className="text-yellow-600">{time.nivelMedio}</span>)
-        </span>
-      </h3>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-base sm:text-lg font-bold flex items-center gap-2">
+          <div
+            className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 ${
+              index === 0 ? 'bg-gray-300 border-gray-400' : 'bg-yellow-500 border-yellow-400'
+            }`}
+          ></div>
+          {nomeTime}
+          <span className={`text-xs sm:text-sm font-normal ${
+            isTimeAmarelo ? 'text-gray-800' : 'text-gray-400'
+          }`}>
+            (<span className="text-yellow-600">{time.nivelMedio}</span>)
+          </span>
+        </h3>
+
+        <div className="flex gap-1">
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setShowAddPlayer(!showAddPlayer)}
+            className={`p-1.5 rounded-lg transition-colors ${
+              isTimeAmarelo ? 'hover:bg-yellow-600/30 text-gray-800' : 'hover:bg-gray-700 text-gray-400'
+            }`}
+            title="Incluir jogador atrasado"
+          >
+            <FaPlus size={14} />
+          </motion.button>
+          <button 
+            onClick={() => setModoEdicao(!modoEdicao)}
+            className={`p-1.5 rounded-lg transition-colors ${isTimeAmarelo ? 'hover:bg-yellow-600/30 text-gray-800' : 'hover:bg-gray-700 text-gray-400'}`}>
+            <FaEdit size={14} />
+          </button>
+          <button 
+            onClick={compartilharTimes}
+            className={`p-1.5 rounded-lg transition-colors ${isTimeAmarelo ? 'hover:bg-yellow-600/30 text-gray-800' : 'hover:bg-gray-700 text-gray-400'}`}>
+            <FaShare size={14} />
+          </button>
+        </div>
+      </div>
 
       <ul className="space-y-2 sm:space-y-3">
         {time.jogadores.map((jogador, idx) => (
@@ -693,29 +720,39 @@ const TimeSorteado = ({ time, index }) => {
       </ul>
 
       {/* Inclusão rápida de jogador pós-sorteio */}
-      <div className="mt-4 pt-4 border-t border-gray-700/50">
-        <p className={`text-[10px] font-bold uppercase mb-2 ${isTimeAmarelo ? 'text-gray-700' : 'text-gray-400'}`}>
-          Incluir jogador atrasado:
-        </p>
-        <div className="flex gap-2">
-          <select
-            onChange={(e) => {
-              adicionarJogadorAoTime(index, e.target.value);
-              e.target.value = ""; // Reset do select
-            }}
-            className={`flex-1 text-xs p-2 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 ${
-              isTimeAmarelo 
-                ? 'bg-yellow-100 border-yellow-600/30 text-black' 
-                : 'bg-gray-900 border-gray-600 text-white'
-            }`}
+      <AnimatePresence>
+        {showAddPlayer && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mt-4 pt-4 border-t border-gray-700/50 overflow-hidden"
           >
-            <option value="">Selecionar jogador...</option>
-            {jogadoresDisponiveisParaInclusao.map(j => (
-              <option key={j._id} value={j._id}>{j.nome}</option>
-            ))}
-          </select>
-        </div>
-      </div>
+            <p className={`text-[10px] font-bold uppercase mb-2 ${isTimeAmarelo ? 'text-gray-700' : 'text-gray-400'}`}>
+              Incluir jogador atrasado:
+            </p>
+            <div className="flex gap-2">
+              <select
+                onChange={(e) => {
+                  adicionarJogadorAoTime(index, e.target.value);
+                  e.target.value = ""; // Reset do select
+                  setShowAddPlayer(false); // Fecha o campo após adicionar
+                }}
+                className={`flex-1 text-xs p-2 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 ${
+                  isTimeAmarelo 
+                    ? 'bg-yellow-100 border-yellow-600/30 text-black' 
+                    : 'bg-gray-900 border-gray-600 text-white'
+                }`}
+              >
+                <option value="">Selecionar jogador...</option>
+                {jogadoresDisponiveisParaInclusao.map(j => (
+                  <option key={j._id} value={j._id}>{j.nome}</option>
+                ))}
+              </select>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className={`mt-3 text-center text-xs sm:text-sm ${
         isTimeAmarelo ? 'text-gray-800' : 'text-gray-400'
