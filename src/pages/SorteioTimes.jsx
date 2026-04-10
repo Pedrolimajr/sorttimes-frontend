@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { 
   FaRandom, FaUser, FaTshirt, FaBalanceScale, FaCheck, FaTimes, 
-  FaSync, FaArrowLeft, FaHistory, FaEdit, FaShare, FaSave, FaPlus,
+  FaSync, FaArrowLeft, FaHistory, FaEdit, FaShare, FaSave, 
   FaTrash, FaUserCheck, FaUserTimes, FaSearch, FaCalendarAlt 
 } from "react-icons/fa";
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
@@ -72,9 +72,6 @@ export default function SorteioTimes() {
   const [filtroJogadoresSelecionados, setFiltroJogadoresSelecionados] = useState('');
   const [partidasAgenda, setPartidasAgenda] = useState([]);
   const [partidaVinculadaId, setPartidaVinculadaId] = useState('');
-  const [isModalAddPlayerOpen, setIsModalAddPlayerOpen] = useState(false);
-  const [teamIndexToAdd, setTeamIndexToAdd] = useState(null);
-  const [playerNameInput, setPlayerNameInput] = useState("");
 
   // Carrega dados do localStorage ao montar o componente
   useEffect(() => {
@@ -508,6 +505,39 @@ const aplicarFiltroPosicao = () => {
   };
 
   /**
+   * Adiciona um jogador que chegou depois diretamente a um time
+   */
+  const adicionarJogadorAoTime = async (timeIdx, jogadorId) => {
+    if (!jogadorId) return;
+    
+    const jogador = jogadoresSelecionados.find(j => j._id === jogadorId);
+    if (!jogador) return;
+
+    // 1. Atualiza os times localmente
+    const novosTimes = [...times];
+    novosTimes[timeIdx].jogadores.push({ ...jogador, id: jogador._id });
+    setTimes(novosTimes);
+
+    // 2. Marca como presente na lista principal
+    setJogadoresSelecionados(prev => 
+      prev.map(j => j._id === jogadorId ? { ...j, presente: true } : j)
+    );
+
+    // 3. Sincroniza com a partida vinculada para a votação
+    if (partidaVinculadaId) {
+      try {
+        const todosParticipantes = novosTimes.flatMap(t => t.jogadores.map(j => j.id || j._id));
+        await api.post(`/partida-publica/vincular-participantes/${partidaVinculadaId}`, { 
+          participantes: todosParticipantes 
+        });
+        toast.success(`${jogador.nome} adicionado e sincronizado com a votação!`);
+      } catch (err) {
+        toast.error("Erro ao sincronizar com o servidor de votação.");
+      }
+    }
+  };
+
+  /**
    * Restaura um sorteio do histórico
    * @param {object} sorteio - Objeto contendo os times do sorteio
    */
@@ -604,6 +634,11 @@ const TimeSorteado = ({ time, index }) => {
   const isTimeAmarelo = index === 1;
   const nomeTime = index === 0 ? "Time (Preto)" : isTimeAmarelo ? "Time (Amarelo)" : time.nome;
 
+  // Filtra jogadores que não estão em NENHUM time para o select de inclusão rápida
+  const jogadoresDisponiveisParaInclusao = jogadoresSelecionados.filter(j => 
+    !times.some(t => t.jogadores.some(pj => (pj.id || pj._id) === j._id))
+  );
+
   return (
     <div
       key={index}
@@ -611,28 +646,19 @@ const TimeSorteado = ({ time, index }) => {
         modoEdicao ? 'border-dashed border-yellow-400' : 'border-gray-700'
       } ${isTimeAmarelo ? 'bg-[#efdf8e] text-black' : 'bg-gray-800/30 text-white'}`}
     >
-      <div className="flex justify-between items-center mb-4 px-1">
-        <div className="flex-1"></div>
-        <h3 className="text-base sm:text-lg font-bold text-center flex items-center justify-center gap-2 flex-1">
-          <div
-            className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 ${
-              index === 0 ? 'bg-gray-300 border-gray-400' : 'bg-yellow-500 border-yellow-400'
-            }`}
-          ></div>
-          {nomeTime}
-        </h3>
-        <div className="flex gap-2 flex-1 justify-end">
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={() => handleOpenAddPlayer(index)}
-            className={`p-1.5 rounded-lg ${isTimeAmarelo ? 'bg-yellow-600/20 text-yellow-800' : 'bg-blue-600/20 text-blue-400'}`}
-            title="Incluir Jogador"
-          >
-            <FaPlus size={14} />
-          </motion.button>
-        </div>
-      </div>
+      <h3 className="text-base sm:text-lg font-bold text-center mb-3 sm:mb-4 flex items-center justify-center gap-2">
+        <div
+          className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 ${
+            index === 0 ? 'bg-gray-300 border-gray-400' : 'bg-yellow-500 border-yellow-400'
+          }`}
+        ></div>
+        {nomeTime}
+        <span className={`text-xs sm:text-sm font-normal ${
+          isTimeAmarelo ? 'text-gray-800' : 'text-gray-400'
+        }`}>
+          (Nível: <span className="text-yellow-600">{time.nivelMedio}</span>)
+        </span>
+      </h3>
 
       <ul className="space-y-2 sm:space-y-3">
         {time.jogadores.map((jogador, idx) => (
@@ -665,6 +691,31 @@ const TimeSorteado = ({ time, index }) => {
           </motion.li>
         ))}
       </ul>
+
+      {/* Inclusão rápida de jogador pós-sorteio */}
+      <div className="mt-4 pt-4 border-t border-gray-700/50">
+        <p className={`text-[10px] font-bold uppercase mb-2 ${isTimeAmarelo ? 'text-gray-700' : 'text-gray-400'}`}>
+          Incluir jogador atrasado:
+        </p>
+        <div className="flex gap-2">
+          <select
+            onChange={(e) => {
+              adicionarJogadorAoTime(index, e.target.value);
+              e.target.value = ""; // Reset do select
+            }}
+            className={`flex-1 text-xs p-2 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 ${
+              isTimeAmarelo 
+                ? 'bg-yellow-100 border-yellow-600/30 text-black' 
+                : 'bg-gray-900 border-gray-600 text-white'
+            }`}
+          >
+            <option value="">Selecionar jogador...</option>
+            {jogadoresDisponiveisParaInclusao.map(j => (
+              <option key={j._id} value={j._id}>{j.nome}</option>
+            ))}
+          </select>
+        </div>
+      </div>
 
       <div className={`mt-3 text-center text-xs sm:text-sm ${
         isTimeAmarelo ? 'text-gray-800' : 'text-gray-400'
@@ -1091,39 +1142,6 @@ const TimeSorteado = ({ time, index }) => {
           </motion.div>
         )}
       </div>
-
-      <AnimatePresence>
-        {isModalAddPlayerOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className="bg-gray-800 p-6 rounded-xl border border-gray-700 w-full max-w-sm shadow-2xl"
-            >
-              <h3 className="text-xl font-bold text-white mb-4">Incluir Jogador</h3>
-              <input 
-                type="text"
-                placeholder="Nome do jogador"
-                value={playerNameInput}
-                onChange={(e) => setPlayerNameInput(e.target.value)}
-                className="w-full p-3 mb-6 bg-gray-700 border border-gray-600 text-white rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
-                autoFocus
-              />
-              <div className="flex gap-3">
-                <button onClick={() => setIsModalAddPlayerOpen(false)} className="flex-1 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors">Cancelar</button>
-                <button onClick={handleAddPlayerToTeam} className="flex-1 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-lg font-bold shadow-lg">Adicionar</button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       <ToastContainer
         position="top-right"
         autoClose={3000}
