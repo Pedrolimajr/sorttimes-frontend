@@ -369,8 +369,9 @@ const aplicarFiltroPosicao = () => {
       // Extrai IDs válidos (MongoDB ObjectIds) de todos os jogadores nos times
       const participantesIds = timesData
         .flatMap(time => time.jogadores)
-        .map(j => j._id || j.id)
-        .filter(id => id && typeof id === 'string' && id.match(/^[0-9a-fA-F]{24}$/));
+        .map(j => (j._id || j.id))
+        .map(id => (id ? String(id) : null)) // Garante que seja string para o regex
+        .filter(id => id && id.match(/^[0-9a-fA-F]{24}$/));
 
       if (participantesIds.length > 0) {
         console.log("[FRONTEND - SORTEIOTIMES] Sincronizando participantes para votação:", participantesIds);
@@ -393,36 +394,47 @@ const aplicarFiltroPosicao = () => {
     const index = modalAddPlayer.teamIndex;
 
     // Busca se o jogador já existe no sistema para manter o vínculo correto para votação
-    const jogadorExistente = jogadoresSelecionados.find(j => 
-      j.nome.toLowerCase() === nomeLimpado.toLowerCase()
+    // Pesquisa em jogadoresSelecionados que contém todos os atletas carregados do banco
+    const jogadorExistente = jogadoresSelecionados.find(j =>
+      j.nome.trim().toLowerCase() === nomeLimpado.toLowerCase()
     );
 
     const novoAtleta = {
-      id: jogadorExistente?._id || `manual-${Date.now()}`,
-      _id: jogadorExistente?._id,
-      nome: nomeLimpado,
-      posicao: POSICOES.MEIA,
+      id: jogadorExistente?._id ? String(jogadorExistente._id) : `manual-${Date.now()}`,
+      _id: jogadorExistente?._id ? String(jogadorExistente._id) : undefined,
+      nome: jogadorExistente?.nome || nomeLimpado,
+      posicao: jogadorExistente?.posicao || POSICOES.MEIA,
       nivel: jogadorExistente?.nivel || 1
     };
 
-    const novosTimes = [...times];
-    novosTimes[index].jogadores.push(novoAtleta);
+    // Atualiza os times criando uma nova referência (imutabilidade)
+    const novosTimes = times.map((time, idx) => {
+      if (idx === index) {
+        const listaAtualizada = [...time.jogadores, novoAtleta];
+        // Recalcula o nível médio do time atingido
+        const nivelTotal = listaAtualizada.reduce((sum, j) => sum + (Number(j.nivel) || 1), 0);
+        return {
+          ...time,
+          jogadores: listaAtualizada,
+          nivelMedio: (nivelTotal / listaAtualizada.length).toFixed(2)
+        };
+      }
+      return time;
+    });
     
-    // Recalcula o nível médio do time
-    const nivelTotal = novosTimes[index].jogadores.reduce((sum, j) => sum + (j.nivel || 1), 0);
-    novosTimes[index].nivelMedio = (nivelTotal / novosTimes[index].jogadores.length).toFixed(2);
-
     setTimes(novosTimes);
 
     // Atualiza o histórico para garantir persistência ao restaurar
     if (historico.length > 0) {
-      const novoHistorico = [...historico];
-      novoHistorico[0].times = novosTimes;
-      setHistorico(novoHistorico);
+      setHistorico(prev => prev.map((h, i) => i === 0 ? { ...h, times: novosTimes } : h));
     }
 
     // Integração automática com a votação
-    await vincularParticipantesNoSorteio(novosTimes);
+    if (partidaVinculadaId) {
+      await vincularParticipantesNoSorteio(novosTimes);
+    } else {
+      console.warn("[SorteioTimes] Jogador adicionado apenas visualmente. Vincule uma partida para registrar na votação.");
+    }
 
     toast.success(`${nomeLimpado} adicionado ao ${novosTimes[index].nome}`);
     setModalAddPlayer({ open: false, teamIndex: null });
