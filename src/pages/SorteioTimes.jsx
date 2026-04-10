@@ -388,11 +388,11 @@ const aplicarFiltroPosicao = () => {
   // Função para filtrar sugestões de jogadores ao digitar no modal
   const lidarMudancaNome = (valor) => {
     setNomeNovoJogador(valor);
-    if (valor.trim().length > 0) {
-      const jaEstaoNosTimes = times.flatMap(t => t.jogadores.map(j => String(j._id || j.id)));
+    if (valor.trim().length > 1) {
+      const jaEstaoNosTimes = times.flatMap(t => t.jogadores.map(j => j._id || j.id));
       const filtrados = jogadoresSelecionados.filter(j => 
         j.nome.toLowerCase().includes(valor.toLowerCase()) &&
-        !jaEstaoNosTimes.includes(String(j._id))
+        !jaEstaoNosTimes.includes(j._id)
       ).slice(0, 5);
       setSugestoes(filtrados);
     } else {
@@ -403,15 +403,16 @@ const aplicarFiltroPosicao = () => {
   /**
    * Adiciona um jogador manualmente a um time após o sorteio
    */
-  const adicionarJogadorAoTime = async (jogadorSugerido = null) => {
-    const nomeFinal = (jogadorSugerido?.nome || nomeNovoJogador).trim();
-    if (!nomeFinal || modalAddPlayer.teamIndex === null) return;
+  const adicionarJogadorAoTime = async () => {
+    if (!nomeNovoJogador.trim() || modalAddPlayer.teamIndex === null) return;
 
+    const nomeLimpado = nomeNovoJogador.trim();
     const index = modalAddPlayer.teamIndex;
 
     // Busca se o jogador já existe no sistema para manter o vínculo correto para votação
-    const jogadorExistente = jogadorSugerido || jogadoresSelecionados.find(j =>
-      j.nome.trim().toLowerCase() === nomeFinal.toLowerCase()
+    // Pesquisa em jogadoresSelecionados que contém todos os atletas carregados do banco
+    const jogadorExistente = jogadoresSelecionados.find(j =>
+      j.nome.trim().toLowerCase() === nomeLimpado.toLowerCase()
     );
 
     const novoAtleta = {
@@ -451,10 +452,9 @@ const aplicarFiltroPosicao = () => {
       console.warn("[SorteioTimes] Jogador adicionado apenas visualmente. Vincule uma partida para registrar na votação.");
     }
 
-    toast.success(`${nomeFinal} adicionado ao ${novosTimes[index].nome}`);
+    toast.success(`${nomeLimpado} adicionado ao ${novosTimes[index].nome}`);
     setModalAddPlayer({ open: false, teamIndex: null });
     setNomeNovoJogador("");
-    setSugestoes([]);
   };
   
   /**
