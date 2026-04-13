@@ -197,6 +197,10 @@ export default function PublicMatchInfo() {
   const golsAgrupados = getGolsAgrupados();
   const vencedorCoroa = getVencedorCoroa();
 
+  // Cálculo dinâmico do placar
+  const golsPreto = partida?.gols?.filter(g => g.time === 'Preto').length || 0;
+  const golsAmarelo = partida?.gols?.filter(g => g.time === 'Amarelo').length || 0;
+
   return (
     <div className="min-h-screen bg-gray-900 text-white p-2 sm:p-4 font-sans pb-20">
       <div className="max-w-lg mx-auto space-y-6">
@@ -217,6 +221,24 @@ export default function PublicMatchInfo() {
           <h2 className="flex items-center gap-2 text-lg font-bold mb-4 text-green-400">
             <FaFutbol className="animate-bounce" /> Registrar Gol
           </h2>
+
+          {/* Placar Bonito da Partida */}
+          <div className="flex items-center justify-center gap-6 mb-8 bg-gray-900/60 p-5 rounded-3xl border border-gray-700 shadow-inner">
+            <div className="flex flex-col items-center gap-1">
+              <img src="/img/preto.png" className="w-12 h-12 object-contain drop-shadow-md" alt="Preto" />
+              <span className="text-[10px] font-black text-gray-500 uppercase tracking-tighter">PRETO</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-5xl font-black text-white tabular-nums drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">{golsPreto}</span>
+              <span className="text-xl font-black text-gray-600">X</span>
+              <span className="text-5xl font-black text-yellow-400 tabular-nums drop-shadow-[0_0_10px_rgba(250,204,21,0.2)]">{golsAmarelo}</span>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <img src="/img/amarelo.png" className="w-12 h-12 object-contain drop-shadow-md" alt="Amarelo" />
+              <span className="text-[10px] font-black text-yellow-600 uppercase tracking-tighter">AMARELO</span>
+            </div>
+          </div>
+
           <div className="flex gap-2">
             <input 
               list="lista-jogadores"
@@ -232,8 +254,8 @@ export default function PublicMatchInfo() {
               onClick={() => registrarEvento('gol', inputGol, 'Preto')}
               className="flex flex-col items-center gap-2 group"
             >
-              <div className="w-14 h-14 bg-gray-700 rounded-full flex items-center justify-center border-2 border-gray-500 group-hover:border-white transition-all">
-                <FaUser className="text-2xl text-black" />
+              <div className="w-16 h-16 bg-gray-700/30 rounded-full flex items-center justify-center border-2 border-gray-600 group-hover:border-white transition-all p-2 overflow-hidden shadow-lg">
+                <img src="/img/preto.png" className="w-full h-full object-contain" alt="Camisa Preta" />
               </div>
               <span className="text-[10px] font-bold text-gray-400">TIME PRETO</span>
             </motion.button>
@@ -242,8 +264,8 @@ export default function PublicMatchInfo() {
               onClick={() => registrarEvento('gol', inputGol, 'Amarelo')}
               className="flex flex-col items-center gap-2 group"
             >
-              <div className="w-14 h-14 bg-yellow-400/20 rounded-full flex items-center justify-center border-2 border-yellow-500/50 group-hover:border-yellow-400 transition-all">
-                <FaUser className="text-2xl text-yellow-400" />
+              <div className="w-16 h-16 bg-yellow-400/10 rounded-full flex items-center justify-center border-2 border-yellow-500/30 group-hover:border-yellow-400 transition-all p-2 overflow-hidden shadow-lg">
+                <img src="/img/amarelo.png" className="w-full h-full object-contain" alt="Camisa Amarela" />
               </div>
               <span className="text-[10px] font-bold text-gray-400">TIME AMARELO</span>
             </motion.button>
