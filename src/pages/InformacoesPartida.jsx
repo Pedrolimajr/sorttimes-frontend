@@ -1002,6 +1002,30 @@ export default function InformacoesPartida() {
                     </button>
                   </div>
 
+                  {/* Placar Bonito no Painel Admin */}
+                  <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 shadow-xl">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <div className="h-px w-8 bg-gray-700"></div>
+                      <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">PLACAR</span>
+                      <div className="h-px w-8 bg-gray-700"></div>
+                    </div>
+                    <div className="flex items-center justify-center gap-6 bg-gray-900/60 p-5 rounded-3xl border border-gray-700 shadow-inner">
+                      <div className="flex flex-col items-center gap-1">
+                        <img src="/img/preto.png" className="w-10 h-10 object-contain drop-shadow-md" alt="Preto" />
+                        <span className="text-[9px] font-black text-gray-500 uppercase">PRETO</span>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className="text-4xl font-black text-white tabular-nums">{golsPreto}</span>
+                        <span className="text-lg font-black text-gray-600">X</span>
+                        <span className="text-4xl font-black text-yellow-400 tabular-nums">{golsAmarelo}</span>
+                      </div>
+                      <div className="flex flex-col items-center gap-1">
+                        <img src="/img/amarelo.png" className="w-10 h-10 object-contain drop-shadow-md" alt="Amarelo" />
+                        <span className="text-[9px] font-black text-yellow-600 uppercase">AMARELO</span>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
                     <div className="flex justify-between items-center mb-4">
