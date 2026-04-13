@@ -1030,51 +1030,53 @@ export default function InformacoesPartida() {
                   </div>
 
                   {/* Placar Bonito no Painel Admin */}
-                  <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 shadow-xl">
+                  <div className="bg-gray-800/80 backdrop-blur-md rounded-3xl p-6 border border-gray-700 shadow-2xl relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 to-transparent pointer-events-none" />
                     <div className="flex items-center justify-center gap-2 mb-2">
-                      <div className="h-px w-8 bg-gray-700"></div>
-                      <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">PLACAR</span>
-                      <div className="h-px w-8 bg-gray-700"></div>
+                      <div className="h-px w-12 bg-gradient-to-r from-transparent to-gray-600"></div>
+                      <span className="text-[11px] font-black text-blue-400 uppercase tracking-[0.4em] drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]">PLACAR</span>
+                      <div className="h-px w-12 bg-gradient-to-l from-transparent to-gray-600"></div>
                     </div>
-                    <div className="flex items-center justify-center gap-6 bg-gray-900/60 p-5 rounded-3xl border border-gray-700 shadow-inner">
+                    <div className="flex items-center justify-center gap-8 bg-black/40 p-6 rounded-[2rem] border border-gray-700/50 shadow-inner ring-1 ring-white/5">
                       <div className="flex flex-col items-center gap-1">
-                        <img src="/img/preto.png" className="w-10 h-10 object-contain drop-shadow-md" alt="Preto" />
-                        <span className="text-[9px] font-black text-gray-500 uppercase">PRETO</span>
+                        <img src="/img/preto.png" className="w-14 h-14 object-contain drop-shadow-[0_5px_15px_rgba(0,0,0,0.5)] transform group-hover:scale-110 transition-transform duration-500" alt="Preto" />
+                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-tighter">PRETO</span>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <span className="text-4xl font-black text-white tabular-nums">{golsPreto}</span>
-                        <span className="text-lg font-black text-gray-600">X</span>
-                        <span className="text-4xl font-black text-yellow-400 tabular-nums">{golsAmarelo}</span>
+                      <div className="flex items-center gap-6">
+                        <span className="text-6xl font-black text-white tabular-nums drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">{golsPreto}</span>
+                        <span className="text-2xl font-black text-gray-700 italic">VS</span>
+                        <span className="text-6xl font-black text-yellow-400 tabular-nums drop-shadow-[0_0_15px_rgba(250,204,21,0.3)]">{golsAmarelo}</span>
                       </div>
                       <div className="flex flex-col items-center gap-1">
-                        <img src="/img/amarelo.png" className="w-10 h-10 object-contain drop-shadow-md" alt="Amarelo" />
-                        <span className="text-[9px] font-black text-yellow-600 uppercase">AMARELO</span>
+                        <img src="/img/amarelo.png" className="w-14 h-14 object-contain drop-shadow-[0_5px_15px_rgba(250,204,21,0.2)] transform group-hover:scale-110 transition-transform duration-500" alt="Amarelo" />
+                        <span className="text-[10px] font-black text-yellow-600 uppercase tracking-tighter">AMARELO</span>
                       </div>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+                  <div className="bg-gray-800/60 backdrop-blur-md rounded-3xl p-6 border border-gray-700 shadow-xl border-t-green-500/20">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-lg font-bold text-green-400 flex items-center gap-2">
-                        <FaFutbol /> Resumo de Gols
+                        <div className="p-2 bg-green-500/10 rounded-lg"><FaFutbol className="animate-pulse" /></div> Resumo de Gols
                       </h3>
                       <button onClick={compartilharGols} className="p-2 text-green-400 hover:bg-green-400/10 rounded-lg transition-all" title="Compartilhar Gols">
                         <FaShareAlt size={16} />
                       </button>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {getGolsAgrupados().length > 0 ? (
                         getGolsAgrupados().map((g, i) => (
-                          <div key={i} className="flex justify-between items-center p-3 bg-gray-900 rounded-xl text-sm border border-gray-700">
+                          <div key={i} className="flex justify-between items-center p-3 bg-black/30 rounded-2xl text-sm border border-gray-700/50 hover:border-green-500/30 transition-colors group">
                             <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-gray-800/50 border border-gray-700 flex items-center justify-center p-1.5 overflow-hidden shadow-inner">
+                              <div className="w-10 h-10 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center p-1.5 overflow-hidden shadow-inner group-hover:ring-2 ring-green-500/20 transition-all">
                                 <img src={`/img/${g.time?.toLowerCase()}.png`} className="w-full h-full object-contain" alt={g.time} />
                               </div>
                               <span className="font-bold text-white">{g.jogador}</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <span className="bg-green-600/20 text-green-400 text-[10px] font-black px-2 py-0.5 rounded border border-green-500/30 uppercase">{g.total} {g.total > 1 ? 'GOLS' : 'GOL'}</span>
+                            <div className="flex flex-col items-end">
+                              <span className="bg-green-500 text-white text-[10px] font-black px-2.5 py-1 rounded-lg shadow-lg shadow-green-500/20 uppercase tracking-tighter">{g.total} {g.total > 1 ? 'GOLS' : 'GOL'}</span>
+                              <span className="text-[8px] text-gray-500 font-bold mt-1 uppercase tracking-widest">Time {g.time}</span>
                             </div>
                           </div>
                         ))
@@ -1085,28 +1087,28 @@ export default function InformacoesPartida() {
                   </div>
 
                   {/* Resumo de Cartões no Painel Admin */}
-                  <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 shadow-xl">
+                  <div className="bg-gray-800/60 backdrop-blur-md rounded-3xl p-6 border border-gray-700 shadow-xl border-t-orange-500/20">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-lg font-bold text-orange-400 flex items-center gap-2">
-                        <FaTable /> Resumo de Cartões
+                        <FaIdCard /> Resumo de Cartões
                       </h3>
                       <button onClick={compartilharCartoes} className="p-2 text-orange-400 hover:bg-orange-400/10 rounded-lg transition-all" title="Compartilhar Cartões">
                         <FaShareAlt size={16} />
                       </button>
                     </div>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-3 gap-3">
                       {[
-                        { label: 'Amarelo', field: 'cartoesAmarelos', bg: 'bg-yellow-400' },
-                        { label: 'Vermelho', field: 'cartoesVermelhos', bg: 'bg-red-500' },
-                        { label: 'Azul', field: 'cartoesAzuis', bg: 'bg-blue-500' }
+                        { label: 'Amarelo', field: 'cartoesAmarelos', bg: 'bg-yellow-400', shadow: 'shadow-yellow-500/20' },
+                        { label: 'Vermelho', field: 'cartoesVermelhos', bg: 'bg-red-500', shadow: 'shadow-red-500/20' },
+                        { label: 'Azul', field: 'cartoesAzuis', bg: 'bg-blue-500', shadow: 'shadow-blue-500/20' }
                       ].map(card => (
-                        <div key={card.field} className="text-center">
-                          <div className={`w-4 h-6 ${card.bg} rounded-sm mx-auto mb-1 shadow-sm`}></div>
+                        <div key={card.field} className="text-center bg-black/20 p-3 rounded-2xl border border-gray-700/50 flex flex-col items-center">
+                          <div className={`w-6 h-8 ${card.bg} ${card.shadow} rounded-md mx-auto mb-2 shadow-lg ring-1 ring-white/10`}></div>
                           <p className="text-[10px] text-gray-400 font-bold uppercase">{card.label}</p>
                           <div className="mt-2 space-y-1">
                             {partidaSelecionada[card.field]?.length > 0 ? 
                               partidaSelecionada[card.field].map((nome, i) => (
-                                <p key={i} className="text-[9px] text-white truncate bg-gray-900 px-1 py-0.5 rounded border border-gray-700">{nome}</p>
+                                <p key={i} className="text-[10px] text-white truncate bg-gray-800/80 px-2 py-1 rounded-lg border border-gray-700/50">{nome}</p>
                               )) : <p className="text-[9px] text-gray-600">-</p>
                             }
                           </div>
@@ -1116,7 +1118,7 @@ export default function InformacoesPartida() {
                   </div>
 
                   {/* Card de Acesso Restrito: Apuração (Votação dos Atletas) */}
-                  <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 shadow-xl">
+                  <div className="bg-gray-800/60 backdrop-blur-md rounded-3xl p-6 border border-gray-700 shadow-xl border-t-amber-500/20">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-lg font-bold bg-gradient-to-r from-yellow-400 to-amber-600 bg-clip-text text-transparent flex items-center gap-2">
                         <FaLock className="text-amber-500 size-4" /> Votação dos Atletas (Apuração)
@@ -1142,22 +1144,48 @@ export default function InformacoesPartida() {
                         const lider = getLiderVotacao(cat.id);
 
                         return (
-                          <div key={cat.id} className="bg-gray-900 p-3 rounded-xl border border-gray-700">
+                          <div key={cat.id} className="bg-black/30 p-4 rounded-2xl border border-gray-700/50 shadow-inner">
                             <div className="flex justify-between items-center mb-2">
                               <div className="flex items-center gap-2">
                                 {cat.icon}
-                                <p className="text-[10px] font-bold text-gray-500 uppercase">{cat.label}</p>
+                                <p className="text-[11px] font-black text-gray-400 uppercase tracking-tight">{cat.label}</p>
                               </div>
                               <span className="text-[9px] font-black text-amber-500/80">{totalCat} VOTOS</span>
                             </div>
+                            
+                            {/* Exibe o líder com foto no topo da categoria se houver votos */}
+                            {lider && !lider.empate && (
+                              <div className="flex items-center gap-3 mb-3 bg-amber-500/10 p-2.5 rounded-2xl border border-amber-500/20">
+                                <div className="relative">
+                                  {partidaSelecionada.participantes?.find(p => p.nome === lider.nome)?.foto ? (
+                                    <img src={partidaSelecionada.participantes.find(p => p.nome === lider.nome).foto} className="w-10 h-10 rounded-full object-cover border-2 border-amber-500 shadow-lg shadow-amber-500/20" alt="" />
+                                  ) : (
+                                    <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center border-2 border-amber-500 text-amber-500"><FaUser size={14}/></div>
+                                  )}
+                                  <div className="absolute -top-1 -right-1 bg-amber-500 text-black rounded-full p-0.5"><FaCrown size={8}/></div>
+                                </div>
+                                <div>
+                                  <p className="text-xs font-black text-white">{lider.nome}</p>
+                                  <p className="text-[9px] text-amber-500 font-bold uppercase">Líder isolado</p>
+                                </div>
+                              </div>
+                            )}
+
                             {listaVotos.length > 0 ? (
                               <div className="space-y-2">
                                 {listaVotos.map(([nome, total], idx) => (
-                                  <div key={idx} className="flex justify-between items-center text-xs">
-                                    <span className={(idx === 0 && !lider?.empate) ? "font-bold text-amber-400 flex items-center gap-1" : "text-gray-400"}>
-                                      {(idx === 0 && !lider?.empate) && <div className="w-1 h-1 bg-amber-500 rounded-full animate-pulse" />} {nome}
-                                    </span>
-                                    <span className="text-[10px] text-gray-500">{total} {total === 1 ? 'voto' : 'votos'}</span>
+                                  <div key={idx} className="space-y-1">
+                                    <div className="flex justify-between items-center text-xs">
+                                      <span className={(idx === 0 && !lider?.empate) ? "font-bold text-amber-400" : "text-gray-400"}>{nome}</span>
+                                      <span className="text-[10px] text-gray-500 font-bold">{total} vts</span>
+                                    </div>
+                                    <div className="h-1 w-full bg-gray-800 rounded-full overflow-hidden">
+                                      <motion.div 
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${(total / totalCat) * 100}%` }}
+                                        className={`h-full ${idx === 0 && !lider?.empate ? 'bg-amber-500' : 'bg-gray-600'}`}
+                                      />
+                                    </div>
                                   </div>
                                 ))}
                               </div>
@@ -1170,7 +1198,7 @@ export default function InformacoesPartida() {
                     </div>
                   </div>
 
-                  <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+                  <div className="bg-gray-800/60 backdrop-blur-md rounded-3xl p-6 border border-gray-700 shadow-xl border-t-yellow-500/20">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-lg font-bold text-yellow-400 flex items-center gap-2">
                         <FaTrophy /> Premiações da Partida
@@ -1190,23 +1218,30 @@ export default function InformacoesPartida() {
                         const displayNome = lider?.empate ? "Houve um Empate" : (lider ? lider.nome : (valorOficial || '-'));
                         
                         return (
-                          <div key={d.id} className="flex items-center justify-between p-3 bg-gray-900 rounded-xl text-sm border border-gray-700 shadow-inner">
-                            <div className="flex items-center gap-3">
-                              {lider && !lider.empate && partidaSelecionada.participantes?.find(p => p.nome === lider.nome)?.foto ? (
-                                <img src={partidaSelecionada.participantes.find(p => p.nome === lider.nome).foto} className="w-6 h-6 rounded-full object-cover border border-yellow-500/50" alt="" />
-                              ) : (
-                                d.icon
+                          <div key={d.id} className="group relative overflow-hidden bg-black/30 p-4 rounded-2xl border border-gray-700/50 hover:border-yellow-500/30 transition-all">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4">
+                                <div className="w-14 h-14 rounded-full bg-gray-800 border-2 border-gray-700 flex items-center justify-center overflow-hidden shadow-inner group-hover:scale-105 transition-transform ring-4 ring-yellow-500/10">
+                                  {lider && !lider.empate && partidaSelecionada.participantes?.find(p => p.nome === lider.nome)?.foto ? (
+                                    <img src={partidaSelecionada.participantes.find(p => p.nome === lider.nome).foto} className="w-full h-full object-cover" alt="" />
+                                  ) : (
+                                    <div className="text-xl opacity-50">{d.icon}</div>
+                                  )}
+                                </div>
+                                <div>
+                                  <span className="font-black text-gray-500 text-[9px] uppercase tracking-[0.2em] block mb-0.5">{d.label}</span>
+                                  <span className={`${lider?.empate ? 'text-gray-500 italic text-xs' : 'text-white font-black text-sm uppercase'}`}>
+                                    {displayNome}
+                                  </span>
+                                </div>
+                              </div>
+                              {lider && !lider.empate && (
+                                <div className="bg-black/40 px-3 py-2 rounded-2xl border border-gray-700 text-center shadow-lg">
+                                  <span className="text-[12px] font-black text-yellow-500 block leading-none">{lider.total}</span>
+                                  <span className="text-[8px] font-bold text-gray-500 uppercase">Votos</span>
+                                </div>
                               )}
-                              <span className="font-bold text-gray-500 text-[10px] uppercase tracking-wider">{d.label}:</span>
-                              <span className={`${lider?.empate ? 'text-gray-500 italic text-xs' : 'text-white font-bold'}`}>
-                                {displayNome}
-                              </span>
                             </div>
-                            {lider && !lider.empate && (
-                              <span className="text-[10px] font-black bg-gray-800 text-yellow-500 px-2 py-1 rounded-lg border border-gray-700">
-                                {lider.total} {lider.total === 1 ? 'VOTO' : 'VOTOS'}
-                              </span>
-                            )}
                           </div>
                         );
                       })}
