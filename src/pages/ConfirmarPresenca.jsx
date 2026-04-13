@@ -36,6 +36,7 @@ export default function ConfirmarPresenca() {
 
   // Nome salvo localmente para agilizar login de jogador
   const [nomeSalvo, setNomeSalvo] = useState('');
+  const [fotoSalva, setFotoSalva] = useState('');
   const [usarNomeSalvo, setUsarNomeSalvo] = useState(true);
   const [mostrarSenhaJogador, setMostrarSenhaJogador] = useState(false);
 
@@ -71,9 +72,12 @@ export default function ConfirmarPresenca() {
 
     // Carrega nome salvo (se existir) para agilizar login do jogador
     const storageKey = `presenca_nome_${linkId}`;
+    const storageKeyFoto = `presenca_foto_${linkId}`;
     const salvo = localStorage.getItem(storageKey);
+    const fotoSalvaLocal = localStorage.getItem(storageKeyFoto);
     if (salvo) {
       setNomeSalvo(salvo);
+      setFotoSalva(fotoSalvaLocal || '');
       setFormData(prev => ({ ...prev, nome: salvo }));
       setUsarNomeSalvo(true);
     } else {
@@ -91,6 +95,7 @@ export default function ConfirmarPresenca() {
     try {
       setSubmetendo(true);
       const storageKey = `presenca_nome_${linkId}`;
+      const storageKeyFoto = `presenca_foto_${linkId}`;
 
       // Usa o nome salvo quando disponível e habilitado
       const nomeParaLogin = usarNomeSalvo && nomeSalvo ? nomeSalvo : formData.nome;
@@ -108,7 +113,9 @@ export default function ConfirmarPresenca() {
         // Salva nome usado para agilizar próximos acessos
         if (nomeParaLogin) {
           localStorage.setItem(storageKey, nomeParaLogin);
+          localStorage.setItem(storageKeyFoto, response.data.jogador.foto || '');
           setNomeSalvo(nomeParaLogin);
+          setFotoSalva(response.data.jogador.foto || '');
           setUsarNomeSalvo(true);
         }
 
@@ -368,9 +375,17 @@ export default function ConfirmarPresenca() {
                       className="bg-gray-800/60 border border-blue-500/30 rounded-2xl p-4 mb-6 relative overflow-hidden"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/20">
-                          <FaUser className="text-white text-xl" />
-                        </div>
+                        {fotoSalva ? (
+                          <img 
+                            src={fotoSalva} 
+                            alt={nomeSalvo} 
+                            className="w-12 h-12 rounded-full object-cover border-2 border-blue-500 shadow-lg shadow-blue-500/20"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                            <FaUser className="text-white text-xl" />
+                          </div>
+                        )}
                         <div className="flex-1">
                           <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-0.5">Confirmando presença como:</p>
                           <p className="text-xl font-bold text-white">{nomeSalvo}</p>
