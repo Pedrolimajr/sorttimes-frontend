@@ -100,11 +100,45 @@ export default function InformacoesPartida() {
     carregarPartidasAgendadas();
   }, []);
 
+  // Função para carregar links que já foram gerados anteriormente para esta partida
+  const carregarLinksExistentes = async (id) => {
+    if (!id) return;
+    try {
+      const res = await api.get(`/partida-publica/links-por-partida/${id}`);
+      const links = res.data.links || [];
+      
+      // Limpa os estados antes de preencher com os dados do banco
+      setLinkGeradoPartida('');
+      setLinkGeradoPartidaExpireAt(null);
+      setLinkVotacao('');
+      setLinkVotacaoExpireAt(null);
+
+      links.forEach(l => {
+        const url = l.tipo === 'eventos' 
+          ? `${window.location.origin}/partida-publica/${l.linkId}`
+          : `${window.location.origin}/votar-partida/${l.linkId}`;
+        
+        if (l.tipo === 'eventos') {
+          setLinkGeradoPartida(url);
+          setLinkGeradoPartidaExpireAt(l.expireAt);
+        } else if (l.tipo === 'votacao') {
+          setLinkVotacao(url);
+          setLinkVotacaoExpireAt(l.expireAt);
+        }
+      });
+    } catch (err) {
+      console.error("Erro ao buscar links existentes", err);
+    }
+  };
+
   // Efeito para selecionar automaticamente a partida se vier via URL
   useEffect(() => {
     if (partidaIdUrl && partidas.length > 0) {
       const encontrada = partidas.find(p => p._id === partidaIdUrl);
-      if (encontrada) setPartidaSelecionada(encontrada);
+      if (encontrada) {
+        setPartidaSelecionada(encontrada);
+        carregarLinksExistentes(encontrada._id);
+      }
     }
   }, [partidaIdUrl, partidas]);
 
@@ -891,11 +925,9 @@ export default function InformacoesPartida() {
                       className="w-full bg-gray-900 border-gray-700 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                       value={partidaSelecionada?._id || ""}
                       onChange={(e) => {
-                        setPartidaSelecionada(partidas.find(p => p._id === e.target.value));
-                        setLinkGeradoPartida('');
-                        setLinkGeradoPartidaExpireAt(null);
-                        setLinkVotacao('');
-                        setLinkVotacaoExpireAt(null);
+                        const id = e.target.value;
+                        setPartidaSelecionada(partidas.find(p => p._id === id));
+                        if (id) carregarLinksExistentes(id);
                       }}
                     >
                       <option value="">Escolha uma partida...</option>
