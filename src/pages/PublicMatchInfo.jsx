@@ -294,7 +294,7 @@ export default function PublicMatchInfo() {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, scale: 0.9 }}
-                  className={`flex items-center justify-between p-4 rounded-2xl border shadow-inner transition-all ${bgTime[g.time] || 'bg-gray-800/40 border-gray-700'}`}
+                  className={`flex items-center justify-between p-4 rounded-2xl border shadow-inner shadow-black/40 transition-all ${bgTime[g.time] || 'bg-gray-800/40 border-gray-700'}`}
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-gray-900/50 border border-gray-700 flex items-center justify-center p-1.5 overflow-hidden shadow-inner">
@@ -354,13 +354,13 @@ export default function PublicMatchInfo() {
           ].map(card => (
             <div 
               key={card.tipo} 
-              className={`bg-gray-800/60 backdrop-blur-md p-4 rounded-3xl border border-gray-700 text-center flex flex-col items-center shadow-inner transition-all hover:scale-[1.02] ${card.shadow}`}
+              className={`bg-gray-800/60 backdrop-blur-md p-4 rounded-3xl border border-gray-700 text-center flex flex-col items-center shadow-inner shadow-black/60 transition-all hover:scale-[1.02] ${card.shadow}`}
             >
-              <div className={`w-10 h-14 ${card.cor} rounded-lg mb-4 shadow-lg ring-2 ring-black/20`} />
+              <div className={`w-10 h-14 ${card.cor} rounded-lg mb-4 shadow-lg shadow-inner ring-2 ring-black/30`} />
               <input 
                 id={`input-${card.tipo}`}
                 list="lista-jogadores"
-                placeholder="Nome..."
+                placeholder="Nome do Jogador..."
                 className="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 text-sm text-center outline-none mb-3 focus:border-white transition-all text-white placeholder:text-gray-600"
               />
               <button 
