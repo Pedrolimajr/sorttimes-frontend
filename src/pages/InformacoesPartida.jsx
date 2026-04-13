@@ -421,15 +421,6 @@ export default function InformacoesPartida() {
     try {
       setCarregando(true);
       
-      // Reset de estados para garantir separação total
-      if (tipo === 'eventos') {
-        setLinkGeradoPartidaExpireAt(null);
-        setLinkVotacao('');
-        setLinkVotacaoExpireAt(null);
-      } else {
-        setLinkGeradoPartida('');
-      }
-
       const res = await api.post(`/partida-publica/gerar-link/${partidaSelecionada._id}`, { tipo });
       const linkId = res.data?.linkId || res.data?.data?.linkId;
       
