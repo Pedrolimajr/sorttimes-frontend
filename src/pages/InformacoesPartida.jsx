@@ -230,6 +230,10 @@ export default function InformacoesPartida() {
     return agrupados.sort((a, b) => b.total - a.total);
   };
 
+  // Cálculo dinâmico do placar para o painel admin
+  const golsPreto = partidaSelecionada?.gols?.filter(g => g.time === 'Preto').length || 0;
+  const golsAmarelo = partidaSelecionada?.gols?.filter(g => g.time === 'Amarelo').length || 0;
+
   const atualizarDadosPartida = async () => {
     if (!partidaSelecionada) return;
     try {
