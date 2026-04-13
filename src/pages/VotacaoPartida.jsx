@@ -260,7 +260,9 @@ export default function VotacaoPartida() {
                     className="w-full bg-gray-900 border border-gray-700 rounded-xl p-4 text-sm outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
                   >
                     <option value="">Selecione um jogador...</option>
-                    {jogadores.map(nome => <option key={nome} value={nome}>{nome}</option>)}
+                    {jogadores
+                      .filter(nome => nome !== jogadorAutenticado?.nome)
+                      .map(nome => <option key={nome} value={nome}>{nome}</option>)}
                   </select>
                 </div>
               ))}
