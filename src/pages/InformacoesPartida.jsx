@@ -7,6 +7,7 @@ import {
   FaArrowLeft, 
   FaSave, 
   FaTable,
+  FaIdCard,
   FaTimesCircle,
   FaFileDownload,
   FaLink,
