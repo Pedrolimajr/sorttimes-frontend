@@ -202,38 +202,12 @@ export default function SorteioTimes() {
 
   // Carrega dados do localStorage ao montar o componente
   useEffect(() => {
-    // Carregar histórico
-    const historicoSalvo = localStorage.getItem(LOCAL_STORAGE_KEYS.HISTORICO_SORTEIOS);
-    if (historicoSalvo) {
-      setHistorico(JSON.parse(historicoSalvo));
-    }
-
     // Carregar jogadores selecionados com estado de presença
     const jogadoresSalvos = localStorage.getItem(LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS);
     if (jogadoresSalvos) {
       setJogadoresSelecionados(JSON.parse(jogadoresSalvos));
     }
   }, []);
-
-  // Salva automaticamente no localStorage quando a lista de jogadores muda
-  useEffect(() => {
-    if (jogadoresSelecionados.length > 0) {
-      localStorage.setItem(
-        LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS, 
-        JSON.stringify(jogadoresSelecionados)
-      );
-    }
-  }, [jogadoresSelecionados]);
-
-  // Salva histórico no localStorage quando muda
-  useEffect(() => {
-    if (historico.length > 0) {
-      localStorage.setItem(
-        LOCAL_STORAGE_KEYS.HISTORICO_SORTEIOS, 
-        JSON.stringify(historico)
-      );
-    }
-  }, [historico]);
 
   // Configuração do socket.io para atualizações em tempo real.
   useEffect(() => {
@@ -1106,7 +1080,7 @@ const aplicarFiltroPosicao = () => {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="bg-gray-800 bg-opacity-50 backdrop-blur-sm rounded-xl shadow-xl border border-gray-700 overflow-hidden"
+            className="bg-gray-800 bg-opacity-50 backdrop-blur-sm rounded-xl shadow-xl border border-gray-700 overflow-hidden mb-10"
           >
             <div className="p-4 sm:p-6">
               <div className="flex justify-between items-center mb-3 sm:mb-4">
@@ -1131,7 +1105,7 @@ const aplicarFiltroPosicao = () => {
                       <button onClick={() => excluirDoHistorico(idx)} className="text-red-400 hover:text-red-300 p-1"><FaTrash size={14} /></button>
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                       {sorteio.times.map((time, i) => (
                         <div key={i}>
                           <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">
