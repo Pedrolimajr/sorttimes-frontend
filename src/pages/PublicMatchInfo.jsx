@@ -203,7 +203,7 @@ export default function PublicMatchInfo() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-2 sm:p-4 font-sans pb-20">
-      <div className="max-w-lg mx-auto space-y-6">
+      <div className="max-w-2xl mx-auto space-y-6">
         <header className="text-center py-6">
           <h1 className="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300 uppercase tracking-tighter">
             Informações da Partida
@@ -223,6 +223,11 @@ export default function PublicMatchInfo() {
           </h2>
 
           {/* Placar Bonito da Partida */}
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <div className="h-px w-8 bg-gray-700"></div>
+            <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">PLACAR</span>
+            <div className="h-px w-8 bg-gray-700"></div>
+          </div>
           <div className="flex items-center justify-center gap-6 mb-8 bg-gray-900/60 p-5 rounded-3xl border border-gray-700 shadow-inner">
             <div className="flex flex-col items-center gap-1">
               <img src="/img/preto.png" className="w-12 h-12 object-contain drop-shadow-md" alt="Preto" />
@@ -288,8 +293,8 @@ export default function PublicMatchInfo() {
                   className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${bgTime[g.time] || 'bg-gray-800/40 border-gray-700'}`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-full bg-gray-900/50 border border-gray-700 ${coresTime[g.time]}`}>
-                      <FaUser size={14} />
+                    <div className="w-10 h-10 rounded-full bg-gray-900/50 border border-gray-700 flex items-center justify-center p-1.5 overflow-hidden shadow-inner">
+                      <img src={`/img/${g.time?.toLowerCase()}.png`} className="w-full h-full object-contain" alt={g.time} />
                     </div>
                     <div>
                       <p className="text-sm font-bold flex items-center gap-2">
