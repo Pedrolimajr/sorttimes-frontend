@@ -217,11 +217,8 @@ export default function PublicMatchInfo() {
         </header>
 
         {/* Seção de Gols */}
-        <section className="bg-gray-800/80 backdrop-blur-md rounded-3xl p-4 sm:p-6 border border-gray-700 shadow-2xl relative overflow-hidden group">
+        <section className="bg-gray-800/80 backdrop-blur-md rounded-3xl p-4 sm:p-6 border border-gray-700 shadow-2xl relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 to-transparent pointer-events-none" />
-          <h2 className="flex items-center gap-2 text-lg font-bold mb-4 text-green-400">
-            <FaFutbol className="animate-bounce" /> Registrar Gol
-          </h2>
 
           {/* Placar Bonito da Partida */}
           <div className="flex items-center justify-center gap-2 mb-2">
@@ -245,36 +242,42 @@ export default function PublicMatchInfo() {
             </div>
           </div>
 
-          <div className="flex gap-2">
-            <input 
-              list="lista-jogadores"
-              value={inputGol}
-              onChange={(e) => setInputGol(e.target.value)}
-              placeholder="Nome do artilheiro..."
-              className="flex-1 bg-gray-900 border border-gray-700 rounded-2xl p-4 text-sm focus:ring-2 focus:ring-green-500 outline-none transition-all"
-            />
-          </div>
-          <div className="flex gap-6 mt-6 justify-center">
-            <motion.button 
-              whileTap={{ scale: 0.9 }}
-              onClick={() => registrarEvento('gol', inputGol, 'Preto')}
-              className="flex flex-col items-center gap-2 group"
-            >
-              <div className="w-16 h-16 bg-gray-700/30 rounded-full flex items-center justify-center border-2 border-gray-600 group-hover:border-white transition-all p-2 overflow-hidden shadow-lg">
-                <img src="/img/preto.png" className="w-full h-full object-contain" alt="Camisa Preta" />
-              </div>
-              <span className="text-[10px] font-bold text-gray-400">TIME PRETO</span>
-            </motion.button>
-            <motion.button 
-              whileTap={{ scale: 0.9 }}
-              onClick={() => registrarEvento('gol', inputGol, 'Amarelo')}
-              className="flex flex-col items-center gap-2 group"
-            >
-              <div className="w-16 h-16 bg-yellow-400/10 rounded-full flex items-center justify-center border-2 border-yellow-500/30 group-hover:border-yellow-400 transition-all p-2 overflow-hidden shadow-lg">
-                <img src="/img/amarelo.png" className="w-full h-full object-contain" alt="Camisa Amarela" />
-              </div>
-              <span className="text-[10px] font-bold text-gray-400">TIME AMARELO</span>
-            </motion.button>
+          {/* Formulário de Registro (Abaixo do Placar) */}
+          <div className="mt-8 bg-gray-900/40 p-6 rounded-3xl border border-gray-700/50 shadow-inner">
+            <h2 className="flex items-center gap-2 text-md font-bold mb-4 text-green-400">
+              <FaFutbol className="animate-bounce" /> Registrar Novo Gol
+            </h2>
+            <div className="flex gap-2">
+              <input 
+                list="lista-jogadores"
+                value={inputGol}
+                onChange={(e) => setInputGol(e.target.value)}
+                placeholder="Nome do artilheiro..."
+                className="flex-1 bg-gray-900 border border-gray-700 rounded-2xl p-4 text-sm focus:ring-2 focus:ring-green-500 outline-none transition-all text-white"
+              />
+            </div>
+            <div className="flex gap-6 mt-6 justify-center">
+              <motion.button 
+                whileTap={{ scale: 0.9 }}
+                onClick={() => registrarEvento('gol', inputGol, 'Preto')}
+                className="flex flex-col items-center gap-2 group"
+              >
+                <div className="w-16 h-16 bg-gray-700/30 rounded-full flex items-center justify-center border-2 border-gray-600 group-hover:border-white transition-all p-2 overflow-hidden shadow-lg">
+                  <img src="/img/preto.png" className="w-full h-full object-contain" alt="Camisa Preta" />
+                </div>
+                <span className="text-[10px] font-bold text-gray-400">TIME PRETO</span>
+              </motion.button>
+              <motion.button 
+                whileTap={{ scale: 0.9 }}
+                onClick={() => registrarEvento('gol', inputGol, 'Amarelo')}
+                className="flex flex-col items-center gap-2 group"
+              >
+                <div className="w-16 h-16 bg-yellow-400/10 rounded-full flex items-center justify-center border-2 border-yellow-500/30 group-hover:border-yellow-400 transition-all p-2 overflow-hidden shadow-lg">
+                  <img src="/img/amarelo.png" className="w-full h-full object-contain" alt="Camisa Amarela" />
+                </div>
+                <span className="text-[10px] font-bold text-gray-400">TIME AMARELO</span>
+              </motion.button>
+            </div>
           </div>
 
           <div className="mt-10 space-y-3">
@@ -345,11 +348,14 @@ export default function PublicMatchInfo() {
     </h2>
         <section className="grid grid-cols-3 gap-3">
           {[
-            { tipo: 'amarelo', cor: 'bg-yellow-400', field: 'cartoesAmarelos', label: 'AMARELO' },
-            { tipo: 'vermelho', cor: 'bg-red-500', field: 'cartoesVermelhos', label: 'VERMELHO' },
-            { tipo: 'azul', cor: 'bg-blue-500', field: 'cartoesAzuis', label: 'AZUL' }
+            { tipo: 'amarelo', cor: 'bg-yellow-400', field: 'cartoesAmarelos', label: 'AMARELO', shadow: 'shadow-yellow-500/20' },
+            { tipo: 'vermelho', cor: 'bg-red-500', field: 'cartoesVermelhos', label: 'VERMELHO', shadow: 'shadow-red-500/20' },
+            { tipo: 'azul', cor: 'bg-blue-500', field: 'cartoesAzuis', label: 'AZUL', shadow: 'shadow-blue-500/20' }
           ].map(card => (
-            <div key={card.tipo} className="bg-gray-800/60 backdrop-blur-md p-4 rounded-3xl border border-gray-700 text-center flex flex-col items-center shadow-2xl">
+            <div 
+              key={card.tipo} 
+              className={`bg-gray-800/60 backdrop-blur-md p-4 rounded-3xl border border-gray-700 text-center flex flex-col items-center shadow-2xl transition-all hover:scale-[1.02] ${card.shadow}`}
+            >
               <div className={`w-10 h-14 ${card.cor} rounded-lg mb-4 shadow-lg ring-2 ring-black/20`} />
               <input 
                 id={`input-${card.tipo}`}
