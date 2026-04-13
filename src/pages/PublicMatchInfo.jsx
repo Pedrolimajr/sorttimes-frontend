@@ -217,29 +217,30 @@ export default function PublicMatchInfo() {
         </header>
 
         {/* Seção de Gols */}
-        <section className="bg-gray-800/50 backdrop-blur-sm rounded-3xl p-4 sm:p-6 border border-gray-700 shadow-2xl">
+        <section className="bg-gray-800/80 backdrop-blur-md rounded-3xl p-4 sm:p-6 border border-gray-700 shadow-2xl relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 to-transparent pointer-events-none" />
           <h2 className="flex items-center gap-2 text-lg font-bold mb-4 text-green-400">
             <FaFutbol className="animate-bounce" /> Registrar Gol
           </h2>
 
           {/* Placar Bonito da Partida */}
           <div className="flex items-center justify-center gap-2 mb-2">
-            <div className="h-px w-8 bg-gray-700"></div>
-            <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">PLACAR</span>
-            <div className="h-px w-8 bg-gray-700"></div>
+            <div className="h-px w-12 bg-gradient-to-r from-transparent to-gray-600"></div>
+            <span className="text-[11px] font-black text-blue-400 uppercase tracking-[0.4em] drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]">PLACAR</span>
+            <div className="h-px w-12 bg-gradient-to-l from-transparent to-gray-600"></div>
           </div>
-          <div className="flex items-center justify-center gap-6 mb-8 bg-gray-900/60 p-5 rounded-3xl border border-gray-700 shadow-inner">
+          <div className="flex items-center justify-center gap-8 bg-black/40 p-6 rounded-[2rem] border border-gray-700/50 shadow-inner ring-1 ring-white/5">
             <div className="flex flex-col items-center gap-1">
-              <img src="/img/preto.png" className="w-12 h-12 object-contain drop-shadow-md" alt="Preto" />
+              <img src="/img/preto.png" className="w-14 h-14 object-contain drop-shadow-[0_5px_15px_rgba(0,0,0,0.5)] transform group-hover:scale-110 transition-transform duration-500" alt="Preto" />
               <span className="text-[10px] font-black text-gray-500 uppercase tracking-tighter">PRETO</span>
             </div>
-            <div className="flex items-center gap-4">
-              <span className="text-5xl font-black text-white tabular-nums drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">{golsPreto}</span>
-              <span className="text-xl font-black text-gray-600">X</span>
-              <span className="text-5xl font-black text-yellow-400 tabular-nums drop-shadow-[0_0_10px_rgba(250,204,21,0.2)]">{golsAmarelo}</span>
+            <div className="flex items-center gap-6">
+              <span className="text-6xl font-black text-white tabular-nums drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">{golsPreto}</span>
+              <span className="text-2xl font-black text-gray-700 italic">VS</span>
+              <span className="text-6xl font-black text-yellow-400 tabular-nums drop-shadow-[0_0_15px_rgba(250,204,21,0.3)]">{golsAmarelo}</span>
             </div>
             <div className="flex flex-col items-center gap-1">
-              <img src="/img/amarelo.png" className="w-12 h-12 object-contain drop-shadow-md" alt="Amarelo" />
+              <img src="/img/amarelo.png" className="w-14 h-14 object-contain drop-shadow-[0_5px_15px_rgba(250,204,21,0.2)] transform group-hover:scale-110 transition-transform duration-500" alt="Amarelo" />
               <span className="text-[10px] font-black text-yellow-600 uppercase tracking-tighter">AMARELO</span>
             </div>
           </div>
@@ -348,13 +349,13 @@ export default function PublicMatchInfo() {
             { tipo: 'vermelho', cor: 'bg-red-500', field: 'cartoesVermelhos', label: 'VERMELHO' },
             { tipo: 'azul', cor: 'bg-blue-500', field: 'cartoesAzuis', label: 'AZUL' }
           ].map(card => (
-            <div key={card.tipo} className="bg-gray-800/50 p-3 rounded-3xl border border-gray-700 text-center flex flex-col items-center shadow-xl">
-              <div className={`w-8 h-10 ${card.cor} rounded-md mb-3 shadow-lg ring-2 ring-black/20`} />
+            <div key={card.tipo} className="bg-gray-800/60 backdrop-blur-md p-4 rounded-3xl border border-gray-700 text-center flex flex-col items-center shadow-2xl">
+              <div className={`w-10 h-14 ${card.cor} rounded-lg mb-4 shadow-lg ring-2 ring-black/20`} />
               <input 
                 id={`input-${card.tipo}`}
                 list="lista-jogadores"
                 placeholder="Nome..."
-                className="w-full bg-gray-900 border border-gray-700 rounded-xl p-2 text-[10px] text-center outline-none mb-2 focus:border-white transition-all"
+                className="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 text-sm text-center outline-none mb-3 focus:border-white transition-all text-white placeholder:text-gray-600"
               />
               <button 
                 onClick={() => {
@@ -362,7 +363,7 @@ export default function PublicMatchInfo() {
                   registrarEvento(card.tipo, inp.value);
                   inp.value = '';
                 }}
-                className="bg-gray-700 hover:bg-gray-600 text-[10px] font-black px-2 py-2 rounded-xl w-full transition-all"
+                className="bg-gray-700 hover:bg-gray-600 text-xs font-black px-2 py-3 rounded-xl w-full transition-all"
               >
                 REGISTRAR
               </button>
@@ -370,7 +371,7 @@ export default function PublicMatchInfo() {
               {/* Lista de jogadores com este cartão */}
               <div className="mt-3 w-full space-y-2">
                 {partida[card.field]?.map((nome, idx) => (
-                  <div key={`${nome}-${idx}`} className="text-sm bg-gray-900/80 text-gray-200 py-3 px-2 rounded-xl border border-gray-700 flex justify-between items-center">
+                  <div key={`${nome}-${idx}`} className="text-sm bg-gray-900/80 text-white font-bold py-3 px-3 rounded-2xl border border-gray-700 flex justify-between items-center shadow-inner">
                     <span className="truncate flex-1 text-left">{nome}</span>
                     <div className="flex gap-1">
                       <button onClick={() => handleRemoverClick(card.tipo, idx, nome)} className="text-red-500 p-1"><FaTrash size={12}/></button>
