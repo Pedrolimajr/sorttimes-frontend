@@ -1126,7 +1126,7 @@ export default function InformacoesPartida() {
                       </h3>
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20 px-2 py-1 rounded-lg">
-                          {partidaSelecionada.votos?.length || 0} TOTAL
+                          {partidaSelecionada.jogadoresQueVotaram?.length || 0} PARTICIPANTES
                         </span>
                         <button onClick={compartilharApuracao} className="p-2 text-amber-500 hover:bg-amber-500/10 rounded-lg transition-all" title="Compartilhar Apuração">
                           <FaShareAlt size={16} />
@@ -1136,16 +1136,16 @@ export default function InformacoesPartida() {
                     <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                       <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
                       {[
-                        { id: 'melhorPartida', label: 'Melhor da Partida', icon: <FaAward className="text-yellow-500" /> },
-                        { id: 'perebaPartida', label: 'Pereba da Partida', icon: <FaUserTimes className="text-red-500" /> },
-                        { id: 'golMaisBonito', label: 'Gol Mais Bonito', icon: <FaFutbol className="text-blue-400" /> }
+                        { id: 'melhorPartida', label: 'Melhor da Partida', icon: <FaAward className="text-yellow-500" />, winnerIcon: <FaCrown size={8}/>, color: 'text-amber-500', glow: 'shadow-amber-500/20', bg: 'bg-amber-500/10', border: 'border-amber-500', bgWinner: 'bg-amber-500' },
+                        { id: 'perebaPartida', label: 'Pereba da Partida', icon: <FaUserTimes className="text-red-500" />, winnerIcon: <FaSkull size={8}/>, color: 'text-red-500', glow: 'shadow-red-500/20', bg: 'bg-red-500/10', border: 'border-red-500', bgWinner: 'bg-red-500' },
+                        { id: 'golMaisBonito', label: 'Gol Mais Bonito', icon: <FaFutbol className="text-blue-400" />, winnerIcon: <FaMagic size={8}/>, color: 'text-blue-500', glow: 'shadow-blue-500/20', bg: 'bg-blue-500/10', border: 'border-blue-500', bgWinner: 'bg-blue-500' }
                       ].map(cat => {
                         const listaVotos = getTodosOsVotos(cat.id);
                         const totalCat = listaVotos.reduce((acc, v) => acc + v[1], 0);
                         const lider = getLiderVotacao(cat.id);
 
                         return (
-                          <div key={cat.id} className="bg-black/30 p-4 rounded-2xl border border-gray-700/50 shadow-inner">
+                          <div key={cat.id} className="bg-black/30 p-4 rounded-2xl border border-gray-700/50 shadow-inner overflow-hidden">
                             <div className="flex justify-between items-center mb-2">
                               <div className="flex items-center gap-2">
                                 {cat.icon}
@@ -1156,18 +1156,18 @@ export default function InformacoesPartida() {
                             
                             {/* Exibe o líder com foto no topo da categoria se houver votos */}
                             {lider && !lider.empate && (
-                              <div className="flex items-center gap-3 mb-3 bg-amber-500/10 p-2.5 rounded-2xl border border-amber-500/20">
+                              <div className={`flex items-center gap-3 mb-3 ${cat.bg} p-2.5 rounded-2xl border border-${cat.color.split('-')[1]}/20`}>
                                 <div className="relative">
                                   {partidaSelecionada.participantes?.find(p => p.nome === lider.nome)?.foto ? (
-                                    <img src={partidaSelecionada.participantes.find(p => p.nome === lider.nome).foto} className="w-10 h-10 rounded-full object-cover border-2 border-amber-500 shadow-lg shadow-amber-500/20" alt="" />
+                                    <img src={partidaSelecionada.participantes.find(p => p.nome === lider.nome).foto} className={`w-10 h-10 rounded-full object-cover border-2 ${cat.border} shadow-lg ${cat.glow}`} alt="" />
                                   ) : (
-                                    <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center border-2 border-amber-500 text-amber-500"><FaUser size={14}/></div>
+                                    <div className={`w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center border-2 ${cat.border} ${cat.color}`}><FaUser size={14}/></div>
                                   )}
-                                  <div className="absolute -top-1 -right-1 bg-amber-500 text-black rounded-full p-0.5"><FaCrown size={8}/></div>
+                                  <div className={`absolute -top-1 -right-1 ${cat.bgWinner} text-black rounded-full p-0.5`}>{cat.winnerIcon}</div>
                                 </div>
                                 <div>
                                   <p className="text-xs font-black text-white">{lider.nome}</p>
-                                  <p className="text-[9px] text-amber-500 font-bold uppercase">Líder isolado</p>
+                                  <p className={`text-[9px] ${cat.color} font-bold uppercase`}>Líder isolado</p>
                                 </div>
                               </div>
                             )}
@@ -1177,14 +1177,14 @@ export default function InformacoesPartida() {
                                 {listaVotos.map(([nome, total], idx) => (
                                   <div key={idx} className="space-y-1">
                                     <div className="flex justify-between items-center text-xs">
-                                      <span className={(idx === 0 && !lider?.empate) ? "font-bold text-amber-400" : "text-gray-400"}>{nome}</span>
+                                      <span className={(idx === 0 && !lider?.empate) ? `font-bold ${cat.color}` : "text-gray-400"}>{nome}</span>
                                       <span className="text-[10px] text-gray-500 font-bold">{total} vts</span>
                                     </div>
                                     <div className="h-1 w-full bg-gray-800 rounded-full overflow-hidden">
                                       <motion.div 
                                         initial={{ width: 0 }}
                                         animate={{ width: `${(total / totalCat) * 100}%` }}
-                                        className={`h-full ${idx === 0 && !lider?.empate ? 'bg-amber-500' : 'bg-gray-600'}`}
+                                        className={`h-full ${idx === 0 && !lider?.empate ? cat.bgWinner : 'bg-gray-600'}`}
                                       />
                                     </div>
                                   </div>
@@ -1210,19 +1210,19 @@ export default function InformacoesPartida() {
                     </div>
                     <div className="space-y-3">
                       {[
-                        { id: 'melhorPartida', label: 'Melhor', icon: <FaAward className="text-yellow-500"/> },
-                        { id: 'perebaPartida', label: 'Pereba', icon: <FaUserTimes className="text-red-500"/> },
-                        { id: 'golMaisBonito', label: 'Gol Bonito', icon: <FaFutbol className="text-blue-400"/> }
+                        { id: 'melhorPartida', label: 'Melhor', icon: <FaAward className="text-yellow-500"/>, color: 'text-yellow-500', glow: 'ring-yellow-500/10', borderHover: 'hover:border-yellow-500/30' },
+                        { id: 'perebaPartida', label: 'Pereba', icon: <FaUserTimes className="text-red-500"/>, color: 'text-red-500', glow: 'ring-red-500/10', borderHover: 'hover:border-red-500/30' },
+                        { id: 'golMaisBonito', label: 'Gol Bonito', icon: <FaFutbol className="text-blue-400"/>, color: 'text-blue-400', glow: 'ring-blue-500/10', borderHover: 'hover:border-blue-500/30' }
                       ].map((d) => {
                         const lider = getLiderVotacao(d.id);
                         const valorOficial = partidaSelecionada.destaques?.[d.id];
                         const displayNome = lider?.empate ? "Houve um Empate" : (lider ? lider.nome : (valorOficial || '-'));
                         
                         return (
-                          <div key={d.id} className="group relative overflow-hidden bg-black/30 p-4 rounded-2xl border border-gray-700/50 hover:border-yellow-500/30 transition-all">
+                          <div key={d.id} className={`group relative overflow-hidden bg-black/30 p-4 rounded-2xl border border-gray-700/50 ${d.borderHover} transition-all`}>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-4">
-                                <div className="w-14 h-14 rounded-full bg-gray-800 border-2 border-gray-700 flex items-center justify-center overflow-hidden shadow-inner group-hover:scale-105 transition-transform ring-4 ring-yellow-500/10">
+                                <div className={`w-14 h-14 rounded-full bg-gray-800 border-2 border-gray-700 flex items-center justify-center overflow-hidden shadow-inner group-hover:scale-105 transition-transform ring-4 ${d.glow}`}>
                                   {lider && !lider.empate && partidaSelecionada.participantes?.find(p => p.nome === lider.nome)?.foto ? (
                                     <img src={partidaSelecionada.participantes.find(p => p.nome === lider.nome).foto} className="w-full h-full object-cover" alt="" />
                                   ) : (
@@ -1238,7 +1238,7 @@ export default function InformacoesPartida() {
                               </div>
                               {lider && !lider.empate && (
                                 <div className="bg-black/40 px-3 py-2 rounded-2xl border border-gray-700 text-center shadow-lg">
-                                  <span className="text-[12px] font-black text-yellow-500 block leading-none">{lider.total}</span>
+                                  <span className={`text-[12px] font-black ${d.color} block leading-none`}>{lider.total}</span>
                                   <span className="text-[8px] font-bold text-gray-500 uppercase">Votos</span>
                                 </div>
                               )}
