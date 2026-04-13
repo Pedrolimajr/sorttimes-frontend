@@ -1016,12 +1016,14 @@ export default function InformacoesPartida() {
                       {getGolsAgrupados().length > 0 ? (
                         getGolsAgrupados().map((g, i) => (
                           <div key={i} className="flex justify-between items-center p-3 bg-gray-900 rounded-xl text-sm border border-gray-700">
-                            <span className="font-bold text-white">{g.jogador}</span>
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-gray-800/50 border border-gray-700 flex items-center justify-center p-1.5 overflow-hidden shadow-inner">
+                                <img src={`/img/${g.time?.toLowerCase()}.png`} className="w-full h-full object-contain" alt={g.time} />
+                              </div>
+                              <span className="font-bold text-white">{g.jogador}</span>
+                            </div>
                             <div className="flex items-center gap-2">
                               <span className="bg-green-600/20 text-green-400 text-[10px] font-black px-2 py-0.5 rounded border border-green-500/30 uppercase">{g.total} {g.total > 1 ? 'GOLS' : 'GOL'}</span>
-                              <div className={`p-1 rounded-full border ${g.time === 'Amarelo' ? 'bg-yellow-400/10 border-yellow-500/30 text-yellow-400' : 'bg-gray-700/40 border-gray-600 text-gray-400'}`}>
-                                <FaUser size={10} />
-                              </div>
                             </div>
                           </div>
                         ))
