@@ -231,8 +231,8 @@ export default function PublicMatchInfo() {
             <span className="text-[11px] font-black text-blue-400 uppercase tracking-[0.4em] drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]">PLACAR</span>
             <div className="h-px w-12 bg-gradient-to-l from-transparent to-gray-600"></div>
           </div>
-          <div className="flex items-center justify-center gap-8 bg-black/40 p-6 rounded-[2rem] border border-gray-700/50 shadow-inner ring-1 ring-white/5">
-            <div className="flex flex-col items-center gap-1">
+          <div className="flex items-center justify-center gap-4 sm:gap-8 bg-black/40 p-6 rounded-[2rem] border border-gray-700/50 shadow-inner ring-1 ring-white/5 group">
+            <div className="flex flex-col items-center gap-1 flex-shrink-0">
               <img src="/img/preto.png" className="w-14 h-14 object-contain drop-shadow-[0_5px_15px_rgba(0,0,0,0.5)] transform group-hover:scale-110 transition-transform duration-500" alt="Preto" />
               <span className="text-[10px] font-black text-gray-500 uppercase tracking-tighter">PRETO</span>
             </div>
@@ -241,7 +241,7 @@ export default function PublicMatchInfo() {
               <span className="text-2xl font-black text-gray-700 italic">VS</span>
               <span className="text-6xl font-black text-yellow-400 tabular-nums drop-shadow-[0_0_15px_rgba(250,204,21,0.3)]">{golsAmarelo}</span>
             </div>
-            <div className="flex flex-col items-center gap-1">
+            <div className="flex flex-col items-center gap-1 flex-shrink-0">
               <img src="/img/amarelo.png" className="w-14 h-14 object-contain drop-shadow-[0_5px_15px_rgba(250,204,21,0.2)] transform group-hover:scale-110 transition-transform duration-500" alt="Amarelo" />
               <span className="text-[10px] font-black text-yellow-600 uppercase tracking-tighter">AMARELO</span>
             </div>
