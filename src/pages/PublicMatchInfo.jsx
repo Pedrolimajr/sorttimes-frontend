@@ -13,6 +13,8 @@ export default function PublicMatchInfo() {
   const [jogadores, setJogadores] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [inputGol, setInputGol] = useState('');
+  const [modalSelecao, setModalSelecao] = useState(false);
+  const [filtroPesquisa, setFiltroPesquisa] = useState('');
   const [expireAt, setExpireAt] = useState(null);
   const [countdown, setCountdown] = useState('');
 
@@ -249,14 +251,22 @@ export default function PublicMatchInfo() {
             <h2 className="flex items-center gap-2 text-md font-bold mb-4 text-green-400">
               <FaFutbol className="animate-bounce" /> Registrar Novo Gol
             </h2>
-            <div className="flex gap-2">
+            <div className="flex gap-2 relative">
               <input 
                 list="lista-jogadores"
                 value={inputGol}
                 onChange={(e) => setInputGol(e.target.value)}
-                placeholder="Nome do artilheiro..."
-                className="flex-1 bg-gray-900 border border-gray-700 rounded-2xl p-4 text-sm focus:ring-2 focus:ring-green-500 outline-none transition-all text-white"
+                placeholder="Nome do Jogador..."
+                className="flex-1 bg-gray-900 border border-gray-700 rounded-2xl p-4 pr-12 text-sm focus:ring-2 focus:ring-green-500 outline-none transition-all text-white"
               />
+              <button 
+                type="button"
+                onClick={() => setModalSelecao(true)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white p-1"
+                title="Escolher da lista"
+              >
+                <FaUser />
+              </button>
             </div>
             <div className="flex gap-6 mt-6 justify-center">
               <motion.button 
@@ -396,6 +406,61 @@ export default function PublicMatchInfo() {
         </datalist>
       </div>
 
+      {/* Modal de Seleção de Jogador (Para Gols) */}
+      <AnimatePresence>
+        {modalSelecao && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }} 
+              animate={{ scale: 1, opacity: 1 }} 
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-gray-800 border border-gray-700 p-6 rounded-3xl max-w-sm w-full flex flex-col max-h-[70vh] shadow-2xl"
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold flex items-center gap-2 text-white">
+                  <FaUser className="text-blue-400" /> Escolher Jogador
+                </h3>
+                <button onClick={() => setModalSelecao(false)} className="text-gray-400 hover:text-white">
+                  <FaTimes />
+                </button>
+              </div>
+              
+              <div className="relative mb-4">
+                <input 
+                  autoFocus
+                  type="text"
+                  placeholder="Pesquisar jogador..."
+                  value={filtroPesquisa}
+                  onChange={(e) => setFiltroPesquisa(e.target.value)}
+                  className="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 pl-10 text-sm text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                />
+                <FaUser className="absolute left-3 top-3.5 text-gray-500 text-sm" />
+              </div>
+
+              <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                {jogadores
+                  .filter(nome => nome.toLowerCase().includes(filtroPesquisa.toLowerCase()))
+                  .map(nome => (
+                    <button
+                      key={nome}
+                      onClick={() => {
+                        setInputGol(nome);
+                        setModalSelecao(false);
+                        setFiltroPesquisa('');
+                      }}
+                      className="w-full text-left p-3 rounded-xl bg-gray-900/50 hover:bg-gray-700 border border-gray-700 transition-colors text-sm font-bold text-white truncate"
+                    >
+                      {nome}
+                    </button>
+                  ))
+                }
+              </div>
+              <button onClick={() => setModalSelecao(false)} className="mt-4 w-full py-3 bg-gray-700 hover:bg-gray-600 rounded-xl font-bold text-xs text-white">CANCELAR</button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Modal de Confirmação */}
       <AnimatePresence>
         {modalConfirm.aberto && (
@@ -442,4 +507,3 @@ export default function PublicMatchInfo() {
     </div>
   );
 }
-
