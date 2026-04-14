@@ -448,24 +448,30 @@ export default function PublicMatchInfo() {
               </div>
 
               <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
-                {jogadores.length === 0 ? (
-                  <p className="text-center text-gray-500 py-4 text-sm italic">Carregando lista...</p>
-                ) : (jogadores.filter(nome => 
-                    typeof nome === 'string' && 
-                    nome.toLowerCase().includes(filtroPesquisa.toLowerCase())
-                  ).length === 0) ? (
+                {carregando ? (
+                  <p className="text-center text-gray-500 py-4 text-sm italic animate-pulse">Carregando lista...</p>
+                ) : (jogadores.filter(j => {
+                    const nome = typeof j === 'string' ? j : j?.nome || '';
+                    return nome.toLowerCase().includes(filtroPesquisa.toLowerCase());
+                  }).length === 0) ? (
                   <p className="text-center text-gray-500 py-4 text-sm italic">Nenhum jogador encontrado.</p>
                 ) : (
                   jogadores
-                  .filter(nome => typeof nome === 'string' && nome.toLowerCase().includes(filtroPesquisa.toLowerCase()))
-                  .map(nome => (
+                  .filter(j => {
+                    const nome = typeof j === 'string' ? j : j?.nome || '';
+                    return nome.toLowerCase().includes(filtroPesquisa.toLowerCase());
+                  })
+                  .map((j, index) => {
+                    const nome = typeof j === 'string' ? j : j?.nome || '';
+                    return (
                     <button
-                      key={nome}
+                      key={index}
                       onClick={() => {
                         if (modalSelecao.tipo === 'gol') {
                           setInputGol(nome);
                         } else if (modalSelecao.inputId) {
-                          document.getElementById(modalSelecao.inputId).value = nome;
+                          const input = document.getElementById(modalSelecao.inputId);
+                          if (input) input.value = nome;
                         }
                         setModalSelecao({ aberto: false, tipo: '', inputId: null });
                         setFiltroPesquisa('');
@@ -474,7 +480,8 @@ export default function PublicMatchInfo() {
                     >
                       {nome}
                     </button>
-                  ))
+                    );
+                  })
                 )}
               </div>
               <button 
