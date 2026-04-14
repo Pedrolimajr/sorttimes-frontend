@@ -416,15 +416,6 @@ export default function InformacoesPartida() {
     return () => clearInterval(intervalIdVotacao);
   }, [linkVotacaoExpireAt]);
 
-  // Função auxiliar para encontrar a foto do atleta pelo nome
-  const getParticipantPhoto = (playerName) => {
-    if (!partidaSelecionada?.participantes || !playerName) return null;
-    const participant = partidaSelecionada.participantes.find(p => p.nome === playerName);
-    if (participant?.foto && participant.foto !== '') {
-      return participant.foto;
-    }
-    return null; // Retorna null se o jogador não for encontrado ou não tiver foto
-  };
   // Funções para Geração de Link de Partida
   const gerarLinkPublicoPartida = async (tipo = 'eventos') => {
     if (!partidaSelecionada) return toast.warn("Selecione uma partida agendada!");
@@ -1156,30 +1147,27 @@ export default function InformacoesPartida() {
                         return (
                           <div key={cat.id} className="bg-black/30 p-4 rounded-2xl border border-gray-700/50 shadow-inner overflow-hidden">
                             <div className="flex justify-between items-center mb-2">
-                              <div className="flex items-center gap-2"> 
-                                {/* Display photo if available, otherwise fallback to icon */}
-                                {getParticipantPhoto(lider?.nome) && !lider?.empate ? (
-                                  <img src={getParticipantPhoto(lider.nome)} className="w-5 h-5 rounded-full object-cover" alt={lider.nome} />
-                                ) : cat.icon}
+                              <div className="flex items-center gap-2">
+                                {cat.icon}
                                 <p className="text-[11px] font-black text-gray-400 uppercase tracking-tight">{cat.label}</p>
-                              </div> 
+                              </div>
                               <span className="text-[9px] font-black text-amber-500/80">{totalCat} VOTOS</span>
                             </div>
                             
                             {/* Exibe o líder com foto no topo da categoria se houver votos */}
-                            {lider && !lider.empate && (
-                              <div className={`flex items-center gap-3 mb-3 ${cat.bg} p-2.5 rounded-2xl border border-${cat.color.split('-')[1]}/20`}>
+                            {lider && (
+                              <div className={`flex items-center gap-3 mb-3 ${lider.empate ? 'bg-gray-800/50' : cat.bg} p-2.5 rounded-2xl border border-${cat.color.split('-')[1]}/20`}>
                                 <div className="relative">
-                                  {getParticipantPhoto(lider.nome) ? (
-                                    <img src={getParticipantPhoto(lider.nome)} className={`w-10 h-10 rounded-full object-cover border-2 ${cat.border} shadow-lg ${cat.glow}`} alt={lider.nome} />
+                                  {partidaSelecionada.participantes?.find(p => p.nome === lider.nome)?.foto ? (
+                                    <img src={partidaSelecionada.participantes.find(p => p.nome === lider.nome).foto} className={`w-10 h-10 rounded-full object-cover border-2 ${cat.border} shadow-lg ${cat.glow}`} alt="" />
                                   ) : (
-                                    <div className={`w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center border-2 ${cat.border} ${cat.color}`}><FaUser size={14}/></div>
+                                    <div className={`w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center border-2 ${cat.border} ${cat.color}`}><FaUser size={14} /></div>
                                   )}
                                   <div className={`absolute -top-1 -right-1 ${cat.bgWinner} text-black rounded-full p-0.5`}>{cat.winnerIcon}</div>
                                 </div>
                                 <div>
                                   <p className="text-xs font-black text-white">{lider.nome}</p>
-                                  <p className={`text-[9px] ${cat.color} font-bold uppercase`}>Líder isolado</p>
+                                  <p className={`text-[9px] ${cat.color} font-bold uppercase`}>{lider.empate ? 'Houve um empate' : 'Líder isolado'}</p>
                                 </div>
                               </div>
                             )}
@@ -1235,8 +1223,8 @@ export default function InformacoesPartida() {
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-4">
                                 <div className={`w-14 h-14 rounded-full bg-gray-800 border-2 border-gray-700 flex items-center justify-center overflow-hidden shadow-inner group-hover:scale-105 transition-transform ring-4 ${d.glow}`}>
-                                  {getParticipantPhoto(lider?.nome) && !lider?.empate ? (
-                                    <img src={getParticipantPhoto(lider.nome)} className="w-full h-full object-cover" alt={lider.nome} />
+                                  {lider && !lider.empate && partidaSelecionada.participantes?.find(p => p.nome === lider.nome)?.foto ? (
+                                    <img src={partidaSelecionada.participantes.find(p => p.nome === lider.nome).foto} className="w-full h-full object-cover" alt="" />
                                   ) : (
                                     <div className="text-xl opacity-50">{d.icon}</div>
                                   )}

@@ -137,7 +137,9 @@ export default function VotacaoPartida() {
   // Função auxiliar para encontrar a foto do atleta pelo nome
   const getFotoJogador = (nome) => {
     if (!nome || nome === 'Ninguém') return null;
-    const p = partida?.participantes?.find(atleta => atleta.nome === nome);
+    const nomeLimpo = nome.trim().toLowerCase();
+    // Busca resiliente ignorando espaços e maiúsculas
+    const p = partida?.participantes?.find(atleta => atleta.nome?.trim().toLowerCase() === nomeLimpo);
     return p?.foto || null;
   };
 
