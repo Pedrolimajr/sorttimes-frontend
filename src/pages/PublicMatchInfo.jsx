@@ -30,6 +30,7 @@ export default function PublicMatchInfo() {
       try {
         // Note que usamos o linkId diretamente na URL conforme definido no backend
         const res = await api.get(`/partida-publica/${linkId}`);
+        console.log("[DEBUG] Jogadores recebidos do servidor:", res.data.jogadores);
         setPartida(res.data.data);
         setJogadores(res.data.jogadores || []);
         setExpireAt(res.data.expireAt);
@@ -253,7 +254,6 @@ export default function PublicMatchInfo() {
             </h2>
             <div className="flex gap-2 relative">
               <input 
-                list="lista-jogadores"
                 value={inputGol}
                 onChange={(e) => setInputGol(e.target.value)}
                 placeholder="Nome do Jogador..."
@@ -372,7 +372,6 @@ export default function PublicMatchInfo() {
               <div className="relative w-full mb-3">
                 <input 
                   id={`input-${card.tipo}`}
-                  list="lista-jogadores"
                   placeholder="Nome do Jogador..."
                   className="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 pr-10 text-sm text-center outline-none focus:border-white transition-all text-white placeholder:text-gray-600"
                 />
@@ -410,10 +409,6 @@ export default function PublicMatchInfo() {
             </div>
           ))}
         </section>
-
-        <datalist id="lista-jogadores">
-          {jogadores.map(nome => <option key={nome} value={nome} />)}
-        </datalist>
       </div>
 
       {/* Modal de Seleção de Jogador */}
