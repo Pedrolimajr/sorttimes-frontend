@@ -129,9 +129,16 @@ export default function VotacaoPartida() {
   const apurarVencedor = (cat) => {
     const vts = partida?.votos?.filter(v => v.categoria === cat) || [];
     if (vts.length === 0) return { nome: 'Ninguém', votos: 0 };
-    const contagem = vts.reduce((acc, v) => { acc[v.jogador] = (acc[v.jogador] || 0) + 1; return acc; }, {});
+    
+    const contagem = vts.reduce((acc, v) => { 
+      const nome = v.jogador?.trim();
+      acc[nome] = (acc[nome] || 0) + 1; 
+      return acc; 
+    }, {});
+
     const sorted = Object.entries(contagem).sort((a, b) => b[1] - a[1]);
-    return { nome: sorted[0][0], votos: sorted[0][1] };
+    const empate = sorted.length > 1 && sorted[0][1] === sorted[1][1];
+    return { nome: sorted[0][0], votos: sorted[0][1], empate };
   };
 
   // Função auxiliar para encontrar a foto do atleta pelo nome
@@ -295,31 +302,33 @@ export default function VotacaoPartida() {
                 ].map(cat => {
                   const vencedor = apurarVencedor(cat.id);
                   const totalVotosCat = partida.votos?.filter(v => v.categoria === cat.id).length || 0;
+                  const foto = getFotoJogador(vencedor.nome);
                   return (
-                    <div key={cat.id} className="bg-gray-900 p-4 rounded-2xl border border-gray-700">
-                      <div className="flex justify-between items-start mb-1">
-                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1">
-                          {cat.icon} {cat.label}
-                        </p>
-                        <span className="text-[10px] bg-amber-500/10 text-amber-500 px-2 py-0.5 rounded-full font-bold border border-amber-500/20">
+                    <div key={cat.id} className="bg-gray-900/50 p-4 rounded-2xl border border-gray-700/50 shadow-inner">
+                      <div className="flex justify-between items-center mb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="opacity-50">{cat.icon}</span>
+                          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{cat.label}</p>
+                        </div>
+                        <span className="text-[9px] bg-amber-500/10 text-amber-500 px-2 py-1 rounded-full font-black border border-amber-500/20 uppercase">
                           {totalVotosCat} votos no total
                         </span>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <p className="text-base font-black text-white flex items-center gap-3">
-                          {vencedor.nome !== 'Ninguém' && getFotoJogador(vencedor.nome) ? (
-                            <img 
-                              src={getFotoJogador(vencedor.nome)} 
-                              alt={vencedor.nome} 
-                              className="w-10 h-10 rounded-full object-cover border-2 border-amber-500/50 shadow-lg shadow-amber-500/20" 
-                            />
-                          ) : (
-                            <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 text-lg">
-                              {cat.icon}
-                            </div>
-                          )}
-                          {vencedor.nome}
-                        </p>
+                      
+                      <div className={`flex justify-between items-center p-2.5 rounded-xl border border-gray-700/30 ${vencedor.empate ? 'bg-gray-800/30' : 'bg-amber-500/5'}`}>
+                        <div className="flex items-center gap-3">
+                          <div className="relative">
+                            {vencedor.nome !== 'Ninguém' && foto ? (
+                              <img src={foto} className={`w-10 h-10 rounded-full object-cover border-2 ${vencedor.empate ? 'border-gray-600' : 'border-amber-500'} shadow-lg`} alt={vencedor.nome} />
+                            ) : (
+                              <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center border-2 border-gray-700 text-gray-500"><FaUser size={14}/></div>
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-sm font-black text-white uppercase">{vencedor.nome}</p>
+                            <p className="text-[9px] text-gray-500 font-bold uppercase tracking-tighter">{vencedor.empate ? 'Houve um empate' : 'Líder isolado'}</p>
+                          </div>
+                        </div>
                         {vencedor.votos > 0 && (
                           <span className="text-xs font-black text-yellow-500">
                             {vencedor.votos} {vencedor.votos === 1 ? 'VOTO' : 'VOTOS'}
