@@ -368,7 +368,7 @@ export default function PublicMatchInfo() {
               key={card.tipo} 
               className={`bg-gray-800/60 backdrop-blur-md p-4 rounded-3xl border border-gray-700 text-center flex flex-col items-center shadow-2xl transition-all hover:scale-[1.02] ${card.shadow}`}
             >
-              <div className={`w-8 h-12 ${card.cor} rounded-lg mb-4 shadow-lg ring-2 ring-black/20`} />
+              <div className={`w-8 h-12 ${card.cor} rounded-lg mb-4 shadow-inner shadow-lg ring-2 ring-black/20`} />
               <div className="relative w-full mb-3">
                 <input 
                   id={`input-${card.tipo}`}
