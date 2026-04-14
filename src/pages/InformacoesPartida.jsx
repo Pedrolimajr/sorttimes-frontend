@@ -53,10 +53,8 @@ export default function InformacoesPartida() {
   const [partidaSelecionada, setPartidaSelecionada] = useState(null);
   const [linkGeradoPartida, setLinkGeradoPartida] = useState('');
   const [linkGeradoPartidaExpireAt, setLinkGeradoPartidaExpireAt] = useState(null);
-  const [linkGeradoPartidaCreatedAt, setLinkGeradoPartidaCreatedAt] = useState(null);
   const [linkVotacao, setLinkVotacao] = useState('');
   const [linkVotacaoExpireAt, setLinkVotacaoExpireAt] = useState(null);
-  const [linkVotacaoCreatedAt, setLinkVotacaoCreatedAt] = useState(null);
   const [countdownEventos, setCountdownEventos] = useState('');
   const [countdownVotacao, setCountdownVotacao] = useState('');
 
@@ -113,10 +111,8 @@ export default function InformacoesPartida() {
       // Limpa os estados antes de preencher com os dados do banco
       setLinkGeradoPartida('');
       setLinkGeradoPartidaExpireAt(null);
-      setLinkGeradoPartidaCreatedAt(null);
       setLinkVotacao('');
       setLinkVotacaoExpireAt(null);
-      setLinkVotacaoCreatedAt(null);
 
       links.forEach(l => {
         const url = l.tipo === 'eventos' 
@@ -126,11 +122,9 @@ export default function InformacoesPartida() {
         if (l.tipo === 'eventos') {
           setLinkGeradoPartida(url);
           setLinkGeradoPartidaExpireAt(l.expireAt);
-          setLinkGeradoPartidaCreatedAt(l.createdAt);
         } else if (l.tipo === 'votacao') {
           setLinkVotacao(url);
           setLinkVotacaoExpireAt(l.expireAt);
-          setLinkVotacaoCreatedAt(l.createdAt);
         }
       });
     } catch (err) {
@@ -431,8 +425,7 @@ export default function InformacoesPartida() {
       const res = await api.post(`/partida-publica/gerar-link/${partidaSelecionada._id}`, { tipo });
       const linkId = res.data?.linkId || res.data?.data?.linkId;
       
-      const expireAt = res.data?.expireAt;
-      const createdAt = res.data?.createdAt;
+      const expireAt = res.data?.expireAt; // Captura a data de expiração do backend
 
       const url = tipo === 'eventos' 
         ? `${window.location.origin}/partida-publica/${linkId}`
@@ -440,12 +433,10 @@ export default function InformacoesPartida() {
 
       if (tipo === 'eventos') {
         setLinkGeradoPartida(url);
-        setLinkGeradoPartidaExpireAt(expireAt);
-        setLinkGeradoPartidaCreatedAt(createdAt);
+        setLinkGeradoPartidaExpireAt(expireAt); // Armazena a data de expiração
       } else {
         setLinkVotacao(url);
-        setLinkVotacaoExpireAt(expireAt);
-        setLinkVotacaoCreatedAt(createdAt);
+        setLinkVotacaoExpireAt(expireAt); // Armazena a data de expiração
       }
       toast.success(`Link de ${tipo === 'eventos' ? 'Eventos' : 'Votação'} gerado com sucesso!`);
     } catch (error) {
