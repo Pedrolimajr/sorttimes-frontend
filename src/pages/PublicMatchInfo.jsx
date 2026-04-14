@@ -13,7 +13,7 @@ export default function PublicMatchInfo() {
   const [jogadores, setJogadores] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [inputGol, setInputGol] = useState('');
-  const [modalSelecao, setModalSelecao] = useState(false);
+  const [modalSelecao, setModalSelecao] = useState({ aberto: false, tipo: '', inputId: null });
   const [filtroPesquisa, setFiltroPesquisa] = useState('');
   const [expireAt, setExpireAt] = useState(null);
   const [countdown, setCountdown] = useState('');
@@ -261,7 +261,7 @@ export default function PublicMatchInfo() {
               />
               <button 
                 type="button"
-                onClick={() => setModalSelecao(true)}
+                onClick={() => setModalSelecao({ aberto: true, tipo: 'gol', inputId: null })}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white p-1"
                 title="Escolher da lista"
               >
@@ -368,13 +368,23 @@ export default function PublicMatchInfo() {
               key={card.tipo} 
               className={`bg-gray-800/60 backdrop-blur-md p-4 rounded-3xl border border-gray-700 text-center flex flex-col items-center shadow-2xl transition-all hover:scale-[1.02] ${card.shadow}`}
             >
-              <div className={`w-10 h-14 ${card.cor} rounded-lg mb-4 shadow-lg ring-2 ring-black/20`} />
-              <input 
-                id={`input-${card.tipo}`}
-                list="lista-jogadores"
-                placeholder="Nome..."
-                className="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 text-sm text-center outline-none mb-3 focus:border-white transition-all text-white placeholder:text-gray-600"
-              />
+              <div className={`w-8 h-12 ${card.cor} rounded-lg mb-4 shadow-lg ring-2 ring-black/20`} />
+              <div className="relative w-full mb-3">
+                <input 
+                  id={`input-${card.tipo}`}
+                  list="lista-jogadores"
+                  placeholder="Nome do Jogador..."
+                  className="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 pr-10 text-sm text-center outline-none focus:border-white transition-all text-white placeholder:text-gray-600"
+                />
+                <button 
+                  type="button"
+                  onClick={() => setModalSelecao({ aberto: true, tipo: card.tipo, inputId: `input-${card.tipo}` })}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+                  title="Escolher da lista"
+                >
+                  <FaUser size={12} />
+                </button>
+              </div>
               <button 
                 onClick={() => {
                   const inp = document.getElementById(`input-${card.tipo}`);
@@ -406,11 +416,11 @@ export default function PublicMatchInfo() {
         </datalist>
       </div>
 
-      {/* Modal de Seleção de Jogador (Para Gols) */}
+      {/* Modal de Seleção de Jogador */}
       <AnimatePresence>
-        {modalSelecao && (
+        {modalSelecao.aberto && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.9, opacity: 0 }} 
               animate={{ scale: 1, opacity: 1 }} 
               exit={{ scale: 0.9, opacity: 0 }}
@@ -420,7 +430,7 @@ export default function PublicMatchInfo() {
                 <h3 className="text-xl font-bold flex items-center gap-2 text-white">
                   <FaUser className="text-blue-400" /> Escolher Jogador
                 </h3>
-                <button onClick={() => setModalSelecao(false)} className="text-gray-400 hover:text-white">
+                <button onClick={() => setModalSelecao({ aberto: false, tipo: '', inputId: null })} className="text-gray-400 hover:text-white">
                   <FaTimes />
                 </button>
               </div>
@@ -438,14 +448,26 @@ export default function PublicMatchInfo() {
               </div>
 
               <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
-                {jogadores
-                  .filter(nome => nome.toLowerCase().includes(filtroPesquisa.toLowerCase()))
+                {jogadores.length === 0 ? (
+                  <p className="text-center text-gray-500 py-4 text-sm italic">Carregando lista...</p>
+                ) : (jogadores.filter(nome => 
+                    typeof nome === 'string' && 
+                    nome.toLowerCase().includes(filtroPesquisa.toLowerCase())
+                  ).length === 0) ? (
+                  <p className="text-center text-gray-500 py-4 text-sm italic">Nenhum jogador encontrado.</p>
+                ) : (
+                  jogadores
+                  .filter(nome => typeof nome === 'string' && nome.toLowerCase().includes(filtroPesquisa.toLowerCase()))
                   .map(nome => (
                     <button
                       key={nome}
                       onClick={() => {
-                        setInputGol(nome);
-                        setModalSelecao(false);
+                        if (modalSelecao.tipo === 'gol') {
+                          setInputGol(nome);
+                        } else if (modalSelecao.inputId) {
+                          document.getElementById(modalSelecao.inputId).value = nome;
+                        }
+                        setModalSelecao({ aberto: false, tipo: '', inputId: null });
                         setFiltroPesquisa('');
                       }}
                       className="w-full text-left p-3 rounded-xl bg-gray-900/50 hover:bg-gray-700 border border-gray-700 transition-colors text-sm font-bold text-white truncate"
@@ -453,9 +475,11 @@ export default function PublicMatchInfo() {
                       {nome}
                     </button>
                   ))
-                }
+                )}
               </div>
-              <button onClick={() => setModalSelecao(false)} className="mt-4 w-full py-3 bg-gray-700 hover:bg-gray-600 rounded-xl font-bold text-xs text-white">CANCELAR</button>
+              <button 
+                onClick={() => setModalSelecao({ aberto: false, tipo: '', inputId: null })} 
+                className="mt-4 w-full py-3 bg-gray-700 hover:bg-gray-600 rounded-xl font-bold text-xs text-white uppercase">Cancelar</button>
             </motion.div>
           </div>
         )}
