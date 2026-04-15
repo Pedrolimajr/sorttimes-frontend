@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTrophy, FaUserTimes, FaAward, FaFutbol, FaCheckCircle, FaLock, FaUser, FaChartBar, FaShareAlt, FaEye, FaEyeSlash } from 'react-icons/fa';
@@ -157,6 +157,37 @@ export default function VotacaoPartida() {
     return p?.foto || null;
   };
 
+  // Lista filtrada de jogadores para votação: 
+  // Somente associados sorteados na partida, excluindo o jogador logado e placeholders.
+  const jogadoresParaVotar = useMemo(() => {
+    // Prioridade: Usar os participantes sorteados vinculados à partida.
+    // Fallback: Usar a lista 'jogadores' enviada pelo backend (que contém os associados gerais).
+    const base = (partida?.participantes && partida.participantes.length > 0)
+      ? partida.participantes
+      : jogadores.map(n => ({ nome: n, nivel: 'Associado' }));
+
+    return base
+      .filter(j => {
+        if (!j || !j.nome) return false;
+        
+        // 1. Regra: Somente Associados (Exclui Convidados e Visitantes)
+        if (j.nivel && j.nivel !== 'Associado') return false;
+
+        // 2. Regra: Ocultar o jogador logado (não votar em si mesmo)
+        const nomeAtleta = j.nome.trim().toLowerCase();
+        const nomeLogado = jogadorAutenticado?.nome?.trim().toLowerCase();
+        if (nomeAtleta === nomeLogado) return false;
+
+        // 3. Regra: Ignorar termos genéricos ou de teste
+        const placeholders = ['convidado', 'visitante', 'outro', 'teste'];
+        if (placeholders.some(p => nomeAtleta.includes(p))) return false;
+
+        return true;
+      })
+      .map(j => j.nome)
+      .sort((a, b) => a.localeCompare(b));
+  }, [partida, jogadores, jogadorAutenticado]);
+
   const compartilharResultados = async () => {
     try {
       // Encerra a votação, deleta o link antigo e gera o novo de 12h no backend
@@ -288,9 +319,9 @@ export default function VotacaoPartida() {
                     className="w-full bg-gray-900 border border-gray-700 rounded-xl p-4 text-sm outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
                   >
                     <option value="">Selecione um jogador...</option>
-                    {jogadores
-                      .filter(nome => nome !== jogadorAutenticado?.nome)
-                      .map(nome => <option key={nome} value={nome}>{nome}</option>)}
+                    {jogadoresParaVotar.map(nome => (
+                      <option key={nome} value={nome}>{nome}</option>
+                    ))}
                   </select>
                 </div>
               ))}
