@@ -247,9 +247,9 @@ export default function VotacaoPartida() {
               className="bg-gray-800 rounded-3xl p-6 border border-gray-700 shadow-2xl space-y-8"
             >
               <div className="border-b border-gray-700 pb-4 flex items-center gap-4">
-                {jogadorAutenticado?.foto ? (
+                {getFotoJogador(jogadorAutenticado?.nome) ? (
                   <img 
-                    src={jogadorAutenticado.foto} 
+                    src={getFotoJogador(jogadorAutenticado?.nome)} 
                     alt={jogadorAutenticado?.nome} 
                     className="w-14 h-14 rounded-full object-cover border-2 border-blue-500 shadow-lg shadow-blue-500/20"
                   />
@@ -289,10 +289,7 @@ export default function VotacaoPartida() {
                   >
                     <option value="">Selecione um jogador...</option>
                     {jogadores
-                      .filter(nome => {
-                        if (!nome || !jogadorAutenticado?.nome) return true;
-                        return nome.trim().toLowerCase() !== jogadorAutenticado.nome.trim().toLowerCase();
-                      })
+                      .filter(nome => nome !== jogadorAutenticado?.nome)
                       .map(nome => <option key={nome} value={nome}>{nome}</option>)}
                   </select>
                 </div>
