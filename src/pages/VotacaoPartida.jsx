@@ -21,6 +21,7 @@ export default function VotacaoPartida() {
   const [mostrarSenhaAdminCred, setMostrarSenhaAdminCred] = useState(false);
   const [expireAt, setExpireAt] = useState(null);
   const [countdown, setCountdown] = useState('');
+  const [tipoLink, setTipoLink] = useState(''); // eventos | votacao | resultado
 
   useEffect(() => {
     const fetchData = async () => {
@@ -29,6 +30,12 @@ export default function VotacaoPartida() {
         setPartida(res.data.data);
         setJogadores(res.data.jogadores || []);
         setExpireAt(res.data.expireAt);
+        setTipoLink(res.data.tipo);
+
+        // Se for um link de resultado, pula o login e vai direto para a tela de vencedores
+        if (res.data.tipo === 'resultado') {
+          setAba('admin');
+        }
       } catch (err) {
         toast.error("Link de votação expirado.");
       } finally {
@@ -150,19 +157,31 @@ export default function VotacaoPartida() {
     return p?.foto || null;
   };
 
-  const compartilharResultados = () => {
-    const melhor = apurarVencedor('melhorPartida');
-    const pereba = apurarVencedor('perebaPartida');
-    const gol = apurarVencedor('golMaisBonito');
+  const compartilharResultados = async () => {
+    try {
+      // Encerra a votação, deleta o link antigo e gera o novo de 12h no backend
+      const res = await api.post(`/partida-publica/${linkId}/encerrar-votacao`);
+      if (res.data.success) {
+        const resultUrl = `${window.location.origin}/votar-partida/${res.data.linkId}`;
+        
+        const melhor = apurarVencedor('melhorPartida');
+        const pereba = apurarVencedor('perebaPartida');
+        const gol = apurarVencedor('golMaisBonito');
 
-    const msg = `🏆 *RESULTADOS DA PARTIDA* 🏆\n\n` +
-                `🌟 Melhor da Partida: ${melhor.nome} (${melhor.votos} votos)\n` +
-                `🐢 Pereba da Partida: ${pereba.nome} (${pereba.votos} votos)\n` +
-                `⚽ Gol Mais Bonito: ${gol.nome} (${gol.votos} votos)\n\n` +
-                `*Universo Cajazeiras*`;
-    
-    navigator.clipboard.writeText(msg);
-    toast.success("Resultados copiados para o WhatsApp!");
+        const msg = `🏆 *RESULTADOS FINAIS* 🏆\n\n` +
+                    `🌟 Melhor da Partida: ${melhor.nome} (${melhor.votos} vts)\n` +
+                    `🐢 Pereba da Partida: ${pereba.nome} (${pereba.votos} vts)\n` +
+                    `⚽ Gol Mais Bonito: ${gol.nome} (${gol.votos} vts)\n\n` +
+                    `🔗 *Confira os detalhes:* ${resultUrl}\n\n` +
+                    `*Universo Cajazeiras*`;
+        
+        navigator.clipboard.writeText(msg);
+        toast.success("Link de resultado gerado e copiado para o WhatsApp!");
+        toast.info("A votação foi encerrada. Este link atual expirará ao atualizar a página.", { autoClose: 6000 });
+      }
+    } catch (err) {
+      toast.error("Erro ao gerar link de resultado.");
+    }
   };
 
   if (carregando && etapa === 'login') return <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div></div>;
@@ -172,7 +191,7 @@ export default function VotacaoPartida() {
       <div className="max-w-md mx-auto space-y-8">
         <header className="text-center py-6">
           <h1 className="text-2xl font-black text-blue-400 uppercase tracking-tighter">Premiações da Partida</h1>
-          <p className="text-gray-500 text-xs font-bold">VOTAÇÃO DOS ATLETAS</p>
+          <p className="text-gray-500 text-xs font-bold">{tipoLink === 'resultado' ? 'RESULTADO FINAL' : 'VOTAÇÃO DOS ATLETAS'}</p>
           {countdown && (
             <div className="mt-2 inline-block px-3 py-1 bg-red-500/10 border border-red-500/20 rounded-full">
               <p className="text-[10px] text-red-400 font-bold">O formulário expira em: {countdown}</p>
@@ -292,7 +311,8 @@ export default function VotacaoPartida() {
               className="bg-gray-800 rounded-3xl p-6 border border-gray-700 shadow-2xl space-y-6"
             >
               <h2 className="text-xl font-black text-center bg-gradient-to-r from-yellow-400 to-amber-600 bg-clip-text text-transparent flex items-center justify-center gap-2">
-                <FaChartBar className="text-amber-500" /> Apuração em Tempo Real
+                <FaChartBar className="text-amber-500" /> 
+                {tipoLink === 'resultado' ? 'Resultado Final da Votação' : 'Apuração em Tempo Real'}
               </h2>
               <div className="space-y-4">
                 {[
@@ -339,10 +359,16 @@ export default function VotacaoPartida() {
                   );
                 })}
               </div>
-              <button onClick={compartilharResultados} className="w-full bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 py-4 rounded-2xl font-black flex items-center justify-center gap-2 transition-all shadow-lg">
-                <FaShareAlt /> COMPARTILHAR RESULTADOS
-              </button>
-              <button onClick={() => setAba('login')} className="w-full text-xs text-gray-500">Sair do Modo Admin</button>
+              {tipoLink !== 'resultado' ? (
+                <>
+                  <button onClick={compartilharResultados} className="w-full bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 py-4 rounded-2xl font-black flex items-center justify-center gap-2 transition-all shadow-lg">
+                    <FaShareAlt /> COMPARTILHAR RESULTADOS
+                  </button>
+                  <button onClick={() => setAba('login')} className="w-full text-xs text-gray-500">Sair do Modo Admin</button>
+                </>
+              ) : (
+                <p className="text-center text-[10px] text-gray-500 font-bold uppercase tracking-widest pt-4">Visualização Final Disponível por 12h</p>
+              )}
             </motion.div>
           )}
 
