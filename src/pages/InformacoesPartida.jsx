@@ -1365,6 +1365,49 @@ export default function InformacoesPartida() {
         </AnimatePresence>
       </div>
 
+      {/* Modal de Confirmação (para exclusão de gols/cartões) */}
+      <AnimatePresence>
+        {modalConfirm.aberto && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-gray-800 border border-gray-700 p-6 rounded-3xl max-w-sm w-full text-center">
+              <div className="w-16 h-16 bg-red-500/20 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FaExclamationTriangle size={30} />
+              </div>
+              <h3 className="text-xl font-bold mb-2 text-white">{modalConfirm.titulo}</h3>
+              <p className="text-gray-400 text-sm mb-6">{modalConfirm.msg}</p>
+              <div className="flex gap-3">
+                <button onClick={() => setModalConfirm({ ...modalConfirm, aberto: false })} className="flex-1 py-3 rounded-2xl bg-gray-700 font-bold text-white hover:bg-gray-600 transition-colors">VOLTAR</button>
+                <button onClick={confirmarRemover} className="flex-1 py-3 rounded-2xl bg-red-600 font-bold text-white hover:bg-red-700 transition-colors">EXCLUIR</button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal de Edição (para gols/cartões) */}
+      <AnimatePresence>
+        {modalEdit.aberto && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="bg-gray-800 border border-gray-700 p-6 rounded-3xl max-w-sm w-full">
+              <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-white"><FaEdit className="text-blue-400" /> Editar Registro</h3>
+              <form onSubmit={confirmarEditar} className="space-y-4">
+                <input 
+                  autoFocus
+                  value={modalEdit.valor}
+                  onChange={(e) => setModalEdit({ ...modalEdit, valor: e.target.value })}
+                  className="w-full bg-gray-900 border border-gray-700 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                  placeholder="Nome do jogador"
+                />
+                <div className="flex gap-3">
+                  <button type="button" onClick={() => setModalEdit({ ...modalEdit, aberto: false })} className="flex-1 py-3 rounded-2xl bg-gray-700 font-bold text-white hover:bg-gray-600 transition-colors">CANCELAR</button>
+                  <button type="submit" className="flex-1 py-3 rounded-2xl bg-blue-600 font-bold text-white hover:bg-blue-700 transition-colors">SALVAR</button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       <AnimatePresence>
         {confirmDeletePlanilha.open && confirmDeletePlanilha.planilha && (
           <motion.div
