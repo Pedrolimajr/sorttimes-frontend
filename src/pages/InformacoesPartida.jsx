@@ -45,6 +45,8 @@ export default function InformacoesPartida() {
   const [planilhaAtiva, setPlanilhaAtiva] = useState(null);
   const [titulo, setTitulo] = useState('Nova Planilha');
   const [subtitulo, setSubtitulo] = useState('');
+  const [modalConfirm, setModalConfirm] = useState({ aberto: false, tipo: '', index: null, titulo: '', msg: '' });
+  const [modalEdit, setModalEdit] = useState({ aberto: false, tipo: '', index: null, valor: '', nomeOriginal: '' });
   const [tabela, setTabela] = useState([['Cabeçalho', 'Valor'], ['', '']]);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState(null);
@@ -403,6 +405,57 @@ export default function InformacoesPartida() {
     setSubtitulo(planilha.subtitulo || '');
     setTabela(planilha.tabela);
     setPlanilhaAtiva(planilha);
+  };
+
+  // Funções para Modais de Confirmação e Edição (Gols e Cartões)
+  const handleRemoverClick = (tipo, index, jogador) => {
+    setModalConfirm({
+      aberto: true,
+      tipo,
+      index,
+      titulo: 'Confirmar Exclusão',
+      msg: `Deseja realmente remover o registro de ${tipo === 'gol' ? 'gol' : 'cartão'} para ${jogador}?`
+    });
+  };
+
+  const confirmarRemover = async () => {
+    const { tipo, index } = modalConfirm;
+    try {
+      // Usa o novo endpoint administrativo para exclusão
+      const res = await api.delete(`/agenda/${partidaSelecionada._id}/evento/${tipo}/${index}`);
+      setPartidaSelecionada(res.data.data);
+      toast.success("Registro removido");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Erro ao remover");
+    } finally {
+      setModalConfirm({ ...modalConfirm, aberto: false });
+    }
+  };
+
+  const handleEditarClick = (tipo, index, nomeAtual) => {
+    setModalEdit({ aberto: true, tipo, index, valor: nomeAtual, nomeOriginal: nomeAtual });
+  };
+
+  const confirmarEditar = async (e) => {
+    if (e) e.preventDefault();
+    const { tipo, index, valor, nomeOriginal } = modalEdit;
+    if (!valor || valor.trim() === '' || valor === nomeOriginal) {
+      return setModalEdit({ ...modalEdit, aberto: false });
+    }
+    try {
+      let res;
+      if (tipo === 'gol-by-name') { // Edição de gol agregado por nome
+        res = await api.patch(`/agenda/${partidaSelecionada._id}/evento/gol/by-name`, { oldName: nomeOriginal, newName: valor });
+      } else { // Edição de cartão por índice
+        res = await api.patch(`/agenda/${partidaSelecionada._id}/evento/${tipo}/${index}`, { novoNome: valor });
+      }
+      setPartidaSelecionada(res.data.data);
+      toast.success("Registro atualizado");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Erro ao atualizar");
+    } finally {
+      setModalEdit({ ...modalEdit, aberto: false });
+    }
   };
 
   // Função auxiliar para formatar o tempo restante
@@ -1095,6 +1148,15 @@ export default function InformacoesPartida() {
                       </button>
                     </div>
                     <div className="space-y-3">
+                    {/* Botões de Ação para Gols */}
+                    <div className="flex justify-end gap-1">
+                      <button onClick={() => handleEditarClick('gol-by-name', null, g.jogador)} className="p-2 text-blue-400 hover:bg-blue-400/10 rounded-lg transition-all" title="Editar Gol">
+                        <FaEdit size={16} />
+                      </button>
+                      <button onClick={() => handleRemoverClick('gol', g.ultimoIndex, g.jogador)} className="p-2 text-red-400 hover:bg-red-400/10 rounded-lg transition-all" title="Remover Gol">
+                        <FaTrash size={16} />
+                      </button>
+                    </div>
                       {getGolsAgrupados().length > 0 ? (
                         getGolsAgrupados().map((g, i) => (
                           <div key={i} className="flex justify-between items-center p-3 bg-black/30 rounded-2xl text-sm border border-gray-700/50 hover:border-green-500/30 transition-colors group">
@@ -1107,6 +1169,7 @@ export default function InformacoesPartida() {
                             <div className="flex flex-col items-end">
                               <span className="bg-green-500 text-white text-[10px] font-black px-2.5 py-1 rounded-lg shadow-lg shadow-green-500/20 uppercase tracking-tighter">{g.total} {g.total > 1 ? 'GOLS' : 'GOL'}</span>
                               <span className="text-[8px] text-gray-500 font-bold mt-1 uppercase tracking-widest">Time {g.time}</span>
+
                             </div>
                           </div>
                         ))
@@ -1137,8 +1200,12 @@ export default function InformacoesPartida() {
                           <p className="text-[10px] text-gray-400 font-bold uppercase">{card.label}</p>
                           <div className="mt-2 space-y-1">
                             {partidaSelecionada[card.field]?.length > 0 ? 
-                              partidaSelecionada[card.field].map((nome, i) => (
+                              partidaSelecionada[card.field].map((nome, i) => ( // Adicionado i para o key
+                                <div key={i} className="flex justify-between items-center">
                                 <p key={i} className="text-[10px] text-white truncate bg-gray-800/80 px-2 py-1 rounded-lg border border-gray-700/50">{nome}</p>
+                                  <button onClick={() => handleEditarClick(card.tipo, i, nome)} className="text-blue-400 p-1"><FaEdit size={12}/></button>
+                                  <button onClick={() => handleRemoverClick(card.tipo, i, nome)} className="text-red-400 p-1"><FaTrash size={12}/></button>
+                                </div>
                               )) : <p className="text-[9px] text-gray-600">-</p>
                             }
                           </div>
