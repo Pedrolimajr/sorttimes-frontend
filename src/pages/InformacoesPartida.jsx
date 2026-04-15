@@ -26,6 +26,7 @@ import {
   FaCrown,
   FaSkull,
   FaMagic,
+  FaListOl,
   FaExclamationTriangle
 } from 'react-icons/fa';
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
@@ -61,6 +62,10 @@ export default function InformacoesPartida() {
   const [linkVotacaoExpireAt, setLinkVotacaoExpireAt] = useState(null);
   const [countdownEventos, setCountdownEventos] = useState('');
   const [countdownVotacao, setCountdownVotacao] = useState('');
+  
+  // Estados para Estatísticas de Atletas
+  const [atletaParaStats, setAtletaParaStats] = useState("");
+  const [showRankingModal, setShowRankingModal] = useState(false);
 
   // Modal de confirmação para exclusão de planilha
   const [confirmDeletePlanilha, setConfirmDeletePlanilha] = useState({ open: false, planilha: null });
@@ -319,6 +324,48 @@ export default function InformacoesPartida() {
       setCarregando(false);
     }
   };
+
+  // Lógica para calcular estatísticas globais de todos os atletas
+  const calcularEstatisticasGlobais = () => {
+    const stats = {};
+    
+    // Inicializa estatísticas para todos os associados
+    jogadores.filter(j => j.nivel === 'Associado').forEach(j => {
+      stats[j.nome] = {
+        nome: j.nome,
+        foto: j.foto,
+        gols: 0,
+        amarelos: 0,
+        vermelhos: 0,
+        azuis: 0,
+        melhor: 0,
+        pereba: 0,
+        golBonito: 0
+      };
+    });
+
+    // Percorre todas as partidas para somar eventos
+    partidas.forEach(p => {
+      p.gols?.forEach(g => { if(stats[g.jogador]) stats[g.jogador].gols++; });
+      p.cartoesAmarelos?.forEach(nome => { if(stats[nome]) stats[nome].amarelos++; });
+      p.cartoesVermelhos?.forEach(nome => { if(stats[nome]) stats[nome].vermelhos++; });
+      p.cartoesAzuis?.forEach(nome => { if(stats[nome]) stats[nome].azuis++; });
+      
+      // Integração com votos
+      p.votos?.forEach(v => {
+        if(stats[v.jogador]) {
+          if(v.categoria === 'melhorPartida') stats[v.jogador].melhor++;
+          if(v.categoria === 'perebaPartida') stats[v.jogador].pereba++;
+          if(v.categoria === 'golMaisBonito') stats[v.jogador].golBonito++;
+        }
+      });
+    });
+
+    return stats;
+  };
+
+  const estatisticasAtletas = calcularEstatisticasGlobais();
+  const atletaSelecionadoStats = atletaParaStats ? estatisticasAtletas[atletaParaStats] : null;
 
   // Funções para manipulação da tabela
   const adicionarLinha = () => setTabela([...tabela, tabela[0].map(() => '')]);
@@ -1012,9 +1059,104 @@ export default function InformacoesPartida() {
               exit={{ opacity: 0, x: -20 }}
               className="space-y-6"
             >
+              {/* Seção de Estatísticas Acumuladas (Neutra) */}
+              <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 shadow-xl border-t-blue-500/20">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                  <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                    <FaAward className="text-blue-400" /> Estatísticas Acumuladas dos Atletas
+                  </h2>
+                  <button 
+                    onClick={() => setShowRankingModal(true)}
+                    className="flex items-center gap-2 bg-blue-600/20 text-blue-400 border border-blue-500/30 px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-600 hover:text-white transition-all"
+                  >
+                    <FaListOl /> Ver Ranking Geral
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                  <div className="space-y-4">
+                    <label className="block text-sm font-medium text-gray-400">Selecionar Jogador (Associado)</label>
+                    <select 
+                      className="w-full bg-gray-900 border-gray-700 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                      value={atletaParaStats}
+                      onChange={(e) => setAtletaParaStats(e.target.value)}
+                    >
+                      <option value="">Buscar atleta...</option>
+                      {Object.keys(estatisticasAtletas).sort().map(nome => (
+                        <option key={nome} value={nome}>{nome}</option>
+                      ))}
+                    </select>
+                    <p className="text-[10px] text-gray-500">* Os dados consideram todas as partidas e votos registrados no sistema.</p>
+                  </div>
+
+                  <AnimatePresence mode="wait">
+                    {atletaSelecionadoStats ? (
+                      <motion.div 
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="bg-black/40 p-5 rounded-2xl border border-blue-500/20 flex flex-col sm:flex-row items-center gap-6"
+                      >
+                        <div className="relative">
+                          {atletaSelecionadoStats.foto ? (
+                            <img src={atletaSelecionadoStats.foto} className="w-24 h-24 rounded-full object-cover border-4 border-blue-600 shadow-xl" alt="" />
+                          ) : (
+                            <div className="w-24 h-24 rounded-full bg-gray-800 flex items-center justify-center border-4 border-gray-700">
+                              <FaUser className="text-gray-600 text-3xl" />
+                            </div>
+                          )}
+                          <div className="absolute -bottom-2 -right-2 bg-blue-600 text-white p-2 rounded-full shadow-lg">
+                            <FaIdCard size={14} />
+                          </div>
+                        </div>
+
+                        <div className="flex-1 text-center sm:text-left">
+                          <h3 className="text-lg font-black text-white uppercase tracking-tighter mb-4">{atletaSelecionadoStats.nome}</h3>
+                          
+                          <div className="grid grid-cols-3 gap-3 mb-4">
+                            <div className="bg-gray-800/50 p-2 rounded-xl border border-gray-700 text-center">
+                              <span className="block text-[10px] text-gray-500 font-bold uppercase">Gols</span>
+                              <span className="text-lg font-black text-green-400">⚽ {atletaSelecionadoStats.gols}</span>
+                            </div>
+                            <div className="bg-gray-800/50 p-2 rounded-xl border border-gray-700 text-center">
+                              <span className="block text-[10px] text-gray-500 font-bold uppercase">Melhor</span>
+                              <span className="text-lg font-black text-yellow-500">🏆 {atletaSelecionadoStats.melhor}</span>
+                            </div>
+                            <div className="bg-gray-800/50 p-2 rounded-xl border border-gray-700 text-center">
+                              <span className="block text-[10px] text-gray-500 font-bold uppercase">Pereba</span>
+                              <span className="text-lg font-black text-red-500">💀 {atletaSelecionadoStats.pereba}</span>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap justify-center sm:justify-start gap-2">
+                            <span className="bg-yellow-400/10 text-yellow-400 border border-yellow-400/20 text-[10px] px-2 py-1 rounded-lg font-bold">
+                              🟨 Amarelos: {atletaSelecionadoStats.amarelos}
+                            </span>
+                            <span className="bg-red-500/10 text-red-500 border border-red-500/20 text-[10px] px-2 py-1 rounded-lg font-bold">
+                              🟥 Vermelhos: {atletaSelecionadoStats.vermelhos}
+                            </span>
+                            <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] px-2 py-1 rounded-lg font-bold">
+                              🟦 Azuis: {atletaSelecionadoStats.azuis}
+                            </span>
+                            <span className="bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] px-2 py-1 rounded-lg font-bold">
+                              ✨ Golaços: {atletaSelecionadoStats.golBonito}
+                            </span>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ) : (
+                      <div className="h-40 border-2 border-dashed border-gray-700 rounded-2xl flex flex-col items-center justify-center text-gray-600">
+                        <FaUser size={24} className="mb-2 opacity-20" />
+                        <p className="text-xs uppercase font-bold tracking-widest">Nenhum atleta selecionado</p>
+                      </div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+
               <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 shadow-xl">
                 <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                  <FaLink className="text-blue-400" /> Gerador de Link Público (24 Horas)
+                  <FaCalendarAlt className="text-blue-400" /> Selecionar Partida Agendada
                 </h2>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
