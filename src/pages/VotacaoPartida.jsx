@@ -247,9 +247,9 @@ export default function VotacaoPartida() {
               className="bg-gray-800 rounded-3xl p-6 border border-gray-700 shadow-2xl space-y-8"
             >
               <div className="border-b border-gray-700 pb-4 flex items-center gap-4">
-                {getFotoJogador(jogadorAutenticado?.nome) ? (
+                {jogadorAutenticado?.foto ? (
                   <img 
-                    src={getFotoJogador(jogadorAutenticado?.nome)} 
+                    src={jogadorAutenticado.foto} 
                     alt={jogadorAutenticado?.nome} 
                     className="w-14 h-14 rounded-full object-cover border-2 border-blue-500 shadow-lg shadow-blue-500/20"
                   />

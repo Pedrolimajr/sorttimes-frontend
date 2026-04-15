@@ -1158,8 +1158,8 @@ export default function InformacoesPartida() {
                             {lider && (
                               <div className={`flex items-center gap-3 mb-3 ${lider.empate ? 'bg-gray-800/50' : cat.bg} p-2.5 rounded-2xl border border-${cat.color.split('-')[1]}/20`}>
                                 <div className="relative">
-                                  {partidaSelecionada.participantes?.find(p => p.nome === lider.nome)?.foto ? (
-                                    <img src={partidaSelecionada.participantes.find(p => p.nome === lider.nome).foto} className={`w-10 h-10 rounded-full object-cover border-2 ${cat.border} shadow-lg ${cat.glow}`} alt="" />
+                                  {partidaSelecionada.participantes?.find(p => p.nome?.trim().toLowerCase() === lider.nome?.trim().toLowerCase())?.foto ? (
+                                    <img src={partidaSelecionada.participantes.find(p => p.nome?.trim().toLowerCase() === lider.nome?.trim().toLowerCase()).foto} className={`w-10 h-10 rounded-full object-cover border-2 ${cat.border} shadow-lg ${cat.glow}`} alt="" />
                                   ) : (
                                     <div className={`w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center border-2 ${cat.border} ${cat.color}`}><FaUser size={14} /></div>
                                   )}
@@ -1223,8 +1223,8 @@ export default function InformacoesPartida() {
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-4">
                                 <div className={`w-14 h-14 rounded-full bg-gray-800 border-2 border-gray-700 flex items-center justify-center overflow-hidden shadow-inner group-hover:scale-105 transition-transform ring-4 ${d.glow}`}>
-                                  {lider && !lider.empate && partidaSelecionada.participantes?.find(p => p.nome === lider.nome)?.foto ? (
-                                    <img src={partidaSelecionada.participantes.find(p => p.nome === lider.nome).foto} className="w-full h-full object-cover" alt="" />
+                                  {lider && !lider.empate && partidaSelecionada.participantes?.find(p => p.nome?.trim().toLowerCase() === lider.nome?.trim().toLowerCase())?.foto ? (
+                                    <img src={partidaSelecionada.participantes.find(p => p.nome?.trim().toLowerCase() === lider.nome?.trim().toLowerCase()).foto} className="w-full h-full object-cover" alt="" />
                                   ) : (
                                     <div className="text-xl opacity-50">{d.icon}</div>
                                   )}
