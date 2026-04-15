@@ -7,6 +7,7 @@ import {
   FaArrowLeft, 
   FaSave, 
   FaTable,
+  FaEdit,
   FaIdCard,
   FaTimesCircle,
   FaFileDownload,
@@ -281,15 +282,17 @@ export default function InformacoesPartida() {
     const agrupados = [];
     if (!partidaSelecionada?.gols) return agrupados;
     
-    partidaSelecionada.gols.forEach((g) => {
+    partidaSelecionada.gols.forEach((g, index) => {
       const indexAgrupado = agrupados.findIndex(item => item.jogador === g.jogador);
       if (indexAgrupado > -1) {
         agrupados[indexAgrupado].total += 1;
+        agrupados[indexAgrupado].ultimoIndex = index;
       } else {
         agrupados.push({
           jogador: g.jogador,
           total: 1,
-          time: g.time
+          time: g.time,
+          ultimoIndex: index
         });
       }
     });
@@ -1148,19 +1151,11 @@ export default function InformacoesPartida() {
                       </button>
                     </div>
                     <div className="space-y-3">
-                    {/* Botões de Ação para Gols */}
-                    <div className="flex justify-end gap-1">
-                      <button onClick={() => handleEditarClick('gol-by-name', null, g.jogador)} className="p-2 text-blue-400 hover:bg-blue-400/10 rounded-lg transition-all" title="Editar Gol">
-                        <FaEdit size={16} />
-                      </button>
-                      <button onClick={() => handleRemoverClick('gol', g.ultimoIndex, g.jogador)} className="p-2 text-red-400 hover:bg-red-400/10 rounded-lg transition-all" title="Remover Gol">
-                        <FaTrash size={16} />
-                      </button>
-                    </div>
                       {getGolsAgrupados().length > 0 ? (
                         getGolsAgrupados().map((g, i) => (
-                          <div key={i} className="flex justify-between items-center p-3 bg-black/30 rounded-2xl text-sm border border-gray-700/50 hover:border-green-500/30 transition-colors group">
-                            <div className="flex items-center gap-3">
+                          <div key={i} className="flex flex-col p-3 bg-black/30 rounded-2xl text-sm border border-gray-700/50 hover:border-green-500/30 transition-colors group">
+                            <div className="flex justify-between items-center">
+                              <div className="flex items-center gap-3">
                               <div className="w-10 h-10 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center p-1.5 overflow-hidden shadow-inner group-hover:ring-2 ring-green-500/20 transition-all">
                                 <img src={`/img/${g.time?.toLowerCase()}.png`} className="w-full h-full object-contain" alt={g.time} />
                               </div>
@@ -1169,7 +1164,16 @@ export default function InformacoesPartida() {
                             <div className="flex flex-col items-end">
                               <span className="bg-green-500 text-white text-[10px] font-black px-2.5 py-1 rounded-lg shadow-lg shadow-green-500/20 uppercase tracking-tighter">{g.total} {g.total > 1 ? 'GOLS' : 'GOL'}</span>
                               <span className="text-[8px] text-gray-500 font-bold mt-1 uppercase tracking-widest">Time {g.time}</span>
-
+                            </div>
+                            </div>
+                            {/* Botões de Ação para Gols dentro do card */}
+                            <div className="flex justify-end gap-1 mt-2 pt-2 border-t border-gray-700/30 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button onClick={() => handleEditarClick('gol-by-name', null, g.jogador)} className="p-1.5 text-blue-400 hover:bg-blue-400/10 rounded-lg transition-all" title="Editar Gol">
+                                <FaEdit size={14} />
+                              </button>
+                              <button onClick={() => handleRemoverClick('gol', g.ultimoIndex, g.jogador)} className="p-1.5 text-red-400 hover:bg-red-400/10 rounded-lg transition-all" title="Remover Gol">
+                                <FaTrash size={14} />
+                              </button>
                             </div>
                           </div>
                         ))
@@ -1191,9 +1195,9 @@ export default function InformacoesPartida() {
                     </div>
                     <div className="grid grid-cols-3 gap-3">
                       {[
-                        { label: 'Amarelo', field: 'cartoesAmarelos', bg: 'bg-yellow-400', shadow: 'shadow-yellow-500/20' },
-                        { label: 'Vermelho', field: 'cartoesVermelhos', bg: 'bg-red-500', shadow: 'shadow-red-500/20' },
-                        { label: 'Azul', field: 'cartoesAzuis', bg: 'bg-blue-500', shadow: 'shadow-blue-500/20' }
+                        { label: 'Amarelo', tipo: 'amarelo', field: 'cartoesAmarelos', bg: 'bg-yellow-400', shadow: 'shadow-yellow-500/20' },
+                        { label: 'Vermelho', tipo: 'vermelho', field: 'cartoesVermelhos', bg: 'bg-red-500', shadow: 'shadow-red-500/20' },
+                        { label: 'Azul', tipo: 'azul', field: 'cartoesAzuis', bg: 'bg-blue-500', shadow: 'shadow-blue-500/20' }
                       ].map(card => (
                         <div key={card.field} className="text-center bg-black/20 p-3 rounded-2xl border border-gray-700/50 flex flex-col items-center">
                           <div className={`w-6 h-8 ${card.bg} ${card.shadow} rounded-md mx-auto mb-2 shadow-lg ring-1 ring-white/10`}></div>
