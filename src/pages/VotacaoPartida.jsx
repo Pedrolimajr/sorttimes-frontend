@@ -7,7 +7,7 @@ import api from '../services/api';
 
 export default function VotacaoPartida() {
   const { linkId } = useParams();
-  const [etapa, setAba] = useState('login'); // login | votacao | admin | enviado
+  const [etapa, setAba] = useState('login'); // login | votacao | admin | enviado | resultado
   const [isAdmin, setIsAdmin] = useState(false);
   const [partida, setPartida] = useState(null);
   const [jogadores, setJogadores] = useState([]);
@@ -21,6 +21,7 @@ export default function VotacaoPartida() {
   const [mostrarSenhaAdminCred, setMostrarSenhaAdminCred] = useState(false);
   const [expireAt, setExpireAt] = useState(null);
   const [countdown, setCountdown] = useState('');
+  const [tipoLink, setTipoLink] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -29,6 +30,12 @@ export default function VotacaoPartida() {
         setPartida(res.data.data);
         setJogadores(res.data.jogadores || []);
         setExpireAt(res.data.expireAt);
+        setTipoLink(res.data.tipo);
+        
+        // Se o link for do tipo resultado, pula direto para a exibição
+        if (res.data.tipo === 'resultado') {
+          setAba('resultado');
+        }
       } catch (err) {
         toast.error("Link de votação expirado.");
       } finally {
@@ -291,8 +298,11 @@ export default function VotacaoPartida() {
               initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               className="bg-gray-800 rounded-3xl p-6 border border-gray-700 shadow-2xl space-y-6"
             >
-              <h2 className="text-xl font-black text-center bg-gradient-to-r from-yellow-400 to-amber-600 bg-clip-text text-transparent flex items-center justify-center gap-2">
-                <FaChartBar className="text-amber-500" /> Apuração em Tempo Real
+              <h2 className="text-xl font-black text-center bg-gradient-to-r from-yellow-400 to-amber-600 bg-clip-text text-transparent flex items-center justify-center gap-2 uppercase">
+                <FaChartBar className="text-amber-500" /> 
+                {countdown === 'Expirado!' || tipoLink === 'resultado' 
+                  ? 'Resultado Final da Votação' 
+                  : 'Apuração em Tempo Real'}
               </h2>
               <div className="space-y-4">
                 {[
@@ -343,6 +353,63 @@ export default function VotacaoPartida() {
                 <FaShareAlt /> COMPARTILHAR RESULTADOS
               </button>
               <button onClick={() => setAba('login')} className="w-full text-xs text-gray-500">Sair do Modo Admin</button>
+            </motion.div>
+          )}
+
+          {etapa === 'resultado' && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+              className="bg-gray-800 rounded-3xl p-6 border border-gray-700 shadow-2xl space-y-6"
+            >
+              <h2 className="text-xl font-black text-center bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent flex items-center justify-center gap-2 uppercase tracking-tighter">
+                <FaTrophy className="text-green-500" /> Resultado Oficial
+              </h2>
+              <div className="space-y-4">
+                {[
+                  { id: 'melhorPartida', label: 'Melhor da Partida', icon: <FaAward className="text-yellow-500" /> },
+                  { id: 'perebaPartida', label: 'Pereba da Partida', icon: <FaUserTimes className="text-red-400" /> },
+                  { id: 'golMaisBonito', label: 'Gol Mais Bonito', icon: <FaFutbol className="text-blue-400" /> }
+                ].map(cat => {
+                  const vencedor = apurarVencedor(cat.id);
+                  const totalVotosCat = partida.votos?.filter(v => v.categoria === cat.id).length || 0;
+                  const foto = getFotoJogador(vencedor.nome);
+                  return (
+                    <div key={cat.id} className="bg-gray-900/50 p-4 rounded-2xl border border-gray-700/50 shadow-inner">
+                      <div className="flex justify-between items-center mb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="opacity-50">{cat.icon}</span>
+                          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{cat.label}</p>
+                        </div>
+                        <span className="text-[9px] bg-green-500/10 text-green-500 px-2 py-1 rounded-full font-black border border-green-500/20 uppercase">
+                          {totalVotosCat} votos
+                        </span>
+                      </div>
+                      
+                      <div className={`flex justify-between items-center p-2.5 rounded-xl border border-gray-700/30 ${vencedor.empate ? 'bg-gray-800/30' : 'bg-green-500/5'}`}>
+                        <div className="flex items-center gap-3">
+                          <div className="relative">
+                            {vencedor.nome !== 'Ninguém' && foto ? (
+                              <img src={foto} className={`w-10 h-10 rounded-full object-cover border-2 ${vencedor.empate ? 'border-gray-600' : 'border-green-500'} shadow-lg`} alt={vencedor.nome} />
+                            ) : (
+                              <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center border-2 border-gray-700 text-gray-500"><FaUser size={14}/></div>
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-sm font-black text-white uppercase">{vencedor.nome}</p>
+                            <p className="text-[9px] text-gray-500 font-bold uppercase tracking-tighter">{vencedor.empate ? 'Houve um empate' : 'Vencedor'}</p>
+                          </div>
+                        </div>
+                        {vencedor.votos > 0 && (
+                          <span className="text-xs font-black text-green-500">
+                            {vencedor.votos} vts
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-[10px] text-center text-gray-600 uppercase font-bold tracking-widest pt-4 border-t border-gray-700/50">Somente Visualização • Universo Cajazeiras</p>
             </motion.div>
           )}
 
