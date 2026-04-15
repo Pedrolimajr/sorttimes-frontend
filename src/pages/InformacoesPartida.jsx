@@ -231,6 +231,14 @@ export default function InformacoesPartida() {
     return { nome: ordenado[0][0], total: ordenado[0][1], empate: false };
   };
 
+  // Função auxiliar para encontrar a foto do atleta pelo nome
+  const getFotoJogador = (nome) => {
+    if (!nome || nome === 'Ninguém' || nome === 'Houve um Empate') return null;
+    const nomeLimpo = nome.trim().toLowerCase();
+    const p = partidaSelecionada?.participantes?.find(atleta => atleta.nome?.trim().toLowerCase() === nomeLimpo);
+    return p?.foto || null;
+  };
+
   // Função para pegar a lista completa de votos por categoria
   const getTodosOsVotos = (categoriaId) => {
     if (!partidaSelecionada?.votos) return [];
@@ -1158,8 +1166,8 @@ export default function InformacoesPartida() {
                             {lider && (
                               <div className={`flex items-center gap-3 mb-3 ${lider.empate ? 'bg-gray-800/50' : cat.bg} p-2.5 rounded-2xl border border-${cat.color.split('-')[1]}/20`}>
                                 <div className="relative">
-                                  {partidaSelecionada.participantes?.find(p => p.nome === lider.nome)?.foto ? (
-                                    <img src={partidaSelecionada.participantes.find(p => p.nome === lider.nome).foto} className={`w-10 h-10 rounded-full object-cover border-2 ${cat.border} shadow-lg ${cat.glow}`} alt="" />
+                                  {getFotoJogador(lider.nome) ? (
+                                    <img src={getFotoJogador(lider.nome)} className={`w-10 h-10 rounded-full object-cover border-2 ${cat.border} shadow-lg ${cat.glow}`} alt="" />
                                   ) : (
                                     <div className={`w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center border-2 ${cat.border} ${cat.color}`}><FaUser size={14} /></div>
                                   )}
@@ -1167,7 +1175,6 @@ export default function InformacoesPartida() {
                                 </div>
                                 <div>
                                   <p className="text-xs font-black text-white">{lider.nome}</p>
-                                  <p className={`text-[9px] ${cat.color} font-bold uppercase`}>{lider.empate ? 'Houve um empate' : 'Líder isolado'}</p>
                                 </div>
                               </div>
                             )}
@@ -1177,7 +1184,16 @@ export default function InformacoesPartida() {
                                 {listaVotos.map(([nome, total], idx) => (
                                   <div key={idx} className="space-y-1">
                                     <div className="flex justify-between items-center text-xs">
-                                      <span className={(idx === 0 && !lider?.empate) ? `font-bold ${cat.color}` : "text-gray-400"}>{nome}</span>
+                                      <div className="flex items-center gap-2">
+                                        {getFotoJogador(nome) && (
+                                          <img 
+                                            src={getFotoJogador(nome)} 
+                                            className="w-4 h-4 rounded-full object-cover border border-gray-600" 
+                                            alt="" 
+                                          />
+                                        )}
+                                        <span className={(idx === 0 && !lider?.empate) ? `font-bold ${cat.color}` : "text-gray-400"}>{nome}</span>
+                                      </div>
                                       <span className="text-[10px] text-gray-500 font-bold">{total} vts</span>
                                     </div>
                                     <div className="h-1 w-full bg-gray-800 rounded-full overflow-hidden">
@@ -1223,8 +1239,8 @@ export default function InformacoesPartida() {
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-4">
                                 <div className={`w-14 h-14 rounded-full bg-gray-800 border-2 border-gray-700 flex items-center justify-center overflow-hidden shadow-inner group-hover:scale-105 transition-transform ring-4 ${d.glow}`}>
-                                  {lider && !lider.empate && partidaSelecionada.participantes?.find(p => p.nome === lider.nome)?.foto ? (
-                                    <img src={partidaSelecionada.participantes.find(p => p.nome === lider.nome).foto} className="w-full h-full object-cover" alt="" />
+                                  {getFotoJogador(lider?.nome) && !lider?.empate ? (
+                                    <img src={getFotoJogador(lider.nome)} className="w-full h-full object-cover" alt="" />
                                   ) : (
                                     <div className="text-xl opacity-50">{d.icon}</div>
                                   )}
