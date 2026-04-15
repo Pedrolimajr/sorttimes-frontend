@@ -55,8 +55,11 @@ export default function InformacoesPartida() {
   const [linkGeradoPartidaExpireAt, setLinkGeradoPartidaExpireAt] = useState(null);
   const [linkVotacao, setLinkVotacao] = useState('');
   const [linkVotacaoExpireAt, setLinkVotacaoExpireAt] = useState(null);
+  const [linkResultado, setLinkResultado] = useState('');
+  const [linkResultadoExpireAt, setLinkResultadoExpireAt] = useState(null);
   const [countdownEventos, setCountdownEventos] = useState('');
   const [countdownVotacao, setCountdownVotacao] = useState('');
+  const [countdownResultado, setCountdownResultado] = useState('');
 
   // Modal de confirmação para exclusão de planilha
   const [confirmDeletePlanilha, setConfirmDeletePlanilha] = useState({ open: false, planilha: null });
@@ -113,6 +116,8 @@ export default function InformacoesPartida() {
       setLinkGeradoPartidaExpireAt(null);
       setLinkVotacao('');
       setLinkVotacaoExpireAt(null);
+      setLinkResultado('');
+      setLinkResultadoExpireAt(null);
 
       links.forEach(l => {
         const url = l.tipo === 'eventos' 
@@ -125,6 +130,9 @@ export default function InformacoesPartida() {
         } else if (l.tipo === 'votacao') {
           setLinkVotacao(url);
           setLinkVotacaoExpireAt(l.expireAt);
+        } else if (l.tipo === 'resultado') {
+          setLinkResultado(url);
+          setLinkResultadoExpireAt(l.expireAt);
         }
       });
     } catch (err) {
@@ -415,6 +423,17 @@ export default function InformacoesPartida() {
     }
     return () => clearInterval(intervalIdVotacao);
   }, [linkVotacaoExpireAt]);
+
+  // Efeito para contagem regressiva do link de Resultado
+  useEffect(() => {
+    let intervalIdResultado;
+    if (linkResultadoExpireAt) {
+      intervalIdResultado = setInterval(() => {
+        setCountdownResultado(formatTimeRemaining(linkResultadoExpireAt));
+      }, 1000);
+    }
+    return () => clearInterval(intervalIdResultado);
+  }, [linkResultadoExpireAt]);
 
   // Funções para Geração de Link de Partida
   const gerarLinkPublicoPartida = async (tipo = 'eventos') => {
@@ -963,7 +982,7 @@ export default function InformacoesPartida() {
                 </div>
 
                 <AnimatePresence>
-                  {(linkGeradoPartida || linkVotacao) && (
+                  {(linkGeradoPartida || linkVotacao || linkResultado) && (
                     <motion.div 
                     key="links-container"
                     initial={{ opacity: 0, y: 10 }}
@@ -1006,6 +1025,27 @@ export default function InformacoesPartida() {
                         <button 
                           onClick={() => { navigator.clipboard.writeText(linkVotacao); toast.info("Link de Votação copiado!"); }}
                           className="bg-amber-600 hover:bg-amber-700 px-6 py-3 rounded-lg font-bold flex items-center gap-2 w-full sm:w-auto text-white"
+                        >
+                          <FaCopy /> Copiar
+                        </button>
+                      </div>
+                      )}
+
+                      {/* Card do Link de Resultado */}
+                      {linkResultado && (
+                        <div className="bg-green-500/10 border border-green-500/30 p-4 rounded-xl flex flex-col sm:flex-row items-center gap-4">
+                        <div className="flex-1">
+                          <p className="text-[10px] font-bold text-green-400 uppercase mb-1">Link de Resultado Final (Público)</p>
+                          <div className="text-xs font-mono text-green-400 break-all bg-gray-900 p-3 rounded-lg border border-green-900/50">
+                            {linkResultado}
+                          </div>
+                          {countdownResultado && (
+                            <p className="text-xs text-gray-400 mt-2">Disponível por mais: <span className="font-bold text-white">{countdownResultado}</span></p>
+                          )}
+                        </div>
+                        <button 
+                          onClick={() => { navigator.clipboard.writeText(linkResultado); toast.info("Link de Resultado copiado!"); }}
+                          className="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg font-bold flex items-center gap-2 w-full sm:w-auto text-white"
                         >
                           <FaCopy /> Copiar
                         </button>
