@@ -452,9 +452,16 @@ export default function InformacoesPartida() {
   const confirmarEditar = async (e) => {
     if (e) e.preventDefault();
     const { tipo, index, valor, nomeOriginal } = modalEdit;
-    if (!valor || valor.trim() === '' || valor === nomeOriginal) {
+
+    // Se o valor estiver vazio, não faz nada
+    if (!valor || valor.trim() === '') return;
+
+    // Para cartões, se o nome não mudou, apenas fecha o modal. 
+    // Para gols, permitimos prosseguir pois o time ou a quantidade podem ter mudado.
+    if (tipo !== 'gol-by-name' && valor === nomeOriginal) {
       return setModalEdit({ ...modalEdit, aberto: false });
     }
+
     try {
       let res;
       if (tipo === 'gol-by-name') { // Edição de gol agregado por nome
