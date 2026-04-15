@@ -41,6 +41,7 @@ export default function InformacoesPartida() {
   
   // Estados da Planilha (Existentes)
   const [planilhas, setPlanilhas] = useState([]);
+  const [jogadores, setJogadores] = useState([]);
   const [planilhaAtiva, setPlanilhaAtiva] = useState(null);
   const [titulo, setTitulo] = useState('Nova Planilha');
   const [subtitulo, setSubtitulo] = useState('');
@@ -97,8 +98,18 @@ export default function InformacoesPartida() {
       }
     };
 
+    const carregarJogadores = async () => {
+      try {
+        const res = await api.get('/jogadores');
+        setJogadores(res.data?.data || res.data || []);
+      } catch (error) {
+        console.error("Erro ao carregar jogadores", error);
+      }
+    };
+
     carregarPlanilhas();
     carregarPartidasAgendadas();
+    carregarJogadores();
   }, []);
 
   // Função para carregar links que já foram gerados anteriormente para esta partida
@@ -233,9 +244,19 @@ export default function InformacoesPartida() {
 
   // Função auxiliar para encontrar a foto do atleta pelo nome
   const getFotoJogador = (nome) => {
-    if (!nome || nome === 'Ninguém' || nome === 'Houve um Empate') return null;
+    if (!nome || nome === 'Ninguém' || nome === 'Houve um Empate' || nome === '-') return null;
     const nomeLimpo = nome.trim().toLowerCase();
-    const p = partidaSelecionada?.participantes?.find(atleta => atleta.nome?.trim().toLowerCase() === nomeLimpo);
+    
+    // 1. Tenta buscar nos participantes vinculados à partida (se populados)
+    let p = partidaSelecionada?.participantes?.find(atleta => 
+      (atleta.nome || atleta)?.toString().trim().toLowerCase() === nomeLimpo
+    );
+
+    // 2. Fallback: Busca na lista global de jogadores carregada do sistema
+    if (!p || !p.foto) {
+      p = jogadores.find(atleta => atleta.nome?.trim().toLowerCase() === nomeLimpo);
+    }
+    
     return p?.foto || null;
   };
 
@@ -1233,14 +1254,15 @@ export default function InformacoesPartida() {
                         const lider = getLiderVotacao(d.id);
                         const valorOficial = partidaSelecionada.destaques?.[d.id];
                         const displayNome = lider?.empate ? "Houve um Empate" : (lider ? lider.nome : (valorOficial || '-'));
+                        const foto = getFotoJogador(displayNome);
                         
                         return (
                           <div key={d.id} className={`group relative overflow-hidden bg-black/30 p-4 rounded-2xl border border-gray-700/50 ${d.borderHover} transition-all`}>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-4">
                                 <div className={`w-14 h-14 rounded-full bg-gray-800 border-2 border-gray-700 flex items-center justify-center overflow-hidden shadow-inner group-hover:scale-105 transition-transform ring-4 ${d.glow}`}>
-                                  {getFotoJogador(lider?.nome) && !lider?.empate ? (
-                                    <img src={getFotoJogador(lider.nome)} className="w-full h-full object-cover" alt="" />
+                                  {foto ? (
+                                    <img src={foto} className="w-full h-full object-cover" alt="" />
                                   ) : (
                                     <div className="text-xl opacity-50">{d.icon}</div>
                                   )}
