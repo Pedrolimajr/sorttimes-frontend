@@ -289,7 +289,10 @@ export default function VotacaoPartida() {
                   >
                     <option value="">Selecione um jogador...</option>
                     {jogadores
-                      .filter(nome => nome !== jogadorAutenticado?.nome)
+                      .filter(nome => {
+                        if (!nome || !jogadorAutenticado?.nome) return true;
+                        return nome.trim().toLowerCase() !== jogadorAutenticado.nome.trim().toLowerCase();
+                      })
                       .map(nome => <option key={nome} value={nome}>{nome}</option>)}
                   </select>
                 </div>
