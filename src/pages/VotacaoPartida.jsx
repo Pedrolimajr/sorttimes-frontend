@@ -377,7 +377,6 @@ export default function VotacaoPartida() {
                           </div>
                           <div>
                             <p className="text-sm font-black text-white uppercase">{vencedor.nome}</p>
-                            <p className="text-[9px] text-gray-500 font-bold uppercase tracking-tighter">{vencedor.empate ? 'Houve um empate' : 'Líder isolado'}</p>
                           </div>
                         </div>
                         {vencedor.votos > 0 && (
