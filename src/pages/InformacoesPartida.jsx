@@ -47,7 +47,7 @@ export default function InformacoesPartida() {
   const [titulo, setTitulo] = useState('Nova Planilha');
   const [subtitulo, setSubtitulo] = useState('');
   const [modalConfirm, setModalConfirm] = useState({ aberto: false, tipo: '', index: null, titulo: '', msg: '' });
-  const [modalEdit, setModalEdit] = useState({ aberto: false, tipo: '', index: null, valor: '', nomeOriginal: '' });
+  const [modalEdit, setModalEdit] = useState({ aberto: false, tipo: '', index: null, valor: '', nomeOriginal: '', time: 'Preto', quantidade: 1 });
   const [tabela, setTabela] = useState([['Cabeçalho', 'Valor'], ['', '']]);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState(null);
@@ -436,7 +436,17 @@ export default function InformacoesPartida() {
   };
 
   const handleEditarClick = (tipo, index, nomeAtual) => {
-    setModalEdit({ aberto: true, tipo, index, valor: nomeAtual, nomeOriginal: nomeAtual });
+    let time = 'Preto';
+    let quantidade = 1;
+
+    if (tipo === 'gol-by-name') {
+      const g = getGolsAgrupados().find(item => item.jogador === nomeAtual);
+      if (g) {
+        time = g.time;
+        quantidade = g.total;
+      }
+    }
+    setModalEdit({ aberto: true, tipo, index, valor: nomeAtual, nomeOriginal: nomeAtual, time, quantidade });
   };
 
   const confirmarEditar = async (e) => {
@@ -448,7 +458,12 @@ export default function InformacoesPartida() {
     try {
       let res;
       if (tipo === 'gol-by-name') { // Edição de gol agregado por nome
-        res = await api.patch(`/agenda/${partidaSelecionada._id}/evento/gol/by-name`, { oldName: nomeOriginal, newName: valor });
+        res = await api.patch(`/agenda/${partidaSelecionada._id}/evento/gol/by-name`, { 
+          oldName: nomeOriginal, 
+          newName: valor,
+          newTime: modalEdit.time,
+          newQuantity: modalEdit.quantidade
+        });
       } else { // Edição de cartão por índice
         res = await api.patch(`/agenda/${partidaSelecionada._id}/evento/${tipo}/${index}`, { novoNome: valor });
       }
@@ -1150,7 +1165,8 @@ export default function InformacoesPartida() {
                         <FaShareAlt size={16} />
                       </button>
                     </div>
-                    <div className="space-y-3">
+                    <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                      <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
                       {getGolsAgrupados().length > 0 ? (
                         getGolsAgrupados().map((g, i) => (
                           <div key={i} className="flex flex-col p-3 bg-black/30 rounded-2xl text-sm border border-gray-700/50 hover:border-green-500/30 transition-colors group">
@@ -1184,7 +1200,7 @@ export default function InformacoesPartida() {
                   </div>
 
                   {/* Resumo de Cartões no Painel Admin */}
-                  <div className="bg-gray-800/60 backdrop-blur-md rounded-3xl p-6 border border-gray-700 shadow-xl border-t-orange-500/20">
+                  <div className="bg-gray-800/60 backdrop-blur-md rounded-3xl p-4 sm:p-5 border border-gray-700 shadow-xl border-t-orange-500/20">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-lg font-bold text-orange-400 flex items-center gap-2">
                         <FaIdCard /> Resumo de Cartões
@@ -1199,14 +1215,14 @@ export default function InformacoesPartida() {
                         { label: 'Vermelho', tipo: 'vermelho', field: 'cartoesVermelhos', bg: 'bg-red-500', shadow: 'shadow-red-500/20' },
                         { label: 'Azul', tipo: 'azul', field: 'cartoesAzuis', bg: 'bg-blue-500', shadow: 'shadow-blue-500/20' }
                       ].map(card => (
-                        <div key={card.field} className="text-center bg-black/20 p-3 rounded-2xl border border-gray-700/50 flex flex-col items-center">
-                          <div className={`w-6 h-8 ${card.bg} ${card.shadow} rounded-md mx-auto mb-2 shadow-lg ring-1 ring-white/10`}></div>
+                        <div key={card.field} className="text-center bg-black/20 p-2 sm:p-3 rounded-2xl border border-gray-700/50 flex flex-col items-center">
+                          <div className={`w-5 h-7 ${card.bg} ${card.shadow} rounded-md mx-auto mb-2 shadow-lg ring-1 ring-white/10`}></div>
                           <p className="text-[10px] text-gray-400 font-bold uppercase">{card.label}</p>
-                          <div className="mt-2 space-y-1">
+                          <div className="mt-2 space-y-1 max-h-[100px] overflow-y-auto no-scrollbar w-full" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                             {partidaSelecionada[card.field]?.length > 0 ? 
                               partidaSelecionada[card.field].map((nome, i) => ( // Adicionado i para o key
                                 <div key={i} className="flex justify-between items-center">
-                                <p key={i} className="text-[10px] text-white truncate bg-gray-800/80 px-2 py-1 rounded-lg border border-gray-700/50">{nome}</p>
+                                <p className="text-[10px] text-white truncate bg-gray-800/80 px-1.5 py-0.5 rounded-lg border border-gray-700/50 flex-1 mr-1 text-left">{nome}</p>
                                   <button onClick={() => handleEditarClick(card.tipo, i, nome)} className="text-blue-400 p-1"><FaEdit size={12}/></button>
                                   <button onClick={() => handleRemoverClick(card.tipo, i, nome)} className="text-red-400 p-1"><FaTrash size={12}/></button>
                                 </div>
@@ -1219,7 +1235,7 @@ export default function InformacoesPartida() {
                   </div>
 
                   {/* Card de Acesso Restrito: Apuração (Votação dos Atletas) */}
-                  <div className="bg-gray-800/60 backdrop-blur-md rounded-3xl p-6 border border-gray-700 shadow-xl border-t-amber-500/20">
+                  <div className="bg-gray-800/60 backdrop-blur-md rounded-3xl p-4 sm:p-6 border border-gray-700 shadow-xl border-t-amber-500/20">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-lg font-bold bg-gradient-to-r from-yellow-400 to-amber-600 bg-clip-text text-transparent flex items-center gap-2">
                         <FaLock className="text-amber-500 size-4" /> Votação dos Atletas (Apuração)
@@ -1234,7 +1250,6 @@ export default function InformacoesPartida() {
                       </div>
                     </div>
                     <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                      <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
                       {[
                         { id: 'melhorPartida', label: 'Melhor da Partida', icon: <FaAward className="text-yellow-500" />, winnerIcon: <FaCrown size={8}/>, color: 'text-amber-500', glow: 'shadow-amber-500/20', bg: 'bg-amber-500/10', border: 'border-amber-500', bgWinner: 'bg-amber-500' },
                         { id: 'perebaPartida', label: 'Pereba da Partida', icon: <FaUserTimes className="text-red-500" />, winnerIcon: <FaSkull size={8}/>, color: 'text-red-500', glow: 'shadow-red-500/20', bg: 'bg-red-500/10', border: 'border-red-500', bgWinner: 'bg-red-500' },
@@ -1391,13 +1406,44 @@ export default function InformacoesPartida() {
             <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="bg-gray-800 border border-gray-700 p-6 rounded-3xl max-w-sm w-full">
               <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-white"><FaEdit className="text-blue-400" /> Editar Registro</h3>
               <form onSubmit={confirmarEditar} className="space-y-4">
-                <input 
-                  autoFocus
-                  value={modalEdit.valor}
-                  onChange={(e) => setModalEdit({ ...modalEdit, valor: e.target.value })}
-                  className="w-full bg-gray-900 border border-gray-700 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                  placeholder="Nome do jogador"
-                />
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase ml-1">Nome do Jogador</label>
+                  <input 
+                    autoFocus
+                    value={modalEdit.valor}
+                    onChange={(e) => setModalEdit({ ...modalEdit, valor: e.target.value })}
+                    className="w-full bg-gray-900 border border-gray-700 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 text-white mt-1"
+                    placeholder="Nome do jogador"
+                  />
+                </div>
+
+                {modalEdit.tipo === 'gol-by-name' && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-bold text-gray-500 uppercase ml-1">Time</label>
+                      <select
+                        value={modalEdit.time}
+                        onChange={(e) => setModalEdit({ ...modalEdit, time: e.target.value })}
+                        className="w-full bg-gray-900 border border-gray-700 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 text-white mt-1"
+                      >
+                        <option value="Preto">Preto</option>
+                        <option value="Amarelo">Amarelo</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-gray-500 uppercase ml-1">Gols</label>
+                      <input 
+                        type="number"
+                        min="1"
+                        max="99"
+                        value={modalEdit.quantidade}
+                        onChange={(e) => setModalEdit({ ...modalEdit, quantidade: e.target.value })}
+                        className="w-full bg-gray-900 border border-gray-700 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 text-white mt-1"
+                      />
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex gap-3">
                   <button type="button" onClick={() => setModalEdit({ ...modalEdit, aberto: false })} className="flex-1 py-3 rounded-2xl bg-gray-700 font-bold text-white hover:bg-gray-600 transition-colors">CANCELAR</button>
                   <button type="submit" className="flex-1 py-3 rounded-2xl bg-blue-600 font-bold text-white hover:bg-blue-700 transition-colors">SALVAR</button>
