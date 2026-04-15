@@ -23,9 +23,7 @@ import {
   FaUserTimes,
   FaUser,
   FaCrown,
-  FaEdit,
   FaSkull,
-  FaTimes,
   FaMagic,
   FaExclamationTriangle
 } from 'react-icons/fa';
@@ -59,7 +57,6 @@ export default function InformacoesPartida() {
   const [linkVotacao, setLinkVotacao] = useState('');
   const [linkVotacaoExpireAt, setLinkVotacaoExpireAt] = useState(null);
   const [countdownEventos, setCountdownEventos] = useState('');
-  const [modalEdit, setModalEdit] = useState({ aberto: false, tipo: '', index: null, valor: '', nomeOriginal: '' });
   const [countdownVotacao, setCountdownVotacao] = useState('');
 
   // Modal de confirmação para exclusão de planilha
@@ -224,33 +221,6 @@ export default function InformacoesPartida() {
     }
   };
 
-  const handleEditarClick = (tipo, index, nomeAtual) => {
-    setModalEdit({ aberto: true, tipo, index, valor: nomeAtual, nomeOriginal: nomeAtual });
-  };
-
-  const confirmarEditar = async (e) => {
-    if (e) e.preventDefault(); // Evita o comportamento padrão de submit do formulário
-    const { tipo, index, valor, nomeOriginal } = modalEdit;
-    if (!valor || valor.trim() === '' || valor === nomeOriginal) {
-      return setModalEdit({ ...modalEdit, aberto: false }); // Fecha se não houver mudança ou valor vazio
-    }
-    try {
-      setCarregando(true); // Indica carregamento
-      // Endpoint autenticado para a página admin
-      const res = await api.patch(`/agenda/${partidaSelecionada._id}/evento/${tipo}/${index}`, { novoNome: valor });
-      
-      // Atualiza o estado local com os novos dados da partida
-      setPartidaSelecionada(res.data.data);
-      toast.success("Registro atualizado");
-    } catch (err) {
-      console.error("Erro ao atualizar evento:", err);
-      toast.error(err.response?.data?.message || "Erro ao atualizar registro");
-    } finally {
-      setModalEdit({ ...modalEdit, aberto: false });
-      setCarregando(false);
-    }
-  };
-
   // Função para calcular o vencedor de cada categoria em tempo real
   const getLiderVotacao = (categoriaId) => {
     if (!partidaSelecionada?.votos) return null;
@@ -310,16 +280,15 @@ export default function InformacoesPartida() {
     if (!partidaSelecionada?.gols) return agrupados;
     
     partidaSelecionada.gols.forEach((g) => {
-      // Para edição, precisamos do índice original do gol na lista `partidaSelecionada.gols`
-      // A forma como `getGolsAgrupados` está implementada atualmente agrupa os gols.
-      // Para editar um gol específico, precisaríamos de um identificador único para cada gol.
-      // Como os gols são apenas objetos `{jogador, time}` sem `_id`, a edição será feita no último gol registrado para aquele jogador.
-      const indexAgrupado = agrupados.findIndex(item => item.jogador === g.jogador); // Encontra o jogador já agrupado
+      const indexAgrupado = agrupados.findIndex(item => item.jogador === g.jogador);
       if (indexAgrupado > -1) {
         agrupados[indexAgrupado].total += 1;
       } else {
-        // Adiciona o gol com seu índice original para permitir a edição
-        agrupados.push({ jogador: g.jogador, total: 1, time: g.time, originalIndex: partidaSelecionada.gols.indexOf(g) });
+        agrupados.push({
+          jogador: g.jogador,
+          total: 1,
+          time: g.time
+        });
       }
     });
     return agrupados.sort((a, b) => b.total - a.total);
@@ -329,22 +298,6 @@ export default function InformacoesPartida() {
   const golsPreto = partidaSelecionada?.gols?.filter(g => g.time === 'Preto').length || 0;
   const golsAmarelo = partidaSelecionada?.gols?.filter(g => g.time === 'Amarelo').length || 0;
 
-  // Função para obter o índice original de um gol para edição
-  const getOriginalGoalIndex = (jogador, time) => {
-    if (!partidaSelecionada?.gols) return -1;
-    // Encontra o último gol desse jogador/time para edição
-    for (let i = partidaSelecionada.gols.length - 1; i >= 0; i--) {
-      const g = partidaSelecionada.gols[i];
-      if (g.jogador === jogador && g.time === time) {
-        return i;
-      }
-    }
-    return -1;
-  };
-
-  // Modifica getGolsAgrupados para incluir o índice do último gol para edição
-  // Isso é um workaround, o ideal seria que cada gol tivesse um _id no backend
-  // para edição precisa.
   const atualizarDadosPartida = async () => {
     if (!partidaSelecionada) return;
     try {
@@ -1151,12 +1104,6 @@ export default function InformacoesPartida() {
                               </div>
                               <span className="font-bold text-white">{g.jogador}</span>
                             </div>
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => handleEditarClick('gol', getOriginalGoalIndex(g.jogador, g.time), g.jogador)}
-                                className="p-2 text-blue-400 hover:bg-blue-400/10 rounded-lg transition-all"
-                              ><FaEdit size={16} /></button>
-                            </div>
                             <div className="flex flex-col items-end">
                               <span className="bg-green-500 text-white text-[10px] font-black px-2.5 py-1 rounded-lg shadow-lg shadow-green-500/20 uppercase tracking-tighter">{g.total} {g.total > 1 ? 'GOLS' : 'GOL'}</span>
                               <span className="text-[8px] text-gray-500 font-bold mt-1 uppercase tracking-widest">Time {g.time}</span>
@@ -1190,13 +1137,8 @@ export default function InformacoesPartida() {
                           <p className="text-[10px] text-gray-400 font-bold uppercase">{card.label}</p>
                           <div className="mt-2 space-y-1">
                             {partidaSelecionada[card.field]?.length > 0 ? 
-                              partidaSelecionada[card.field].map((nome, i) => ( // 'i' é o índice do cartão no array
-                                <div key={i} className="flex items-center justify-between">
+                              partidaSelecionada[card.field].map((nome, i) => (
                                 <p key={i} className="text-[10px] text-white truncate bg-gray-800/80 px-2 py-1 rounded-lg border border-gray-700/50">{nome}</p>
-                                <button onClick={() => handleEditarClick(card.tipo, i, nome)} className="text-blue-400 hover:text-blue-300 p-1">
-                                  <FaEdit size={12} />
-                                </button>
-                                </div>
                               )) : <p className="text-[9px] text-gray-600">-</p>
                             }
                           </div>
