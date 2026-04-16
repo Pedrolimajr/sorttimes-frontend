@@ -1469,7 +1469,7 @@ export default function InformacoesPartida() {
                               <span className="flex items-center gap-2">
                                 {cat.icon}
                                 <p className="text-[11px] font-black text-gray-400 uppercase tracking-tight">{cat.label}</p>
-                              </div>
+                              </span>
                               <span className="text-[9px] font-black text-amber-500/80">{totalCat} VOTOS</span>
                             </div>
                             
