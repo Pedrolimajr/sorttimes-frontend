@@ -1751,11 +1751,17 @@ export default function InformacoesPartida() {
                   <label className="text-xs font-bold text-gray-500 uppercase ml-1">Nome do Jogador</label>
                   <input 
                     autoFocus
+                    list="jogadores-partida-datalist"
                     value={modalEdit.valor}
                     onChange={(e) => setModalEdit({ ...modalEdit, valor: e.target.value })}
                     className="w-full bg-gray-900 border border-gray-700 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 text-white mt-1"
                     placeholder="Nome do jogador"
                   />
+                  <datalist id="jogadores-partida-datalist">
+                    {partidaSelecionada?.participantes?.map((p, idx) => (
+                      <option key={idx} value={typeof p === 'string' ? p : p.nome} />
+                    ))}
+                  </datalist>
                 </div>
 
                 {modalEdit.tipo === 'gol-by-name' && (
