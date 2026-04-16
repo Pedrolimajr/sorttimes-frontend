@@ -1073,8 +1073,8 @@ export default function InformacoesPartida() {
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                  <div className="space-y-4">
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+                  <div className="space-y-4 lg:col-span-1">
                     <label className="block text-sm font-medium text-gray-400">Selecionar Jogador (Associado)</label>
                     <select 
                       className="w-full bg-gray-900 border-gray-700 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 text-white"
@@ -1095,7 +1095,7 @@ export default function InformacoesPartida() {
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
-                        className="bg-black/40 p-5 rounded-2xl border border-blue-500/20 flex flex-col sm:flex-row items-center gap-6"
+                        className="lg:col-span-3 bg-black/40 p-5 rounded-2xl border border-blue-500/20 flex flex-col sm:flex-row items-center gap-6"
                       >
                         <div className="relative">
                           {atletaSelecionadoStats.foto ? (
@@ -1113,7 +1113,7 @@ export default function InformacoesPartida() {
                         <div className="flex-1 text-center sm:text-left">
                           <h3 className="text-lg font-black text-white uppercase tracking-tighter mb-4">{atletaSelecionadoStats.nome}</h3>
                           
-                          <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-5">
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-5">
                             <div className="bg-gray-900/60 p-2 rounded-xl border border-gray-700/50 text-center shadow-inner">
                               <span className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">Gols</span>
                               <div className="flex items-center justify-center gap-1">
@@ -1124,6 +1124,10 @@ export default function InformacoesPartida() {
                             <div className="bg-gray-900/60 p-2 rounded-xl border border-gray-700/50 text-center shadow-inner">
                               <span className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1 text-yellow-500/50">Melhor</span>
                               <span className="text-xl font-black text-yellow-500 leading-none">{atletaSelecionadoStats.melhor}🏆</span>
+                            </div>
+                            <div className="bg-gray-900/60 p-2 rounded-xl border border-gray-700/50 text-center shadow-inner">
+                              <span className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1 text-purple-500/50">Golaços</span>
+                              <span className="text-xl font-black text-purple-400 leading-none">{atletaSelecionadoStats.golBonito}✨</span>
                             </div>
                             <div className="bg-gray-900/60 p-2 rounded-xl border border-gray-700/50 text-center shadow-inner">
                               <span className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1 text-red-500/50">Pereba</span>
@@ -1144,15 +1148,11 @@ export default function InformacoesPartida() {
                               <div className="w-2 h-3 bg-blue-500 rounded-[1px] shadow-[0_0_8px_rgba(59,130,246,0.4)]" />
                               <span>Azuis: {atletaSelecionadoStats.azuis}</span>
                             </div>
-                            <div className="flex items-center gap-2 bg-purple-500/5 text-purple-400 border border-purple-500/20 px-2.5 py-1.5 rounded-lg font-black text-[10px] uppercase tracking-tighter">
-                              <FaMagic className="text-purple-400" />
-                              <span>Golaços: {atletaSelecionadoStats.golBonito}</span>
-                            </div>
                           </div>
                         </div>
                       </motion.div>
                     ) : (
-                      <div className="h-40 border-2 border-dashed border-gray-700 rounded-2xl flex flex-col items-center justify-center text-gray-600">
+                      <div className="lg:col-span-3 h-40 border-2 border-dashed border-gray-700 rounded-2xl flex flex-col items-center justify-center text-gray-600">
                         <FaUser size={24} className="mb-2 opacity-20" />
                         <p className="text-xs uppercase font-bold tracking-widest">Nenhum atleta selecionado</p>
                       </div>
@@ -1581,7 +1581,7 @@ export default function InformacoesPartida() {
                       <th className="pb-2 text-left pl-4">Atleta</th>
                       <th className="pb-2">Gols</th>
                       <th className="pb-2">Melhor</th>
-                      <th className="pb-2">Pereba</th>
+                      <th className="pb-2">Golaços</th>
                       <th className="pb-2">Cartões</th>
                     </tr>
                   </thead>
@@ -1608,7 +1608,7 @@ export default function InformacoesPartida() {
                             <span className="text-sm font-black text-yellow-500">🏆 {atleta.melhor}</span>
                           </td>
                           <td className="py-3 text-center border-t border-b border-gray-700">
-                            <span className="text-sm font-black text-red-500">💀 {atleta.pereba}</span>
+                            <span className="text-sm font-black text-purple-400">✨ {atleta.golBonito}</span>
                           </td>
                           <td className="py-3 px-4 rounded-r-2xl border-r border-t border-b border-gray-700 text-center">
                             <div className="flex justify-center gap-2">
