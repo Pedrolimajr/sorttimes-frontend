@@ -1745,7 +1745,7 @@ export default function InformacoesPartida() {
       <AnimatePresence>
         {modalEdit.aberto && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="bg-gray-800 border border-gray-700 p-6 rounded-3xl max-w-sm w-full">
+            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="bg-gray-800 border border-gray-700 p-6 rounded-3xl max-w-xs w-full">
               <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-white"><FaEdit className="text-blue-400" /> Editar Registro</h3>
               <form onSubmit={confirmarEditar} className="space-y-4">
                 <div>
