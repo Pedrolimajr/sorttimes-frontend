@@ -1749,16 +1749,31 @@ export default function InformacoesPartida() {
               <form onSubmit={confirmarEditar} className="space-y-4">
                 <div>
                   <label className="text-xs font-bold text-gray-500 uppercase ml-1">Nome do Jogador</label>
-                  <input 
-                    autoFocus
-                    list="jogadores-partida-datalist"
-                    value={modalEdit.valor}
-                    onChange={(e) => setModalEdit({ ...modalEdit, valor: e.target.value })}
-                    className="w-full bg-gray-900 border border-gray-700 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 text-white mt-1"
-                    placeholder="Nome do jogador"
-                  />
+                  <div className="relative">
+                    <input 
+                      autoFocus
+                      list="jogadores-partida-datalist"
+                      value={modalEdit.valor}
+                      onChange={(e) => setModalEdit({ ...modalEdit, valor: e.target.value })}
+                      className="w-full bg-gray-900 border border-gray-700 p-4 pr-12 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 text-white mt-1"
+                      placeholder="Nome do jogador"
+                    />
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 mt-0.5 text-gray-500 pointer-events-none">
+                      <FaUser />
+                    </div>
+                  </div>
                   <datalist id="jogadores-partida-datalist">
-                    {partidaSelecionada?.participantes?.filter(p => p.nivel === 'Associado').map((p, idx) => (
+                    {(partidaSelecionada?.participantes?.length > 0 
+                      ? partidaSelecionada.participantes 
+                      : jogadores
+                    )
+                    .filter(p => {
+                      if (!p) return false;
+                      const nivel = p.nivel || 'Associado';
+                      const nome = p.nome || (typeof p === 'string' ? p : '');
+                      return nivel === 'Associado' && !['convidado', 'visitante', 'teste'].some(t => nome.toLowerCase().includes(t));
+                    })
+                    .map((p, idx) => (
                       <option key={idx} value={typeof p === 'string' ? p : p.nome} />
                     ))}
                   </datalist>
