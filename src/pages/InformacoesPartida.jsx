@@ -1295,7 +1295,7 @@ export default function InformacoesPartida() {
                         disabled={!partidaSelecionada || carregando}
                         className="flex-1 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50 text-xs"
                       >
-                        <FaLink /> Link de Eventos (Gols e Cartões)
+                        <FaFutbol className="animate-bounce" /> Link de Eventos (Gols e Cartões)
                       </button>
                       <button
                         onClick={() => gerarLinkPublicoPartida('votacao')}
@@ -1758,7 +1758,7 @@ export default function InformacoesPartida() {
                     placeholder="Nome do jogador"
                   />
                   <datalist id="jogadores-partida-datalist">
-                    {partidaSelecionada?.participantes?.map((p, idx) => (
+                    {partidaSelecionada?.participantes?.filter(p => p.nivel === 'Associado').map((p, idx) => (
                       <option key={idx} value={typeof p === 'string' ? p : p.nome} />
                     ))}
                   </datalist>
