@@ -1643,7 +1643,7 @@ export default function InformacoesPartida() {
       <AnimatePresence>
         {modalConfirm.aberto && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-gray-800 border border-gray-700 p-6 rounded-3xl max-w-sm w-full text-center">
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-gray-800 border border-gray-700 p-5 rounded-3xl max-w-[280px] w-full text-center">
               <div className="w-16 h-16 bg-red-500/20 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <FaExclamationTriangle size={30} />
               </div>
@@ -1745,7 +1745,7 @@ export default function InformacoesPartida() {
       <AnimatePresence>
         {modalEdit.aberto && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="bg-gray-800 border border-gray-700 p-6 rounded-3xl max-w-xs w-full">
+            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="bg-gray-800 border border-gray-700 p-5 rounded-3xl max-w-[280px] w-full relative">
               <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-white"><FaEdit className="text-blue-400" /> Editar Registro</h3>
               <form onSubmit={confirmarEditar} className="space-y-4">
                 <div>
@@ -1775,54 +1775,53 @@ export default function InformacoesPartida() {
                     >
                       <FaUser />
                     </button>
-                  </div>
+                    <AnimatePresence>
+                      {mostrarSugestoesEdit && (
+                        <motion.div 
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="absolute z-50 w-full left-0 top-full mt-1 bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl max-h-48 overflow-y-auto custom-scrollbar"
+                        >
+                          {(() => {
+                            const lista = jogadores
+                            .filter(p => {
+                              if (!p) return false;
+                              const nome = (p.nome || '').toLowerCase();
+                              const isAssociado = p.nivel === 'Associado';
+                              const isAtivo = p.ativo !== false;
+                              const matchesSearch = nome.includes((modalEdit.valor || '').toLowerCase());
+                              const isPlaceholder = ['convidado', 'visitante', 'teste', 'outro'].some(t => nome.includes(t));
+                              return isAssociado && isAtivo && !isPlaceholder && matchesSearch;
+                            })
+                            .sort((a, b) => a.nome.localeCompare(b.nome));
 
-                  <AnimatePresence>
+                            if (lista.length === 0) return <div className="p-4 text-center text-gray-500 text-xs italic">Nenhum associado encontrado</div>;
+
+                            return lista.map((p, idx) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => {
+                                  setModalEdit({ ...modalEdit, valor: p.nome });
+                                  setMostrarSugestoesEdit(false);
+                                }}
+                                className="w-full text-left p-3 hover:bg-blue-600/20 hover:text-blue-400 text-gray-300 text-sm border-b border-gray-800 last:border-0 transition-colors flex items-center gap-2"
+                              >
+                                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                                {p.nome}
+                              </button>
+                            ));
+                          })()}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    {/* Overlay para fechar ao clicar fora */}
                     {mostrarSugestoesEdit && (
-                      <motion.div 
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="absolute z-50 w-full mt-1 bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl max-h-48 overflow-y-auto custom-scrollbar"
-                      >
-                        {(() => {
-                          const lista = jogadores
-                          .filter(p => {
-                            if (!p) return false;
-                            const nome = (p.nome || '').toLowerCase();
-                            const isAssociado = p.nivel === 'Associado';
-                            const isAtivo = p.ativo !== false;
-                            const matchesSearch = nome.includes((modalEdit.valor || '').toLowerCase());
-                            const isPlaceholder = ['convidado', 'visitante', 'teste', 'outro'].some(t => nome.includes(t));
-                            return isAssociado && isAtivo && !isPlaceholder && matchesSearch;
-                          })
-                          .sort((a, b) => a.nome.localeCompare(b.nome));
-
-                          if (lista.length === 0) return <div className="p-4 text-center text-gray-500 text-xs italic">Nenhum associado encontrado</div>;
-
-                          return lista.map((p, idx) => (
-                            <button
-                              key={idx}
-                              type="button"
-                              onClick={() => {
-                                setModalEdit({ ...modalEdit, valor: p.nome });
-                                setMostrarSugestoesEdit(false);
-                              }}
-                              className="w-full text-left p-3 hover:bg-blue-600/20 hover:text-blue-400 text-gray-300 text-sm border-b border-gray-800 last:border-0 transition-colors flex items-center gap-2"
-                            >
-                              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                              {p.nome}
-                            </button>
-                          ));
-                        })()}
-                      </motion.div>
+                      <div className="fixed inset-0 z-40" onClick={() => setMostrarSugestoesEdit(false)} />
                     )}
-                  </AnimatePresence>
-
-                  {/* Overlay para fechar ao clicar fora */}
-                  {mostrarSugestoesEdit && (
-                    <div className="fixed inset-0 z-40" onClick={() => setMostrarSugestoesEdit(false)} />
-                  )}
+                  </div>
                 </div>
 
                 {modalEdit.tipo === 'gol-by-name' && (
