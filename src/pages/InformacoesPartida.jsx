@@ -351,12 +351,29 @@ export default function InformacoesPartida() {
       p.cartoesVermelhos?.forEach(nome => { if(stats[nome]) stats[nome].vermelhos++; });
       p.cartoesAzuis?.forEach(nome => { if(stats[nome]) stats[nome].azuis++; });
       
-      // Integração com votos
-      p.votos?.forEach(v => {
-        if(stats[v.jogador]) {
-          if(v.categoria === 'melhorPartida') stats[v.jogador].melhor++;
-          if(v.categoria === 'perebaPartida') stats[v.jogador].pereba++;
-          if(v.categoria === 'golMaisBonito') stats[v.jogador].golBonito++;
+      // Integração com votos: Contabiliza apenas se foi o vencedor isolado da partida
+      const categoriasVotos = [
+        { id: 'melhorPartida', statKey: 'melhor' },
+        { id: 'perebaPartida', statKey: 'pereba' },
+        { id: 'golMaisBonito', statKey: 'golBonito' }
+      ];
+
+      categoriasVotos.forEach(cat => {
+        const votosCat = p.votos?.filter(v => v.categoria === cat.id) || [];
+        if (votosCat.length === 0) return;
+
+        const contagem = votosCat.reduce((acc, v) => {
+          acc[v.jogador] = (acc[v.jogador] || 0) + 1;
+          return acc;
+        }, {});
+
+        const ordenado = Object.entries(contagem).sort((a, b) => b[1] - a[1]);
+        const [vencedor, votosVencedor] = ordenado[0];
+        const empate = ordenado.length > 1 && ordenado[1][1] === votosVencedor;
+
+        // Só incrementa 1 ponto no ranking se não houver empate no primeiro lugar
+        if (!empate && stats[vencedor]) {
+          stats[vencedor][cat.statKey]++;
         }
       });
     });
