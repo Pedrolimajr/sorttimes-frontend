@@ -381,6 +381,47 @@ export default function InformacoesPartida() {
     return stats;
   };
 
+  // Função para capturar uma div específica e compartilhar como imagem (Print)
+  const compartilharCaptura = async (idElemento, nomeArquivo) => {
+    try {
+      const { toPng } = await import('html-to-image');
+      const elemento = document.getElementById(idElemento);
+      if (!elemento) return;
+
+      const dataUrl = await toPng(elemento, {
+        backgroundColor: '#111827', // Fundo escuro padrão
+        cacheBust: true,
+        filter: (node) => {
+          // Filtra elementos com a classe 'no-export' para não aparecerem no print
+          return node.classList ? !node.classList.contains('no-export') : true;
+        },
+        style: {
+          padding: '10px',
+          borderRadius: '24px',
+        }
+      });
+
+      const blob = await (await fetch(dataUrl)).blob();
+      const file = new File([blob], `${nomeArquivo}.png`, { type: 'image/png' });
+
+      if (navigator.share && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: 'Resultados - SortTimes',
+        });
+      } else {
+        const link = document.createElement('a');
+        link.download = `${nomeArquivo}.png`;
+        link.href = dataUrl;
+        link.click();
+        toast.info("Imagem baixada com sucesso!");
+      }
+    } catch (error) {
+      console.error('Erro ao capturar imagem:', error);
+      toast.error('Erro ao gerar imagem para compartilhar');
+    }
+  };
+
   const estatisticasAtletas = calcularEstatisticasGlobais();
   const atletaSelecionadoStats = atletaParaStats ? estatisticasAtletas[atletaParaStats] : null;
 
@@ -1464,13 +1505,22 @@ export default function InformacoesPartida() {
                         const lider = getLiderVotacao(cat.id);
 
                         return (
-                          <div key={cat.id} className="bg-black/30 p-4 rounded-2xl border border-gray-700/50 shadow-inner overflow-hidden">
+                          <div key={cat.id} id={`apuracao-${cat.id}`} className="bg-black/30 p-4 rounded-2xl border border-gray-700/50 shadow-inner overflow-hidden">
                             <div className="flex justify-between items-center mb-2">
                               <span className="flex items-center gap-2">
                                 {cat.icon}
                                 <p className="text-[11px] font-black text-gray-400 uppercase tracking-tight">{cat.label}</p>
                               </span>
-                              <span className="text-[9px] font-black text-amber-500/80">{totalCat} VOTOS</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[9px] font-black text-amber-500/80">{totalCat} VOTOS</span>
+                                <button 
+                                  onClick={() => compartilharCaptura(`apuracao-${cat.id}`, `resultado-${cat.id}`)} 
+                                  className="no-export text-gray-500 hover:text-white transition-colors p-1" 
+                                  title="Compartilhar Print"
+                                >
+                                  <FaFileImage size={12} />
+                                </button>
+                              </div>
                             </div>
                             
                             {/* Exibe o líder com foto no topo da categoria APENAS se houver um vencedor único (sem empate) */}
@@ -1526,12 +1576,16 @@ export default function InformacoesPartida() {
                     </div>
                   </div>
 
-                  <div className="bg-gray-800/60 backdrop-blur-md rounded-3xl p-6 border border-gray-700 shadow-xl border-t-yellow-500/20">
+                  <div id="secao-premiacoes" className="bg-gray-800/60 backdrop-blur-md rounded-3xl p-6 border border-gray-700 shadow-xl border-t-yellow-500/20">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-lg font-bold text-yellow-400 flex items-center gap-2">
                         <FaTrophy /> Premiações da Partida
                       </h3>
-                      <button onClick={compartilharDestaques} className="p-2 text-yellow-400 hover:bg-yellow-400/10 rounded-lg transition-all" title="Compartilhar Destaques">
+                      <button 
+                        onClick={() => compartilharCaptura('secao-premiacoes', 'premiacoes-partida')} 
+                        className="no-export p-2 text-yellow-400 hover:bg-yellow-400/10 rounded-lg transition-all" 
+                        title="Compartilhar Print das Premiações"
+                      >
                         <FaShareAlt size={16} />
                       </button>
                     </div>
