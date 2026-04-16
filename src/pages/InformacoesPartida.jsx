@@ -1090,8 +1090,8 @@ export default function InformacoesPartida() {
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
-                  <div className="space-y-4 lg:col-span-1">
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
+                  <div className="space-y-4 lg:col-span-2">
                     <label className="block text-sm font-medium text-gray-400">Selecionar Jogador (Associado)</label>
                     <select 
                       className="w-full bg-gray-900 border-gray-700 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 text-white"
@@ -1112,7 +1112,7 @@ export default function InformacoesPartida() {
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
-                        className="lg:col-span-3 bg-black/40 p-5 rounded-2xl border border-blue-500/20 flex flex-col sm:flex-row items-center gap-6"
+                        className="lg:col-span-3 bg-black/40 p-5 rounded-2xl border border-blue-500/20 flex flex-col sm:flex-row items-center gap-4 sm:gap-6"
                       >
                         <div className="relative">
                           {atletaSelecionadoStats.foto ? (
@@ -1130,46 +1130,42 @@ export default function InformacoesPartida() {
                         <div className="flex-1 text-center sm:text-left">
                           <h3 className="text-lg font-black text-white uppercase tracking-tighter mb-4">{atletaSelecionadoStats.nome}</h3>
                           
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-5">
-                            <div className="bg-gray-900/60 p-2 rounded-xl border border-gray-700/50 text-center shadow-inner">
-                              <span className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">Gols</span>
-                              <div className="flex items-center justify-center gap-1">
-                                <span className="text-xl font-black text-white">{atletaSelecionadoStats.gols}</span>
-                                <FaFutbol className="text-green-400 text-xs" />
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-5">
+                            {[
+                              { label: 'Gols', value: atletaSelecionadoStats.gols, icon: <FaFutbol className="text-green-400" />, color: 'text-white' },
+                              { label: 'Melhor', value: atletaSelecionadoStats.melhor, icon: '🏆', color: 'text-yellow-500' },
+                              { label: 'Golaços', value: atletaSelecionadoStats.golBonito, icon: '✨', color: 'text-purple-400' },
+                              { label: 'Pereba', value: atletaSelecionadoStats.pereba, icon: '💀', color: 'text-red-500' }
+                            ].map((item, idx) => (
+                              <div key={idx} className="bg-gray-900/80 p-2 rounded-xl border border-gray-700/50 text-center shadow-inner group hover:border-blue-500/30 transition-all">
+                                <span className="block text-[8px] text-gray-500 font-black uppercase tracking-widest mb-1">{item.label}</span>
+                                <div className="flex items-center justify-center gap-1">
+                                  <span className={`text-lg font-black ${item.color}`}>{item.value}</span>
+                                  <span className="text-xs opacity-80">{item.icon}</span>
+                                </div>
                               </div>
-                            </div>
-                            <div className="bg-gray-900/60 p-2 rounded-xl border border-gray-700/50 text-center shadow-inner">
-                              <span className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1 text-yellow-500/50">Melhor</span>
-                              <span className="text-xl font-black text-yellow-500 leading-none">{atletaSelecionadoStats.melhor}🏆</span>
-                            </div>
-                            <div className="bg-gray-900/60 p-2 rounded-xl border border-gray-700/50 text-center shadow-inner">
-                              <span className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1 text-purple-500/50">Golaços</span>
-                              <span className="text-xl font-black text-purple-400 leading-none">{atletaSelecionadoStats.golBonito}✨</span>
-                            </div>
-                            <div className="bg-gray-900/60 p-2 rounded-xl border border-gray-700/50 text-center shadow-inner">
-                              <span className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1 text-red-500/50">Pereba</span>
-                              <span className="text-xl font-black text-red-500 leading-none">{atletaSelecionadoStats.pereba}💀</span>
-                            </div>
+                            ))}
                           </div>
 
-                          <div className="flex flex-wrap justify-center sm:justify-start gap-2.5">
-                            <div className="flex items-center gap-2 bg-yellow-400/5 text-yellow-400 border border-yellow-400/20 px-2.5 py-1.5 rounded-lg font-black text-[10px] uppercase tracking-tighter">
-                              <div className="w-2 h-3 bg-yellow-400 rounded-[1px] shadow-[0_0_8px_rgba(250,204,21,0.4)]" />
-                              <span>Amarelos: {atletaSelecionadoStats.amarelos}</span>
-                            </div>
-                            <div className="flex items-center gap-2 bg-red-500/5 text-red-500 border border-red-500/20 px-2.5 py-1.5 rounded-lg font-black text-[10px] uppercase tracking-tighter">
-                              <div className="w-2 h-3 bg-red-500 rounded-[1px] shadow-[0_0_8px_rgba(239,68,68,0.4)]" />
-                              <span>Vermelhos: {atletaSelecionadoStats.vermelhos}</span>
-                            </div>
-                            <div className="flex items-center gap-2 bg-blue-500/5 text-blue-400 border border-blue-500/20 px-2.5 py-1.5 rounded-lg font-black text-[10px] uppercase tracking-tighter">
-                              <div className="w-2 h-3 bg-blue-500 rounded-[1px] shadow-[0_0_8px_rgba(59,130,246,0.4)]" />
-                              <span>Azuis: {atletaSelecionadoStats.azuis}</span>
-                            </div>
+                          <div className="flex flex-wrap justify-center sm:justify-start gap-3">
+                            {[
+                              { label: 'Amarelos', value: atletaSelecionadoStats.amarelos, color: 'bg-yellow-400', glow: 'shadow-[0_0_10px_rgba(250,204,21,0.4)]' },
+                              { label: 'Vermelhos', value: atletaSelecionadoStats.vermelhos, color: 'bg-red-500', glow: 'shadow-[0_0_10px_rgba(239,68,68,0.4)]' },
+                              { label: 'Azuis', value: atletaSelecionadoStats.azuis, color: 'bg-blue-500', glow: 'shadow-[0_0_10px_rgba(59,130,246,0.4)]' }
+                            ].map((card, idx) => (
+                              <div key={idx} className="flex items-center gap-2 bg-gray-900/60 border border-gray-700/50 pl-1.5 pr-3 py-1 rounded-xl group hover:border-gray-600 transition-colors">
+                                <div className={`w-3 h-5 ${card.color} rounded-[2px] ${card.glow}`} />
+                                <div className="flex flex-col items-start">
+                                  <span className="text-[7px] text-gray-500 font-black uppercase leading-none mb-0.5">{card.label}</span>
+                                  <span className="text-xs font-black text-white leading-none">{card.value}</span>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         </div>
                       </motion.div>
                     ) : (
-                      <div className="lg:col-span-3 h-40 border-2 border-dashed border-gray-700 rounded-2xl flex flex-col items-center justify-center text-gray-600">
+                      <div className="lg:col-span-3 h-40 border-2 border-dashed border-gray-700 rounded-2xl flex flex-col items-center justify-center text-gray-600 w-full">
                         <FaUser size={24} className="mb-2 opacity-20" />
                         <p className="text-xs uppercase font-bold tracking-widest">Nenhum atleta selecionado</p>
                       </div>
