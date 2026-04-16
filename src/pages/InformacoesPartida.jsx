@@ -1786,22 +1786,17 @@ export default function InformacoesPartida() {
                         className="absolute z-50 w-full mt-1 bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl max-h-48 overflow-y-auto custom-scrollbar"
                       >
                         {(() => {
-                          const lista = (partidaSelecionada?.participantes?.length > 0
-                            ? partidaSelecionada.participantes.map(p => {
-                                if (typeof p === 'string') return jogadores.find(j => String(j._id) === String(p)) || { nome: p, nivel: 'Associado' };
-                                return p;
-                              })
-                            : jogadores
-                          )
+                          const lista = jogadores
                           .filter(p => {
                             if (!p) return false;
-                            const nome = (p.nome || (typeof p === 'string' ? p : '')).toLowerCase();
-                            const nivel = p.nivel;
-                            const matchesSearch = nome.includes(modalEdit.valor.toLowerCase());
-                            const isAssociado = nivel === 'Associado';
+                            const nome = (p.nome || '').toLowerCase();
+                            const isAssociado = p.nivel === 'Associado';
+                            const isAtivo = p.ativo !== false;
+                            const matchesSearch = nome.includes((modalEdit.valor || '').toLowerCase());
                             const isPlaceholder = ['convidado', 'visitante', 'teste', 'outro'].some(t => nome.includes(t));
-                            return isAssociado && !isPlaceholder && matchesSearch;
-                          });
+                            return isAssociado && isAtivo && !isPlaceholder && matchesSearch;
+                          })
+                          .sort((a, b) => a.nome.localeCompare(b.nome));
 
                           if (lista.length === 0) return <div className="p-4 text-center text-gray-500 text-xs italic">Nenhum associado encontrado</div>;
 
