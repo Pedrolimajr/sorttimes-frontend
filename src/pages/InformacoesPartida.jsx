@@ -1586,7 +1586,7 @@ export default function InformacoesPartida() {
                         className="no-export p-2 text-yellow-400 hover:bg-yellow-400/10 rounded-lg transition-all" 
                         title="Compartilhar Print das Premiações"
                       >
-                        <FaShareAlt size={16} />
+                        <FaFileImage size={16} />
                       </button>
                     </div>
                     <div className="space-y-3">
