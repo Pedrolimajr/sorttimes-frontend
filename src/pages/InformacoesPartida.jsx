@@ -1122,11 +1122,11 @@ export default function InformacoesPartida() {
                               </div>
                             </div>
                             <div className="bg-gray-900/60 p-2 rounded-xl border border-gray-700/50 text-center shadow-inner">
-                              <span className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1 text-yellow-500/50">Lider</span>
+                              <span className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1 text-yellow-500/50">Melhor</span>
                               <span className="text-xl font-black text-yellow-500 leading-none">{atletaSelecionadoStats.melhor}🏆</span>
                             </div>
                             <div className="bg-gray-900/60 p-2 rounded-xl border border-gray-700/50 text-center shadow-inner">
-                              <span className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1 text-red-500/50">Zica</span>
+                              <span className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1 text-red-500/50">Pereba</span>
                               <span className="text-xl font-black text-red-500 leading-none">{atletaSelecionadoStats.pereba}💀</span>
                             </div>
                           </div>
