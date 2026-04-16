@@ -1750,28 +1750,39 @@ export default function InformacoesPartida() {
                 <div>
                   <label className="text-xs font-bold text-gray-500 uppercase ml-1">Nome do Jogador</label>
                   <div className="relative">
+                    <style>{`
+                      #modal-edit-input::-webkit-calendar-picker-indicator {
+                        display: none !important;
+                      }
+                    `}</style>
                     <input 
+                      id="modal-edit-input"
                       autoFocus
                       list="jogadores-partida-datalist"
                       value={modalEdit.valor}
                       onChange={(e) => setModalEdit({ ...modalEdit, valor: e.target.value })}
-                      className="w-full bg-gray-900 border border-gray-700 p-4 pr-12 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 text-white mt-1"
+                      className="w-full bg-gray-900 border border-gray-700 p-4 pr-12 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 text-white mt-1 appearance-none"
                       placeholder="Nome do jogador"
                     />
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 mt-0.5 text-gray-500 pointer-events-none">
+                    <div className="absolute right-5 top-1/2 -translate-y-1/2 mt-0.5 text-gray-500 pointer-events-none">
                       <FaUser />
                     </div>
                   </div>
                   <datalist id="jogadores-partida-datalist">
-                    {(partidaSelecionada?.participantes?.length > 0 
-                      ? partidaSelecionada.participantes 
+                    {/* Task 1: Prioriza a lista do sorteio vinculado, convertendo IDs em objetos para pegar o nome correto */}
+                    {(partidaSelecionada?.participantes?.length > 0
+                      ? partidaSelecionada.participantes.map(p => {
+                          if (typeof p === 'string') return jogadores.find(j => j._id === p) || { nome: p, nivel: 'Associado' };
+                          return p;
+                        })
                       : jogadores
                     )
+                    /* Task 2: Oculta CONVIDADOS e termos de teste */
                     .filter(p => {
                       if (!p) return false;
-                      const nivel = p.nivel || 'Associado';
-                      const nome = p.nome || (typeof p === 'string' ? p : '');
-                      return nivel === 'Associado' && !['convidado', 'visitante', 'teste'].some(t => nome.toLowerCase().includes(t));
+                      const nivel = p.nivel;
+                      const nome = p.nome || '';
+                      return nivel === 'Associado' && !['convidado', 'visitante', 'teste', 'outro'].some(t => nome.toLowerCase().includes(t));
                     })
                     .map((p, idx) => (
                       <option key={idx} value={typeof p === 'string' ? p : p.nome} />
