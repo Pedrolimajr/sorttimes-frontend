@@ -50,6 +50,7 @@ export default function InformacoesPartida() {
   const [modalConfirm, setModalConfirm] = useState({ aberto: false, tipo: '', index: null, titulo: '', msg: '' });
   const [modalEdit, setModalEdit] = useState({ aberto: false, tipo: '', index: null, valor: '', nomeOriginal: '', time: 'Preto', quantidade: 1 });
   const [tabela, setTabela] = useState([['Cabeçalho', 'Valor'], ['', '']]);
+  const [mostrarSugestoesEdit, setMostrarSugestoesEdit] = useState(false);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState(null);
 
@@ -1758,36 +1759,75 @@ export default function InformacoesPartida() {
                     <input 
                       id="modal-edit-input"
                       autoFocus
-                      list="jogadores-partida-datalist"
                       value={modalEdit.valor}
-                      onChange={(e) => setModalEdit({ ...modalEdit, valor: e.target.value })}
-                      className="w-full bg-gray-900 border border-gray-700 p-4 pr-12 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 text-white mt-1 appearance-none"
+                      onChange={(e) => {
+                        setModalEdit({ ...modalEdit, valor: e.target.value });
+                        setMostrarSugestoesEdit(true);
+                      }}
+                      onFocus={() => setMostrarSugestoesEdit(true)}
+                      className="w-full bg-gray-900 border border-gray-700 p-4 pr-12 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 text-white mt-1 appearance-none transition-all"
                       placeholder="Nome do jogador"
                     />
-                    <div className="absolute right-5 top-1/2 -translate-y-1/2 mt-0.5 text-gray-500 pointer-events-none">
+                    <button 
+                      type="button"
+                      onClick={() => setMostrarSugestoesEdit(!mostrarSugestoesEdit)}
+                      className="absolute right-5 top-1/2 -translate-y-1/2 mt-0.5 text-gray-500 hover:text-blue-400 transition-colors"
+                    >
                       <FaUser />
-                    </div>
+                    </button>
                   </div>
-                  <datalist id="jogadores-partida-datalist">
-                    {/* Task 1: Prioriza a lista do sorteio vinculado, convertendo IDs em objetos para pegar o nome correto */}
-                    {(partidaSelecionada?.participantes?.length > 0
-                      ? partidaSelecionada.participantes.map(p => {
-                          if (typeof p === 'string') return jogadores.find(j => j._id === p) || { nome: p, nivel: 'Associado' };
-                          return p;
-                        })
-                      : jogadores
-                    )
-                    /* Task 2: Oculta CONVIDADOS e termos de teste */
-                    .filter(p => {
-                      if (!p) return false;
-                      const nivel = p.nivel;
-                      const nome = p.nome || '';
-                      return nivel === 'Associado' && !['convidado', 'visitante', 'teste', 'outro'].some(t => nome.toLowerCase().includes(t));
-                    })
-                    .map((p, idx) => (
-                      <option key={idx} value={typeof p === 'string' ? p : p.nome} />
-                    ))}
-                  </datalist>
+
+                  <AnimatePresence>
+                    {mostrarSugestoesEdit && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="absolute z-50 w-full mt-1 bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl max-h-48 overflow-y-auto custom-scrollbar"
+                      >
+                        {(() => {
+                          const lista = (partidaSelecionada?.participantes?.length > 0
+                            ? partidaSelecionada.participantes.map(p => {
+                                if (typeof p === 'string') return jogadores.find(j => String(j._id) === String(p)) || { nome: p, nivel: 'Associado' };
+                                return p;
+                              })
+                            : jogadores
+                          )
+                          .filter(p => {
+                            if (!p) return false;
+                            const nome = (p.nome || (typeof p === 'string' ? p : '')).toLowerCase();
+                            const nivel = p.nivel;
+                            const matchesSearch = nome.includes(modalEdit.valor.toLowerCase());
+                            const isAssociado = nivel === 'Associado';
+                            const isPlaceholder = ['convidado', 'visitante', 'teste', 'outro'].some(t => nome.includes(t));
+                            return isAssociado && !isPlaceholder && matchesSearch;
+                          });
+
+                          if (lista.length === 0) return <div className="p-4 text-center text-gray-500 text-xs italic">Nenhum associado encontrado</div>;
+
+                          return lista.map((p, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => {
+                                setModalEdit({ ...modalEdit, valor: p.nome });
+                                setMostrarSugestoesEdit(false);
+                              }}
+                              className="w-full text-left p-3 hover:bg-blue-600/20 hover:text-blue-400 text-gray-300 text-sm border-b border-gray-800 last:border-0 transition-colors flex items-center gap-2"
+                            >
+                              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                              {p.nome}
+                            </button>
+                          ));
+                        })()}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Overlay para fechar ao clicar fora */}
+                  {mostrarSugestoesEdit && (
+                    <div className="fixed inset-0 z-40" onClick={() => setMostrarSugestoesEdit(false)} />
+                  )}
                 </div>
 
                 {modalEdit.tipo === 'gol-by-name' && (
