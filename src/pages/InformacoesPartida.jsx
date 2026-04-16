@@ -1473,9 +1473,9 @@ export default function InformacoesPartida() {
                               <span className="text-[9px] font-black text-amber-500/80">{totalCat} VOTOS</span>
                             </div>
                             
-                            {/* Exibe o líder com foto no topo da categoria se houver votos */}
-                            {lider && (
-                              <div className={`flex items-center gap-3 mb-3 ${lider.empate ? 'bg-gray-800/50' : cat.bg} p-2.5 rounded-2xl border border-${cat.color.split('-')[1]}/20`}>
+                            {/* Exibe o líder com foto no topo da categoria APENAS se houver um vencedor único (sem empate) */}
+                            {lider && !lider.empate && (
+                              <div className={`flex items-center gap-3 mb-3 ${cat.bg} p-2.5 rounded-2xl border border-${cat.color.split('-')[1]}/20`}>
                                 <div className="relative">
                                   {getFotoJogador(lider.nome) ? (
                                     <img src={getFotoJogador(lider.nome)} className={`w-10 h-10 rounded-full object-cover border-2 ${cat.border} shadow-lg ${cat.glow}`} alt="" />
