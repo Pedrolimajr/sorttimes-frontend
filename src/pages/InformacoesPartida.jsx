@@ -1466,7 +1466,7 @@ export default function InformacoesPartida() {
                         return (
                           <div key={cat.id} className="bg-black/30 p-4 rounded-2xl border border-gray-700/50 shadow-inner overflow-hidden">
                             <div className="flex justify-between items-center mb-2">
-                              <div className="flex items-center gap-2">
+                              <span className="flex items-center gap-2">
                                 {cat.icon}
                                 <p className="text-[11px] font-black text-gray-400 uppercase tracking-tight">{cat.label}</p>
                               </div>
