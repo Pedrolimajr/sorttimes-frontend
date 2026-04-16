@@ -1113,34 +1113,41 @@ export default function InformacoesPartida() {
                         <div className="flex-1 text-center sm:text-left">
                           <h3 className="text-lg font-black text-white uppercase tracking-tighter mb-4">{atletaSelecionadoStats.nome}</h3>
                           
-                          <div className="grid grid-cols-3 gap-3 mb-4">
-                            <div className="bg-gray-800/50 p-2 rounded-xl border border-gray-700 text-center">
-                              <span className="block text-[10px] text-gray-500 font-bold uppercase">Gols</span>
-                              <span className="text-lg font-black text-green-400">⚽ {atletaSelecionadoStats.gols}</span>
+                          <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-5">
+                            <div className="bg-gray-900/60 p-2 rounded-xl border border-gray-700/50 text-center shadow-inner">
+                              <span className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">Gols</span>
+                              <div className="flex items-center justify-center gap-1">
+                                <span className="text-xl font-black text-white">{atletaSelecionadoStats.gols}</span>
+                                <FaFutbol className="text-green-400 text-xs" />
+                              </div>
                             </div>
-                            <div className="bg-gray-800/50 p-2 rounded-xl border border-gray-700 text-center">
-                              <span className="block text-[10px] text-gray-500 font-bold uppercase">Melhor</span>
-                              <span className="text-lg font-black text-yellow-500">🏆 {atletaSelecionadoStats.melhor}</span>
+                            <div className="bg-gray-900/60 p-2 rounded-xl border border-gray-700/50 text-center shadow-inner">
+                              <span className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1 text-yellow-500/50">Lider</span>
+                              <span className="text-xl font-black text-yellow-500 leading-none">{atletaSelecionadoStats.melhor}🏆</span>
                             </div>
-                            <div className="bg-gray-800/50 p-2 rounded-xl border border-gray-700 text-center">
-                              <span className="block text-[10px] text-gray-500 font-bold uppercase">Pereba</span>
-                              <span className="text-lg font-black text-red-500">💀 {atletaSelecionadoStats.pereba}</span>
+                            <div className="bg-gray-900/60 p-2 rounded-xl border border-gray-700/50 text-center shadow-inner">
+                              <span className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1 text-red-500/50">Zica</span>
+                              <span className="text-xl font-black text-red-500 leading-none">{atletaSelecionadoStats.pereba}💀</span>
                             </div>
                           </div>
 
-                          <div className="flex flex-wrap justify-center sm:justify-start gap-2">
-                            <span className="bg-yellow-400/10 text-yellow-400 border border-yellow-400/20 text-[10px] px-2 py-1 rounded-lg font-bold">
-                              🟨 Amarelos: {atletaSelecionadoStats.amarelos}
-                            </span>
-                            <span className="bg-red-500/10 text-red-500 border border-red-500/20 text-[10px] px-2 py-1 rounded-lg font-bold">
-                              🟥 Vermelhos: {atletaSelecionadoStats.vermelhos}
-                            </span>
-                            <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] px-2 py-1 rounded-lg font-bold">
-                              🟦 Azuis: {atletaSelecionadoStats.azuis}
-                            </span>
-                            <span className="bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] px-2 py-1 rounded-lg font-bold">
-                              ✨ Golaços: {atletaSelecionadoStats.golBonito}
-                            </span>
+                          <div className="flex flex-wrap justify-center sm:justify-start gap-2.5">
+                            <div className="flex items-center gap-2 bg-yellow-400/5 text-yellow-400 border border-yellow-400/20 px-2.5 py-1.5 rounded-lg font-black text-[10px] uppercase tracking-tighter">
+                              <div className="w-2 h-3 bg-yellow-400 rounded-[1px] shadow-[0_0_8px_rgba(250,204,21,0.4)]" />
+                              <span>Amarelos: {atletaSelecionadoStats.amarelos}</span>
+                            </div>
+                            <div className="flex items-center gap-2 bg-red-500/5 text-red-500 border border-red-500/20 px-2.5 py-1.5 rounded-lg font-black text-[10px] uppercase tracking-tighter">
+                              <div className="w-2 h-3 bg-red-500 rounded-[1px] shadow-[0_0_8px_rgba(239,68,68,0.4)]" />
+                              <span>Vermelhos: {atletaSelecionadoStats.vermelhos}</span>
+                            </div>
+                            <div className="flex items-center gap-2 bg-blue-500/5 text-blue-400 border border-blue-500/20 px-2.5 py-1.5 rounded-lg font-black text-[10px] uppercase tracking-tighter">
+                              <div className="w-2 h-3 bg-blue-500 rounded-[1px] shadow-[0_0_8px_rgba(59,130,246,0.4)]" />
+                              <span>Azuis: {atletaSelecionadoStats.azuis}</span>
+                            </div>
+                            <div className="flex items-center gap-2 bg-purple-500/5 text-purple-400 border border-purple-500/20 px-2.5 py-1.5 rounded-lg font-black text-[10px] uppercase tracking-tighter">
+                              <FaMagic className="text-purple-400" />
+                              <span>Golaços: {atletaSelecionadoStats.golBonito}</span>
+                            </div>
                           </div>
                         </div>
                       </motion.div>
@@ -1543,6 +1550,80 @@ export default function InformacoesPartida() {
                 <button onClick={() => setModalConfirm({ ...modalConfirm, aberto: false })} className="flex-1 py-3 rounded-2xl bg-gray-700 font-bold text-white hover:bg-gray-600 transition-colors">VOLTAR</button>
                 <button onClick={confirmarRemover} className="flex-1 py-3 rounded-2xl bg-red-600 font-bold text-white hover:bg-red-700 transition-colors">EXCLUIR</button>
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal Ranking Geral */}
+      <AnimatePresence>
+        {showRankingModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-gray-800 border border-gray-700 p-6 rounded-3xl max-w-4xl w-full flex flex-col max-h-[85vh] shadow-2xl"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-2xl font-black flex items-center gap-3 text-white uppercase tracking-tighter">
+                  <FaListOl className="text-blue-400" /> Ranking Geral de Atletas
+                </h3>
+                <button onClick={() => setShowRankingModal(false)} className="text-gray-400 hover:text-white p-2">
+                  <FaTimesCircle size={24} />
+                </button>
+              </div>
+
+              <div className="overflow-x-auto overflow-y-auto pr-1 custom-scrollbar flex-1">
+                <table className="w-full border-separate border-spacing-y-2">
+                  <thead>
+                    <tr className="text-gray-500 text-[10px] font-black uppercase tracking-widest text-center">
+                      <th className="pb-2 text-left pl-4">Atleta</th>
+                      <th className="pb-2">Gols</th>
+                      <th className="pb-2">Melhor</th>
+                      <th className="pb-2">Pereba</th>
+                      <th className="pb-2">Cartões</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.values(estatisticasAtletas)
+                      .sort((a, b) => b.gols - a.gols || b.melhor - a.melhor)
+                      .map((atleta, index) => (
+                        <tr key={atleta.nome} className="bg-gray-900/50 hover:bg-gray-700 transition-colors rounded-xl">
+                          <td className="py-3 px-4 rounded-l-2xl border-l border-t border-b border-gray-700">
+                            <div className="flex items-center gap-3">
+                              <span className={`text-[10px] font-bold w-5 ${index < 3 ? 'text-yellow-500' : 'text-gray-600'}`}>#{index + 1}</span>
+                              {atleta.foto ? (
+                                <img src={atleta.foto} className="w-8 h-8 rounded-full object-cover border border-gray-600 shadow-md" alt="" />
+                              ) : (
+                                <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 text-gray-600"><FaUser size={12}/></div>
+                              )}
+                              <span className="text-sm font-bold text-white uppercase tracking-tighter">{atleta.nome}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 text-center border-t border-b border-gray-700">
+                            <span className="text-sm font-black text-green-400">⚽ {atleta.gols}</span>
+                          </td>
+                          <td className="py-3 text-center border-t border-b border-gray-700">
+                            <span className="text-sm font-black text-yellow-500">🏆 {atleta.melhor}</span>
+                          </td>
+                          <td className="py-3 text-center border-t border-b border-gray-700">
+                            <span className="text-sm font-black text-red-500">💀 {atleta.pereba}</span>
+                          </td>
+                          <td className="py-3 px-4 rounded-r-2xl border-r border-t border-b border-gray-700 text-center">
+                            <div className="flex justify-center gap-2">
+                              {atleta.amarelos > 0 && <span className="text-[10px] font-bold text-yellow-400">🟨{atleta.amarelos}</span>}
+                              {atleta.vermelhos > 0 && <span className="text-[10px] font-bold text-red-500">🟥{atleta.vermelhos}</span>}
+                              {atleta.azuis > 0 && <span className="text-[10px] font-bold text-blue-400">🟦{atleta.azuis}</span>}
+                              {atleta.amarelos + atleta.vermelhos + atleta.azuis === 0 && <span className="text-gray-600 opacity-20">-</span>}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-[10px] text-gray-500 mt-4 text-center italic uppercase tracking-widest font-bold">* Ranking baseado no histórico completo do sistema</p>
             </motion.div>
           </div>
         )}
