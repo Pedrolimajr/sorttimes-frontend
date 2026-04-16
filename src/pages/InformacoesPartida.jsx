@@ -676,6 +676,41 @@ export default function InformacoesPartida() {
     toast.success("Destaques copiados!");
   };
 
+  const compartilharRankingGeral = () => {
+    const listaRanqueada = Object.values(estatisticasAtletas)
+      .sort((a, b) => b.gols - a.gols || b.melhor - a.melhor);
+
+    if (listaRanqueada.length === 0) return toast.info("Não há dados para compartilhar.");
+
+    const medalhas = ["🥇", "🥈", "🥉"];
+    const topRanking = listaRanqueada.slice(0, 10); // Compartilha o Top 10 para não ficar muito extenso
+
+    let msg = `🏆 *RANKING GERAL DE ATLETAS* 🏆\n`;
+    msg += `*SORT TIMES*\n\n`;
+
+    topRanking.forEach((atleta, index) => {
+      const pos = index < 3 ? medalhas[index] : `${index + 1}.`;
+      msg += `${pos} *${atleta.nome.toUpperCase()}*\n`;
+      msg += `   ⚽ Gols: ${atleta.gols} | 🏆 Melhor: ${atleta.melhor} | ✨ Golaços: ${atleta.golBonito}\n`;
+      
+      const temCartao = atleta.amarelos > 0 || atleta.vermelhos > 0 || atleta.azuis > 0;
+      if (temCartao) {
+        msg += `   ${atleta.amarelos > 0 ? `🟨 ${atleta.amarelos} ` : ""}${atleta.vermelhos > 0 ? `🟥 ${atleta.vermelhos} ` : ""}${atleta.azuis > 0 ? `🟦 ${atleta.azuis}` : ""}\n`;
+      }
+      msg += `\n`;
+    });
+
+    msg += `📊 _Total de Atletas Registrados: ${listaRanqueada.length}_\n`;
+    msg += `🔥 *Universo Cajazeiras*`;
+
+    if (navigator.share) {
+      navigator.share({ title: 'Ranking Geral Sort Times', text: msg }).catch(err => console.error('Erro ao compartilhar:', err));
+    } else {
+      navigator.clipboard.writeText(msg);
+      toast.success("Ranking copiado para o WhatsApp!");
+    }
+  };
+
   const voltarParaDashboard = () => navigate('/dashboard');
 
   const [exportModalOpen, setExportModalOpen] = useState(false);
@@ -1582,9 +1617,18 @@ export default function InformacoesPartida() {
                 <h3 className="text-2xl font-black flex items-center gap-3 text-white uppercase tracking-tighter">
                   <FaListOl className="text-blue-400" /> Ranking Geral de Atletas
                 </h3>
-                <button onClick={() => setShowRankingModal(false)} className="text-gray-400 hover:text-white p-2">
-                  <FaTimesCircle size={24} />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={compartilharRankingGeral}
+                    className="text-blue-400 hover:text-blue-300 p-2 bg-blue-500/10 rounded-xl transition-all"
+                    title="Compartilhar Ranking"
+                  >
+                    <FaShareAlt size={18} />
+                  </button>
+                  <button onClick={() => setShowRankingModal(false)} className="text-gray-400 hover:text-white p-2">
+                    <FaTimesCircle size={24} />
+                  </button>
+                </div>
               </div>
 
               <div className="overflow-x-auto overflow-y-auto pr-1 custom-scrollbar flex-1">
