@@ -292,48 +292,51 @@ export default function PublicMatchInfo() {
             </div>
           </div>
 
-          <div className="mt-10 space-y-3">
+          <div className="mt-10">
             <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest flex items-center gap-2 mb-4">
               <div className="h-px flex-1 bg-gray-700"></div>
               Gols da Partida
               <div className="h-px flex-1 bg-gray-700"></div>
             </h3>
             
-            <AnimatePresence>
-              {golsAgrupados.map((g) => (
-                <motion.div
-                  key={g.jogador}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${bgTime[g.time] || 'bg-gray-800/40 border-gray-700'}`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gray-900/50 border border-gray-700 flex items-center justify-center p-1.5 overflow-hidden shadow-inner">
-                      <img src={`/img/${g.time?.toLowerCase()}.png`} className="w-full h-full object-contain" alt={g.time} />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold flex items-center gap-2">
-                        {g.jogador === vencedorCoroa && <FaCrown className="text-yellow-500 drop-shadow-glow" />}
-                        {g.jogador}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="bg-green-600 text-white text-[10px] font-black px-2 py-0.5 rounded shadow-sm border border-green-500/50 uppercase">{g.total} {g.total > 1 ? 'GOLS' : 'GOL'}</span>
-                        <span className="text-[10px] text-gray-500 font-bold uppercase">• TIME {g.time?.toUpperCase()}</span>
+            <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+              <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
+              <AnimatePresence>
+                {golsAgrupados.map((g) => (
+                  <motion.div
+                    key={g.jogador}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${bgTime[g.time] || 'bg-gray-800/40 border-gray-700'}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gray-900/50 border border-gray-700 flex items-center justify-center p-1.5 overflow-hidden shadow-inner">
+                        <img src={`/img/${g.time?.toLowerCase()}.png`} className="w-full h-full object-contain" alt={g.time} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold flex items-center gap-2">
+                          {g.jogador === vencedorCoroa && <FaCrown className="text-yellow-500 drop-shadow-glow" />}
+                          {g.jogador}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="bg-green-600 text-white text-[10px] font-black px-2 py-0.5 rounded shadow-sm border border-green-500/50 uppercase">{g.total} {g.total > 1 ? 'GOLS' : 'GOL'}</span>
+                          <span className="text-[10px] text-gray-500 font-bold uppercase">• TIME {g.time?.toUpperCase()}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex gap-1">
-                    <button 
-                      onClick={() => handleRemoverClick('gol', g.ultimoIndex, g.jogador)}
-                      className="p-3 text-red-400 hover:bg-red-400/10 rounded-xl transition-all"
-                    >
-                      <FaTrash size={16} />
-                    </button>
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
+                    <div className="flex gap-1">
+                      <button 
+                        onClick={() => handleRemoverClick('gol', g.ultimoIndex, g.jogador)}
+                        className="p-3 text-red-400 hover:bg-red-400/10 rounded-xl transition-all"
+                      >
+                        <FaTrash size={16} />
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
           </div>
         </section>
 
@@ -395,8 +398,8 @@ export default function PublicMatchInfo() {
                 REGISTRAR
               </button>
 
-              {/* Lista de jogadores com este cartão */}
-              <div className="mt-3 w-full space-y-2">
+              {/* Lista de jogadores com este cartão - Aplicado scroll oculto para manter padrão */}
+              <div className="mt-3 w-full space-y-2 max-h-[150px] overflow-y-auto no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                 {partida[card.field]?.map((nome, idx) => (
                   <div key={`${nome}-${idx}`} className="text-sm bg-gray-900/80 text-white font-bold py-3 px-3 rounded-2xl border border-gray-700 flex justify-between items-center shadow-inner">
                     <span className="truncate flex-1 text-left">{nome}</span>
