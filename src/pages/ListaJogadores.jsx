@@ -1,13 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   FaArrowLeft, FaUsers, FaEdit, FaTrash, FaPlus,
   FaSave, FaTimes, FaSearch, FaFilter, FaUserCircle,
   FaCheck, FaMoneyBillWave, FaTshirt, FaMapMarkerAlt, FaAward,
-  FaStar, FaCalendarAlt, FaPhone, FaEnvelope, FaBan, FaUnlock
+  FaStar, FaCalendarAlt, FaPhone, FaEnvelope, FaBan, FaUnlock,
+  FaFileExcel, FaFileImage, FaPrint, FaFileCsv, FaDownload
 } from 'react-icons/fa';
 import { RiArrowLeftDoubleLine } from 'react-icons/ri';
 import { motion, AnimatePresence } from 'framer-motion';
+import * as XLSX from 'xlsx';
+import html2canvas from 'html2canvas';
+import { useReactToPrint } from 'react-to-print';
 import { toast, ToastContainer } from 'react-toastify';
 import { useJogadores } from '../context/JogadoresContext';
 import { calcularIdade } from '../utils/dateUtils';
@@ -36,6 +40,10 @@ export default function ListaJogadores({
   const [filtroStatus, setFiltroStatus] = useState('');
   const [filtroNivel, setFiltroNivel] = useState('');
   const [filtroAtivo, setFiltroAtivo] = useState('todos'); // todos | ativos | bloqueados
+  const [selecionados, setSelecionados] = useState([]);
+  const [exportando, setExportando] = useState(false);
+  const componenteRef = useRef();
+
   const [editando, setEditando] = useState(null);
   const [mensagemSucesso, setMensagemSucesso] = useState(null);
   const [fotoAmpliada, setFotoAmpliada] = useState({
@@ -394,6 +402,91 @@ export default function ListaJogadores({
     await atualizarStatus(id, novoStatus);
   };
 
+  // --- Lógica de Exportação ---
+
+  const getDadosFormatados = () => {
+    const lista = selecionados.length > 0 
+      ? jogadores.filter(j => selecionados.includes(j._id))
+      : jogadoresFiltrados;
+
+    return lista.map(j => ({
+      'Nome': j.nome,
+      'Idade': calcularIdade(j.dataNascimento) || '-',
+      'Posição': j.posicao,
+      'Nível': j.nivel,
+      'Camisa': j.numeroCamisa || '-',
+      'Status Financeiro': j.statusFinanceiro,
+      'Telefone': j.telefone || '-',
+      'Email': j.email || '-',
+      'Ingresso': j.dataIngresso ? new Date(j.dataIngresso).toLocaleDateString() : '-',
+      'Endereço': j.endereco || '-'
+    }));
+  };
+
+  const exportarExcel = () => {
+    setExportando(true);
+    try {
+      const dados = getDadosFormatados();
+      const ws = XLSX.utils.json_to_sheet(dados);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Jogadores");
+      const dataStr = new Date().toISOString().split('T')[0];
+      XLSX.writeFile(wb, `lista_jogadores_${dataStr}.xlsx`);
+      toast.success('Excel exportado com sucesso!');
+    } catch (err) {
+      toast.error('Erro ao exportar Excel');
+    } finally {
+      setExportando(false);
+    }
+  };
+
+  const exportarCSV = () => {
+    const dados = getDadosFormatados();
+    const ws = XLSX.utils.json_to_sheet(dados);
+    const csv = XLSX.utils.sheet_to_csv(ws);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `lista_jogadores_${new Date().getTime()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('CSV exportado!');
+  };
+
+  const exportarImagem = async () => {
+    if (!componenteRef.current) return;
+    setExportando(true);
+    try {
+      const canvas = await html2canvas(componenteRef.current, {
+        backgroundColor: '#111827',
+        scale: 2,
+        useCORS: true,
+        ignoreElements: (el) => el.classList.contains('no-export')
+      });
+      const link = document.createElement('a');
+      link.download = `jogadores_styled_${new Date().getTime()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      toast.success('Imagem gerada com sucesso!');
+    } catch (err) {
+      toast.error('Erro ao gerar imagem');
+    } finally {
+      setExportando(false);
+    }
+  };
+
+  const handlePrint = useReactToPrint({
+    content: () => componenteRef.current,
+    documentTitle: 'Relatório de Jogadores',
+  });
+
+  const toggleSelecionarTodos = () => {
+    if (selecionados.length === jogadoresFiltrados.length) setSelecionados([]);
+    else setSelecionados(jogadoresFiltrados.map(j => j._id));
+  };
+
   const totalAssociados = jogadores.filter(j => j.nivel === 'Associado').length;
   const totalConvidados = jogadores.filter(j => j.nivel === 'Convidado').length;
   const totalBloqueados = jogadores.filter(j => j.ativo === false).length;
@@ -620,6 +713,36 @@ export default function ListaJogadores({
             </motion.p>
           </div>
         </motion.div>
+
+        {/* Barra de Ações de Exportação */}
+        {!modoSelecao && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gray-800/40 backdrop-blur-sm p-4 rounded-xl border border-gray-700 mb-6 flex flex-wrap gap-3 items-center justify-between"
+          >
+            <div className="flex flex-wrap gap-2">
+              <button onClick={exportarExcel} disabled={exportando} className="flex items-center gap-2 px-3 py-2 bg-green-600/20 text-green-400 border border-green-500/30 rounded-lg hover:bg-green-600 hover:text-white transition-all text-xs font-bold">
+                <FaFileExcel /> EXCEL
+              </button>
+              <button onClick={exportarCSV} className="flex items-center gap-2 px-3 py-2 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-lg hover:bg-blue-600 hover:text-white transition-all text-xs font-bold">
+                <FaFileCsv /> CSV
+              </button>
+              <button onClick={exportarImagem} disabled={exportando} className="flex items-center gap-2 px-3 py-2 bg-purple-600/20 text-purple-400 border border-purple-500/30 rounded-lg hover:bg-purple-600 hover:text-white transition-all text-xs font-bold">
+                <FaFileImage /> GERAR IMAGEM
+              </button>
+              <button onClick={handlePrint} className="flex items-center gap-2 px-3 py-2 bg-gray-600/20 text-gray-300 border border-gray-500/30 rounded-lg hover:bg-gray-600 hover:text-white transition-all text-xs font-bold">
+                <FaPrint /> IMPRIMIR / PDF
+              </button>
+            </div>
+            
+            {selecionados.length > 0 && (
+              <div className="text-xs text-blue-400 font-bold animate-pulse">
+                {selecionados.length} JOGADORES SELECIONADOS PARA EXPORTAÇÃO
+              </div>
+            )}
+          </motion.div>
+        )}
 
         {!modoSelecao ? (
           <motion.div
@@ -1027,15 +1150,25 @@ export default function ListaJogadores({
               <div className="overflow-x-auto">
                 <div className="min-w-full inline-block align-middle">
                   <div className="overflow-hidden">
-                    <div className="max-h-[60vh] sm:max-h-[65vh] md:max-h-[70vh] lg:max-h-[75vh] overflow-y-auto">
+                    <div ref={componenteRef} className="max-h-[60vh] sm:max-h-[65vh] md:max-h-[70vh] lg:max-h-[75vh] overflow-y-auto">
                       <table className="min-w-full divide-y divide-gray-700">
                         <thead className="bg-gray-700 sticky top-0">
                           <tr>
+                            {!modoSelecao && (
+                              <th className="px-4 py-3 no-export">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-600 bg-gray-800 text-blue-500 focus:ring-blue-500"
+                                  onChange={toggleSelecionarTodos}
+                                  checked={selecionados.length === jogadoresFiltrados.length && jogadoresFiltrados.length > 0}
+                                />
+                              </th>
+                            )}
                             <th className="px-4 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider sm:px-6">Jogador</th>
                             <th className="px-4 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider sm:px-6">Informações</th>
                             <th className="px-4 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider sm:px-6">Contato</th>
                             <th className="px-4 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider sm:px-6">Status</th>
-                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider sm:px-6">Ações</th>
+                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider sm:px-6 no-export">Ações</th>
                           </tr>
                         </thead>
                         <tbody className="bg-gray-800/50 divide-y divide-gray-700">
@@ -1047,6 +1180,22 @@ export default function ListaJogadores({
                               whileHover={{ backgroundColor: 'rgba(55, 65, 81, 0.3)' }}
                               className="transition-colors"
                             >
+                              {!modoSelecao && (
+                                <td className="px-4 py-4 whitespace-nowrap no-export">
+                                  <input 
+                                    type="checkbox" 
+                                    className="rounded border-gray-600 bg-gray-800 text-blue-500 focus:ring-blue-500"
+                                    checked={selecionados.includes(jogador._id)}
+                                    onChange={() => {
+                                      setSelecionados(prev => 
+                                        prev.includes(jogador._id) 
+                                          ? prev.filter(id => id !== jogador._id) 
+                                          : [...prev, jogador._id]
+                                      );
+                                    }}
+                                  />
+                                </td>
+                              )}
                               <td className="px-4 py-4 whitespace-nowrap sm:px-6">
                                 <div className="flex items-center space-x-3">
                                   {jogador.foto ? (
@@ -1155,7 +1304,7 @@ export default function ListaJogadores({
                                 )}
                               </td>
                               
-                              <td className="px-4 py-4 whitespace-nowrap text-sm font-medium sm:px-6">
+                              <td className="px-4 py-4 whitespace-nowrap text-sm font-medium sm:px-6 no-export">
                                 <div className="flex gap-2 sm:gap-3">
                                   {/* Isentar Jogador */}
                                   <motion.button
