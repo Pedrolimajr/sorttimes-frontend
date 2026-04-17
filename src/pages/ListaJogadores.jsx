@@ -6,10 +6,11 @@ import {
   FaArrowLeft, FaUsers, FaEdit, FaTrash, FaPlus,
   FaSave, FaTimes, FaSearch, FaFilter, FaUserCircle,
   FaCheck, FaMoneyBillWave, FaTshirt, FaMapMarkerAlt, FaAward,
-  FaStar, FaCalendarAlt, FaPhone, FaEnvelope, FaBan, FaUnlock
+  FaStar, FaCalendarAlt, FaPhone, FaEnvelope, FaBan, FaUnlock, FaFileExcel
 } from 'react-icons/fa';
 import { RiArrowLeftDoubleLine } from 'react-icons/ri';
 import { motion, AnimatePresence } from 'framer-motion';
+import * as XLSX from 'xlsx';
 import { toast, ToastContainer } from 'react-toastify';
 import { useJogadores } from '../context/JogadoresContext';
 import { calcularIdade } from '../utils/dateUtils';
@@ -38,6 +39,8 @@ export default function ListaJogadores({
   const [filtroStatus, setFiltroStatus] = useState('');
   const [filtroNivel, setFiltroNivel] = useState('');
   const [filtroAtivo, setFiltroAtivo] = useState('todos'); // todos | ativos | bloqueados
+  const [selecionados, setSelecionados] = useState([]);
+  const [exportando, setExportando] = useState(false);
   const [editando, setEditando] = useState(null);
   const [mensagemSucesso, setMensagemSucesso] = useState(null);
   const [fotoAmpliada, setFotoAmpliada] = useState({
@@ -396,6 +399,60 @@ export default function ListaJogadores({
     await atualizarStatus(id, novoStatus);
   };
 
+  // --- Lógica de Exportação para Excel ---
+
+  const exportarExcel = () => {
+    setExportando(true);
+    try {
+      // Se houver jogadores selecionados, exporta apenas eles. Caso contrário, exporta o resultado dos filtros atuais.
+      const listaParaExportar = selecionados.length > 0 
+        ? jogadores.filter(j => selecionados.includes(j._id))
+        : jogadoresFiltrados;
+
+      if (listaParaExportar.length === 0) {
+        toast.warn('Nenhum jogador para exportar');
+        return;
+      }
+
+      // Mapeia os dados para o formato de colunas do Excel
+      const dados = listaParaExportar.map(j => ({
+        'Nome': j.nome,
+        'Idade': calcularIdade(j.dataNascimento) || '-',
+        'Posição': j.posicao,
+        'Nível': j.nivel,
+        'Camisa': j.numeroCamisa || '-',
+        'Status Financeiro': j.statusFinanceiro,
+        'Telefone': j.telefone || '-',
+        'Email': j.email || '-',
+        'Data de Ingresso': j.dataIngresso ? new Date(j.dataIngresso).toLocaleDateString() : '-',
+        'Endereço': j.endereco || '-'
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(dados);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Jogadores");
+
+      // Nomeia o arquivo automaticamente com a data atual (Ex: lista_jogadores_15-05-2024.xlsx)
+      const dataStr = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+      XLSX.writeFile(wb, `lista_jogadores_${dataStr}.xlsx`);
+
+      toast.success('Excel exportado com sucesso!');
+    } catch (error) {
+      console.error("Erro ao exportar Excel:", error);
+      toast.error('Erro ao gerar arquivo Excel');
+    } finally {
+      setExportando(false);
+    }
+  };
+
+  const toggleSelecionarTodos = () => {
+    if (selecionados.length === jogadoresFiltrados.length && jogadoresFiltrados.length > 0) {
+      setSelecionados([]);
+    } else {
+      setSelecionados(jogadoresFiltrados.map(j => j._id));
+    }
+  };
+
   const totalAssociados = jogadores.filter(j => j.nivel === 'Associado').length;
   const totalConvidados = jogadores.filter(j => j.nivel === 'Convidado').length;
   const totalBloqueados = jogadores.filter(j => j.ativo === false).length;
@@ -622,6 +679,29 @@ export default function ListaJogadores({
             </motion.p>
           </div>
         </motion.div>
+
+        {/* Barra de Ações de Exportação */}
+        {!modoSelecao && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gray-800/40 backdrop-blur-sm p-4 rounded-xl border border-gray-700 mb-6 flex flex-wrap gap-3 items-center justify-between"
+          >
+            <button 
+              onClick={exportarExcel} 
+              disabled={exportando || jogadoresFiltrados.length === 0}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600/20 text-green-400 border border-green-500/30 rounded-lg hover:bg-green-600 hover:text-white transition-all text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <FaFileExcel className="text-base" /> {exportando ? 'GERANDO...' : 'EXPORTAR PARA EXCEL'}
+            </button>
+            
+            {selecionados.length > 0 && (
+              <div className="text-xs text-blue-400 font-bold animate-pulse">
+                {selecionados.length} JOGADORES SELECIONADOS PARA EXPORTAÇÃO
+              </div>
+            )}
+          </motion.div>
+        )}
 
         {!modoSelecao ? (
           <motion.div
@@ -1033,6 +1113,16 @@ export default function ListaJogadores({
                       <table className="min-w-full divide-y divide-gray-700">
                         <thead className="bg-gray-700 sticky top-0">
                           <tr>
+                            {!modoSelecao && (
+                              <th className="px-4 py-3">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-600 bg-gray-800 text-blue-500 focus:ring-blue-500 cursor-pointer"
+                                  onChange={toggleSelecionarTodos}
+                                  checked={selecionados.length === jogadoresFiltrados.length && jogadoresFiltrados.length > 0}
+                                />
+                              </th>
+                            )}
                             <th className="px-4 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider sm:px-6">Jogador</th>
                             <th className="px-4 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider sm:px-6">Informações</th>
                             <th className="px-4 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider sm:px-6">Contato</th>
@@ -1049,6 +1139,22 @@ export default function ListaJogadores({
                               whileHover={{ backgroundColor: 'rgba(55, 65, 81, 0.3)' }}
                               className="transition-colors"
                             >
+                              {!modoSelecao && (
+                                <td className="px-4 py-4 whitespace-nowrap">
+                                  <input 
+                                    type="checkbox" 
+                                    className="rounded border-gray-600 bg-gray-800 text-blue-500 focus:ring-blue-500 cursor-pointer"
+                                    checked={selecionados.includes(jogador._id)}
+                                    onChange={() => {
+                                      setSelecionados(prev => 
+                                        prev.includes(jogador._id) 
+                                          ? prev.filter(id => id !== jogador._id) 
+                                          : [...prev, jogador._id]
+                                      );
+                                    }}
+                                  />
+                                </td>
+                              )}
                               <td className="px-4 py-4 whitespace-nowrap sm:px-6">
                                 <div className="flex items-center space-x-3">
                                   {jogador.foto ? (
@@ -1245,4 +1351,3 @@ export default function ListaJogadores({
     </div>
   );
 }
-
