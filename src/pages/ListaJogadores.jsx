@@ -11,7 +11,7 @@ import { RiArrowLeftDoubleLine } from 'react-icons/ri';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as XLSX from 'xlsx';
 import html2canvas from 'html2canvas';
-import { useReactToPrint } from 'react-to-print';
+import jsPDF from 'jspdf';
 import { toast, ToastContainer } from 'react-toastify';
 import { useJogadores } from '../context/JogadoresContext';
 import { calcularIdade } from '../utils/dateUtils';
@@ -477,10 +477,49 @@ export default function ListaJogadores({
     }
   };
 
-  const handlePrint = useReactToPrint({
-    content: () => componenteRef.current,
-    documentTitle: 'Relatório de Jogadores',
-  });
+  const handlePrint = async () => {
+    if (!componenteRef.current) return;
+    setExportando(true);
+    try {
+      const element = componenteRef.current;
+      
+      // Ajusta estilos temporariamente para capturar todo o conteúdo (mesmo o que está fora do scroll)
+      const prevOverflow = element.style.overflow;
+      const prevMaxHeight = element.style.maxHeight;
+      const prevHeight = element.style.height;
+      
+      element.style.overflow = 'visible';
+      element.style.maxHeight = 'none';
+      element.style.height = 'auto';
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#111827', // Fundo escuro para combinar com o tema
+        ignoreElements: (el) => el.classList.contains('no-export')
+      });
+
+      // Restaura os estilos originais da tela
+      element.style.overflow = prevOverflow;
+      element.style.maxHeight = prevMaxHeight;
+      element.style.height = prevHeight;
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`lista_jogadores_${new Date().getTime()}.pdf`);
+      
+      toast.success('Relatório PDF gerado com sucesso!');
+    } catch (err) {
+      console.error('Erro ao gerar PDF:', err);
+      toast.error('Erro ao gerar PDF. Tente usar a exportação para Excel.');
+    } finally {
+      setExportando(false);
+    }
+  };
 
   const toggleSelecionarTodos = () => {
     if (selecionados.length === jogadoresFiltrados.length) setSelecionados([]);
