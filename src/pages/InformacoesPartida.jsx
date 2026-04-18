@@ -1019,7 +1019,7 @@ export default function InformacoesPartida() {
                       {tabela[0].map((cabecalho, colIndex) => (
                         <th 
                           key={colIndex} 
-                          className="p-2 border border-gray-500 sticky top-0 bg-gray-600 min-w-[150px] text-center"
+                          className="p-2 border border-gray-500 sticky top-0 bg-gray-600 min-w-[150px] text-center z-10"
                         >
                           <div className="flex flex-col items-center">
                             <input
@@ -1040,7 +1040,7 @@ export default function InformacoesPartida() {
                           </div>
                         </th>
                       ))}
-                      <th className="w-10 p-2 border border-gray-500 sticky top-0 bg-gray-600 text-center">
+                      <th className="w-10 p-2 border border-gray-500 sticky top-0 bg-gray-600 text-center z-10">
                         <button
                           onClick={adicionarColuna}
                           className="mx-auto flex justify-center text-white hover:text-green-300 transition-colors"
