@@ -448,6 +448,7 @@ export default function ListaJogadores({
 
   return (
     <div className={`${!modoSelecao ? 'min-h-screen' : ''} bg-gray-900 p-4 sm:p-6`}>
+      <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
       {/* Modal para foto ampliada */}
       <AnimatePresence>
         {fotoAmpliada.aberto && (
@@ -1044,7 +1045,7 @@ export default function ListaJogadores({
                 Nenhum jogador encontrado
               </div>
             ) : modoSelecao ? (
-              <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-2">
+              <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-2 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                 {jogadoresFiltrados.map((jogador) => (
                   <motion.div
                     key={jogador._id}
@@ -1084,7 +1085,7 @@ export default function ListaJogadores({
               <div className="overflow-x-auto">
                 <div className="min-w-full inline-block align-middle">
                   <div className="overflow-hidden">
-                    <div className="max-h-[60vh] sm:max-h-[65vh] md:max-h-[70vh] lg:max-h-[75vh] overflow-y-auto">
+                    <div className="max-h-[60vh] sm:max-h-[65vh] md:max-h-[70vh] lg:max-h-[75vh] overflow-y-auto no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                       <table className="min-w-full divide-y divide-gray-700">
                         <thead className="bg-gray-700 sticky top-0">
                           <tr>

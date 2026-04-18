@@ -1197,6 +1197,7 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
 
   return (
     <div className="min-h-screen bg-gray-900 p-4 sm:p-6">
+      <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
       <div className="fixed inset-0 overflow-hidden -z-10 opacity-20">
         {[...Array(15)].map((_, i) => (
           <motion.div
@@ -1457,7 +1458,7 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                       </button>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-4">
+                    <div className="flex-1 overflow-y-auto p-4 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                       <ListaJogadores
                         modoSelecao={true}
                         onJogadorSelecionado={(jogador) => {
@@ -1597,7 +1598,7 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <div className="max-h-[400px] overflow-y-auto" id="tabela-historico">
+                  <div className="max-h-[400px] overflow-y-auto no-scrollbar" id="tabela-historico" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                     <table className="min-w-full divide-y divide-gray-700">
                       <thead className="bg-gray-700 sticky top-0">
                         <tr>
@@ -1709,7 +1710,7 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
       Nenhum jogador cadastrado
     </div>
   ) : (
-    <div className="overflow-x-auto max-h-[60vh] sm:max-h-[70vh] md:max-h-[80vh]">
+    <div className="overflow-x-auto max-h-[60vh] sm:max-h-[70vh] md:max-h-[80vh] no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
       <div id="tabela-mensalidades" className="min-w-[800px]">
         <table className="w-full divide-y divide-gray-700">
           <thead className="bg-gray-700 sticky top-0">
@@ -1960,7 +1961,8 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
 
               <div
                 id="relatorio-content"
-                className="space-y-3 sm:space-y-4 px-4 sm:px-6 py-4 overflow-y-auto flex-1"
+                className="space-y-3 sm:space-y-4 px-4 sm:px-6 py-4 overflow-y-auto flex-1 no-scrollbar"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
                 {/* Conteúdo existente do modal */}
                 <div className="grid grid-cols-1 gap-3 sm:gap-4">
