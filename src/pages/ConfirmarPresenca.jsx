@@ -634,7 +634,8 @@ export default function ConfirmarPresenca() {
                     </motion.div>
                   </div>
 
-                  <div className="max-h-96 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+                  <div className="max-h-96 overflow-y-auto space-y-3 pr-1 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                    <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
                     {jogadoresAdmin.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-8 text-gray-500">
                         <FaUserShield className="text-4xl mb-2 opacity-20" />
