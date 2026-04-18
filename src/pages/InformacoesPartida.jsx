@@ -1686,7 +1686,7 @@ export default function InformacoesPartida() {
                 </div>
               </div>
 
-              <div className="overflow-x-auto overflow-y-auto pr-1 custom-scrollbar flex-1">
+              <div className="overflow-x-auto overflow-y-auto pr-1 no-scrollbar flex-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                 <table className="w-full border-separate border-spacing-y-2">
                   <thead>
                     <tr className="text-gray-500 text-[10px] font-black uppercase tracking-widest text-center">
