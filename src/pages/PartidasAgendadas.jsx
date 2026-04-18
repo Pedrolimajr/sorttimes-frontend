@@ -114,6 +114,7 @@ const PartidasAgendadas = () => {
 
   return (
     <div className="min-h-screen bg-gray-900 px-4 py-8 sm:px-6 lg:px-8">
+      <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
       {/* Mantém o efeito de partículas */}
       <div className="fixed inset-0 overflow-hidden -z-10 opacity-20">
         {[...Array(15)].map((_, i) => (
@@ -199,7 +200,8 @@ const PartidasAgendadas = () => {
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.3 }}
-          className="space-y-4"
+          className="space-y-4 max-h-[65vh] overflow-y-auto no-scrollbar pr-1"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {partidas.length === 0 ? (
             <div className="text-center text-gray-400 py-8">
