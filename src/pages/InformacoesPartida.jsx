@@ -1011,7 +1011,7 @@ export default function InformacoesPartida() {
               </div>
 
               {/* Tabela editável com scroll */}
-              <div className="overflow-auto max-h-[60vh] rounded-lg border border-gray-700 shadow-xl">
+              <div className="overflow-auto max-h-[60vh] rounded-lg border border-gray-700 shadow-xl no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                 <table className="min-w-full border-collapse table-fixed">
                   <thead>
                     <tr className="bg-gray-600">
@@ -1111,7 +1111,7 @@ export default function InformacoesPartida() {
             {planilhas.length === 0 ? (
               <p className="text-gray-400">Nenhuma planilha cadastrada</p>
             ) : (
-              <div className="overflow-y-auto max-h-[60vh] space-y-3">
+              <div className="overflow-y-auto max-h-[60vh] space-y-3 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                 {planilhas.map((planilha) => (
                   <div 
                     key={planilha._id}
@@ -1781,7 +1781,8 @@ export default function InformacoesPartida() {
                           initial={{ opacity: 0, y: -10 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -10 }}
-                          className="absolute z-50 w-full left-0 top-full mt-1 bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl max-h-48 overflow-y-auto custom-scrollbar"
+                          className="absolute z-50 w-full left-0 top-full mt-1 bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl max-h-48 overflow-y-auto no-scrollbar"
+                          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                         >
                           {(() => {
                             const lista = jogadores
