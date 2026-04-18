@@ -208,6 +208,7 @@ export default function PublicMatchInfo() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-2 sm:p-4 font-sans pb-20">
+      <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
       <div className="max-w-2xl mx-auto space-y-6">
         <header className="text-center py-6">
           <h1 className="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300 uppercase tracking-tighter">
@@ -445,7 +446,7 @@ export default function PublicMatchInfo() {
                 <FaUser className="absolute left-3 top-3.5 text-gray-500 text-sm" />
               </div>
 
-              <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+              <div className="flex-1 overflow-y-auto space-y-2 pr-1 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                 {carregando ? (
                   <p className="text-center text-gray-500 py-4 text-sm italic animate-pulse">Carregando lista...</p>
                 ) : (jogadores.filter(j => {

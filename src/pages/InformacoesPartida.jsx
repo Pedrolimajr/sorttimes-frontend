@@ -850,6 +850,7 @@ export default function InformacoesPartida() {
 
   return (
     <div className="min-h-screen bg-gray-900 px-4 py-8 sm:px-6 lg:px-8">
+      <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
       {/* Efeito de partículas */}
       <div className="fixed inset-0 overflow-hidden -z-10 opacity-20">
         {[...Array(15)].map((_, i) => (
@@ -1412,7 +1413,6 @@ export default function InformacoesPartida() {
                       </button>
                     </div>
                     <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                      <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
                       {getGolsAgrupados().length > 0 ? (
                         getGolsAgrupados().map((g, i) => (
                           <div key={i} className="flex flex-col p-3 bg-black/30 rounded-2xl text-sm border border-gray-700/50 hover:border-green-500/30 transition-colors group">
