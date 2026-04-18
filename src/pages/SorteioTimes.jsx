@@ -734,6 +734,7 @@ const aplicarFiltroPosicao = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 px-4 py-8 sm:px-6 lg:px-8 relative">
+      <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
       {/* Efeitos de luz de fundo (Glow) */}
       <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
         <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-blue-600/10 blur-[120px]" />
@@ -968,7 +969,7 @@ const aplicarFiltroPosicao = () => {
                   <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-blue-500"></div>
                 </div>
               ) : (
-                <div className="max-h-64 sm:max-h-96 overflow-y-auto pr-2">
+                <div className="max-h-64 sm:max-h-96 overflow-y-auto pr-2 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                   <AnimatePresence>
                     {jogadoresSelecionados.length === 0 ? (
                       <div className="text-center py-3 sm:py-4 text-gray-500 text-xs sm:text-sm">
@@ -1089,7 +1090,7 @@ const aplicarFiltroPosicao = () => {
                 </h3>
               </div>
               
-              <div className="space-y-3 sm:space-y-4 max-h-96 overflow-y-auto pr-2">
+              <div className="space-y-3 sm:space-y-4 max-h-96 overflow-y-auto pr-2 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                 {historico.map((sorteio, idx) => (
                   <motion.div
                     key={idx}
