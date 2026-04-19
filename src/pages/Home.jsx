@@ -5,13 +5,18 @@ import { motion } from "framer-motion";
 
 export default function PaginaInicial() {
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-100 flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden">
-      {/* Aurora & Grid Background Effects */}
+    <div className="min-h-screen bg-[#020617] text-slate-100 flex flex-col items-center justify-center p-4 sm:p-10 relative overflow-hidden selection:bg-blue-500/30">
+      {/* Mesh Gradient & Texture Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-cyan-500/10 blur-[100px]" />
-        <div className="absolute inset-0 opacity-[0.03]" 
-          style={{ backgroundImage: `radial-gradient(#ffffff 1px, transparent 1px)`, backgroundSize: '40px 40px' }} 
+        <div className="absolute top-[-10%] left-[-20%] w-[80%] h-[80%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-20%] w-[70%] h-[70%] rounded-full bg-cyan-500/10 blur-[100px] animate-pulse" style={{ animationDelay: '3s' }} />
+        
+        {/* Subtle Noise Texture */}
+        <div className="absolute inset-0 opacity-[0.02] bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+
+        {/* Tech Grid */}
+        <div className="absolute inset-0 opacity-[0.05]" 
+          style={{ backgroundImage: `linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px)`, backgroundSize: '50px 50px' }} 
         />
       </div>
 
@@ -20,7 +25,7 @@ export default function PaginaInicial() {
         {[...Array(20)].map((_, i) => (
           <motion.div
             key={i}
-            initial={{
+            initial={{ 
               x: Math.random() * 100,
               y: Math.random() * 100,
               opacity: 0.3,
@@ -46,24 +51,24 @@ export default function PaginaInicial() {
       {/* Container principal simplificado para Coluna Única (Estilo App) */}
       <div className="max-w-2xl mx-auto flex flex-col items-center text-center relative z-10">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="space-y-8 sm:space-y-10 flex flex-col items-center"
+          className="space-y-10 flex flex-col items-center"
         >
           {/* Cabeçalho com logo */}
           <div className="flex flex-col sm:flex-row items-center gap-4">
-            <div className="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center bg-slate-900 border border-white/10 p-2 rounded-2xl shadow-2xl">
+            <div className="w-14 h-14 flex items-center justify-center bg-black/40 border border-white/10 p-2.5 rounded-2xl shadow-2xl backdrop-blur-md">
               <img
                 src="/img/logo_time.png"
                 alt="Logo SortTimes"
-                className="w-full h-full object-contain"
+                className="w-full h-full object-contain drop-shadow-[0_0_10px_rgba(59,130,246,0.5)]"
               />
             </div>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tighter uppercase bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400 flex items-center gap-3">
+            <h1 className="text-3xl sm:text-4xl font-black tracking-tighter uppercase bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-blue-500 to-cyan-400 flex items-center gap-3">
               <motion.div 
                 whileHover={{ rotate: 360, scale: 1.2 }} 
-                transition={{ type: "spring", stiffness: 260, damping: 20 }}
+                transition={{ type: "spring", stiffness: 200, damping: 10 }}
               >
                 <FaFutbol className="text-blue-500" />
               </motion.div>
@@ -71,33 +76,36 @@ export default function PaginaInicial() {
             </h1>
           </div>
 
-          {/* Título principal */}
-          <h2 className="text-4xl sm:text-5xl lg:text-7xl font-black leading-[1.1] tracking-tighter text-white">
-            A nova era da <br/>
+          {/* Título principal com detalhe de linha */}
+          <div className="space-y-4">
+            <h2 className="text-5xl sm:text-6xl lg:text-7xl font-black leading-[1.1] tracking-tight text-white drop-shadow-sm">
+              Domine a sua <br/>
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-blue-500 to-cyan-400">
               Gestão de Futebol
             </span>
           </h2>
+            <div className="h-1.5 w-24 bg-gradient-to-r from-blue-600 to-cyan-400 rounded-full mx-auto" />
+          </div>
 
           {/* Subtítulo */}
           <div className="flex flex-col gap-3">
-            <p className="text-lg sm:text-xl text-slate-400 font-medium max-w-xl">
+            <p className="text-lg sm:text-xl text-slate-500 font-semibold max-w-xl leading-relaxed">
               O sistema definitivo para boleiros. Organize sorteios, controle o financeiro e gerencie presença de forma profissional.
             </p>
           </div>
 
-          {/* Imagem unificada - estilo App centralizado com efeito de chute */}
-          <div className="w-full mt-6 px-2">
+          {/* Imagem unificada - Crystal Frame com efeito de chute snappier */}
+          <div className="w-full mt-4 px-2">
             <motion.div
               whileHover={{
-                rotate: [0, -6, 4, 0],
-                x: [0, -8, 12, 0],
-                scale: [1, 0.98, 1.03, 1],
-                y: -5
+                rotate: [0, -8, 6, 0],
+                x: [0, -12, 18, 0],
+                scale: [1, 0.97, 1.05, 1],
+                y: -8
               }}
-              whileTap={{ scale: 0.97 }}
-              transition={{ duration: 0.4 }}
-              className="relative bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-3 sm:p-4 aspect-video overflow-hidden shadow-2xl group cursor-pointer"
+              whileTap={{ scale: 0.96 }}
+              transition={{ duration: 0.35, ease: "backOut" }}
+              className="relative bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[3rem] p-4 sm:p-5 aspect-video overflow-hidden shadow-[0_32px_64px_-12px_rgba(0,0,0,0.6)] group cursor-pointer"
             >
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-blue-500/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
@@ -106,28 +114,35 @@ export default function PaginaInicial() {
                 <img
                   src="/img/sorttimes-img.jpg"
                   alt="Painel de Controle"
-                  className="w-full h-full object-cover brightness-75 group-hover:brightness-100 scale-100 group-hover:scale-105 transition-all duration-700"
+                  className="w-full h-full object-cover brightness-[0.8] group-hover:brightness-110 scale-100 group-hover:scale-110 transition-all duration-700 ease-in-out"
                 />
               </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+              
+              {/* Reflective Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-black/80 via-transparent to-white/5 pointer-events-none" />
 
               {/* Detalhe flutuante (Painel Operacional) */}
-              <div className="absolute top-6 left-4 sm:top-10 sm:left-6 bg-slate-900/90 border border-white/10 p-2 sm:p-4 rounded-xl sm:rounded-2xl shadow-2xl backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+              <div className="absolute top-6 left-6 bg-black/60 border border-white/10 p-3 rounded-2xl shadow-2xl backdrop-blur-xl opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-2 group-hover:translate-y-0">
                 <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-green-500 animate-pulse" />
-                  <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-slate-300">Live Management</span>
+                  <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                  <span className="text-[9px] font-black uppercase tracking-widest text-white">Painel Operacional Ativo</span>
                 </div>
               </div>
             </motion.div>
           </div>
 
           {/* Botão de ação principal */}
-          <Link to="/login" className="block w-fit">
+          <Link to="/login" className="block w-fit group relative">
+            {/* Button Outer Glow */}
+            <div className="absolute inset-0 bg-blue-500/20 blur-2xl group-hover:bg-blue-500/40 transition-all duration-500 rounded-full" />
+            
             <motion.button
-              whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(37, 99, 235, 0.3)" }}
+              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="mt-4 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 text-white font-black py-5 px-12 rounded-[2rem] shadow-xl hover:shadow-blue-500/25 transition-all flex items-center gap-4 text-sm uppercase tracking-[0.2em]"
+              className="relative mt-4 bg-gradient-to-br from-blue-600 to-blue-500 text-white font-black py-5 px-14 rounded-[2rem] shadow-2xl border border-white/10 transition-all flex items-center gap-4 text-sm uppercase tracking-[0.25em] overflow-hidden"
             >
+              {/* Internal shine animation */}
+              <div className="absolute top-0 -left-full w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-30deg] group-hover:left-[150%] transition-all duration-1000 ease-in-out" />
               Acessar Painel <FaArrowRight />
             </motion.button>
           </Link>
