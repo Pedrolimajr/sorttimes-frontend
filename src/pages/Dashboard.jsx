@@ -117,94 +117,95 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#0a0f1d] px-4 py-8 sm:py-12 relative selection:bg-blue-500/30">
-      {/* Fundo com padrão de grid técnico */}
-      <div className="fixed inset-0 pointer-events-none -z-10 opacity-[0.03]" 
-        style={{ backgroundImage: `radial-gradient(#ffffff 1px, transparent 1px)`, backgroundSize: '32px 32px' }} 
-      />
-
-      {/* Cabeçalho com animação */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ type: "spring", stiffness: 120 }}
-        className="mb-12 sm:mb-20 max-w-7xl mx-auto flex flex-col md:flex-row md:items-end md:justify-between border-b border-white/5 pb-8"
-      >
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-600/20 rounded-lg">
-              <FaTachometerAlt className="text-blue-500 text-2xl" />
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-            Painel de Controle
-          </h1>
+    <div className="min-h-screen bg-[#0f172a] text-slate-100 selection:bg-blue-500/30 pb-24">
+      {/* Header Estilo App */}
+      <div className="sticky top-0 z-50 bg-[#0f172a]/80 backdrop-blur-lg border-b border-slate-800">
+        <div className="max-w-5xl mx-auto px-6 h-20 flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-black tracking-tight flex items-center gap-2">
+              <span className="text-blue-500"><FaFutbol /></span>
+              SORT TIMES
+            </h1>
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Painel Administrativo</p>
           </div>
-          <p className="text-gray-500 text-sm font-medium">
-            Bem-vindo ao centro administrativo do SortTimes.
-          </p>
+          <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shadow-lg">
+            <FaUser className="text-slate-400 text-sm" />
+          </div>
         </div>
-        
-        <div className="mt-6 md:mt-0 flex items-center gap-4">
-           <div className="text-right hidden sm:block">
-             <p className="text-white text-[10px] font-black uppercase tracking-widest opacity-40">Status do Sistema</p>
-             <p className="text-green-500 text-[10px] font-bold flex items-center justify-end gap-1.5 mt-1">
-               <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" /> 
-               SISTEMA OPERACIONAL
-             </p>
-           </div>
-        </div>
-      </motion.div>
+      </div>
 
-      {/* Grid organizado por módulos */}
-      <div className="max-w-7xl mx-auto grid grid-cols-1 gap-12">
-        {cardsDashboard.map((categoria, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.15 }}
-          >
-            <div className="flex items-center gap-4 mb-8">
-              <h2 className="text-[10px] font-black text-blue-500/80 uppercase tracking-[0.4em] whitespace-nowrap">
-                {categoria.categoria}
-              </h2>
-              <div className="h-px w-full bg-gradient-to-r from-blue-500/20 to-transparent" />
+      <div className="max-w-5xl mx-auto px-6 pt-8">
+        {/* Card Hero de Boas-vindas */}
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-gradient-to-br from-blue-600 to-cyan-500 rounded-[2.5rem] p-8 mb-10 shadow-xl shadow-blue-500/20 relative overflow-hidden"
+        >
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl" />
+          <div className="relative">
+            <p className="text-blue-100 text-sm font-medium mb-1">Olá, Administrador!</p>
+            <h2 className="text-3xl font-black text-white leading-tight">O que vamos organizar hoje?</h2>
+            <div className="mt-6 flex items-center gap-2 bg-black/10 w-fit px-3 py-1 rounded-full border border-white/10">
+              <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+              <span className="text-[10px] font-bold text-white uppercase tracking-wider">Sistema Online</span>
             </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-              {categoria.itens.map((card, idx) => (
-                <motion.div
-                  key={idx}
-                  whileHover={{ y: -4 }}
-                  whileTap={{ scale: 0.97 }}
-                >
-                  <Link
-                    to={card.caminho}
-                    className="block bg-[#161b2c] p-6 rounded-xl border border-white/5 hover:border-blue-500/40 transition-all duration-300 h-full group relative overflow-hidden"
+          </div>
+        </motion.div>
+
+        {/* Seções por categoria estilo Mobile Menu */}
+        <div className="space-y-12">
+          {cardsDashboard.map((categoria, index) => (
+            <div key={index}>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em]">
+                  {categoria.categoria}
+                </h2>
+                <div className="h-px flex-1 bg-slate-800 ml-4" />
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {categoria.itens.map((card, idx) => (
+                  <motion.div
+                    key={idx}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                   >
-                    <div className="absolute inset-0 bg-blue-600/0 group-hover:bg-blue-600/[0.02] transition-colors" />
-                    
-                    <div className="relative flex flex-col h-full">
-                      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-gray-900 border border-white/10 text-blue-500 text-lg mb-6 group-hover:border-blue-500/50 group-hover:text-white group-hover:bg-blue-600 transition-all duration-300">
+                    <Link
+                      to={card.caminho}
+                      className="flex items-center gap-5 bg-slate-800/40 p-5 rounded-[2rem] border border-slate-800 hover:border-blue-500/50 hover:bg-slate-800/60 transition-all group"
+                    >
+                      <div className={`w-14 h-14 shrink-0 rounded-2xl bg-gradient-to-br ${card.cor} flex items-center justify-center text-white text-xl shadow-lg group-hover:shadow-blue-500/20`}>
                         {card.icone}
                       </div>
-                      <div>
-                        <h3 className="font-bold text-sm sm:text-base text-gray-100 group-hover:text-blue-400 transition-colors">
+                      <div className="flex-1">
+                        <h3 className="font-bold text-slate-100 text-base mb-1">
                           {card.titulo}
                         </h3>
-                        <p className="text-gray-500 text-xs mt-2 leading-relaxed">
+                        <p className="text-slate-500 text-xs leading-relaxed">
                           {card.descricao}
                         </p>
                       </div>
-                    </div>
-                  </Link>
-                </motion.div>
-              ))}
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
             </div>
-          </motion.div>
-        ))}
+          ))}
+        </div>
       </div>
 
+      {/* Simulação de Bottom Navigation (Visível em Mobile) */}
+      <div className="fixed bottom-0 left-0 right-0 p-6 z-50 md:hidden pointer-events-none">
+        <div className="max-w-xs mx-auto bg-slate-900/90 backdrop-blur-xl border border-slate-700/50 rounded-full h-16 flex items-center justify-around px-8 shadow-2xl pointer-events-auto">
+          <button className="text-blue-500" title="Home"><FaHome size={20}/></button>
+          <Link to="/cadastro-jogadores" className="text-slate-500 hover:text-blue-400 transition-colors" title="Novo Jogador"><FaUserPlus size={20}/></Link>
+          <div className="w-12 h-12 bg-blue-600 rounded-full -mt-12 flex items-center justify-center shadow-lg shadow-blue-500/40 text-white border-4 border-[#0f172a]">
+            <FaRandom />
+          </div>
+          <Link to="/agendar-partida" className="text-slate-500 hover:text-blue-400 transition-colors" title="Novo Jogo"><FaCalendarAlt size={20}/></Link>
+          <Link to="/configuracoes" className="text-slate-500 hover:text-blue-400 transition-colors" title="Opções"><FaCog size={20}/></Link>
+        </div>
+      </div>
     </div>
   );
 }
