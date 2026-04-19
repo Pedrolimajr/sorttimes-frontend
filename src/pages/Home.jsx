@@ -43,17 +43,16 @@ export default function PaginaInicial() {
         ))}
       </div>
 
-      {/* Container principal com layout responsivo */}
-      <div className="max-w-5xl mx-auto flex flex-col md:grid md:grid-cols-2 gap-8 sm:gap-12 md:gap-16 items-center">
-        {/* Coluna esquerda - Conteúdo textual */}
+      {/* Container principal simplificado para Coluna Única (Estilo App) */}
+      <div className="max-w-2xl mx-auto flex flex-col items-center text-center relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="space-y-6 sm:space-y-8"
+          className="space-y-8 sm:space-y-10 flex flex-col items-center"
         >
           {/* Cabeçalho com logo */}
-          <div className="inline-flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-center gap-4">
             <div className="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center bg-slate-900 border border-white/10 p-2 rounded-2xl shadow-2xl">
               <img
                 src="/img/logo_time.png"
@@ -61,8 +60,13 @@ export default function PaginaInicial() {
                 className="w-full h-full object-contain"
               />
             </div>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tighter uppercase bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400 flex items-center gap-2">
-              <FaFutbol className="text-blue-500" />
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tighter uppercase bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400 flex items-center gap-3">
+              <motion.div 
+                whileHover={{ rotate: 360, scale: 1.2 }} 
+                transition={{ type: "spring", stiffness: 260, damping: 20 }}
+              >
+                <FaFutbol className="text-blue-500" />
+              </motion.div>
               SortTimes
             </h1>
           </div>
@@ -77,18 +81,23 @@ export default function PaginaInicial() {
 
           {/* Subtítulo */}
           <div className="flex flex-col gap-3">
-            <p className="text-lg sm:text-xl text-slate-400 font-medium max-w-lg">
+            <p className="text-lg sm:text-xl text-slate-400 font-medium max-w-xl">
               O sistema definitivo para boleiros. Organize sorteios, controle o financeiro e gerencie presença de forma profissional.
             </p>
           </div>
 
-          {/* Imagem em mobile - aparece abaixo do subtítulo com efeitos hover */}
-          <div className="block md:hidden w-full mt-4">
+          {/* Imagem unificada - estilo App centralizado com efeito de chute */}
+          <div className="w-full mt-6 px-2">
             <motion.div
-              whileHover={{ y: -5, scale: 1.01 }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ duration: 0.3 }}
-              className="relative bg-slate-900/40 backdrop-blur-md border border-white/10 rounded-[2rem] p-3 aspect-video overflow-hidden shadow-2xl group"
+              whileHover={{
+                rotate: [0, -6, 4, 0],
+                x: [0, -8, 12, 0],
+                scale: [1, 0.98, 1.03, 1],
+                y: -5
+              }}
+              whileTap={{ scale: 0.97 }}
+              transition={{ duration: 0.4 }}
+              className="relative bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-3 sm:p-4 aspect-video overflow-hidden shadow-2xl group cursor-pointer"
             >
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-blue-500/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
@@ -97,10 +106,18 @@ export default function PaginaInicial() {
                 <img
                   src="/img/sorttimes-img.jpg"
                   alt="Painel de Controle"
-                  className="w-full h-full object-cover brightness-75 scale-100 group-hover:scale-105 transition-all duration-500"
+                  className="w-full h-full object-cover brightness-75 group-hover:brightness-100 scale-100 group-hover:scale-105 transition-all duration-700"
                 />
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+
+              {/* Detalhe flutuante (Painel Operacional) */}
+              <div className="absolute top-6 left-4 sm:top-10 sm:left-6 bg-slate-900/90 border border-white/10 p-2 sm:p-4 rounded-xl sm:rounded-2xl shadow-2xl backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-green-500 animate-pulse" />
+                  <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-slate-300">Live Management</span>
+                </div>
+              </div>
             </motion.div>
           </div>
 
@@ -109,45 +126,11 @@ export default function PaginaInicial() {
             <motion.button
               whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(37, 99, 235, 0.3)" }}
               whileTap={{ scale: 0.95 }}
-              className="mt-4 sm:mt-6 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 text-white font-black py-4 px-10 rounded-2xl shadow-xl transition-all flex items-center gap-3 text-sm uppercase tracking-[0.15em]"
+              className="mt-4 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 text-white font-black py-5 px-12 rounded-[2rem] shadow-xl hover:shadow-blue-500/25 transition-all flex items-center gap-4 text-sm uppercase tracking-[0.2em]"
             >
-              Começar Agora <FaArrowRight />
+              Acessar Painel <FaArrowRight />
             </motion.button>
           </Link>
-        </motion.div>
-
-        {/* Coluna direita - Floating Dashboard Preview */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 1, delay: 0.2 }}
-          className="hidden md:block w-full relative group"
-        >
-          <div className="relative bg-slate-900/40 backdrop-blur-md border border-white/10 rounded-[3rem] p-5 aspect-video overflow-hidden shadow-2xl transition-all duration-700 group-hover:border-blue-500/30 group-hover:rotate-1">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-transparent" />
-            
-            <div className="absolute inset-5 overflow-hidden rounded-[2rem]">
-              <img
-                src="/img/sorttimes-img.jpg"
-                alt="Painel de Controle"
-                className="w-full h-full object-cover brightness-75 contrast-125 transition-all duration-700 group-hover:brightness-100 group-hover:scale-105"
-              />
-            </div>
-            
-            {/* Glossy Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
-            
-            {/* Floating Info Detail */}
-            <div className="absolute top-10 -left-6 bg-slate-900/90 border border-white/10 p-4 rounded-2xl shadow-2xl backdrop-blur-md">
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">Painel Operacional</span>
-              </div>
-            </div>
-          </div>
-          
-          {/* Decorative Back Glow */}
-          <div className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-blue-600/10 blur-[100px] rounded-full" />
         </motion.div>
       </div>
     </div>

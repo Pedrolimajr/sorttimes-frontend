@@ -139,7 +139,7 @@ export default function Dashboard() {
               <span className="text-blue-500"><FaFutbol /></span>
               SORT TIMES
             </h1>
-            <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] -mt-1">Suíte de Gestão</p>
+            <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] -mt-1">Painel de Gestão</p>
           </div>
           <div className="w-12 h-12 rounded-2xl overflow-hidden border border-white/10 shadow-2xl hover:scale-105 transition-all duration-300">
             <img 
