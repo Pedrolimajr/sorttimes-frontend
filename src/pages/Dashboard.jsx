@@ -163,7 +163,7 @@ export default function Dashboard() {
           
           <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
-              <p className="text-blue-100/80 text-sm font-bold uppercase tracking-widest mb-2">{saudacao}, Administrador</p>
+              <p className="text-blue-100/80 text-sm font-bold uppercase tracking-widest mb-2">{saudacao}, Administrador!</p>
               <h2 className="text-4xl md:text-5xl font-black text-white leading-[1.1] tracking-tighter">
                 Pronto para o <br/> próximo jogo?
               </h2>
@@ -220,13 +220,6 @@ export default function Dashboard() {
           ))}
         </div>
       </div>
-
-      {/* Rodapé fixo na base */}
-      <footer className="w-full py-6 text-center relative z-10 opacity-30 mt-auto">
-        <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em]">
-          © {new Date().getFullYear()} SortTimes Suite
-        </p>
-      </footer>
 
       {/* Simulação de Bottom Navigation (Visível em Mobile) */}
       <div className="fixed bottom-0 left-0 right-0 p-6 z-50 md:hidden pointer-events-none">
