@@ -152,8 +152,8 @@ export default function Login() {
 
             {/* Campo Senha */}
             <div>
-              <div className="flex justify-between items-center mb-2 ml-1">
-                <label htmlFor="senha" className="block text-xs font-black text-slate-500 uppercase tracking-widest">Senha</label>
+              <div className="flex justify-between items-center mb-1.5 ml-1">
+                <label htmlFor="senha" className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Senha</label>
                 <Link 
                   to="/recuperar-senha" 
                   className="text-[10px] font-bold text-blue-400 hover:text-blue-300 transition-colors uppercase tracking-wider"
@@ -168,7 +168,7 @@ export default function Login() {
                   type={mostrarSenha ? "text" : "password"}
                   value={senha}
                   onChange={(e) => setSenha(e.target.value)}
-                  className="w-full pl-12 pr-12 py-4 bg-black/40 border border-white/5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white placeholder-slate-600 transition-all text-sm"
+                  className="w-full pl-12 pr-12 py-3 bg-black/40 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white placeholder-slate-600 transition-all text-sm"
                   placeholder="Sua senha secreta"
                   required
                 />
@@ -211,9 +211,9 @@ export default function Login() {
               whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={carregando}
-              className={`w-full py-4 rounded-2xl font-black transition-all flex items-center justify-center gap-3 text-sm uppercase tracking-[0.1em] ${
+              className={`w-full py-3.5 rounded-xl font-black transition-all flex items-center justify-center gap-3 text-sm uppercase tracking-[0.1em] ${
                 carregando
-                  ? "bg-slate-700 text-slate-400 cursor-not-allowed"
+                  ? "bg-slate-800 text-slate-500 cursor-not-allowed"
                   : "bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:shadow-blue-500/25 text-white shadow-xl"
               }`}
             >
