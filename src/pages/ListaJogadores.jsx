@@ -447,7 +447,13 @@ export default function ListaJogadores({
   const totalGeral = jogadores.filter(j => j.nivel === 'Associado' && j.ativo !== false).length;
 
   return (
-    <div className={`${!modoSelecao ? 'min-h-screen' : ''} bg-gray-900 p-4 sm:p-6`}>
+    <div className={`${!modoSelecao ? 'min-h-screen' : ''} bg-[#020617] text-slate-100 selection:bg-blue-500/30 p-4 sm:p-6 relative overflow-hidden`}>
+      {/* Aurora Background Effects - Inspirado no Dashboard */}
+      <div className="fixed inset-0 pointer-events-none -z-10">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-cyan-500/10 blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
+      </div>
+
       <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
       {/* Modal para foto ampliada */}
       <AnimatePresence>
@@ -499,32 +505,32 @@ export default function ListaJogadores({
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-gray-800 rounded-xl max-w-md w-full p-6 shadow-xl border border-gray-700"
+              className="bg-slate-900 border border-white/10 rounded-[2rem] max-w-md w-full p-8 shadow-2xl backdrop-blur-xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <h2 className="text-lg font-semibold text-white mb-3">
+              <h2 className="text-xl font-black text-white tracking-tighter uppercase mb-3">
                 {modalBloqueio.novoAtivo ? 'Desbloquear jogador' : 'Bloquear jogador'}
               </h2>
 
-              <p className="text-gray-300 text-sm mb-4">
+              <p className="text-slate-400 text-sm mb-6 leading-relaxed">
                 {modalBloqueio.novoAtivo
                   ? `Deseja DESBLOQUEAR o jogador "${modalBloqueio.jogador.nome}"? Ele voltará a aparecer nas demais telas.`
                   : `Deseja BLOQUEAR o jogador "${modalBloqueio.jogador.nome}"? Ele não aparecerá mais nas telas de Financeiro, Sorteio e Presença.`}
               </p>
 
-              <div className="flex justify-end gap-3 mt-4">
+              <div className="flex justify-end gap-3">
                 <button
                   onClick={fecharModalBloqueio}
-                  className="px-4 py-2 text-sm rounded-lg bg-gray-700 text-gray-200 hover:bg-gray-600"
+                  className="px-6 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={confirmarBloqueio}
-                  className={`px-4 py-2 text-sm rounded-lg text-white ${
+                  className={`px-6 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl text-white transition-all shadow-lg ${
                     modalBloqueio.novoAtivo
-                      ? 'bg-green-600 hover:bg-green-700'
-                      : 'bg-red-600 hover:bg-red-700'
+                      ? 'bg-green-600 hover:bg-green-500'
+                      : 'bg-red-600 hover:bg-red-500'
                   }`}
                 >
                   Confirmar
@@ -549,29 +555,29 @@ export default function ListaJogadores({
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-gray-800 rounded-xl max-w-md w-full p-6 shadow-xl border border-gray-700"
+              className="bg-slate-900 border border-white/10 rounded-[2rem] max-w-md w-full p-8 shadow-2xl backdrop-blur-xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <h2 className="text-lg font-semibold text-white mb-3">
+              <h2 className="text-xl font-black text-white tracking-tighter uppercase mb-3">
                 {modalIsencao.novoIsento ? 'Isentar jogador' : 'Remover isenção'}
               </h2>
 
-              <p className="text-gray-300 text-sm mb-4">
+              <p className="text-slate-400 text-sm mb-6 leading-relaxed">
                 {modalIsencao.novoIsento
                   ? `Deseja ISENTAR o jogador "${modalIsencao.jogador.nome}" de todas as mensalidades do ano? O status financeiro será definido como Adimplente.`
                   : `Deseja REMOVER A ISENÇÃO do jogador "${modalIsencao.jogador.nome}"? O status financeiro será recalculado com base nos pagamentos.`}
               </p>
 
-              <div className="flex justify-end gap-3 mt-4">
+              <div className="flex justify-end gap-3">
                 <button
                   onClick={fecharModalIsencao}
-                  className="px-4 py-2 text-sm rounded-lg bg-gray-700 text-gray-200 hover:bg-gray-600"
+                  className="px-6 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={confirmarIsencao}
-                  className={`px-4 py-2 text-sm rounded-lg text-white ${modalIsencao.novoIsento ? 'bg-blue-600 hover:bg-blue-700' : 'bg-yellow-600 hover:bg-yellow-700'}`}
+                  className={`px-6 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl text-white transition-all shadow-lg ${modalIsencao.novoIsento ? 'bg-blue-600 hover:bg-blue-500' : 'bg-yellow-600 hover:bg-yellow-500'}`}
                 >
                   Confirmar
                 </button>
@@ -690,10 +696,10 @@ export default function ListaJogadores({
             >
               <Link 
                 to="/cadastro-jogadores"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white rounded-lg shadow-lg transition-all duration-300 text-sm"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:shadow-blue-500/25 text-white font-black uppercase tracking-widest text-[10px] rounded-xl shadow-xl transition-all"
               >
                 <FaPlus />
-                Cadastrar Novo Jogador
+                Novo Atleta
               </Link>
             </motion.div>
           </motion.div>
@@ -716,48 +722,54 @@ export default function ListaJogadores({
           <button 
             onClick={exportarExcel} 
             disabled={exportando || jogadoresFiltrados.length === 0}
-            className="mb-4 flex items-center gap-2 px-4 py-2 bg-green-600/20 text-green-400 border border-green-500/30 rounded-lg hover:bg-green-600 hover:text-white transition-all text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+            className="mb-4 flex items-center gap-2 px-4 py-2 bg-green-600/10 text-green-400 border border-green-500/20 rounded-xl hover:bg-green-600 hover:text-white transition-all text-[10px] font-black uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <FaFileExcel className="text-base" /> {exportando ? 'GERANDO...' : 'EXPORTAR PARA EXCEL'}
+            <FaFileExcel className="text-sm" /> {exportando ? 'GERANDO...' : 'Exportar Excel'}
           </button>
         )}
 
         <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-gray-800 bg-opacity-50 backdrop-blur-sm rounded-xl shadow-xl border border-gray-700 overflow-hidden"
+          className="bg-slate-900/40 backdrop-blur-3xl rounded-[2.5rem] shadow-2xl border border-white/10 overflow-hidden relative"
         >
-          <div className="p-6 border-b border-gray-700">
-            <h2 className="text-lg font-semibold text-gray-300 mb-4 flex items-center gap-2">
-              <FaFilter className="text-blue-400" /> Filtros
+          {/* Decoração sutil no topo do card */}
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50" />
+
+          <div className="p-6 sm:p-10 border-b border-white/5">
+            <h2 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+              <FaFilter className="text-blue-400" /> Filtros de Pesquisa
             </h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-400 flex items-center gap-2">
-                  <FaSearch /> Buscar por nome
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
+                  Nome
                 </label>
-                <input 
-                  type="text" 
-                  placeholder="Digite o nome..." 
-                  className="w-full p-2 text-sm bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                  value={filtro} 
-                  onChange={(e) => setFiltro(e.target.value)} 
-                />
+                <div className="relative group">
+                  <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-blue-400 transition-colors" />
+                  <input 
+                    type="text" 
+                    placeholder="Pesquisar..." 
+                    className="w-full pl-9 pr-3 py-2 bg-black/40 border border-white/5 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-sm transition-all" 
+                    value={filtro} 
+                    onChange={(e) => setFiltro(e.target.value)} 
+                  />
+                </div>
               </div>
               
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-400">
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
                   Posição
                 </label>
                 <select 
-                  className="w-full p-2 text-sm bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                  className="w-full p-2 bg-black/40 border border-white/5 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-sm transition-all appearance-none" 
                   value={filtroPosicao} 
                   onChange={(e) => setFiltroPosicao(e.target.value)} 
                 >
-                  <option value="" className="bg-gray-800">Todas as posições</option>
+                  <option value="" className="bg-slate-900">Todas</option>
                   {posicoes.map(posicao => (
-                    <option key={posicao} value={posicao} className="bg-gray-800">
+                    <option key={posicao} value={posicao} className="bg-slate-900">
                       {posicao}
                     </option>
                   ))}
@@ -765,17 +777,17 @@ export default function ListaJogadores({
               </div>
               
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-400">
-                  Status Financeiro
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
+                  Financeiro
                 </label>
                 <select 
-                  className="w-full p-2 text-sm bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                  className="w-full p-2 bg-black/40 border border-white/5 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-sm transition-all appearance-none" 
                   value={filtroStatus} 
                   onChange={(e) => setFiltroStatus(e.target.value)} 
                 >
-                  <option value="" className="bg-gray-800">Todos os status</option>
+                  <option value="" className="bg-slate-900">Todos</option>
                   {statusFinanceiroOptions.map(status => (
-                    <option key={status} value={status} className="bg-gray-800">
+                    <option key={status} value={status} className="bg-slate-900">
                       {status}
                     </option>
                   ))}
@@ -783,7 +795,7 @@ export default function ListaJogadores({
               </div>
 
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-400">
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
                   Nível
                 </label>
                 <select 
@@ -791,9 +803,9 @@ export default function ListaJogadores({
                   value={filtroNivel} 
                   onChange={(e) => setFiltroNivel(e.target.value)} 
                 >
-                  <option value="" className="bg-gray-800">Todos os níveis</option>
+                  <option value="" className="bg-slate-900">Todos</option>
                   {niveisOptions.map(nivel => (
-                    <option key={nivel} value={nivel} className="bg-gray-800">
+                    <option key={nivel} value={nivel} className="bg-slate-900">
                       {nivel}
                     </option>
                   ))}
@@ -801,11 +813,11 @@ export default function ListaJogadores({
               </div>
 
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-400">
-                  Status do Jogador
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
+                  Exibição
                 </label>
-                <select
-                  className="w-full p-2 text-sm bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                <select 
+                  className="w-full p-2 bg-black/40 border border-white/5 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-sm transition-all appearance-none" 
                   value={filtroAtivo}
                   onChange={(e) => setFiltroAtivo(e.target.value)}
                 >
@@ -827,7 +839,7 @@ export default function ListaJogadores({
                   transition={{ duration: 0.3 }}
                   className="overflow-hidden"
                 >
-                  <form onSubmit={handleSubmit} className="p-6 border-b border-gray-700 bg-gray-700/30">
+                  <form onSubmit={handleSubmit} className="p-6 sm:p-10 border-b border-white/5 bg-blue-500/5">
                   <h2 className="text-lg font-semibold text-gray-300 mb-4 flex items-center gap-2">
                     {editando ? (
                       <>
@@ -842,7 +854,7 @@ export default function ListaJogadores({
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <label className="block text-sm font-medium text-gray-400">Nome Completo</label>
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Nome Completo</label>
                       <input 
                         type="text" 
                         name="nome" 
@@ -853,7 +865,7 @@ export default function ListaJogadores({
                     </div>
                     
                     <div className="space-y-2">
-                      <label className="block text-sm font-medium text-gray-400">Data de Nascimento</label>
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Data de Nascimento</label>
                       <input 
                         type="date" 
                         name="dataNascimento" 
@@ -864,7 +876,7 @@ export default function ListaJogadores({
                     </div>
                     
                     <div className="space-y-2">
-                      <label className="block text-sm font-medium text-gray-400">Posição</label>
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Posição</label>
                       <select 
                         name="posicao" 
                         value={formData.posicao} 
@@ -881,7 +893,7 @@ export default function ListaJogadores({
                     </div>
                     
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-400 flex items-center gap-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
                         <FaPhone /> Telefone
                       </label>
                       <input 
@@ -894,7 +906,7 @@ export default function ListaJogadores({
                     </div>
                     
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-400 flex items-center gap-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
                         <FaEnvelope /> E-mail
                       </label>
                       <input 
@@ -907,7 +919,7 @@ export default function ListaJogadores({
                     </div>
                     
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-400 flex items-center gap-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
                         <FaCalendarAlt /> Data de Ingresso
                       </label>
                       <input 
@@ -920,7 +932,7 @@ export default function ListaJogadores({
                     </div>
                     
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-400 flex items-center gap-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
                         <FaMoneyBillWave /> Status Financeiro
                       </label>
                       <select 
@@ -938,7 +950,7 @@ export default function ListaJogadores({
                     </div>
                     
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-400 flex items-center gap-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
                         <FaMapMarkerAlt /> Endereço
                       </label>
                       <input 
@@ -951,7 +963,7 @@ export default function ListaJogadores({
                     </div>
                     
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-400 flex items-center gap-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
                         <FaTshirt /> Número da Camisa
                       </label>
                       <input 
@@ -964,7 +976,7 @@ export default function ListaJogadores({
                     </div>
                     
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-400 flex items-center gap-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
                         <FaStar /> Nível
                       </label>
                       <select 
@@ -982,7 +994,7 @@ export default function ListaJogadores({
                     </div>
                     
                     <div className="space-y-2">
-                      <label className="block text-sm font-medium text-gray-400">Foto do Atleta</label>
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Foto do Atleta</label>
                       <input 
                         type="file" 
                         name="foto" 
@@ -1014,7 +1026,7 @@ export default function ListaJogadores({
                       }}
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
-                      className="flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-all text-sm"
+                      className="flex items-center gap-2 px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white font-black uppercase tracking-widest text-[10px] rounded-xl transition-all"
                     >
                       <FaTimes /> Cancelar
                     </motion.button>
@@ -1023,7 +1035,7 @@ export default function ListaJogadores({
                       type="submit"
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
-                      className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white rounded-lg transition-all shadow-md text-sm"
+                      className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white font-black uppercase tracking-widest text-[10px] rounded-xl transition-all shadow-lg shadow-blue-500/20"
                     >
                       <FaSave /> {editando ? 'Atualizar' : 'Adicionar'}
                     </motion.button>
@@ -1085,27 +1097,27 @@ export default function ListaJogadores({
               <div className="overflow-x-auto">
                 <div className="min-w-full inline-block align-middle">
                   <div className="overflow-hidden">
-                    <div className="max-h-[60vh] sm:max-h-[65vh] md:max-h-[70vh] lg:max-h-[75vh] overflow-y-auto no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                      <table className="min-w-full divide-y divide-gray-700">
-                        <thead className="bg-gray-700 sticky top-0">
+                    <div className="max-h-[60vh] sm:max-h-[65vh] md:max-h-[70vh] lg:max-h-[75vh] overflow-y-auto no-scrollbar relative" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                      <table className="min-w-full divide-y divide-white/5">
+                        <thead className="bg-slate-900/80 backdrop-blur-md sticky top-0 z-10">
                           <tr>
-                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider sm:px-6">Jogador</th>
-                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider sm:px-6">Informações</th>
-                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider sm:px-6">Contato</th>
-                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider sm:px-6">Status</th>
-                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider sm:px-6">Ações</th>
+                            <th className="px-4 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest sm:px-8">Jogador</th>
+                            <th className="px-4 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest sm:px-8">Informações</th>
+                            <th className="px-4 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest sm:px-8">Contato</th>
+                            <th className="px-4 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest sm:px-8">Financeiro</th>
+                            <th className="px-4 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest sm:px-8 text-center">Gestão</th>
                           </tr>
                         </thead>
-                        <tbody className="bg-gray-800/50 divide-y divide-gray-700">
+                        <tbody className="divide-y divide-white/5 bg-transparent">
                           {jogadoresFiltrados.map((jogador) => (
                             <motion.tr 
                               key={jogador._id}
                               initial={{ opacity: 0 }}
                               animate={{ opacity: 1 }}
-                              whileHover={{ backgroundColor: 'rgba(55, 65, 81, 0.3)' }}
+                              whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.02)' }}
                               className="transition-colors"
                             >
-                              <td className="px-4 py-4 whitespace-nowrap sm:px-6">
+                              <td className="px-4 py-6 whitespace-nowrap sm:px-8">
                                 <div className="flex items-center space-x-3">
                                   {jogador.foto ? (
                                     <div 
@@ -1113,18 +1125,18 @@ export default function ListaJogadores({
                                       onClick={() => abrirFotoAmpliada(jogador.foto, jogador.nome)}
                                     >
                                       <img 
-                                        className="h-10 w-10 sm:h-12 sm:w-12 rounded-full object-cover" 
+                                        className="h-10 w-10 sm:h-12 sm:w-12 rounded-2xl object-cover border border-white/10 shadow-lg" 
                                         src={jogador.foto} 
                                         alt={jogador.nome} 
                                       />
                                     </div>
                                   ) : (
-                                    <div className="flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-gray-700 flex items-center justify-center">
+                                    <div className="flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12 rounded-2xl bg-black/40 border border-white/10 flex items-center justify-center shadow-lg">
                                       <FaUserCircle className="text-gray-400 text-lg sm:text-xl" />
                                     </div>
                                   )}
                                   <div>
-                                    <div className="text-sm font-medium text-white">
+                                    <div className="text-sm font-black text-white tracking-tight">
                                       {jogador.nome}
                                       {jogador.ativo === false && (
                                         <span className="ml-2 text-xs text-red-400 font-normal">(Bloqueado)</span>
@@ -1140,11 +1152,11 @@ export default function ListaJogadores({
                                 </div>
                               </td>
                               
-                              <td className="px-4 py-4 whitespace-nowrap sm:px-6">
+                              <td className="px-4 py-4 whitespace-nowrap sm:px-8">
                                 <div className="space-y-1">
-                                  <div className="text-sm text-white flex items-center gap-2">
+                                  <div className="text-sm text-slate-100 font-bold flex items-center gap-2">
                                     <FaTshirt className="text-gray-400 hidden sm:inline" />
-                                    {jogador.posicao} {jogador.numeroCamisa && `#${jogador.numeroCamisa}`}
+                                    {jogador.posicao} {jogador.numeroCamisa && <span className="bg-slate-800 text-[10px] px-1.5 py-0.5 rounded text-blue-400">#{jogador.numeroCamisa}</span>}
                                   </div>
                                   <div className="text-xs text-gray-400 flex items-center gap-2">
                                     <FaStar className="text-yellow-400 hidden sm:inline" />
@@ -1159,11 +1171,11 @@ export default function ListaJogadores({
                                 </div>
                               </td>
                               
-                              <td className="px-4 py-4 whitespace-nowrap sm:px-6">
+                              <td className="px-4 py-4 whitespace-nowrap sm:px-8">
                                 <div className="space-y-1">
-                                  <div className="text-sm text-white flex items-center gap-2">
+                                  <div className="text-sm text-slate-200 flex items-center gap-2">
                                     <FaPhone className="hidden sm:inline" />
-                                    {jogador.telefone || 'Não informado'}
+                                    {jogador.telefone || '-'}
                                   </div>
                                   <div className="text-sm text-white flex items-center gap-2">
                                     <FaEnvelope className="hidden sm:inline" />
@@ -1176,25 +1188,25 @@ export default function ListaJogadores({
                                 </div>
                               </td>
                               
-                              <td className="px-4 py-4 whitespace-nowrap sm:px-6">
+                              <td className="px-4 py-4 whitespace-nowrap sm:px-8">
                                 {jogador.ativo === false ? (
-                                  <div className="px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 bg-red-500/20 text-red-400 w-fit cursor-not-allowed">
+                                  <div className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 bg-red-500/10 text-red-400 border border-red-500/20 w-fit cursor-not-allowed">
                                     <FaBan className="text-xs" />
                                     <span>Bloqueado</span>
                                   </div>
                                 ) : jogador.pagamentos?.every(p => p.isento) ? (
-                                  <div className="px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 bg-orange-500/20 text-orange-400 w-fit cursor-help" title="Jogador isento de mensalidades">
+                                  <div className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 bg-orange-500/10 text-orange-400 border border-orange-500/20 w-fit cursor-help" title="Jogador isento de mensalidades">
                                     <FaAward className="text-xs" />
                                     <span>Isento</span>
                                   </div>
                                 ) : (
                                   <motion.button
                                     onClick={() => toggleStatus(jogador._id)}
-                                    whileHover={{ scale: 1.05 }}
+                                    whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.95 }}
-                                    className={`px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all duration-300 ${
+                                    className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-all duration-300 border ${
                                       jogador.statusFinanceiro === 'Adimplente' ?
-                                        'bg-green-500/20 text-green-400 hover:bg-green-500/30' :
+                                        'bg-green-500/10 text-green-400 border-green-500/20 hover:bg-green-500/20' :
                                         'bg-red-500/20 text-red-400 hover:bg-red-500/30'
                                     }`}
                                   >
@@ -1213,11 +1225,11 @@ export default function ListaJogadores({
                                 )}
                               </td>
                               
-                              <td className="px-4 py-4 whitespace-nowrap text-sm font-medium sm:px-6">
-                                <div className="flex gap-2 sm:gap-3">
+                              <td className="px-4 py-4 whitespace-nowrap text-sm font-medium sm:px-8">
+                                <div className="flex justify-center gap-3">
                                   {/* Isentar Jogador */}
                                   <motion.button
-                                    onClick={() => {
+                                    onClick={(e) => {
                                       const isIsento = jogador.pagamentos?.every(p => p.isento);
                                       setModalIsencao({
                                         aberto: true,
@@ -1227,14 +1239,14 @@ export default function ListaJogadores({
                                     }}
                                     whileHover={{ scale: 1.1 }}
                                     whileTap={{ scale: 0.9 }}
-                                    className={jogador.pagamentos?.every(p => p.isento) ? 'text-yellow-400 hover:text-yellow-300' : 'text-gray-400 hover:text-gray-300'}
+                                    className={`p-2 rounded-lg transition-colors ${jogador.pagamentos?.every(p => p.isento) ? 'bg-yellow-500/10 text-yellow-400' : 'bg-slate-800 text-slate-500 hover:text-white'}`}
                                     title={jogador.pagamentos?.every(p => p.isento) ? 'Remover Isenção' : 'Isentar de Mensalidades'}
                                   >
                                     <FaAward className="text-sm sm:text-base" />
                                   </motion.button>
 
                                   {/* Bloquear / Desbloquear antes do botão Editar */}
-                                  <motion.button
+                                  <motion.button 
                                     onClick={() => {
                                       const ativoAtual = jogador.ativo !== false;
                                       const novoAtivo = !ativoAtual;
@@ -1247,7 +1259,7 @@ export default function ListaJogadores({
                                     }}
                                     whileHover={{ scale: 1.1 }}
                                     whileTap={{ scale: 0.9 }}
-                                    className={jogador.ativo === false ? 'text-green-400 hover:text-green-300' : 'text-yellow-400 hover:text-yellow-300'}
+                                    className={`p-2 rounded-lg transition-colors ${jogador.ativo === false ? 'bg-green-500/10 text-green-400' : 'bg-slate-800 text-slate-500 hover:text-yellow-400'}`}
                                     title={jogador.ativo === false ? 'Desbloquear' : 'Bloquear'}
                                   >
                                     {jogador.ativo === false ? (
@@ -1261,7 +1273,7 @@ export default function ListaJogadores({
                                     onClick={() => handleEditar(jogador)}
                                     whileHover={{ scale: 1.1 }}
                                     whileTap={{ scale: 0.9 }}
-                                    className="text-blue-400 hover:text-blue-300"
+                                    className="p-2 bg-slate-800 rounded-lg text-slate-500 hover:text-blue-400 transition-colors"
                                     title="Editar"
                                   >
                                     <FaEdit className="text-sm sm:text-base" />
@@ -1271,7 +1283,7 @@ export default function ListaJogadores({
                                     onClick={() => handleExcluir(jogador._id)}
                                     whileHover={{ scale: 1.1 }}
                                     whileTap={{ scale: 0.9 }}
-                                    className="text-red-400 hover:text-red-300"
+                                    className="p-2 bg-slate-800 rounded-lg text-slate-500 hover:text-red-400 transition-colors"
                                     title="Excluir"
                                   >
                                     <FaTrash className="text-sm sm:text-base" />
@@ -1283,12 +1295,12 @@ export default function ListaJogadores({
                         </tbody>
                       </table>
                     </div>
-                    <div className="sticky bottom-0 left-0 w-full bg-gray-900 border-t border-gray-700 py-3 px-4 text-center text-gray-300 text-sm sm:text-base z-20 shadow-inner">
+                    <div className="sticky bottom-0 left-0 w-full bg-slate-950/90 backdrop-blur-xl border-t border-white/5 py-4 px-6 text-center z-20 shadow-2xl">
                       <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
-                        <span>Associados: <strong>{totalAssociados}</strong></span>
-                        <span>Bloqueados: <strong>{totalBloqueados}</strong></span>
-                        <span>Convidados: <strong>{totalConvidados}</strong></span>
-                        <span>Total: <strong>{totalGeral}</strong></span>
+                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Associados: <span className="text-white ml-1">{totalAssociados}</span></span>
+                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Bloqueados: <span className="text-red-400 ml-1">{totalBloqueados}</span></span>
+                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Convidados: <span className="text-white ml-1">{totalConvidados}</span></span>
+                        <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Ativos: <span className="text-white ml-1">{totalGeral}</span></span>
                       </div>
                     </div>
                   </div>
