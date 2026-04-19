@@ -49,18 +49,18 @@ export default function PaginaInicial() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="space-y-8 sm:space-y-10 flex flex-col items-center"
+          className="space-y-6 sm:space-y-8 lg:space-y-4 flex flex-col items-center"
         >
           {/* Cabeçalho com logo */}
           <div className="flex flex-col sm:flex-row items-center gap-4">
-            <div className="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center bg-slate-900 border border-white/10 p-2 rounded-2xl shadow-2xl">
+            <div className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center bg-slate-900 border border-white/10 p-2 rounded-2xl shadow-2xl">
               <img
                 src="/img/logo_time.png"
                 alt="Logo SortTimes"
                 className="w-full h-full object-contain"
               />
             </div>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tighter uppercase bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400 flex items-center gap-3">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tighter uppercase bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400 flex items-center gap-3">
               <motion.div 
                 whileHover={{ rotate: 360, scale: 1.2 }} 
                 transition={{ type: "spring", stiffness: 260, damping: 20 }}
@@ -72,7 +72,7 @@ export default function PaginaInicial() {
           </div>
 
           {/* Título principal */}
-          <h2 className="text-4xl sm:text-5xl lg:text-7xl font-black leading-[1.1] tracking-tighter text-white">
+          <h2 className="text-3xl sm:text-5xl lg:text-5xl xl:text-6xl font-black leading-[1.1] tracking-tighter text-white">
             A nova era da <br/>
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-blue-500 to-cyan-400">
               Gestão de Futebol
@@ -81,13 +81,13 @@ export default function PaginaInicial() {
 
           {/* Subtítulo */}
           <div className="flex flex-col gap-3">
-            <p className="text-lg sm:text-xl text-slate-400 font-medium max-w-xl">
+            <p className="text-base sm:text-lg lg:text-base text-slate-400 font-medium max-w-xl">
               O sistema definitivo para boleiros. Organize sorteios, controle o financeiro e gerencie presença de forma profissional.
             </p>
           </div>
 
           {/* Imagem unificada - estilo App centralizado com efeito de chute */}
-          <div className="w-full mt-6 px-2">
+          <div className="w-full mt-4 lg:mt-2 px-2 max-w-lg lg:max-w-md">
             <motion.div
               whileHover={{
                 rotate: [0, -6, 4, 0],
@@ -126,7 +126,7 @@ export default function PaginaInicial() {
             <motion.button
               whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(37, 99, 235, 0.3)" }}
               whileTap={{ scale: 0.95 }}
-              className="mt-4 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 text-white font-black py-5 px-12 rounded-[2rem] shadow-xl hover:shadow-blue-500/25 transition-all flex items-center gap-4 text-sm uppercase tracking-[0.2em]"
+              className="mt-4 lg:mt-2 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 text-white font-black py-4 lg:py-3 px-10 lg:px-8 rounded-[2rem] shadow-xl hover:shadow-blue-500/25 transition-all flex items-center gap-4 text-xs lg:text-sm uppercase tracking-[0.2em]"
             >
               Acessar Painel <FaArrowRight />
             </motion.button>
@@ -136,4 +136,3 @@ export default function PaginaInicial() {
     </div>
   );
 }
-
