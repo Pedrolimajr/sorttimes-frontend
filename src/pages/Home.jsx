@@ -52,15 +52,18 @@ export default function PaginaInicial() {
           className="space-y-6 sm:space-y-8 lg:space-y-4 flex flex-col items-center"
         >
           {/* Cabeçalho com logo */}
-          <div className="flex flex-col sm:flex-row items-center gap-4">
-            <div className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center bg-slate-900 border border-white/10 p-2 rounded-2xl shadow-2xl">
+          <div className="flex flex-col items-center gap-4">
+            <motion.div 
+              whileHover={{ scale: 1.1, rotate: 5 }}
+              className="w-20 h-20 md:w-24 md:h-24 flex items-center justify-center bg-slate-800/40 border border-white/10 p-4 rounded-[2rem] shadow-2xl backdrop-blur-sm"
+            >
               <img
                 src="/img/logo_time.png"
                 alt="Logo SortTimes"
-                className="w-full h-full object-contain"
+                className="w-full h-full object-contain brightness-125 contrast-125 drop-shadow-[0_0_20px_rgba(59,130,246,0.5)]"
               />
-            </div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tighter uppercase bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400 flex items-center gap-3">
+            </motion.div>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tighter uppercase bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400 flex items-center gap-3">
               <motion.div 
                 whileHover={{ rotate: 360, scale: 1.2 }} 
                 transition={{ type: "spring", stiffness: 260, damping: 20 }}
