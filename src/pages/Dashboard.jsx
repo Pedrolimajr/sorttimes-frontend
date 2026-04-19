@@ -101,21 +101,27 @@ const cardsDashboard = [
 ];
 
 export default function Dashboard() {
-  const [dadosDashboard, setDadosDashboard] = useState([]);
+  const [time, setTime] = useState(new Date());
 
   useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    
     socket.connect();
-
     socket.on('dados-atualizados', (novosDados) => {
-      // Atualiza os dados do dashboard
-      setDadosDashboard(novosDados);
+      // setDadosDashboard(novosDados);
     });
 
     return () => {
+      clearInterval(timer);
       socket.off('dados-atualizados');
       socket.disconnect();
     };
   }, []);
+
+  const hour = time.getHours();
+  const saudacao = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
+  const relogioFormatado = time.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const segundos = time.toLocaleTimeString('pt-BR', { second: '2-digit' });
 
   return (
     <div className="min-h-screen bg-[#0f172a] text-slate-100 selection:bg-blue-500/30 pb-24">
@@ -129,8 +135,12 @@ export default function Dashboard() {
             </h1>
             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Painel Administrativo</p>
           </div>
-          <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shadow-lg">
-            <FaUser className="text-slate-400 text-sm" />
+          <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-blue-500/20 shadow-lg">
+            <img 
+              src="/img/Logo_Melhorado.png" 
+              alt="Logo Administrador" 
+              className="w-full h-full object-cover"
+            />
           </div>
         </div>
       </div>
@@ -140,15 +150,25 @@ export default function Dashboard() {
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-gradient-to-br from-blue-600 to-cyan-500 rounded-[2.5rem] p-8 mb-10 shadow-xl shadow-blue-500/20 relative overflow-hidden"
+          className="bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-500 rounded-[2.5rem] p-8 mb-10 shadow-2xl shadow-blue-500/30 relative overflow-hidden border border-white/10"
         >
-          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl" />
-          <div className="relative">
-            <p className="text-blue-100 text-sm font-medium mb-1">Olá, Administrador!</p>
-            <h2 className="text-3xl font-black text-white leading-tight">O que vamos organizar hoje?</h2>
-            <div className="mt-6 flex items-center gap-2 bg-black/10 w-fit px-3 py-1 rounded-full border border-white/10">
-              <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
-              <span className="text-[10px] font-bold text-white uppercase tracking-wider">Sistema Online</span>
+          <div className="absolute -top-10 -right-10 w-64 h-64 bg-white/10 rounded-full blur-3xl p-8" />
+          <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-black/10 rounded-full blur-2xl" />
+          
+          <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+              <p className="text-blue-100 text-lg font-medium mb-1 opacity-90">{saudacao}, Administrador!</p>
+              <h2 className="text-3xl md:text-4xl font-black text-white leading-tight tracking-tight">
+                O que vamos <br/> organizar hoje?
+              </h2>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-md px-6 py-4 rounded-3xl border border-white/20 flex flex-col items-center justify-center min-w-[140px] shadow-inner">
+              <span className="text-[10px] font-black text-blue-100 uppercase tracking-[0.2em] mb-1">Horário Local</span>
+              <div className="flex items-baseline gap-1">
+                <span className="text-4xl font-black text-white tabular-nums tracking-tighter">{relogioFormatado}</span>
+                <span className="text-lg font-bold text-blue-200 opacity-80 tabular-nums">{segundos}</span>
+              </div>
             </div>
           </div>
         </motion.div>
