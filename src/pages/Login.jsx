@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FaEye, FaEyeSlash, FaSignInAlt, FaKey, FaEnvelope, FaLock } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaSignInAlt, FaKey, FaEnvelope, FaLock, FaHome, FaUserPlus, FaRandom, FaCalendarAlt, FaCog } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { authService } from "../services/authService";
@@ -45,7 +45,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-[#020617] flex flex-col items-center justify-between p-4 relative overflow-hidden pb-24 selection:bg-blue-500/30">
       {/* Efeitos de luz de fundo (Glow) para profundidade */}
       <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
         <div className="absolute -top-[10%] -left-[10%] w-[60%] h-[60%] rounded-full bg-blue-900/20 blur-[140px]" />
@@ -80,8 +80,8 @@ export default function Login() {
         ))}
       </div>
 
-      {/* Container principal com breakpoints específicos */}
-      <div className="w-full max-w-xs xs:max-w-sm sm:max-w-md mx-2 relative">
+      {/* Container principal centralizado */}
+      <div className="flex-1 flex flex-col items-center justify-center w-full max-w-xs xs:max-w-sm sm:max-w-md mx-2 relative z-10 py-8">
         {/* Botão Voltar - Agora fora do form */}
         <motion.button 
           type="button"
@@ -99,43 +99,42 @@ export default function Login() {
           transition={{ duration: 0.3 }}
         >
           <RiArrowLeftDoubleLine className="text-blue-400 text-xl transform transition-transform group-hover:translate-x-1" />
-          <div className="absolute inset-0 rounded-full bg-blue-400/10 animate-pulse" style={{ animationDuration: '3s' }} />
         </motion.button>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ type: "spring", damping: 20 }}
+          transition={{ type: "spring", damping: 25, stiffness: 120 }}
         >
           <form 
             onSubmit={fazerLogin} 
-            className="bg-slate-900/40 backdrop-blur-3xl p-10 rounded-[3rem] shadow-2xl border border-white/10 space-y-8 relative overflow-hidden"
+            className="bg-slate-900/40 backdrop-blur-3xl p-6 sm:p-8 rounded-[2.5rem] shadow-2xl border border-white/10 space-y-5 relative overflow-hidden"
           >
             {/* Decoração sutil no topo do card */}
             <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50" />
 
             <div className="text-center">
-              <div className="flex justify-center mb-6">
+              <div className="flex justify-center mb-4">
                 <motion.div 
                   whileHover={{ rotate: -5, scale: 1.1 }}
-                  className="w-28 h-28 rounded-[2rem] overflow-hidden border border-white/10 shadow-2xl p-2 bg-slate-950/80"
+                  className="w-20 h-20 rounded-2xl overflow-hidden border border-white/10 shadow-2xl p-2 bg-slate-950/80"
                 >
                   <img src="/img/logo_time.png" alt="Logo SortTimes" className="w-full h-full object-contain" />
                 </motion.div>
               </div>
-              <h1 className="text-4xl font-black text-white tracking-tighter uppercase mb-1">
+              <h1 className="text-2xl font-black text-white tracking-tighter uppercase mb-1">
                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400">
                   SortTimes
                 </span>
               </h1>
-              <h2 className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em] flex items-center justify-center gap-2">
+              <h2 className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] flex items-center justify-center gap-2">
                 <FaKey className="text-yellow-400 text-xs xs:text-sm" /> Acesse sua conta
               </h2>
             </div>
 
             {/* Campo Email */}
             <div>
-              <label htmlFor="email" className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Email</label>
+              <label htmlFor="email" className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Email</label>
               <div className="relative group">
                 <FaEnvelope className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
                 <input
@@ -143,7 +142,7 @@ export default function Login() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-12 pr-4 py-4 bg-black/40 border border-white/5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white placeholder-slate-600 transition-all text-sm"
+                  className="w-full pl-11 pr-4 py-3 bg-black/40 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white placeholder-slate-600 transition-all text-sm"
                   placeholder="exemplo@email.com"
                   required
                 />
@@ -156,7 +155,7 @@ export default function Login() {
                 <label htmlFor="senha" className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Senha</label>
                 <Link 
                   to="/recuperar-senha" 
-                  className="text-[10px] font-bold text-blue-400 hover:text-blue-300 transition-colors uppercase tracking-wider"
+                  className="text-[9px] font-bold text-blue-400 hover:text-blue-300 transition-colors uppercase tracking-wider"
                 >
                   Esqueceu a senha?
                 </Link>
@@ -168,7 +167,7 @@ export default function Login() {
                   type={mostrarSenha ? "text" : "password"}
                   value={senha}
                   onChange={(e) => setSenha(e.target.value)}
-                  className="w-full pl-12 pr-12 py-3 bg-black/40 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white placeholder-slate-600 transition-all text-sm"
+                  className="w-full pl-11 pr-12 py-3 bg-black/40 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white placeholder-slate-600 transition-all text-sm"
                   placeholder="Sua senha secreta"
                   required
                 />
@@ -189,16 +188,16 @@ export default function Login() {
 
             {/* Exibição de erros */}
             {erro ? (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
-                className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 flex items-center justify-between"
+                className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 flex items-center justify-between"
               >
-                <p className="text-red-400 text-xs font-bold leading-tight">{erro}</p>
+                <p className="text-red-400 text-[11px] font-bold leading-tight">{erro}</p>
                 <button 
                   type="button"
                   onClick={() => setErro("")}
-                  className="text-red-400 hover:text-red-300 text-lg font-bold px-2"
+                  className="text-red-400 hover:text-red-300 text-base font-bold px-1"
                 >
                   ×
                 </button>
@@ -211,7 +210,7 @@ export default function Login() {
               whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={carregando}
-              className={`w-full py-3.5 rounded-xl font-black transition-all flex items-center justify-center gap-3 text-sm uppercase tracking-[0.1em] ${
+              className={`w-full py-3 rounded-xl font-black transition-all flex items-center justify-center gap-3 text-sm uppercase tracking-[0.1em] ${
                 carregando
                   ? "bg-slate-800 text-slate-500 cursor-not-allowed"
                   : "bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:shadow-blue-500/25 text-white shadow-xl"
@@ -227,7 +226,7 @@ export default function Login() {
             </motion.button>
 
             {/* Link para cadastro */}
-            <div className="text-center pt-4 border-t border-white/5">
+            <div className="text-center pt-3 border-t border-white/5">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-tighter">
                 Não tem uma conta?{" "}
               <Link
@@ -252,6 +251,26 @@ export default function Login() {
           pauseOnHover
           theme="dark"
         />
+      </div>
+
+      {/* Rodapé fixo na base */}
+      <footer className="w-full py-4 text-center relative z-10 opacity-30">
+        <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em]">
+          © {new Date().getFullYear()} SortTimes Suite
+        </p>
+      </footer>
+
+      {/* Simulação de Bottom Navigation (Visível em Mobile) */}
+      <div className="fixed bottom-0 left-0 right-0 p-6 z-50 md:hidden pointer-events-none">
+        <div className="max-w-xs mx-auto bg-slate-900/90 backdrop-blur-xl border border-slate-700/50 rounded-full h-16 flex items-center justify-around px-8 shadow-2xl pointer-events-auto">
+          <Link to="/" className="text-blue-500" title="Home"><FaHome size={20}/></Link>
+          <Link to="/cadastro-jogadores" className="text-slate-500 hover:text-blue-400 transition-colors" title="Novo Jogador"><FaUserPlus size={20}/></Link>
+          <div className="w-12 h-12 bg-blue-600 rounded-full -mt-12 flex items-center justify-center shadow-lg shadow-blue-500/40 text-white border-4 border-[#020617]">
+            <FaRandom />
+          </div>
+          <Link to="/agendar-partida" className="text-slate-500 hover:text-blue-400 transition-colors" title="Novo Jogo"><FaCalendarAlt size={20}/></Link>
+          <Link to="/configuracoes" className="text-slate-500 hover:text-blue-400 transition-colors" title="Opções"><FaCog size={20}/></Link>
+        </div>
       </div>
     </div>
   );
