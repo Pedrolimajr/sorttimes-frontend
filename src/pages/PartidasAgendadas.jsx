@@ -151,7 +151,6 @@ const PartidasAgendadas = () => {
             transition={{ duration: 0.3 }}
           >
             <RiArrowLeftDoubleLine className="text-blue-400 text-2xl transform transition-transform group-hover:translate-x-1" />
-            <div className="absolute inset-0 rounded-full bg-blue-400/10 animate-pulse" style={{ animationDuration: '3s' }} />
           </motion.button>
 
           {/* Título Centralizado */}

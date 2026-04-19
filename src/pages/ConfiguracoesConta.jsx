@@ -93,7 +93,6 @@ export default function ConfiguracoesConta() {
             transition={{ duration: 0.3 }}
           >
             <RiArrowLeftDoubleLine className="text-blue-400 text-xl transform transition-transform group-hover:translate-x-1" />
-            <div className="absolute inset-0 rounded-full bg-blue-400/10 animate-pulse" style={{ animationDuration: '3s' }} />
           </motion.button>
 
           <div className="flex flex-col items-center gap-2">
