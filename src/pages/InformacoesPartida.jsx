@@ -849,35 +849,13 @@ export default function InformacoesPartida() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 px-4 py-8 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#020617] text-slate-100 selection:bg-blue-500/30 px-4 py-8 sm:px-6 lg:px-8 relative overflow-hidden">
       <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
-      {/* Efeito de partículas */}
-      <div className="fixed inset-0 overflow-hidden -z-10 opacity-20">
-        {[...Array(15)].map((_, i) => (
-          <motion.div
-            key={i}
-            initial={{ 
-              x: Math.random() * 100,
-              y: Math.random() * 100,
-              opacity: 0.3
-            }}
-            animate={{ 
-              y: [null, (Math.random() - 0.5) * 50],
-              x: [null, (Math.random() - 0.5) * 50],
-            }}
-            transition={{ 
-              duration: 15 + Math.random() * 20,
-              repeat: Infinity,
-              repeatType: "reverse",
-              ease: "easeInOut"
-            }}
-            className="absolute w-1 h-1 bg-white rounded-full"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-          />
-        ))}
+
+      {/* Aurora Background Effects */}
+      <div className="fixed inset-0 pointer-events-none -z-10">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-cyan-500/10 blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
 
       <div className="max-w-7xl mx-auto">
@@ -892,65 +870,50 @@ export default function InformacoesPartida() {
             whileHover={{ 
               scale: 1.05,
               x: -5,
-              backgroundColor: "rgba(37, 99, 235, 0.1)"
+              backgroundColor: "rgba(15, 23, 42, 0.8)"
             }}
             whileTap={{ scale: 0.95 }}
-            className="absolute left-4 top-0 sm:top-8 w-11 h-11 flex items-center justify-center bg-gray-800/40 hover:bg-gray-700/40 text-gray-200 rounded-full transition-all duration-300 backdrop-blur-sm border border-gray-700/50 shadow-lg hover:shadow-blue-500/20"
+            className="absolute left-0 -top-2 sm:top-2 w-12 h-12 flex items-center justify-center bg-slate-900/50 text-gray-200 rounded-2xl transition-all duration-300 backdrop-blur-md border border-white/5 shadow-xl hover:shadow-blue-500/10"
             title="Voltar para o Dashboard"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3 }}
           >
             <RiArrowLeftDoubleLine className="text-blue-400 text-2xl transform transition-transform group-hover:translate-x-1" />
           </motion.button>
 
           {/* Seletor de Abas */}
-          <div className="flex bg-gray-800 p-1 rounded-xl mb-8 w-fit mx-auto border border-gray-700 shadow-lg">
+          <div className="flex bg-slate-900/50 backdrop-blur-md p-1.5 rounded-2xl mb-10 w-fit mx-auto border border-white/5 shadow-2xl">
             <button
               onClick={() => setAbaAtiva('planilhas')}
-              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
-                abaAtiva === 'planilhas' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-400 hover:text-gray-200'
+              className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+                abaAtiva === 'planilhas' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : 'text-slate-500 hover:text-slate-300'
               }`}
             >
-              Gerenciador de Planilhas
+              Planilhas
             </button>
             <button
               onClick={() => setAbaAtiva('partida')}
-              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
-                abaAtiva === 'partida' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-400 hover:text-gray-200'
+              className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+                abaAtiva === 'partida' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : 'text-slate-500 hover:text-slate-300'
               }`}
             >
-              Link de Eventos (Live)
+              Live & Eventos
             </button>
           </div>
 
           {/* Cabeçalho com título e botões */}
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            {/* Título e Subtítulo Centralizados */}
             <div className="flex flex-col items-center flex-grow">
               <div className="flex items-center justify-center gap-3">
-                <FaTable className="text-blue-400 text-2xl sm:text-3xl" />
-                <motion.h1 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.1 }}
-                  className="text-2xl sm:text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300"
-                >
-                  {abaAtiva === 'planilhas' ? 'Informações das Partidas' : 'Registro em Tempo Real'}
+                <motion.h1 className="text-3xl sm:text-4xl font-black text-white tracking-tighter uppercase mb-1 flex items-center justify-center gap-3">
+                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400">
+                    {abaAtiva === 'planilhas' ? 'Gestão de Planilhas' : 'Painel Live'}
+                  </span>
                 </motion.h1>
               </div>
-
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 0.8 }}
-                transition={{ delay: 0.2 }}
-                className="text-gray-400 text-sm sm:text-base mt-1"
-              >
-                {abaAtiva === 'planilhas' ? 'Gerencie as informações e detalhes das partidas' : 'Gere links públicos para registro de gols e cartões'}
-              </motion.p>
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">
+                {abaAtiva === 'planilhas' ? 'Administração de Dados' : 'Monitoramento em Tempo Real'}
+              </p>
             </div>
 
-            {/* Botões de ação mantidos à direita */}
             <motion.div 
               className="flex gap-3 sm:flex-shrink-0"
               initial={{ opacity: 0 }}
@@ -961,7 +924,7 @@ export default function InformacoesPartida() {
                 <>
               <button
                 onClick={criarNovaPlanilha}
-                className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg text-sm"
+                className="bg-slate-800 hover:bg-slate-700 text-blue-400 border border-blue-500/20 px-5 py-2.5 rounded-xl font-black uppercase tracking-widest transition-all text-[10px]"
               >
                 <FaPlus /> Nova Planilha
               </button>
@@ -969,7 +932,7 @@ export default function InformacoesPartida() {
               <button
                 onClick={salvarPlanilha}
                 disabled={carregando}
-                className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg text-sm"
+                className="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 text-white px-5 py-2.5 rounded-xl font-black uppercase tracking-widest transition-all shadow-xl text-[10px] disabled:opacity-50"
               >
                 <FaSave /> {carregando ? 'Salvando...' : 'Salvar'}
               </button>
@@ -989,24 +952,26 @@ export default function InformacoesPartida() {
             >
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
-            <div className="bg-gray-800 p-6 rounded-lg shadow-lg mb-6 backdrop-blur-sm">
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-300 mb-1">Título</label>
+            <div className="bg-slate-900/40 backdrop-blur-3xl p-6 sm:p-10 rounded-[2.5rem] shadow-2xl border border-white/10 relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50" />
+              
+              <div className="mb-8">
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Título da Planilha</label>
                 <input
                   value={titulo}
                   onChange={(e) => setTitulo(e.target.value)}
-                  className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white"
-                  placeholder="Título da Planilha"
+                  className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white transition-all text-sm font-bold"
+                  placeholder="Ex: Estatísticas Maio"
                 />
               </div>
               
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-300 mb-1">Subtítulo</label>
+              <div className="mb-8">
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Subtítulo / Descrição</label>
                 <input
                   value={subtitulo}
                   onChange={(e) => setSubtitulo(e.target.value)}
-                  className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white"
-                  placeholder="Subtítulo"
+                  className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white transition-all text-sm"
+                  placeholder="Detalhes adicionais..."
                 />
               </div>
 
@@ -1014,13 +979,13 @@ export default function InformacoesPartida() {
               <div className="overflow-auto max-h-[60vh] rounded-lg border border-gray-700 shadow-xl no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                 <table className="min-w-full border-collapse table-fixed">
                   <thead>
-                    <tr className="bg-gray-600">
+                    <tr className="bg-slate-800/80 backdrop-blur-md">
                       {tabela[0].map((cabecalho, colIndex) => (
                         <th 
                           key={colIndex} 
-                          className="p-2 border border-gray-500 sticky top-0 bg-gray-600 min-w-[150px] text-center z-10"
+                          className="p-4 border border-white/5 sticky top-0 min-w-[150px] text-center z-10"
                         >
-                          <div className="flex flex-col items-center">
+                          <div className="flex flex-col items-center gap-2">
                             <input
                               value={cabecalho}
                               onChange={(e) => atualizarCelula(0, colIndex, e.target.value)}
@@ -1030,7 +995,7 @@ export default function InformacoesPartida() {
                             <div className="mt-1">
                               <button
                                 onClick={() => removerColuna(colIndex)}
-                                className="text-red-400 hover:text-red-300 text-xs opacity-60 hover:opacity-100 transition-opacity"
+                                className="text-red-400/50 hover:text-red-400 transition-colors"
                                 title="Remover coluna"
                               >
                                 <FaTimesCircle />
@@ -1039,10 +1004,10 @@ export default function InformacoesPartida() {
                           </div>
                         </th>
                       ))}
-                      <th className="w-10 p-2 border border-gray-500 sticky top-0 bg-gray-600 text-center z-10">
+                      <th className="w-12 p-2 border border-white/5 sticky top-0 bg-slate-800/80 text-center z-10">
                         <button
                           onClick={adicionarColuna}
-                          className="mx-auto flex justify-center text-white hover:text-green-300 transition-colors"
+                          className="mx-auto flex justify-center text-blue-400 hover:text-blue-300 transition-colors"
                           title="Adicionar coluna"
                         >
                           <FaPlus />
@@ -1054,12 +1019,10 @@ export default function InformacoesPartida() {
                     {tabela.slice(1).map((linha, rowIndex) => (
                       <tr 
                         key={rowIndex} 
-                        className={`${
-                          rowIndex % 2 === 0 ? 'bg-gray-700' : 'bg-gray-800'
-                        } hover:bg-gray-600/50 transition-colors`}
+                        className="hover:bg-white/5 transition-colors border-b border-white/5"
                       >
                         {linha.map((celula, colIndex) => (
-                          <td key={colIndex} className="border border-gray-600 p-0 text-center">
+                          <td key={colIndex} className="p-0 text-center border-r border-white/5">
                             <input
                               value={celula}
                               onChange={(e) => atualizarCelula(rowIndex + 1, colIndex, e.target.value)}
@@ -1069,11 +1032,11 @@ export default function InformacoesPartida() {
                             />
                           </td>
                         ))}
-                        <td className="border border-gray-600 w-10 text-center">
+                        <td className="w-10 text-center">
                           <button
                             onClick={() => removerLinha(rowIndex + 1)}
-                            className="w-full h-full flex justify-center items-center text-red-400 hover:text-red-300 opacity-60 hover:opacity-100 transition-opacity"
-                            title="Remover linha"
+                            className="w-full h-full flex justify-center items-center text-red-400/30 hover:text-red-400 transition-colors"
+                            title="Excluir linha"
                           >
                             <FaTrash size={12} />
                           </button>
@@ -1084,42 +1047,42 @@ export default function InformacoesPartida() {
                 </table>
               </div>
 
-              <div className="mt-6 flex flex-wrap gap-3 border-t border-gray-700 pt-4">
+              <div className="mt-8 flex flex-wrap gap-4 border-t border-white/5 pt-8">
                 <button
                   onClick={adicionarLinha}
-                  className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg text-xs sm:text-sm"
+                  className="bg-white/5 hover:bg-white/10 text-slate-300 px-6 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all flex items-center gap-2"
                 >
                   <FaPlus /> Adicionar Linha
                 </button>
                 
                 <button
                   onClick={exportarPDF}
-                  className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg text-xs sm:text-sm"
+                  className="bg-red-500/10 hover:bg-red-500/20 text-red-400 px-6 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all flex items-center gap-2 border border-red-500/20"
                 >
-                  <FaFilePdf /> Exportar PDF
+                  <FaFilePdf /> Gerar PDF
                 </button>
               </div>
             </div>
           </div>
 
           {/* Lista de planilhas (1 coluna em desktop) com scroll */}
-          <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
-            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+          <div className="bg-slate-900/40 backdrop-blur-3xl p-8 rounded-[2.5rem] shadow-2xl border border-white/10">
+            <h2 className="text-xl font-black text-white tracking-tighter uppercase mb-6 flex items-center gap-3">
               <FaTable /> Planilhas Salvas
             </h2>
             
             {planilhas.length === 0 ? (
-              <p className="text-gray-400">Nenhuma planilha cadastrada</p>
+              <p className="text-slate-500 text-xs font-bold uppercase tracking-widest italic text-center py-8">Vazio...</p>
             ) : (
               <div className="overflow-y-auto max-h-[60vh] space-y-3 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                 {planilhas.map((planilha) => (
                   <div 
                     key={planilha._id}
                     onClick={() => selecionarPlanilha(planilha)}
-                    className={`p-3 border rounded-lg cursor-pointer transition-colors relative ${
+                    className={`p-5 rounded-2xl cursor-pointer transition-all relative border ${
                       planilhaAtiva?._id === planilha._id 
-                        ? 'bg-blue-900/30 border-blue-500' 
-                        : 'border-gray-600 hover:bg-gray-700'
+                        ? 'bg-blue-600/10 border-blue-500/50 shadow-[0_0_20px_rgba(59,130,246,0.1)]' 
+                        : 'bg-black/20 border-white/5 hover:border-white/10 hover:bg-white/5'
                     }`}
                   >
                     <button
@@ -1127,10 +1090,10 @@ export default function InformacoesPartida() {
                         e.stopPropagation();
                         deletarPlanilha(planilha._id);
                       }}
-                      className="absolute top-2 right-2 text-red-400 hover:text-red-300"
+                      className="absolute top-4 right-4 text-slate-600 hover:text-red-400 transition-colors"
                       title="Excluir planilha"
                     >
-                      <FaTrash />
+                      <FaTrash size={14} />
                     </button>
                     
                     <h3 className="font-bold">{planilha.titulo}</h3>
@@ -1153,11 +1116,13 @@ export default function InformacoesPartida() {
               exit={{ opacity: 0, x: -20 }}
               className="space-y-6"
             >
-              {/* Seção de Estatísticas Acumuladas (Neutra) */}
-              <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 shadow-xl border-t-blue-500/20">
+              <div className="bg-slate-900/40 backdrop-blur-3xl p-6 sm:p-10 rounded-[2.5rem] shadow-2xl border border-white/10 relative overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50" />
+                
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                  <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                    <FaAward className="text-blue-400" /> Estatísticas Acumuladas dos Atletas
+                  <h2 className="text-xl font-black text-white tracking-tighter uppercase flex items-center gap-3">
+                    <FaAward className="text-blue-400" /> 
+                    Estatísticas Acumuladas
                   </h2>
                   <button 
                     onClick={() => setShowRankingModal(true)}
@@ -1169,13 +1134,13 @@ export default function InformacoesPartida() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
                   <div className="space-y-4 lg:col-span-2">
-                    <label className="block text-sm font-medium text-gray-400">Selecionar Jogador (Associado)</label>
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Selecionar Atleta</label>
                     <select 
-                      className="w-full bg-gray-900 border-gray-700 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                      className="w-full bg-black/40 border border-white/5 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-blue-500/30 text-white appearance-none transition-all"
                       value={atletaParaStats}
                       onChange={(e) => setAtletaParaStats(e.target.value)}
                     >
-                      <option value="">Buscar atleta...</option>
+                      <option value="" className="bg-slate-900">Buscar atleta...</option>
                       {Object.keys(estatisticasAtletas).sort().map(nome => (
                         <option key={nome} value={nome}>{nome}</option>
                       ))}
@@ -1195,8 +1160,8 @@ export default function InformacoesPartida() {
                           {atletaSelecionadoStats.foto ? (
                             <img src={atletaSelecionadoStats.foto} className="w-24 h-24 rounded-full object-cover border-4 border-blue-600 shadow-xl" alt="" />
                           ) : (
-                            <div className="w-24 h-24 rounded-full bg-gray-800 flex items-center justify-center border-4 border-gray-700">
-                              <FaUser className="text-gray-600 text-3xl" />
+                            <div className="w-24 h-24 rounded-full bg-slate-800 flex items-center justify-center border-4 border-slate-700">
+                              <FaUser className="text-slate-600 text-3xl" />
                             </div>
                           )}
                           <div className="absolute -bottom-2 -right-2 bg-blue-600 text-white p-2 rounded-full shadow-lg">
@@ -1242,25 +1207,26 @@ export default function InformacoesPartida() {
                         </div>
                       </motion.div>
                     ) : (
-                      <div className="lg:col-span-3 h-40 border-2 border-dashed border-gray-700 rounded-2xl flex flex-col items-center justify-center text-gray-600 w-full">
+                      <div className="lg:col-span-3 h-40 border border-dashed border-white/5 bg-black/20 rounded-2xl flex flex-col items-center justify-center text-slate-600 w-full">
                         <FaUser size={24} className="mb-2 opacity-20" />
-                        <p className="text-xs uppercase font-bold tracking-widest">Nenhum atleta selecionado</p>
+                        <p className="text-[10px] uppercase font-black tracking-widest">Selecione um associado</p>
                       </div>
                     )}
                   </AnimatePresence>
                 </div>
               </div>
 
-              <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 shadow-xl">
-                <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                  <FaCalendarAlt className="text-blue-400" /> Selecionar Partida Agendada
+              <div className="bg-slate-900/40 backdrop-blur-3xl p-6 sm:p-10 rounded-[2.5rem] shadow-2xl border border-white/10 relative overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-50" />
+                <h2 className="text-xl font-black text-white tracking-tighter uppercase mb-8 flex items-center gap-3">
+                  <FaCalendarAlt className="text-cyan-400" /> Vínculo da Agenda
                 </h2>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                   <div>
-                    <label className="block text-sm font-medium text-gray-400 mb-2">Selecionar Partida Agendada</label>
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Partida Correspondente</label>
                     <select 
-                      className="w-full bg-gray-900 border-gray-700 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full bg-black/40 border border-white/5 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-blue-500/30 text-white appearance-none transition-all"
                       value={partidaSelecionada?._id || ""}
                       onChange={(e) => {
                         const id = e.target.value;
@@ -1294,14 +1260,14 @@ export default function InformacoesPartida() {
                       <button
                         onClick={() => gerarLinkPublicoPartida('eventos')}
                         disabled={!partidaSelecionada || carregando}
-                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50 text-xs"
+                        className="flex-1 bg-blue-600 hover:shadow-blue-500/25 text-white p-4 rounded-xl font-black uppercase tracking-widest transition-all disabled:opacity-50 text-[10px] flex items-center justify-center gap-2"
                       >
-                        <FaFutbol className="animate-bounce" /> Link de Eventos (Gols e Cartões)
+                        <FaFutbol className="animate-bounce" /> Link de Eventos
                       </button>
                       <button
                         onClick={() => gerarLinkPublicoPartida('votacao')}
                         disabled={!partidaSelecionada || carregando}
-                        className="flex-1 bg-amber-600 hover:bg-amber-700 text-white p-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50 text-xs"
+                        className="flex-1 bg-amber-600 hover:shadow-amber-500/25 text-white p-4 rounded-xl font-black uppercase tracking-widest transition-all disabled:opacity-50 text-[10px] flex items-center justify-center gap-2"
                       >
                         <FaAward /> Link de Votação (Pós-Jogo)
                       </button>
@@ -1318,21 +1284,21 @@ export default function InformacoesPartida() {
                     >
                       {/* Card do Link de Eventos */}
                       {linkGeradoPartida && (
-                        <div className="bg-blue-500/10 border border-blue-500/30 p-4 rounded-xl flex flex-col sm:flex-row items-center gap-4">
+                        <div className="bg-blue-500/5 border border-blue-500/20 p-5 rounded-2xl flex flex-col sm:flex-row items-center gap-4">
                         <div className="flex-1">
                           <p className="text-[10px] font-bold text-blue-400 uppercase mb-1">Link de Eventos (Gols e Cartões)</p>
-                          <div className="text-xs font-mono text-blue-300 break-all bg-gray-900 p-3 rounded-lg border border-blue-900/50">
+                          <div className="text-xs font-mono text-blue-300 break-all bg-black/40 p-3 rounded-lg border border-white/5">
                             {linkGeradoPartida}
                           </div>
                           {countdownEventos && (
-                            <p className="text-xs text-gray-400 mt-2">Expira em: <span className="font-bold text-white">{countdownEventos}</span></p>
+                            <p className="text-[10px] text-slate-500 mt-2 font-black uppercase tracking-widest">Expira em: <span className="text-white">{countdownEventos}</span></p>
                           )}
                         </div>
                         <button 
                           onClick={() => { navigator.clipboard.writeText(linkGeradoPartida); toast.info("Link de Eventos copiado!"); }}
-                          className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-bold flex items-center gap-2 w-full sm:w-auto"
+                          className="bg-blue-600 hover:bg-blue-500 px-6 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center gap-2 w-full sm:w-auto transition-all shadow-lg"
                         >
-                          <FaCopy /> Copiar
+                          <FaCopy />
                         </button>
                       </div>
                       )}
@@ -1342,16 +1308,16 @@ export default function InformacoesPartida() {
                         <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-xl flex flex-col sm:flex-row items-center gap-4">
                         <div className="flex-1">
                           <p className="text-[10px] font-bold text-amber-500 uppercase mb-1">Link de Votação para Atletas</p>
-                          <div className="text-xs font-mono text-amber-400 break-all bg-gray-900 p-3 rounded-lg border border-amber-900/50">
+                          <div className="text-xs font-mono text-amber-400 break-all bg-black/40 p-3 rounded-lg border border-white/5">
                             {linkVotacao}
                           </div>
                           {countdownVotacao && (
-                            <p className="text-xs text-gray-400 mt-2">Expira em: <span className="font-bold text-white">{countdownVotacao}</span></p>
+                            <p className="text-[10px] text-slate-500 mt-2 font-black uppercase tracking-widest">Expira em: <span className="text-white">{countdownVotacao}</span></p>
                           )}
                         </div>
                         <button 
                           onClick={() => { navigator.clipboard.writeText(linkVotacao); toast.info("Link de Votação copiado!"); }}
-                          className="bg-amber-600 hover:bg-amber-700 px-6 py-3 rounded-lg font-bold flex items-center gap-2 w-full sm:w-auto text-white"
+                          className="bg-amber-600 hover:bg-amber-500 px-6 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center gap-2 w-full sm:w-auto text-white transition-all shadow-lg"
                         >
                           <FaCopy /> Copiar
                         </button>
@@ -1364,20 +1330,20 @@ export default function InformacoesPartida() {
 
               {partidaSelecionada && (
                 <div className="space-y-6">
-                  <div className="flex justify-between items-center bg-gray-900/50 p-3 rounded-xl border border-gray-700">
-                    <span className="text-xs font-bold text-blue-400 flex items-center gap-2">
+                  <div className="flex justify-between items-center bg-slate-900/50 p-4 rounded-2xl border border-white/5 backdrop-blur-md">
+                    <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-2">
                       <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" /> MONITORAMENTO LIVE
                     </span>
                     <button 
                       onClick={atualizarDadosPartida}
-                      className="text-xs flex items-center gap-2 text-gray-400 hover:text-white transition-all bg-gray-800 px-3 py-1.5 rounded-lg border border-gray-700"
+                      className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-slate-500 hover:text-white transition-all bg-white/5 px-4 py-2 rounded-xl"
                     >
                       <FaSync className={carregando ? 'animate-spin' : ''} /> Atualizar Placar
                     </button>
                   </div>
 
                   {/* Placar Bonito no Painel Admin */}
-                  <div className="bg-gray-800/80 backdrop-blur-md rounded-3xl p-6 border border-gray-700 shadow-2xl relative overflow-hidden group">
+                  <div className="bg-slate-900/40 backdrop-blur-3xl rounded-[2.5rem] p-8 border border-white/10 shadow-2xl relative overflow-hidden group">
                     <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 to-transparent pointer-events-none" />
                     <div className="flex items-center justify-center gap-2 mb-2">
                       <div className="h-px w-12 bg-gradient-to-r from-transparent to-gray-600"></div>
@@ -1402,10 +1368,10 @@ export default function InformacoesPartida() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-gray-800/60 backdrop-blur-md rounded-3xl p-6 border border-gray-700 shadow-xl border-t-green-500/20">
+                  <div className="bg-slate-900/40 backdrop-blur-3xl rounded-[2.5rem] p-8 border border-white/10 shadow-2xl">
                     <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-lg font-bold text-green-400 flex items-center gap-2">
-                        <div className="p-2 bg-green-500/10 rounded-lg"><FaFutbol className="animate-pulse" /></div> Resumo de Gols
+                      <h3 className="text-lg font-black text-green-400 tracking-tighter uppercase flex items-center gap-3">
+                        <FaFutbol className="animate-pulse" /> Resumo de Gols
                       </h3>
                       <button onClick={compartilharGols} className="p-2 text-green-400 hover:bg-green-400/10 rounded-lg transition-all" title="Compartilhar Gols">
                         <FaShareAlt size={16} />
@@ -1414,10 +1380,10 @@ export default function InformacoesPartida() {
                     <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                       {getGolsAgrupados().length > 0 ? (
                         getGolsAgrupados().map((g, i) => (
-                          <div key={i} className="flex flex-col p-3 bg-black/30 rounded-2xl text-sm border border-gray-700/50 hover:border-green-500/30 transition-colors group">
+                          <div key={i} className="flex flex-col p-4 bg-black/20 rounded-[1.5rem] text-sm border border-white/5 hover:border-green-500/30 transition-all group">
                             <div className="flex justify-between items-center">
                               <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center p-1.5 overflow-hidden shadow-inner group-hover:ring-2 ring-green-500/20 transition-all">
+                              <div className="w-10 h-10 rounded-full bg-slate-800 border border-white/5 flex items-center justify-center p-1.5 overflow-hidden shadow-inner group-hover:ring-2 ring-green-500/20 transition-all">
                                 <img src={`/img/${g.time?.toLowerCase()}.png`} className="w-full h-full object-contain" alt={g.time} />
                               </div>
                               <span className="font-bold text-white">{g.jogador}</span>
@@ -1428,7 +1394,7 @@ export default function InformacoesPartida() {
                             </div>
                             </div>
                             {/* Botões de Ação para Gols dentro do card */}
-                            <div className="flex justify-end gap-1 mt-2 pt-2 border-t border-gray-700/30 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="flex justify-end gap-1 mt-2 pt-2 border-t border-white/5 opacity-0 group-hover:opacity-100 transition-opacity">
                               <button onClick={() => handleEditarClick('gol-by-name', null, g.jogador)} className="p-1.5 text-blue-400 hover:bg-blue-400/10 rounded-lg transition-all" title="Editar Gol">
                                 <FaEdit size={14} />
                               </button>
@@ -1445,10 +1411,10 @@ export default function InformacoesPartida() {
                   </div>
 
                   {/* Resumo de Cartões no Painel Admin */}
-                  <div className="bg-gray-800/60 backdrop-blur-md rounded-3xl p-4 sm:p-5 border border-gray-700 shadow-xl border-t-orange-500/20">
+                  <div className="bg-slate-900/40 backdrop-blur-3xl rounded-[2.5rem] p-8 border border-white/10 shadow-2xl">
                     <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-lg font-bold text-orange-400 flex items-center gap-2">
-                        <FaIdCard /> Resumo de Cartões
+                      <h3 className="text-lg font-black text-orange-400 tracking-tighter uppercase flex items-center gap-3">
+                        <FaIdCard /> Cartões
                       </h3>
                       <button onClick={compartilharCartoes} className="p-2 text-orange-400 hover:bg-orange-400/10 rounded-lg transition-all" title="Compartilhar Cartões">
                         <FaShareAlt size={16} />
@@ -1460,12 +1426,12 @@ export default function InformacoesPartida() {
                         { label: 'Vermelho', tipo: 'vermelho', field: 'cartoesVermelhos', bg: 'bg-red-500', shadow: 'shadow-red-500/20' },
                         { label: 'Azul', tipo: 'azul', field: 'cartoesAzuis', bg: 'bg-blue-500', shadow: 'shadow-blue-500/20' }
                       ].map(card => (
-                        <div key={card.field} className="text-center bg-black/20 p-2 sm:p-3 rounded-2xl border border-gray-700/50 flex flex-col items-center">
+                        <div key={card.field} className="text-center bg-black/20 p-3 rounded-2xl border border-white/5 flex flex-col items-center transition-all hover:bg-black/30">
                           <div className={`w-5 h-7 ${card.bg} ${card.shadow} rounded-md mx-auto mb-2 shadow-lg ring-1 ring-white/10`}></div>
-                          <p className="text-[10px] text-gray-400 font-bold uppercase">{card.label}</p>
+                          <p className="text-[8px] text-slate-500 font-black uppercase tracking-widest">{card.label}</p>
                           <div className="mt-2 space-y-1 max-h-[100px] overflow-y-auto no-scrollbar w-full" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                             {partidaSelecionada[card.field]?.length > 0 ? 
-                              partidaSelecionada[card.field].map((nome, i) => ( // Adicionado i para o key
+                              partidaSelecionada[card.field].map((nome, i) => (
                                 <div key={i} className="flex justify-between items-center">
                                 <p className="text-[10px] text-white truncate bg-gray-800/80 px-1.5 py-0.5 rounded-lg border border-gray-700/50 flex-1 mr-1 text-left">{nome}</p>
                                   <button onClick={() => handleEditarClick(card.tipo, i, nome)} className="text-blue-400 p-1"><FaEdit size={12}/></button>
@@ -1480,10 +1446,10 @@ export default function InformacoesPartida() {
                   </div>
 
                   {/* Card de Acesso Restrito: Apuração (Votação dos Atletas) */}
-                  <div className="bg-gray-800/60 backdrop-blur-md rounded-3xl p-4 sm:p-6 border border-gray-700 shadow-xl border-t-amber-500/20">
+                  <div className="bg-slate-900/40 backdrop-blur-3xl rounded-[2.5rem] p-8 border border-white/10 shadow-2xl">
                     <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-lg font-bold bg-gradient-to-r from-yellow-400 to-amber-600 bg-clip-text text-transparent flex items-center gap-2">
-                        <FaLock className="text-amber-500 size-4" /> Votação dos Atletas (Apuração)
+                      <h3 className="text-lg font-black text-amber-500 tracking-tighter uppercase flex items-center gap-3">
+                        <FaLock className="size-4" /> Apuração
                       </h3>
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20 px-2 py-1 rounded-lg">
@@ -1505,7 +1471,7 @@ export default function InformacoesPartida() {
                         const lider = getLiderVotacao(cat.id);
 
                         return (
-                          <div key={cat.id} id={`apuracao-${cat.id}`} className="bg-black/30 p-4 rounded-2xl border border-gray-700/50 shadow-inner overflow-hidden">
+                          <div key={cat.id} id={`apuracao-${cat.id}`} className="bg-black/20 p-5 rounded-[1.5rem] border border-white/5 shadow-inner overflow-hidden">
                             <div className="flex justify-between items-center mb-2">
                               <span className="flex items-center gap-2">
                                 {cat.icon}
@@ -1530,7 +1496,7 @@ export default function InformacoesPartida() {
                                   {getFotoJogador(lider.nome) ? (
                                     <img src={getFotoJogador(lider.nome)} className={`w-10 h-10 rounded-full object-cover border-2 ${cat.border} shadow-lg ${cat.glow}`} alt="" />
                                   ) : (
-                                    <div className={`w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center border-2 ${cat.border} ${cat.color}`}><FaUser size={14} /></div>
+                                    <div className={`w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center border-2 ${cat.border} ${cat.color}`}><FaUser size={14} /></div>
                                   )}
                                   <div className={`absolute -top-1 -right-1 ${cat.bgWinner} text-black rounded-full p-0.5`}>{cat.winnerIcon}</div>
                                 </div>
@@ -1555,9 +1521,9 @@ export default function InformacoesPartida() {
                                         )}
                                         <span className={(idx === 0 && !lider?.empate) ? `font-bold ${cat.color}` : "text-gray-400"}>{nome}</span>
                                       </div>
-                                      <span className="text-[10px] text-gray-500 font-bold">{total} vts</span>
+                                      <span className="text-[10px] text-slate-500 font-bold">{total} vts</span>
                                     </div>
-                                    <div className="h-1 w-full bg-gray-800 rounded-full overflow-hidden">
+                                    <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden">
                                       <motion.div 
                                         initial={{ width: 0 }}
                                         animate={{ width: `${(total / totalCat) * 100}%` }}
@@ -1568,7 +1534,7 @@ export default function InformacoesPartida() {
                                 ))}
                               </div>
                             ) : (
-                              <p className="text-xs text-gray-600 italic">Nenhum voto ainda</p>
+                              <p className="text-[10px] text-slate-600 italic">Nenhum voto ainda</p>
                             )}
                           </div>
                         );
@@ -1576,10 +1542,10 @@ export default function InformacoesPartida() {
                     </div>
                   </div>
 
-                  <div id="secao-premiacoes" className="bg-gray-800/60 backdrop-blur-md rounded-3xl p-6 border border-gray-700 shadow-xl border-t-yellow-500/20">
+                  <div id="secao-premiacoes" className="bg-slate-900/40 backdrop-blur-3xl rounded-[2.5rem] p-8 border border-white/10 shadow-2xl">
                     <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-lg font-bold text-yellow-400 flex items-center gap-2">
-                        <FaTrophy /> Premiações da Partida
+                      <h3 className="text-lg font-black text-yellow-500 tracking-tighter uppercase flex items-center gap-3">
+                        <FaTrophy /> Premiações
                       </h3>
                       <button 
                         onClick={() => compartilharCaptura('secao-premiacoes', 'premiacoes-partida')} 
@@ -1601,10 +1567,10 @@ export default function InformacoesPartida() {
                         const foto = getFotoJogador(displayNome);
                         
                         return (
-                          <div key={d.id} className={`group relative overflow-hidden bg-black/30 p-4 rounded-2xl border border-gray-700/50 ${d.borderHover} transition-all`}>
+                          <div key={d.id} className={`group relative overflow-hidden bg-black/20 p-5 rounded-[1.5rem] border border-white/5 ${d.borderHover} transition-all`}>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-4">
-                                <div className={`w-14 h-14 rounded-full bg-gray-800 border-2 border-gray-700 flex items-center justify-center overflow-hidden shadow-inner group-hover:scale-105 transition-transform ring-4 ${d.glow}`}>
+                                <div className={`w-14 h-14 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center overflow-hidden shadow-inner group-hover:scale-105 transition-transform ring-4 ${d.glow}`}>
                                   {foto ? (
                                     <img src={foto} className="w-full h-full object-cover" alt="" />
                                   ) : (
@@ -1619,9 +1585,9 @@ export default function InformacoesPartida() {
                                 </div>
                               </div>
                               {lider && !lider.empate && (
-                                <div className="bg-black/40 px-3 py-2 rounded-2xl border border-gray-700 text-center shadow-lg">
+                                <div className="bg-black/40 px-4 py-3 rounded-2xl border border-white/5 text-center shadow-lg">
                                   <span className={`text-[12px] font-black ${d.color} block leading-none`}>{lider.total}</span>
-                                  <span className="text-[8px] font-bold text-gray-500 uppercase">Votos</span>
+                                  <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest mt-1 block">Votos</span>
                                 </div>
                               )}
                             </div>
