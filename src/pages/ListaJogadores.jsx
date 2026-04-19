@@ -638,14 +638,11 @@ export default function ListaJogadores({
             whileHover={{ 
               scale: 1.05,
               x: -5,
-              backgroundColor: "rgba(37, 99, 235, 0.1)"
+              backgroundColor: "rgba(15, 23, 42, 0.8)"
             }}
             whileTap={{ scale: 0.95 }}
-            className="absolute left-3 top-4 sm:top-8 w-11 h-11 flex items-center justify-center bg-gray-800/40 hover:bg-gray-700/40 text-gray-200 rounded-full transition-all duration-300 backdrop-blur-sm border border-gray-700/50 shadow-lg hover:shadow-blue-500/20"
+            className="absolute left-0 -top-2 sm:top-2 w-12 h-12 flex items-center justify-center bg-slate-900/50 text-gray-200 rounded-2xl transition-all duration-300 backdrop-blur-md border border-white/5 shadow-xl hover:shadow-blue-500/10"
             title="Voltar para o Dashboard"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3 }}
           >
             <RiArrowLeftDoubleLine className="text-blue-400 text-2xl transform transition-transform group-hover:translate-x-1" />
           </motion.button>
