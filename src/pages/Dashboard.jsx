@@ -13,7 +13,8 @@ import {
   FaInfoCircle,
   FaFutbol,
   FaTachometerAlt,
-  FaCog
+  FaCog,
+  FaUser
 } from 'react-icons/fa';
 import socket from '../services/socket';
 
