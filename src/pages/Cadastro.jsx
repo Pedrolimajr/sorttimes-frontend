@@ -79,24 +79,21 @@ export default function Cadastro() {
       </div>
 
       {/* Container principal - ajustado para diferentes tamanhos de tela */}
-      <div className="w-full max-w-xs xs:max-w-sm sm:max-w-md mx-2">
-        {/* Botão Voltar - Atualizado para ficar igual ao do Login */}
+      <div className="w-full max-w-xs xs:max-w-sm sm:max-w-md mx-2 relative pt-16 sm:pt-0">
+        {/* Botão Voltar - Atualizado para ficar igual ao do AgendarPartida */}
         <motion.button 
           type="button"
           onClick={voltarParaHome}
           whileHover={{ 
             scale: 1.05,
             x: -5,
-            backgroundColor: "rgba(37, 99, 235, 0.1)"
+            backgroundColor: "rgba(15, 23, 42, 0.8)"
           }}
           whileTap={{ scale: 0.95 }}
-          className="mb-6 w-10 h-10 flex items-center justify-center bg-gray-800/40 hover:bg-gray-700/40 text-gray-200 rounded-full transition-all duration-300 backdrop-blur-sm border border-gray-700/50 shadow-lg hover:shadow-blue-500/20"
+          className="absolute left-0 -top-2 sm:top-2 w-12 h-12 flex items-center justify-center bg-slate-900/50 text-gray-200 rounded-2xl transition-all duration-300 backdrop-blur-md border border-white/5 shadow-xl hover:shadow-blue-500/10"
           title="Voltar para Home"
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.3 }}
         >
-          <RiArrowLeftDoubleLine className="text-blue-400 text-xl transform transition-transform group-hover:translate-x-1" />
+          <RiArrowLeftDoubleLine className="text-blue-400 text-2xl transform transition-transform group-hover:translate-x-1" />
         </motion.button>
 
         {/* Formulário de cadastro */}
