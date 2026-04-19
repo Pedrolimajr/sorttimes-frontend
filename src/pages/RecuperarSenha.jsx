@@ -27,7 +27,7 @@ export default function RecuperarSenha() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center p-3 xs:p-4 sm:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center p-3 xs:p-4 sm:p-6 relative">
       {/* Efeito de partículas de fundo */}
       <div className="fixed inset-0 overflow-hidden -z-10 opacity-10">
         {[...Array(20)].map((_, i) => (
@@ -43,32 +43,31 @@ export default function RecuperarSenha() {
       </div>
 
       {/* Container principal com breakpoints específicos */}
-      <div className="w-full max-w-xs xs:max-w-sm sm:max-w-md mx-2">
-        {/* Botão Voltar com tamanhos responsivos */}
+      <div className="w-full max-w-xs xs:max-w-sm sm:max-w-md mx-2 relative pt-16 sm:pt-0">
+        {/* Botão Voltar atualizado para o estilo de Cadastro.jsx */}
         <motion.button 
+          type="button"
           onClick={() => navegar(-1)}
           whileHover={{ 
             scale: 1.05,
             x: -5,
-            backgroundColor: "rgba(37, 99, 235, 0.1)"
+            backgroundColor: "rgba(15, 23, 42, 0.8)"
           }}
           whileTap={{ scale: 0.95 }}
-          className="absolute left-50 top-20 sm:top-20 w-11 h-11 flex items-center justify-center bg-gray-800/40 hover:bg-gray-700/40 text-gray-200 rounded-full transition-all duration-300 backdrop-blur-sm border border-gray-700/50 shadow-lg hover:shadow-blue-500/20"
+          className="absolute left-0 -top-2 sm:top-2 w-12 h-12 flex items-center justify-center bg-slate-900/50 text-gray-200 rounded-2xl transition-all duration-300 backdrop-blur-md border border-white/5 shadow-xl hover:shadow-blue-500/10"
           title="Voltar"
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.3 }}
         >
           <RiArrowLeftDoubleLine className="text-blue-400 text-2xl transform transition-transform group-hover:translate-x-1" />
         </motion.button>
 
-        {/* Card do formulário com paddings responsivos */}
-        <div className="bg-gray-800 bg-opacity-50 backdrop-blur-sm rounded-xl shadow-xl border border-gray-700 overflow-hidden p-4 xs:p-5 sm:p-6">
-          {/* Conteúdo central */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <form 
+            onSubmit={enviarRecuperacao} 
+            className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 xs:p-5 sm:p-6 md:p-8 rounded-xl shadow-xl border border-gray-700 space-y-4 xs:space-y-5 sm:space-y-6"
           >
             {/* Cabeçalho com tamanhos responsivos */}
             <div className="text-center mb-4 xs:mb-5 sm:mb-6">
@@ -77,7 +76,7 @@ export default function RecuperarSenha() {
                   <img 
                     src="/src/img/logo_time.png" 
                     alt="Logo" 
-                    className="w-14 h-14 xs:w-16 xs:h-16 sm:w-20 sm:h-20 object-contain"
+                    className="w-14 h-14 xs:w-16 xs:h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 object-contain"
                   />
                 </div>
               </div>
@@ -92,91 +91,79 @@ export default function RecuperarSenha() {
               </h2>
             </div>
 
-            {/* Formulário de recuperação */}
-            <form onSubmit={enviarRecuperacao} className="space-y-4 xs:space-y-5 sm:space-y-6">
-              {/* Campo Email com estilos responsivos */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-              >
-                <label htmlFor="email" className="block text-xs xs:text-sm font-medium text-gray-400 mb-1 xs:mb-2">
-                  Email cadastrado
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaEnvelope className="text-gray-500 text-xs xs:text-sm" />
-                  </div>
-                  <input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-9 xs:pl-10 pr-3 xs:pr-4 py-2 xs:py-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs xs:text-sm"
-                    placeholder="seu@email.com"
-                    required
-                  />
+            {/* Campo Email */}
+            <div>
+              <label htmlFor="email" className="block text-xs xs:text-sm font-medium text-gray-400 mb-1 xs:mb-2">
+                Email cadastrado
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaEnvelope className="text-gray-500 text-xs xs:text-sm" />
                 </div>
-              </motion.div>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-9 xs:pl-10 pr-3 xs:pr-4 py-2 xs:py-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs xs:text-sm sm:text-base"
+                  placeholder="seu@email.com"
+                  required
+                />
+              </div>
+            </div>
 
-              {/* Mensagem de feedback responsiva */}
-              <AnimatePresence>
-                {mensagem && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className={`overflow-hidden text-xs xs:text-sm p-2 xs:p-3 rounded-md ${
-                      mensagem.includes("Erro") 
-                        ? "text-red-300 bg-red-900/30 border border-red-800"
-                        : "text-green-300 bg-green-900/30 border border-green-800"
-                    }`}
-                  >
-                    {mensagem}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Botão de envio responsivo */}
-              <motion.button
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                type="submit"
-                disabled={carregando}
-                // Atualizado o background para usar as cores da logo (azul para ciano)
-                className="w-full bg-gradient-to-r from-blue-500 to-cyan-400 hover:from-blue-600 hover:to-cyan-500 text-white font-medium py-2 xs:py-3 px-4 rounded-lg transition-all shadow-lg flex items-center justify-center gap-1 xs:gap-2 text-xs xs:text-sm"
-              >
-                {carregando ? (
-                  <span className="inline-block h-3 w-3 xs:h-4 xs:w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                ) : (
-                  <>
-                    <FaEnvelope className="text-xs xs:text-sm" />
-                    Enviar Link
-                  </>
-                )}
-              </motion.button>
-
-              {/* Link para página de login responsivo */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="text-center text-xs xs:text-sm text-gray-400 pt-3 xs:pt-4 border-t border-gray-700"
-              >
-                Lembrou sua senha?{" "}
-                <Link 
-                  to="/login" 
-                  className="text-blue-400 hover:text-blue-300 font-medium hover:underline transition-colors"
+            {/* Mensagem de feedback */}
+            <AnimatePresence>
+              {mensagem && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className={`overflow-hidden text-xs xs:text-sm p-2 xs:p-3 rounded-md ${
+                    mensagem.includes("Erro") 
+                      ? "text-red-300 bg-red-900/30 border border-red-800"
+                      : "text-green-300 bg-green-900/30 border border-green-800"
+                  }`}
                 >
-                  Faça login
-                </Link>
-              </motion.div>
-            </form>
-          </motion.div>
-        </div>
+                  {mensagem}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Botão de envio atualizado para o gradiente de Cadastro.jsx */}
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="submit"
+              disabled={carregando}
+              className={`w-full py-2 xs:py-3 px-4 rounded-lg font-medium transition-all flex items-center justify-center gap-1 xs:gap-2 text-xs xs:text-sm sm:text-base ${
+                carregando
+                  ? "bg-gray-700 text-gray-500 cursor-not-allowed"
+                  : "bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white shadow-lg"
+              }`}
+            >
+              {carregando ? (
+                <span className="inline-block h-3 w-3 xs:h-4 xs:w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              ) : (
+                <>
+                  <FaEnvelope className="text-xs xs:text-sm" />
+                  Enviar Link
+                </>
+              )}
+            </motion.button>
+
+            {/* Link para página de login */}
+            <div className="text-center text-xs xs:text-sm text-gray-400 pt-2 xs:pt-3 sm:pt-4 border-t border-gray-700">
+              Lembrou sua senha?{" "}
+              <Link 
+                to="/login" 
+                className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
+              >
+                Faça login
+              </Link>
+            </div>
+          </form>
+        </motion.div>
       </div>
     </div>
   );
