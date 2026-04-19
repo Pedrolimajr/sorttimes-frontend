@@ -143,7 +143,7 @@ export default function Dashboard() {
           </div>
           <div className="w-12 h-12 rounded-2xl overflow-hidden border border-white/10 shadow-2xl hover:scale-105 transition-all duration-300">
             <img 
-              src="/img/Logo_Melhorado.png" 
+              src="/img/logo_time.png" 
               alt="Logo Administrador" 
               className="w-full h-full object-cover scale-110"
             />
