@@ -1,3 +1,4 @@
+// src/pages/CadastroJogadores.jsx
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { 
@@ -179,306 +180,282 @@ export default function CadastroJogadores() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 px-4 py-8 sm:px-6 lg:px-8">
-      <div className="fixed inset-0 overflow-hidden -z-10 opacity-20">
-        {[...Array(15)].map((_, i) => (
-          <motion.div
-            key={i}
-            initial={{ 
-              x: Math.random() * 100,
-              y: Math.random() * 100,
-              opacity: 0.3
-            }}
-            animate={{ 
-              y: [null, (Math.random() - 0.5) * 50],
-              x: [null, (Math.random() - 0.5) * 50],
-            }}
-            transition={{ 
-              duration: 15 + Math.random() * 20,
-              repeat: Infinity,
-              repeatType: "reverse",
-              ease: "easeInOut"
-            }}
-            className="absolute w-1 h-1 bg-white rounded-full"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-          />
-        ))}
+    <div className="min-h-screen bg-[#020617] text-slate-100 selection:bg-blue-500/30 px-4 py-8 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Aurora Background Effects - Inspirado no Dashboard */}
+      <div className="fixed inset-0 pointer-events-none -z-10">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-cyan-500/10 blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
 
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-4xl mx-auto"
+        className="max-w-3xl mx-auto"
       >
-        <div className="text-center mb-8 relative pt-16 sm:pt-0"> {/* Aumentado o padding-top para mobile */}
+        <div className="text-center mb-10 relative pt-16 sm:pt-0">
           <motion.button 
             onClick={() => navigate('/dashboard')}
             whileHover={{ 
               scale: 1.05,
               x: -5,
-              backgroundColor: "rgba(37, 99, 235, 0.1)"
+              backgroundColor: "rgba(15, 23, 42, 0.8)"
             }}
             whileTap={{ scale: 0.95 }}
-            className="absolute left-4 -top-2 sm:top-4 w-11 h-11 flex items-center justify-center bg-gray-800/40 hover:bg-gray-700/40 text-gray-200 rounded-full transition-all duration-300 backdrop-blur-sm border border-gray-700/50 shadow-lg hover:shadow-blue-500/20"
+            className="absolute left-0 -top-2 sm:top-2 w-12 h-12 flex items-center justify-center bg-slate-900/50 text-gray-200 rounded-2xl transition-all duration-300 backdrop-blur-md border border-white/5 shadow-xl hover:shadow-blue-500/10"
             title="Voltar para o Dashboard"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3 }}
           >
             <RiArrowLeftDoubleLine className="text-blue-400 text-2xl transform transition-transform group-hover:translate-x-1" />
-            <div className="absolute inset-0 rounded-full bg-blue-400/10 animate-pulse" style={{ animationDuration: '3s' }} />
           </motion.button>
           
-          <div className="flex items-center justify-center gap-3">
-            <FaFutbol className="text-blue-400 text-2xl sm:text-3xl" />
-            <motion.h1 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.1 }}
-              className="text-2xl sm:text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300 mb-2"
-            >
-              Cadastro de Jogadores
-            </motion.h1>
-          </div>
+          <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tighter uppercase mb-1">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400">
+              Novo Jogador
+            </span>
+          </h1>
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.8 }}
             transition={{ delay: 0.2 }}
-            className="text-gray-400 text-sm sm:text-base mt-1 sm:mt-0"
+            className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]"
           >
-            Preencha os dados do atleta para cadastrar no sistema
+            Painel de Recrutamento
           </motion.p>
         </div>
 
         <motion.form
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3 }}
           onSubmit={manipularEnvio}
-          className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-xl shadow-xl border border-gray-700 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6"
+          className="bg-slate-900/40 backdrop-blur-3xl p-6 sm:p-10 rounded-[2.5rem] shadow-2xl border border-white/10 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 relative overflow-hidden"
         >
+          {/* Decoração sutil no topo do card */}
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50" />
+
           {/* Campo Nome Completo */}
           <div className="col-span-1 md:col-span-2">
-            <label className="text-xs sm:text-sm font-medium text-gray-300 mb-1 sm:mb-2 flex items-center gap-1 sm:gap-2">
-              <FaUser className="text-blue-400 text-sm sm:text-base" />
-              Nome completo
+            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">
+              Nome do Atleta
             </label>
-            <motion.input
-              whileFocus={{ scale: 1.01 }}
-              type="text"
-              name="nome"
-              value={jogador.nome}
-              onChange={manipularMudanca}
-              className={`w-full px-3 py-2 sm:px-4 sm:py-3 rounded-lg bg-gray-700 border ${erros.nome ? 'border-red-500' : 'border-gray-600'} focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400 transition-all text-sm sm:text-base`}
-              placeholder="Nome completo do jogador"
-            />
+            <div className="relative group">
+              <FaUser className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
+              <input
+                type="text"
+                name="nome"
+                value={jogador.nome}
+                onChange={manipularMudanca}
+                className="w-full pl-11 pr-4 py-3 bg-black/40 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white placeholder-slate-600 transition-all text-sm"
+                placeholder="Nome completo"
+              />
+            </div>
             {erros.nome && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-red-400 text-xs sm:text-sm mt-1">{erros.nome}</motion.p>}
           </div>
 
           {/* Campo Data de Nascimento */}
           <div>
-            <label className="text-xs sm:text-sm font-medium text-gray-300 mb-1 sm:mb-2 flex items-center gap-1 sm:gap-2">
-              <FaCalendarAlt className="text-blue-400 text-sm sm:text-base" />
+            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">
               Data de nascimento
             </label>
-            <motion.input
-              whileFocus={{ scale: 1.01 }}
-              type="date"
-              name="nascimento"
-              value={jogador.nascimento}
-              onChange={manipularMudanca}
-              max={new Date().toISOString().split('T')[0]}
-              className={`w-full px-3 py-2 sm:px-4 sm:py-3 rounded-lg bg-gray-700 border ${erros.nascimento ? 'border-red-500' : 'border-gray-600'} focus:outline-none focus:ring-2 focus:ring-blue-500 text-white transition-all text-sm sm:text-base`}
-            />
+            <div className="relative group">
+              <FaCalendarAlt className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
+              <input
+                type="date"
+                name="nascimento"
+                value={jogador.nascimento}
+                onChange={manipularMudanca}
+                max={new Date().toISOString().split('T')[0]}
+                className="w-full pl-11 pr-4 py-3 bg-black/40 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white transition-all text-sm"
+              />
+            </div>
             {erros.nascimento && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-red-400 text-xs sm:text-sm mt-1">{erros.nascimento}</motion.p>}
-          </div>
-
-          {/* Campo Endereço */}
-          <div className="col-span-1 md:col-span-2">
-            <label className="text-xs sm:text-sm font-medium text-gray-300 mb-1 sm:mb-2 flex items-center gap-1 sm:gap-2">
-              <FaMapMarkerAlt className="text-blue-400 text-sm sm:text-base" />
-              Endereço
-            </label>
-            <motion.input
-              whileFocus={{ scale: 1.01 }}
-              type="text"
-              name="endereco"
-              value={jogador.endereco}
-              onChange={manipularMudanca}
-              className={`w-full px-3 py-2 sm:px-4 sm:py-3 rounded-lg bg-gray-700 border ${erros.endereco ? 'border-red-500' : 'border-gray-600'} focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400 transition-all text-sm sm:text-base`}
-              placeholder="Endereço completo"
-            />
-            {erros.endereco && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-red-400 text-xs sm:text-sm mt-1">{erros.endereco}</motion.p>}
           </div>
 
           {/* Campo Telefone */}
           <div>
-            <label className="text-xs sm:text-sm font-medium text-gray-300 mb-1 sm:mb-2 flex items-center gap-1 sm:gap-2">
-              <FaPhone className="text-blue-400 text-sm sm:text-base" />
+            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">
               Telefone
             </label>
-            <motion.input
-              whileFocus={{ scale: 1.01 }}
-              type="tel"
-              name="telefone"
-              value={jogador.telefone}
-              onChange={manipularMudancaTelefone}
-              placeholder="(99) 99999-9999"
-              maxLength={15}
-              className={`w-full px-3 py-2 sm:px-4 sm:py-3 rounded-lg bg-gray-700 border ${erros.telefone ? 'border-red-500' : 'border-gray-600'} focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400 transition-all text-sm sm:text-base`}
-            />
+            <div className="relative group">
+              <FaPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
+              <input
+                type="tel"
+                name="telefone"
+                value={jogador.telefone}
+                onChange={manipularMudancaTelefone}
+                placeholder="(99) 99999-9999"
+                maxLength={15}
+                className="w-full pl-11 pr-4 py-3 bg-black/40 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white placeholder-slate-600 transition-all text-sm"
+              />
+            </div>
             {erros.telefone && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-red-400 text-xs sm:text-sm mt-1">{erros.telefone}</motion.p>}
           </div>
 
           {/* Campo E-mail */}
-          <div>
-            <label className="text-xs sm:text-sm font-medium text-gray-300 mb-1 sm:mb-2 flex items-center gap-1 sm:gap-2">
-              <FaEnvelope className="text-blue-400 text-sm sm:text-base" />
+          <div className="col-span-1 md:col-span-2">
+            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">
               E-mail
             </label>
-            <motion.input
-              whileFocus={{ scale: 1.01 }}
-              type="email"
-              name="email"
-              value={jogador.email}
-              onChange={manipularMudanca}
-              className={`w-full px-3 py-2 sm:px-4 sm:py-3 rounded-lg bg-gray-700 border ${erros.email ? 'border-red-500' : 'border-gray-600'} focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400 transition-all text-sm sm:text-base`}
-              placeholder="email@exemplo.com"
-            />
+            <div className="relative group">
+              <FaEnvelope className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
+              <input
+                type="email"
+                name="email"
+                value={jogador.email}
+                onChange={manipularMudanca}
+                className="w-full pl-11 pr-4 py-3 bg-black/40 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white placeholder-slate-600 transition-all text-sm"
+                placeholder="email@exemplo.com"
+              />
+            </div>
             {erros.email && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-red-400 text-xs sm:text-sm mt-1">{erros.email}</motion.p>}
           </div>
 
-          {/* Campo Data de Ingresso */}
-          <div>
-            <label className="text-xs sm:text-sm font-medium text-gray-300 mb-1 sm:mb-2 flex items-center gap-1 sm:gap-2">
-              <FaCalendarAlt className="text-blue-400 text-sm sm:text-base" />
-              Data de ingresso
+          {/* Campo Endereço */}
+          <div className="col-span-1 md:col-span-2">
+            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">
+              Endereço
             </label>
-            <motion.input
-              whileFocus={{ scale: 1.01 }}
-              type="date"
-              name="ingresso"
-              value={jogador.ingresso}
-              onChange={manipularMudanca}
-              max={new Date().toISOString().split('T')[0]}
-              className={`w-full px-3 py-2 sm:px-4 sm:py-3 rounded-lg bg-gray-700 border ${erros.ingresso ? 'border-red-500' : 'border-gray-600'} focus:outline-none focus:ring-2 focus:ring-blue-500 text-white transition-all text-sm sm:text-base`}
-            />
-            {erros.ingresso && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-red-400 text-xs sm:text-sm mt-1">{erros.ingresso}</motion.p>}
+            <div className="relative group">
+              <FaMapMarkerAlt className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
+              <input
+                type="text"
+                name="endereco"
+                value={jogador.endereco}
+                onChange={manipularMudanca}
+                className="w-full pl-11 pr-4 py-3 bg-black/40 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white placeholder-slate-600 transition-all text-sm"
+                placeholder="Cidade, Bairro ou Rua"
+              />
+            </div>
           </div>
 
           {/* Campo Posição */}
           <div>
-            <label className="text-xs sm:text-sm font-medium text-gray-300 mb-1 sm:mb-2 flex items-center gap-1 sm:gap-2">
-              <FaFutbol className="text-blue-400 text-sm sm:text-base" />
+            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">
               Posição
             </label>
-            <motion.select
-              whileFocus={{ scale: 1.01 }}
-              name="posicao"
-              value={jogador.posicao}
-              onChange={manipularMudanca}
-              className={`w-full px-3 py-2 sm:px-4 sm:py-3 rounded-lg bg-gray-700 border ${erros.posicao ? 'border-red-500' : 'border-gray-600'} focus:outline-none focus:ring-2 focus:ring-blue-500 text-white transition-all text-sm sm:text-base`}
-            >
-              <option value="" className="bg-gray-800">Selecione</option>
-              <option className="bg-gray-800">Goleiro</option>
-              <option className="bg-gray-800">Defensor</option>
-              <option className="bg-gray-800">Lateral-Esquerdo</option>
-              <option className="bg-gray-800">Lateral-Direito</option>
-              <option className="bg-gray-800">Volante</option>
-              <option className="bg-gray-800">Meia-Direita</option>
-              <option className="bg-gray-800">Meia-Esquerda</option>
-              <option className="bg-gray-800">Centroavante</option>
-            </motion.select>
+            <div className="relative group">
+              <FaFutbol className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors pointer-events-none" />
+              <select
+                name="posicao"
+                value={jogador.posicao}
+                onChange={manipularMudanca}
+                className="w-full pl-11 pr-4 py-3 bg-black/40 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white transition-all text-sm appearance-none"
+              >
+                <option value="" className="bg-slate-900">Selecione</option>
+                <option className="bg-slate-900">Goleiro</option>
+                <option className="bg-slate-900">Defensor</option>
+                <option className="bg-slate-900">Lateral-Esquerdo</option>
+                <option className="bg-slate-900">Lateral-Direito</option>
+                <option className="bg-slate-900">Volante</option>
+                <option className="bg-slate-900">Meia-Direita</option>
+                <option className="bg-slate-900">Meia-Esquerda</option>
+                <option className="bg-slate-900">Centroavante</option>
+              </select>
+            </div>
             {erros.posicao && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-red-400 text-xs sm:text-sm mt-1">{erros.posicao}</motion.p>}
           </div>
 
           {/* Campo Número da Camisa */}
           <div>
-            <label className="text-xs sm:text-sm font-medium text-gray-300 mb-1 sm:mb-2 flex items-center gap-1 sm:gap-2">
-              <FaTshirt className="text-blue-400 text-sm sm:text-base" />
-              Número da Camisa
+            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">
+              Nº Camisa
             </label>
-            <motion.input
-              whileFocus={{ scale: 1.01 }}
-              type="number"
-              name="numeroCamisa"
-              value={jogador.numeroCamisa}
-              onChange={manipularMudanca}
-              className={`w-full px-3 py-2 sm:px-4 sm:py-3 rounded-lg bg-gray-700 border ${erros.numeroCamisa ? 'border-red-500' : 'border-gray-600'} focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400 transition-all text-sm sm:text-base`}
-              placeholder="Número da camisa"
-            />
-            {erros.numeroCamisa && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-red-400 text-xs sm:text-sm mt-1">{erros.numeroCamisa}</motion.p>}
+            <div className="relative group">
+              <FaTshirt className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
+              <input
+                type="number"
+                name="numeroCamisa"
+                value={jogador.numeroCamisa}
+                onChange={manipularMudanca}
+                className="w-full pl-11 pr-4 py-3 bg-black/40 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white placeholder-slate-600 transition-all text-sm"
+                placeholder="00"
+              />
+            </div>
           </div>
 
           {/* Campo Nível */}
           <div>
-            <label className="text-xs sm:text-sm font-medium text-gray-300 mb-1 sm:mb-2 flex items-center gap-1 sm:gap-2">
-              <FaFutbol className="text-blue-400 text-sm sm:text-base" />
-              Nível
+            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">
+              Nível de Cadastro
             </label>
-            <motion.select
-              whileFocus={{ scale: 1.01 }}
-              name="nivel"
-              value={jogador.nivel}
-              onChange={manipularMudanca}
-              className="w-full px-3 py-2 sm:px-4 sm:py-3 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white transition-all text-sm sm:text-base"
-            >
-              <option value="Associado" className="bg-gray-800">Associado</option>
-              <option value="Convidado" className="bg-gray-800">Convidado</option>
-              <option value="Visitante" className="bg-gray-800">Visitante</option>
-            </motion.select>
+            <div className="relative group">
+              <FaUser className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors pointer-events-none" />
+              <select
+                name="nivel"
+                value={jogador.nivel}
+                onChange={manipularMudanca}
+                className="w-full pl-11 pr-4 py-3 bg-black/40 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white transition-all text-sm appearance-none"
+              >
+                <option value="Associado" className="bg-slate-900">Associado</option>
+                <option value="Convidado" className="bg-slate-900">Convidado</option>
+                <option value="Visitante" className="bg-slate-900">Visitante</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Campo Data de Ingresso */}
+          <div>
+            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">
+              Data de ingresso
+            </label>
+            <div className="relative group">
+              <FaCalendarAlt className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
+              <input
+                type="date"
+                name="ingresso"
+                value={jogador.ingresso}
+                onChange={manipularMudanca}
+                max={new Date().toISOString().split('T')[0]}
+                className="w-full pl-11 pr-4 py-3 bg-black/40 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white transition-all text-sm"
+              />
+            </div>
+            {erros.ingresso && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-red-400 text-xs sm:text-sm mt-1">{erros.ingresso}</motion.p>}
           </div>
 
           {/* Campo Foto do Atleta */}
           <div className="col-span-1 md:col-span-2">
-            <label className="text-xs sm:text-sm font-medium text-gray-300 mb-1 sm:mb-2 flex items-center gap-1 sm:gap-2">
-              <FaCamera className="text-blue-400 text-sm sm:text-base" />
-              Foto do atleta
+            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 ml-1">
+              Foto do Atleta
             </label>
             
-            {/* Preview da foto */}
-            {jogador.fotoPreview && (
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="mb-3 sm:mb-4 flex justify-center"
-              >
+            <div className="flex flex-col sm:flex-row items-center gap-6">
+              {/* Preview da foto */}
+              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-black/40 border border-white/5 flex items-center justify-center overflow-hidden shadow-2xl shrink-0">
+                {jogador.fotoPreview ? (
                 <img 
                   src={jogador.fotoPreview} 
                   alt="Preview" 
-                  className="h-24 w-24 sm:h-32 sm:w-32 object-cover rounded-full border-2 border-blue-500 shadow-lg"
+                    className="w-full h-full object-cover"
                 />
-              </motion.div>
-            )}
+                ) : (
+                  <FaCamera className="text-slate-700 text-3xl" />
+                )}
+              </div>
             
             {/* Input de arquivo */}
-            <motion.div
-              whileHover={{ scale: 1.005 }}
-              className={`relative overflow-hidden rounded-lg border ${erros.foto ? 'border-red-500' : 'border-gray-600'} bg-gray-700`}
-            >
-              <input
-                type="file"
-                name="foto"
-                accept="image/*"
-                onChange={manipularMudanca}
-                ref={referenciaArquivo}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              />
-              <div className="px-3 py-2 sm:px-4 sm:py-3 flex justify-between items-center">
-                <span className="text-gray-300 text-xs sm:text-sm">
-                  {jogador.foto ? jogador.foto.name : "Selecione uma foto"}
-                </span>
-                <button 
-                  type="button"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 sm:px-3 sm:py-1 rounded text-xs sm:text-sm transition-colors"
+              <div className="flex-1 w-full">
+                <motion.div
+                  whileHover={{ scale: 1.005 }}
+                  className={`relative overflow-hidden rounded-xl border ${erros.foto ? 'border-red-500/50' : 'border-white/5'} bg-black/40 group transition-all`}
                 >
-                  Procurar
-                </button>
+                  <input
+                    type="file"
+                    name="foto"
+                    accept="image/*"
+                    onChange={manipularMudanca}
+                    ref={referenciaArquivo}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  />
+                  <div className="px-4 py-3 flex justify-between items-center">
+                    <span className="text-slate-500 text-xs truncate mr-2">
+                      {jogador.foto ? jogador.foto.name : "Toque para selecionar imagem"}
+                    </span>
+                    <span className="bg-slate-800 text-blue-400 group-hover:bg-blue-600 group-hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all shadow-lg shrink-0">
+                      Procurar
+                    </span>
+                  </div>
+                </motion.div>
+                <p className="text-[9px] text-slate-600 mt-2 ml-1">* Resolução ideal: 500x500px (Máx: 5MB)</p>
               </div>
-            </motion.div>
+            </div>
             {erros.foto && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-red-400 text-xs sm:text-sm mt-1">{erros.foto}</motion.p>}
           </div>
 
@@ -489,7 +466,11 @@ export default function CadastroJogadores() {
               disabled={enviando}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className={`w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white font-medium py-2 px-4 sm:py-3 sm:px-6 rounded-lg transition-all shadow-lg ${enviando ? 'opacity-80 cursor-not-allowed' : ''} text-sm sm:text-base`}
+              className={`w-full py-4 rounded-xl font-black transition-all flex items-center justify-center gap-3 text-sm uppercase tracking-[0.1em] ${
+                enviando
+                  ? "bg-slate-800 text-slate-500 cursor-not-allowed"
+                  : "bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:shadow-blue-500/25 text-white shadow-xl"
+              }`}
             >
               <motion.span
                 animate={enviando ? { opacity: [1, 0.5, 1] } : { opacity: 1 }}
