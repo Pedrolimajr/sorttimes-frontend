@@ -55,11 +55,7 @@ const JogadorItem = ({ jogador, onAlternarPresenca, onAtualizarPosicao }) => (
     initial={{ opacity: 0, x: -20 }}
     animate={{ opacity: 1, x: 0 }}
     exit={{ opacity: 0, x: 20 }}
-    className={`p-2 sm:p-3 rounded-md flex justify-between items-center mb-1 sm:mb-2 transition-colors ${
-      jogador.presente 
-        ? 'bg-gray-700 hover:bg-gray-600 border border-gray-600' 
-        : 'bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700'
-    }`}
+    className={`p-3 sm:p-4 rounded-2xl flex justify-between items-center mb-2 transition-all border ${jogador.presente ? 'bg-blue-600/10 border-blue-500/30 shadow-[0_0_15px_-5px_rgba(59,130,246,0.2)]' : 'bg-black/20 border-white/5 hover:border-white/10'}`}
   >
     <div className="flex items-center gap-2">
       <span className={`text-sm sm:text-base ${jogador.presente ? "font-medium text-white" : "text-gray-400"}`}>
@@ -71,10 +67,10 @@ const JogadorItem = ({ jogador, onAlternarPresenca, onAtualizarPosicao }) => (
       <select
         value={jogador.posicao}
         onChange={(e) => onAtualizarPosicao(jogador._id, e.target.value)}
-        className="bg-gray-700 text-white text-xs p-1 rounded border border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        className="bg-black/40 text-white text-[10px] p-2 rounded-xl border border-white/5 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all appearance-none"
       >
         {POSICOES_ARRAY.map(pos => (
-          <option key={pos} value={pos} className="bg-gray-800">{pos}</option>
+          <option key={pos} value={pos} className="bg-slate-900">{pos}</option>
         ))}
       </select>
 
@@ -82,10 +78,10 @@ const JogadorItem = ({ jogador, onAlternarPresenca, onAtualizarPosicao }) => (
         onClick={() => onAlternarPresenca(jogador._id)}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
-        className={`p-2 rounded-lg transition-all duration-300 ${
+        className={`p-2.5 rounded-xl transition-all duration-300 border ${
           jogador.presente 
-            ? 'bg-green-900/30 text-green-400 hover:bg-green-800/40' 
-            : 'bg-red-900/30 text-red-400 hover:bg-red-800/40'
+            ? 'bg-green-600/20 text-green-400 hover:bg-green-600/30 border-green-500/20' 
+            : 'bg-red-600/20 text-red-400 hover:bg-red-600/30 border-red-500/20'
         }`}
         title={jogador.presente ? 'Presente' : 'Ausente'}
       >
@@ -103,13 +99,15 @@ const TimeSorteado = ({ time, index, modoEdicao, onAddPlayer, onMoverJogador }) 
 
   return (
     <div
-      className={`border p-4 rounded-lg ${
-        modoEdicao ? 'border-dashed border-yellow-400' : 'border-gray-700'
-      } ${isTimeAmarelo ? 'bg-[#efdf8e] text-black' : 'bg-gray-800/30 text-white'}`}
+      className={`border p-6 rounded-[2.5rem] shadow-2xl relative overflow-hidden ${
+        modoEdicao ? 'border-dashed border-yellow-400' : 'border-white/10'
+      } ${isTimeAmarelo ? 'bg-[#efdf8e] text-black' : 'bg-black/40 text-white'}`}
     >
+      <div className={`absolute top-0 left-0 right-0 h-[2px] opacity-50 bg-gradient-to-r from-transparent ${index === 0 ? 'via-slate-400' : 'via-yellow-400'} to-transparent`} />
+      
       <div className="flex justify-between items-center mb-3 sm:mb-4 px-1">
         <div className="w-10"></div>
-        <h3 className="text-base sm:text-lg font-bold flex items-center justify-center gap-2">
+        <h3 className="text-xl font-black tracking-tighter uppercase flex items-center justify-center gap-2">
           <div
             className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 ${
               index === 0 ? 'bg-gray-300 border-gray-400' : 'bg-yellow-500 border-yellow-400'
@@ -122,7 +120,7 @@ const TimeSorteado = ({ time, index, modoEdicao, onAddPlayer, onMoverJogador }) 
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={() => onAddPlayer(index)}
-            className={`p-1.5 rounded transition-colors ${isTimeAmarelo ? 'bg-black/10 hover:bg-black/20 text-black' : 'bg-white/10 hover:bg-white/20 text-white'}`}
+            className={`p-2 rounded-xl transition-all ${isTimeAmarelo ? 'bg-black/10 hover:bg-black/20 text-black' : 'bg-white/10 hover:bg-white/20 text-white'}`}
             title="Incluir jogador neste time"
           >
             <FaUserPlus size={14} />
@@ -137,11 +135,11 @@ const TimeSorteado = ({ time, index, modoEdicao, onAddPlayer, onMoverJogador }) 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.1 }}
-            className={`p-2 sm:p-3 rounded-md border bg-[#111827] hover:bg-[#1f2937] ${
+            className={`p-3 sm:p-4 rounded-2xl border ${isTimeAmarelo ? 'bg-black/10 border-black/10' : 'bg-[#111827] border-white/5'} hover:shadow-lg ${
               modoEdicao
-                ? 'cursor-move border-dashed border-gray-500'
-                : 'border-gray-600'
-            } transition-colors`}
+                ? 'cursor-move border-dashed border-blue-500/50'
+                : ''
+            } transition-all`}
             draggable={modoEdicao}
             onDragStart={(e) => e.dataTransfer.setData('jogadorId', jogador.id)}
             onDragOver={(e) => e.preventDefault()}
@@ -152,20 +150,20 @@ const TimeSorteado = ({ time, index, modoEdicao, onAddPlayer, onMoverJogador }) 
             }}
           >
             <div className="flex justify-between items-center">
-              <span className="text-white text-sm sm:text-base">{jogador.nome}</span>
+              <span className={`text-sm sm:text-base font-bold ${isTimeAmarelo ? 'text-black' : 'text-white'}`}>{jogador.nome}</span>
               <span className="text-yellow-400 text-xs sm:text-sm">{jogador.nivel} ⭐</span>
             </div>
-            <div className="text-xs text-gray-300 mt-0.5 sm:mt-1">
+            <div className={`text-[10px] font-black uppercase tracking-widest mt-1 ${isTimeAmarelo ? 'text-black/60' : 'text-slate-500'}`}>
               Posição: {jogador.posicao}
             </div>
           </motion.li>
         ))}
       </ul>
 
-      <div className={`mt-3 text-center text-xs sm:text-sm ${
-        isTimeAmarelo ? 'text-gray-800' : 'text-gray-400'
+      <div className={`mt-6 text-center text-[10px] font-black uppercase tracking-[0.2em] ${
+        isTimeAmarelo ? 'text-black/50' : 'text-slate-500'
       }`}>
-        Total de jogadores: <strong>{time.jogadores.length}</strong>
+        Total: <span className={isTimeAmarelo ? 'text-black' : 'text-white'}>{time.jogadores.length}</span> Atletas
       </div>
     </div>
   );
@@ -733,41 +731,13 @@ const aplicarFiltroPosicao = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 px-4 py-8 sm:px-6 lg:px-8 relative">
+    <div className="min-h-screen bg-[#020617] text-slate-100 selection:bg-blue-500/30 px-4 py-8 sm:px-6 lg:px-8 relative overflow-hidden">
       <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
-      {/* Efeitos de luz de fundo (Glow) */}
-      <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
-        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-blue-600/10 blur-[120px]" />
-        <div className="absolute top-[40%] -right-[10%] w-[40%] h-[40%] rounded-full bg-cyan-500/10 blur-[100px]" />
-        <div className="absolute -bottom-[10%] left-[20%] w-[30%] h-[30%] rounded-full bg-purple-500/10 blur-[100px]" />
-      </div>
-
-      {/* Efeito de fundo com partículas */}
-      <div className="fixed inset-0 overflow-hidden -z-10 opacity-20">
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            initial={{ 
-              x: Math.random() * 100, 
-              y: Math.random() * 100, 
-              opacity: 0.3 
-            }}
-            animate={{ 
-              y: [null, (Math.random() - 0.5) * 50], 
-              x: [null, (Math.random() - 0.5) * 50] 
-            }}
-            transition={{ 
-              duration: 15 + Math.random() * 20, 
-              repeat: Infinity, 
-              repeatType: "reverse" 
-            }}
-            className="absolute w-1 h-1 bg-white rounded-full"
-            style={{ 
-              left: `${Math.random() * 100}%`, 
-              top: `${Math.random() * 100}%` 
-            }}
-          />
-        ))}
+      
+      {/* Aurora Background Effects */}
+      <div className="fixed inset-0 pointer-events-none -z-10">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-cyan-500/10 blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
 
       <div className="max-w-6xl mx-auto">
@@ -782,14 +752,11 @@ const aplicarFiltroPosicao = () => {
             whileHover={{ 
               scale: 1.05,
               x: -5,
-              backgroundColor: "rgba(37, 99, 235, 0.1)"
+              backgroundColor: "rgba(15, 23, 42, 0.8)"
             }}
             whileTap={{ scale: 0.95 }}
-            className="absolute left-4 top-2 sm:top-8 w-11 h-11 flex items-center justify-center bg-gray-800/40 hover:bg-gray-700/40 text-gray-200 rounded-full transition-all duration-300 backdrop-blur-sm border border-gray-700/50 shadow-lg hover:shadow-blue-500/20"
+            className="absolute left-0 -top-2 sm:top-2 w-12 h-12 flex items-center justify-center bg-slate-900/50 text-gray-200 rounded-2xl transition-all duration-300 backdrop-blur-md border border-white/5 shadow-xl hover:shadow-blue-500/10"
             title="Voltar para o Dashboard"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3 }}
           >
             <RiArrowLeftDoubleLine className="text-blue-400 text-2xl transform transition-transform group-hover:translate-x-1" />
           </motion.button>
@@ -801,9 +768,11 @@ const aplicarFiltroPosicao = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.1 }}
-                className="text-2xl sm:text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300"
+                className="text-3xl sm:text-4xl font-black text-white tracking-tighter uppercase mb-1 flex items-center justify-center gap-3"
               >
-                Sorteio de Times
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400">
+                  Sorteio de Times
+                </span>
               </motion.h1>
             </div>
 
@@ -811,9 +780,9 @@ const aplicarFiltroPosicao = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.8 }}
               transition={{ delay: 0.2 }}
-              className="text-gray-400 text-sm sm:text-base"
+              className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]"
             >
-              Organize e sorteie os times para as partidas
+              Organização de Equipes
             </motion.p>
           </div>
         </motion.div>
@@ -822,18 +791,20 @@ const aplicarFiltroPosicao = () => {
         <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-gray-800 bg-opacity-50 backdrop-blur-sm rounded-xl shadow-xl border border-gray-700 overflow-hidden mb-6"
+          className="bg-slate-900/40 backdrop-blur-3xl rounded-[2.5rem] shadow-2xl border border-white/10 relative overflow-hidden mb-6"
         >
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50" />
+          
          <div className="p-4 sm:p-10">
             {/* Filtro de posição */}
-            <div className="mb-6 p-4 bg-blue-900/20 border border-blue-500/30 rounded-xl">
-              <label className="text-xs sm:text-sm font-medium text-blue-300 mb-2 flex items-center gap-2">
+            <div className="mb-6 p-4 bg-blue-900/10 border border-blue-500/20 rounded-2xl shadow-inner">
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1 flex items-center gap-2">
                 <FaCalendarAlt /> Vincular este Sorteio a uma Partida Agendada
               </label>
               <select
                 value={partidaVinculadaId}
                 onChange={(e) => setPartidaVinculadaId(e.target.value)}
-                className="w-full p-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="w-full px-4 py-2 bg-black/40 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white transition-all text-sm appearance-none"
               >
                 <option value="">Selecione a partida da agenda...</option>
                 {partidasAgenda.map(p => (
@@ -846,14 +817,14 @@ const aplicarFiltroPosicao = () => {
             </div>
             <div className="mb-4 flex flex-col sm:flex-row gap-4 items-end">
     <div className="flex-1 max-sm:w-full">
-      <label className="text-xs sm:text-sm font-medium text-gray-400 mb-1 flex items-center gap-2">
+      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1 flex items-center gap-2">
         <FaTshirt className="text-blue-400" /> Definir mesma posição para todos
       </label>
       <div className="flex gap-2 max-sm:flex-col">
         <select
           value={filtroPosicao}
           onChange={(e) => setFiltroPosicao(e.target.value)}
-          className="flex-1 p-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm max-sm:w-full"
+          className="flex-1 px-4 py-2 bg-black/40 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white transition-all text-sm appearance-none max-sm:w-full"
         >
           <option value="">Posição original</option>
           {POSICOES_ARRAY.map(pos => (
@@ -864,9 +835,9 @@ const aplicarFiltroPosicao = () => {
                    onClick={aplicarFiltroPosicao}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-4 py-2 rounded-lg text-xs sm:text-sm shadow-lg transition-all duration-300 flex items-center gap-2 max-sm:w-full max-sm:justify-center"
+          className="bg-slate-800 hover:bg-slate-700 text-blue-400 font-black uppercase tracking-widest px-5 py-2 rounded-xl transition-all text-[10px] border border-blue-500/20 max-sm:w-full max-sm:justify-center flex items-center gap-2"
         >
-          <FaCheck className="text-xs sm:text-sm" />
+          <FaCheck className="text-xs" />
           Aplicar
                   </motion.button>
                 </div>
@@ -876,7 +847,7 @@ const aplicarFiltroPosicao = () => {
             {/* Lista de jogadores */}
             
 <div className="mb-4">
-              <label className="text-xs sm:text-sm font-medium text-gray-400 mb-1 sm:mb-2 flex items-center gap-2">
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1 flex items-center gap-2">
                 <FaUser className="text-blue-400 text-sm sm:text-base" /> Jogadores Disponíveis
               </label>
 
@@ -887,7 +858,7 @@ const aplicarFiltroPosicao = () => {
       disabled={carregandoJogadores}
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
-      className="w-1/2 sm:flex-1 flex items-center justify-center gap-1 text-xs sm:text-sm bg-gray-700 hover:bg-gray-600 text-gray-200 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg transition-all"
+      className="w-1/2 sm:flex-1 flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-black uppercase tracking-widest px-4 py-2.5 rounded-xl transition-all text-[10px] border border-white/5"
     >
       <FaSync className={carregandoJogadores ? "animate-spin w-3 h-3 sm:w-4 sm:h-4" : "w-3 h-3 sm:w-4 sm:h-4"} />
       <span>Atualizar</span>
@@ -904,7 +875,7 @@ const aplicarFiltroPosicao = () => {
   }}
   whileHover={{ scale: 1.02 }}
   whileTap={{ scale: 0.98 }}
-  className="w-1/2 sm:flex-1 flex items-center justify-center gap-1 text-xs sm:text-sm bg-gray-700 hover:bg-gray-600 text-gray-200 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg transition-all"
+  className="w-1/2 sm:flex-1 flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-black uppercase tracking-widest px-4 py-2.5 rounded-xl transition-all text-[10px] border border-white/5"
 >
   <FaCheck className="w-3 h-3 sm:w-4 sm:h-4" />
   <span>{jogadoresSelecionados.every(j => j.presente) ? 'Desmarcar Todos' : 'Marcar Todos'}</span>
@@ -914,13 +885,13 @@ const aplicarFiltroPosicao = () => {
 
             {/* Seletor de balanceamento */}
             <div className="mb-4">
-              <label className="text-xs sm:text-sm font-medium text-gray-400 mb-1 sm:mb-2 flex items-center gap-2">
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1 flex items-center gap-2">
                 <FaBalanceScale className="text-blue-400 text-sm sm:text-base" /> Balanceamento
               </label>
               <select
                 value={balanceamento}
                 onChange={(e) => setBalanceamento(e.target.value)}
-                className="w-full p-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
+                className="w-full px-4 py-2 bg-black/40 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white transition-all text-sm appearance-none"
               >
                 <option value={TIPOS_BALANCEAMENTO.ALEATORIO} className="bg-gray-800">Aleatório</option>
                 <option value={TIPOS_BALANCEAMENTO.NIVEL} className="bg-gray-800">Por Nível</option>
@@ -932,7 +903,7 @@ const aplicarFiltroPosicao = () => {
             {/* Lista de jogadores selecionados */}
             <div className="mb-4 sm:mb-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-                <h3 className="text-xs sm:text-sm font-medium text-gray-400 flex items-center gap-2">
+                <h3 className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1 flex items-center gap-2">
                   <FaTshirt className="text-blue-400 text-sm sm:text-base" />
                   Jogadores Selecionados ({jogadoresSelecionados.filter(j => j.presente).length}/{jogadoresSelecionados.length})
                 </h3>
@@ -945,16 +916,16 @@ const aplicarFiltroPosicao = () => {
                       placeholder="Pesquisar jogador..."
                       value={filtroJogadoresSelecionados}
                       onChange={(e) => setFiltroJogadoresSelecionados(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs"
+                      className="w-full px-4 py-2 bg-black/40 border border-white/5 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white text-[10px]"
                     />
-                    <FaSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xs" />
+                    <FaSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 text-[10px]" />
                   </div>
 
                   <motion.button
                     onClick={compartilharJogadoresSelecionados}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg text-xs sm:text-sm text-white bg-blue-600 hover:bg-blue-700 transition-all"
+                    className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600/10 border border-blue-500/20 p-2.5 rounded-xl text-blue-400 hover:bg-blue-600 hover:text-white transition-all shadow-lg text-[10px] font-black uppercase tracking-widest"
                     title="Compartilhar jogadores presentes"
                   >
                     <FaShare className="text-white text-sm" />
@@ -965,7 +936,7 @@ const aplicarFiltroPosicao = () => {
 
               {carregandoJogadores ? (
                 <div className="flex justify-center py-3 sm:py-4">
-                  <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-blue-500"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
                 </div>
               ) : (
                 <div className="max-h-64 sm:max-h-96 overflow-y-auto pr-2 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
@@ -998,10 +969,10 @@ const aplicarFiltroPosicao = () => {
               whileTap={{ scale: 0.98 }}
               onClick={sortearTimes}
               disabled={jogadoresSelecionados.filter(j => j.presente).length < 2 || carregando}
-              className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 text-sm ${
+              className={`w-full py-4 rounded-xl font-black uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-3 text-sm shadow-xl ${
                 jogadoresSelecionados.filter(j => j.presente).length < 2 || carregando
-                  ? "bg-gray-700 text-gray-500 cursor-not-allowed"
-                  : "bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white shadow-lg"
+                  ? "bg-slate-800 text-slate-600 cursor-not-allowed"
+                  : "bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:shadow-blue-500/25 text-white"
               }`}
             >
               {carregando ? (
@@ -1024,11 +995,13 @@ const aplicarFiltroPosicao = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-gray-800 bg-opacity-50 backdrop-blur-sm rounded-xl shadow-xl border border-gray-700 overflow-hidden mb-6"
+            className="bg-slate-900/40 backdrop-blur-3xl rounded-[2.5rem] shadow-2xl border border-white/10 relative overflow-hidden mb-6"
           >
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-50" />
+            
             <div className="p-4 sm:p-6">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg sm:text-xl font-bold text-white">
+                <h2 className="text-xl font-black text-white tracking-tighter uppercase">
                   Times Sorteados
                   <span className="block text-xs sm:text-sm font-normal text-gray-400 mt-1">
                     {balanceamento === TIPOS_BALANCEAMENTO.ALEATORIO ? "Aleatório" : 
@@ -1042,7 +1015,7 @@ const aplicarFiltroPosicao = () => {
                     onClick={() => setModoEdicao(!modoEdicao)}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className={`p-2 rounded-lg ${modoEdicao ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 hover:bg-gray-600'}`}
+                    className={`p-2.5 rounded-xl transition-all shadow-lg ${modoEdicao ? 'bg-green-600 text-white' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
                     title={modoEdicao ? 'Salvar edição' : 'Editar times'}
                   >
                     {modoEdicao ? <FaSave size={14} /> : <FaEdit size={14} />}
@@ -1052,7 +1025,7 @@ const aplicarFiltroPosicao = () => {
                     onClick={compartilharTimes}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="p-2 bg-blue-600 hover:bg-blue-700 rounded-lg"
+                    className="bg-blue-600/10 border border-blue-500/20 p-2.5 rounded-xl text-blue-400 hover:bg-blue-600 hover:text-white transition-all shadow-lg"
                     title="Compartilhar times"
                   >
                     <FaShare size={14} />
@@ -1080,11 +1053,13 @@ const aplicarFiltroPosicao = () => {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="bg-gray-800 bg-opacity-50 backdrop-blur-sm rounded-xl shadow-xl border border-gray-700 overflow-hidden mb-10"
+            className="bg-slate-900/40 backdrop-blur-3xl rounded-[2.5rem] shadow-2xl border border-white/10 relative overflow-hidden mb-10"
           >
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-slate-500 to-transparent opacity-50" />
+            
             <div className="p-4 sm:p-6">
               <div className="flex justify-between items-center mb-3 sm:mb-4">
-                <h3 className="text-base sm:text-lg font-semibold text-gray-300 flex items-center gap-2">
+                <h3 className="text-xl font-black text-white tracking-tighter uppercase flex items-center gap-3">
                   <FaHistory className="text-blue-400" /> Últimos Sorteios
                 </h3>
               </div>
@@ -1095,7 +1070,7 @@ const aplicarFiltroPosicao = () => {
                     key={idx}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-gray-700/30 p-3 sm:p-4 rounded-md border border-gray-700 hover:bg-gray-700/50 transition-colors"
+                    className="bg-black/20 p-5 rounded-[1.5rem] border border-white/5 hover:border-blue-500/30 transition-all group"
                   >
                     <div className="flex justify-between items-start mb-2">
                       <div>
@@ -1127,7 +1102,7 @@ const aplicarFiltroPosicao = () => {
                     <div className="mt-2 flex justify-end">
                       <button
                         onClick={() => restaurarSorteio(sorteio)}
-                        className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
+                        className="bg-slate-800 hover:bg-slate-700 text-blue-400 font-black uppercase tracking-widest px-4 py-2 rounded-xl transition-all text-[10px] border border-blue-500/20"
                       >
                         Restaurar
                       </button>
