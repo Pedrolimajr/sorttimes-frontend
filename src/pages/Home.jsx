@@ -85,9 +85,10 @@ export default function PaginaInicial() {
           {/* Imagem em mobile - aparece abaixo do subtítulo com efeitos hover */}
           <div className="block md:hidden w-full mt-4">
             <motion.div
-              whileHover={{ y: -5 }}
+              whileHover={{ y: -5, scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
               transition={{ duration: 0.3 }}
-              className="relative bg-slate-900/40 backdrop-blur-md border border-white/10 rounded-[2rem] p-3 aspect-video overflow-hidden shadow-2xl"
+              className="relative bg-slate-900/40 backdrop-blur-md border border-white/10 rounded-[2rem] p-3 aspect-video overflow-hidden shadow-2xl group"
             >
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-blue-500/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
