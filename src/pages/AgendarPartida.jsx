@@ -181,41 +181,18 @@ export default function AgendarPartida() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 px-4 py-8 sm:px-6 lg:px-8 flex flex-col justify-center">
-      {/* Efeito de partículas */}
-      <div className="fixed inset-0 overflow-hidden -z-10 opacity-20">
-        {[...Array(15)].map((_, i) => (
-          <motion.div
-            key={i}
-            initial={{ 
-              x: Math.random() * 100,
-              y: Math.random() * 100,
-              opacity: 0.3
-            }}
-            animate={{ 
-              y: [null, (Math.random() - 0.5) * 50],
-              x: [null, (Math.random() - 0.5) * 50],
-            }}
-            transition={{ 
-              duration: 15 + Math.random() * 20,
-              repeat: Infinity,
-              repeatType: "reverse",
-              ease: "easeInOut"
-            }}
-            className="absolute w-1 h-1 bg-white rounded-full"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-          />
-        ))}
+    <div className="min-h-screen bg-[#020617] text-slate-100 selection:bg-blue-500/30 px-4 py-8 sm:px-6 lg:px-8 relative overflow-hidden flex flex-col justify-center">
+      {/* Aurora Background Effects - Inspirado no Dashboard */}
+      <div className="fixed inset-0 pointer-events-none -z-10">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-cyan-500/10 blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
 
       <div className="max-w-7xl mx-auto w-full">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8 relative pt-16 sm:pt-0 text-center"
+          className="mb-10 relative pt-16 sm:pt-0 text-center"
         >
           {/* Botão Voltar */}
           <motion.button 
@@ -223,42 +200,30 @@ export default function AgendarPartida() {
             whileHover={{ 
               scale: 1.05,
               x: -5,
-              backgroundColor: "rgba(37, 99, 235, 0.1)"
+              backgroundColor: "rgba(15, 23, 42, 0.8)"
             }}
             whileTap={{ scale: 0.95 }}
-            className="absolute left-4 top-2 sm:top-8 w-11 h-11 flex items-center justify-center bg-gray-800/40 hover:bg-gray-700/40 text-gray-200 rounded-full transition-all duration-300 backdrop-blur-sm border border-gray-700/50 shadow-lg hover:shadow-blue-500/20"
+            className="absolute left-0 -top-2 sm:top-2 w-12 h-12 flex items-center justify-center bg-slate-900/50 text-gray-200 rounded-2xl transition-all duration-300 backdrop-blur-md border border-white/5 shadow-xl hover:shadow-blue-500/10"
             title="Voltar para o Dashboard"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3 }}
           >
             <RiArrowLeftDoubleLine className="text-blue-400 text-2xl transform transition-transform group-hover:translate-x-1" />
-            <div className="absolute inset-0 rounded-full bg-blue-400/10 animate-pulse" style={{ animationDuration: '3s' }} />
           </motion.button>
 
           {/* Título e Subtítulo */}
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex items-center justify-center gap-3">
-              <FaCalendarAlt className="text-blue-400 text-2xl sm:text-3xl" />
-              <motion.h1 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.1 }}
-                className="text-2xl sm:text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300"
-              >
-                Painel da Partida
-              </motion.h1>
-            </div>
-
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.8 }}
-              transition={{ delay: 0.2 }}
-              className="text-gray-400 text-sm sm:text-base"
-            >
-              Gerencie o agendamento e a convocação do time
-            </motion.p>
-          </div>
+          <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tighter uppercase mb-1 flex items-center justify-center gap-3">
+            <FaCalendarAlt className="text-blue-400" />
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400">
+              Painel da Partida
+            </span>
+          </h1>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.8 }}
+            transition={{ delay: 0.2 }}
+            className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]"
+          >
+            Agendamento e Convocação
+          </motion.p>
         </motion.div>
 
         {error && (
@@ -279,40 +244,41 @@ export default function AgendarPartida() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <div className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-6 rounded-xl shadow-xl border border-gray-700 h-full">
-              <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2 border-b border-gray-700 pb-4">
+            <div className="bg-slate-900/40 backdrop-blur-3xl p-6 sm:p-10 rounded-[2.5rem] shadow-2xl border border-white/10 h-full relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50" />
+              
+              <h2 className="text-xl font-black text-white tracking-tighter uppercase mb-8 flex items-center gap-3 border-b border-white/5 pb-4">
                 <FaCalendarAlt className="text-blue-400" />
                 {modoEdicao ? 'Editar Detalhes' : 'Agendar Partida'}
               </h2>
 
               <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="text-gray-300 mb-2 flex items-center gap-2 text-sm font-medium">
-                      <FaCalendarAlt className="text-blue-400" /> Data
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">
+                      Data do Jogo
                     </label>
                     <input 
                       type="date" 
                       value={formData.data} 
                       onChange={(e) => setFormData({...formData, data: e.target.value})} 
                       required 
-                      className="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
+                      className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white transition-all text-sm" 
                     />
                   </div>
                   <div>
-                    <label className="text-gray-300 mb-2 flex items-center gap-2 text-sm font-medium">
-                      <FaClock className="text-blue-400" /> Horário
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">
+                      Horário
                     </label>
                     <div 
                       onClick={openTimePicker}
-                      className="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent transition-all cursor-pointer flex items-center justify-between hover:bg-gray-600/50"
+                      className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-xl focus-within:ring-2 focus-within:ring-blue-500/30 transition-all cursor-pointer flex items-center justify-between hover:bg-white/5"
                     >
-                      <span className={formData.horario ? "text-white font-medium" : "text-gray-400"}>
+                      <span className={formData.horario ? "text-white font-medium text-sm" : "text-slate-600 text-sm"}>
                         {formData.horario || "Selecione o horário"}
                       </span>
-                      <FaClock className="text-gray-400" />
+                      <FaClock className="text-slate-500" />
                     </div>
-                    {/* Input oculto para manter a validação HTML5 do formulário */}
                     <input 
                       type="hidden" 
                       value={formData.horario} 
@@ -322,26 +288,26 @@ export default function AgendarPartida() {
                 </div>
 
                 <div>
-                  <label className="text-gray-300 mb-2 flex items-center gap-2 text-sm font-medium">
-                    <FaMapMarkerAlt className="text-blue-400" /> Local
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">
+                    Local da Partida
                   </label>
                   <input 
                     type="text" 
                     value={formData.local} 
                     onChange={(e) => setFormData({...formData, local: e.target.value})} 
-                    className="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
+                    className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white placeholder-slate-600 transition-all text-sm" 
                     placeholder="Ex: Arena Society" 
                   />
                 </div>
 
                 <div>
-                  <label className="text-gray-300 mb-2 flex items-center gap-2 text-sm font-medium">
-                    <FaStickyNote className="text-blue-400" /> Observações
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">
+                    Observações Adicionais
                   </label>
                   <textarea 
                     value={formData.observacoes} 
                     onChange={(e) => setFormData({...formData, observacoes: e.target.value})} 
-                    className="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 h-32 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none" 
+                    className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-xl h-32 focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white placeholder-slate-600 transition-all text-sm resize-none" 
                     placeholder="Detalhes adicionais..." 
                   />
                 </div>
@@ -352,7 +318,7 @@ export default function AgendarPartida() {
                     disabled={loading}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white py-3.5 rounded-lg font-bold shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full py-4 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:shadow-blue-500/25 text-white rounded-xl font-black uppercase tracking-widest shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 text-sm"
                   >
                     {loading ? (
                       <>
@@ -378,35 +344,35 @@ export default function AgendarPartida() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.3, delay: 0.1 }}
           >
-            <div className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-6 rounded-xl shadow-xl border border-gray-700 h-full flex flex-col">
-              <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2 border-b border-gray-700 pb-4">
+            <div className="bg-slate-900/40 backdrop-blur-3xl p-6 sm:p-10 rounded-[2.5rem] shadow-2xl border border-white/10 h-full flex flex-col relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-green-500 to-transparent opacity-50" />
+              
+              <h2 className="text-xl font-black text-white tracking-tighter uppercase mb-8 flex items-center gap-3 border-b border-white/5 pb-4">
                 <FaBullhorn className="text-green-400" />
                 Convocação
               </h2>
 
               <div className="flex-grow flex flex-col items-center justify-center text-center space-y-6 py-4">
-                <div className="w-24 h-24 bg-gray-700/50 rounded-full flex items-center justify-center border-2 border-gray-600">
+                <div className="w-24 h-24 bg-black/40 rounded-3xl flex items-center justify-center border border-white/5 shadow-2xl">
                   <FaLink className="text-4xl text-blue-400" />
                 </div>
                 
                 <div className="space-y-2">
-                  <h3 className="text-lg font-semibold text-white">Link de Presença</h3>
-                  <p className="text-gray-400 text-sm">
+                  <h3 className="font-bold text-white uppercase tracking-tight text-lg">Convite WhatsApp</h3>
+                  <p className="text-slate-500 text-xs leading-relaxed max-w-[200px]">
                     Gere um link automático para compartilhar no WhatsApp e permitir que os jogadores confirmem presença.
                   </p>
                 </div>
 
                 {(formData.data && formData.horario) ? (
-                  <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-3 w-full">
-                    <p className="text-green-400 text-xs font-bold uppercase mb-1">Dados para o convite</p>
-                    <p className="text-white font-medium">
+                  <div className="bg-green-500/5 border border-green-500/20 rounded-2xl p-4 w-full text-center">
+                    <p className="text-[9px] font-black text-green-500 uppercase tracking-widest mb-1">Evento Preparado</p>
+                    <p className="text-white font-black tracking-tight text-sm">
                       {new Date(formData.data + 'T12:00:00').toLocaleDateString('pt-BR')} às {formData.horario}
                     </p>
                   </div>
                 ) : (
-                  <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-3 w-full">
-                    <p className="text-yellow-400 text-xs">Preencha data e horário para habilitar</p>
-                  </div>
+                  <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest bg-black/20 px-3 py-2 rounded-lg italic">Aguardando preenchimento...</p>
                 )}
               </div>
 
@@ -417,7 +383,7 @@ export default function AgendarPartida() {
                   disabled={!formData.data || !formData.horario}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed text-white py-3.5 rounded-lg font-bold shadow-lg transition-all duration-300 flex items-center justify-center gap-2"
+                  className="w-full py-4 bg-green-600 hover:bg-green-500 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white rounded-xl font-black uppercase tracking-widest shadow-xl transition-all flex items-center justify-center gap-3 text-sm"
                 >
                   <FaShare className="text-lg" />
                   Gerar e Compartilhar
@@ -443,41 +409,39 @@ export default function AgendarPartida() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               className="bg-gray-800 rounded-xl w-full max-w-md border border-gray-700 shadow-2xl overflow-hidden"
+              className="bg-slate-900 border border-white/10 rounded-[2rem] w-full max-w-md shadow-2xl overflow-hidden backdrop-blur-xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-4 border-b border-gray-700 flex justify-between items-center bg-gray-900/50">
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <div className="p-6 border-b border-white/5 flex justify-between items-center bg-black/20">
+                <h3 className="text-xl font-black text-white tracking-tighter uppercase flex items-center gap-3">
                   <FaClock className="text-blue-400" /> Escolha o Horário
                 </h3>
-                <button onClick={() => setShowTimePicker(false)} className="text-gray-400 hover:text-white transition-colors">
-                  <FaTimes />
+                <button onClick={() => setShowTimePicker(false)} className="text-slate-500 hover:text-white transition-colors">
+                  <FaTimes size={20} />
                 </button>
               </div>
 
-              <div className="p-6 space-y-6">
+              <div className="p-8 space-y-8">
                 {/* Mostrador Digital */}
-                <div className="flex justify-center mb-4">
-                  <div className="bg-gray-900 px-8 py-4 rounded-2xl border border-gray-600 flex items-center gap-2 shadow-inner">
-                    <span className="text-5xl font-mono font-bold text-white tracking-wider">{tempTime.hour}</span>
+                <div className="flex justify-center">
+                  <div className="bg-black/40 px-10 py-6 rounded-[2rem] border border-white/5 flex items-center gap-2 shadow-inner ring-1 ring-white/5">
+                    <span className="text-6xl font-mono font-black text-white tracking-wider drop-shadow-[0_0_10px_rgba(255,255,255,0.1)]">{tempTime.hour}</span>
                     <span className="text-5xl font-mono font-bold text-blue-500 animate-pulse pb-2">:</span>
-                    <span className="text-5xl font-mono font-bold text-white tracking-wider">{tempTime.minute}</span>
+                    <span className="text-6xl font-mono font-black text-white tracking-wider drop-shadow-[0_0_10px_rgba(255,255,255,0.1)]">{tempTime.minute}</span>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  {/* Seleção de Horas */}
                   <div className="space-y-2">
-                    <p className="text-xs text-gray-400 uppercase font-bold text-center mb-2 tracking-wider">Horas</p>
-                    <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto custom-scrollbar pr-1">
+                    <p className="text-[10px] text-slate-500 uppercase font-black text-center mb-3 tracking-widest">Horas</p>
+                    <div className="grid grid-cols-4 gap-2 max-h-40 overflow-y-auto no-scrollbar pr-1">
                       {hours.map(h => (
                         <button
                           key={h}
                           type="button"
                           onClick={() => setTempTime(prev => ({ ...prev, hour: h }))}
                           className={`p-2 rounded-lg text-sm font-bold transition-all ${
-                            tempTime.hour === h 
-                              ? 'bg-blue-600 text-white shadow-lg scale-105 ring-2 ring-blue-400/50' 
-                              : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
+                            tempTime.hour === h ? 'bg-blue-600 text-white shadow-lg scale-110' : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
                           }`}
                         >
                           {h}
@@ -486,20 +450,15 @@ export default function AgendarPartida() {
                     </div>
                   </div>
 
-                  {/* Seleção de Minutos */}
                   <div className="space-y-2">
-                    <p className="text-xs text-gray-400 uppercase font-bold text-center mb-2 tracking-wider">Minutos</p>
+                    <p className="text-[10px] text-slate-500 uppercase font-black text-center mb-3 tracking-widest">Minutos</p>
                     <div className="grid grid-cols-3 gap-2">
                       {minutes.map(m => (
                         <button
                           key={m}
                           type="button"
                           onClick={() => setTempTime(prev => ({ ...prev, minute: m }))}
-                          className={`p-2 rounded-lg text-sm font-bold transition-all ${
-                            tempTime.minute === m 
-                              ? 'bg-blue-600 text-white shadow-lg scale-105 ring-2 ring-blue-400/50' 
-                              : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
-                          }`}
+                          className={`p-2 rounded-lg text-sm font-bold transition-all ${tempTime.minute === m ? 'bg-blue-600 text-white shadow-lg scale-110' : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'}`}
                         >
                           {m}
                         </button>
@@ -509,18 +468,18 @@ export default function AgendarPartida() {
                 </div>
               </div>
 
-              <div className="p-4 border-t border-gray-700 bg-gray-900/50 flex justify-end gap-3">
+              <div className="p-6 border-t border-white/5 bg-black/20 flex justify-end gap-4">
                 <button
                   type="button"
                   onClick={() => setShowTimePicker(false)}
-                  className="px-4 py-2.5 rounded-lg text-gray-300 hover:text-white hover:bg-gray-700 transition-colors text-sm font-medium"
+                  className="px-6 py-2.5 text-xs font-black uppercase tracking-widest text-slate-500 hover:text-white transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   type="button"
                   onClick={handleTimeConfirm}
-                  className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold shadow-lg transition-all flex items-center gap-2 text-sm transform active:scale-95"
+                  className="px-8 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-white font-black uppercase tracking-widest text-xs shadow-lg shadow-blue-500/20 transform active:scale-95 transition-all"
                 >
                   <FaCheck /> Confirmar Horário
                 </button>
