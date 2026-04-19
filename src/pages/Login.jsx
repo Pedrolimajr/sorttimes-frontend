@@ -45,11 +45,11 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0f172a] flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-[#020617] flex items-center justify-center p-4 relative overflow-hidden">
       {/* Efeitos de luz de fundo (Glow) para profundidade */}
       <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
-        <div className="absolute -top-[10%] -left-[10%] w-[50%] h-[50%] rounded-full bg-blue-600/10 blur-[120px]" />
-        <div className="absolute -bottom-[10%] -right-[10%] w-[50%] h-[50%] rounded-full bg-cyan-500/10 blur-[120px]" />
+        <div className="absolute -top-[10%] -left-[10%] w-[60%] h-[60%] rounded-full bg-blue-900/20 blur-[140px]" />
+        <div className="absolute -bottom-[10%] -right-[10%] w-[60%] h-[60%] rounded-full bg-cyan-900/10 blur-[140px]" />
       </div>
 
       {/* Efeito de partículas de fundo */}
@@ -105,25 +105,25 @@ export default function Login() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ type: "spring", stiffness: 100 }}
+          transition={{ type: "spring", damping: 20 }}
         >
           <form 
             onSubmit={fazerLogin} 
-            className="bg-slate-800/40 backdrop-blur-2xl p-8 xs:p-10 rounded-[2.5rem] shadow-2xl border border-white/5 space-y-6 relative overflow-hidden"
+            className="bg-slate-900/40 backdrop-blur-3xl p-10 rounded-[3rem] shadow-2xl border border-white/10 space-y-8 relative overflow-hidden"
           >
             {/* Decoração sutil no topo do card */}
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-blue-500/50 to-transparent" />
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50" />
 
             <div className="text-center">
               <div className="flex justify-center mb-6">
                 <motion.div 
-                  whileHover={{ rotate: 5, scale: 1.05 }}
-                  className="w-24 h-24 rounded-3xl overflow-hidden border-2 border-white/10 shadow-2xl p-1 bg-slate-900/50"
+                  whileHover={{ rotate: -5, scale: 1.1 }}
+                  className="w-28 h-28 rounded-[2rem] overflow-hidden border border-white/10 shadow-2xl p-2 bg-slate-950/80"
                 >
-                  <img src="/img/logo_time.png" alt="Logo SortTimes" className="w-full h-full object-cover rounded-2xl" />
+                  <img src="/img/logo_time.png" alt="Logo SortTimes" className="w-full h-full object-contain" />
                 </motion.div>
               </div>
-              <h1 className="text-3xl font-black text-white tracking-tighter uppercase mb-1">
+              <h1 className="text-4xl font-black text-white tracking-tighter uppercase mb-1">
                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400">
                   SortTimes
                 </span>
@@ -143,7 +143,7 @@ export default function Login() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-12 pr-4 py-4 bg-slate-900/50 border border-white/5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white placeholder-slate-600 transition-all text-sm"
+                  className="w-full pl-12 pr-4 py-4 bg-black/40 border border-white/5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white placeholder-slate-600 transition-all text-sm"
                   placeholder="exemplo@email.com"
                   required
                 />
@@ -168,7 +168,7 @@ export default function Login() {
                   type={mostrarSenha ? "text" : "password"}
                   value={senha}
                   onChange={(e) => setSenha(e.target.value)}
-                  className="w-full pl-12 pr-12 py-4 bg-slate-900/50 border border-white/5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white placeholder-slate-600 transition-all text-sm"
+                  className="w-full pl-12 pr-12 py-4 bg-black/40 border border-white/5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white placeholder-slate-600 transition-all text-sm"
                   placeholder="Sua senha secreta"
                   required
                 />
