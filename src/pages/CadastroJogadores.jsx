@@ -3,7 +3,8 @@ import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { 
   FaFutbol, FaUser, FaEnvelope, FaPhone, FaCalendarAlt, 
-  FaCamera, FaMapMarkerAlt, FaTshirt, FaArrowLeft 
+  FaCamera, FaMapMarkerAlt, FaTshirt, FaArrowLeft,
+  FaUserPlus
 } from 'react-icons/fa';
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { useNavigate } from 'react-router-dom';
@@ -207,7 +208,8 @@ export default function CadastroJogadores() {
             <RiArrowLeftDoubleLine className="text-blue-400 text-2xl transform transition-transform group-hover:translate-x-1" />
           </motion.button>
           
-          <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tighter uppercase mb-1">
+          <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tighter uppercase mb-1 flex items-center justify-center gap-3">
+            <FaUserPlus className="text-blue-400" />
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400">
               Novo Jogador
             </span>
