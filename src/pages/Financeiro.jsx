@@ -1196,8 +1196,14 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
 
 
   return (
-    <div className="min-h-screen bg-gray-900 p-4 sm:p-6">
+    <div className="min-h-screen bg-[#020617] text-slate-100 selection:bg-blue-500/30 p-4 sm:p-6 relative overflow-hidden">
       <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
+      {/* Aurora Background Effects - Inspirado no Dashboard */}
+      <div className="fixed inset-0 pointer-events-none -z-10">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-cyan-500/10 blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
+      </div>
+
       <div className="fixed inset-0 overflow-hidden -z-10 opacity-20">
         {[...Array(15)].map((_, i) => (
           <motion.div
@@ -1215,18 +1221,17 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-12 sm:mb-16 relative"
+          className="mb-12 sm:mb-16 relative pt-16 sm:pt-0 text-center"
         >
-          {/* Novo botão voltar */}
           <motion.button 
             onClick={() => navigate('/dashboard')}
             whileHover={{ 
               scale: 1.05,
               x: -5,
-              backgroundColor: "rgba(37, 99, 235, 0.1)"
+              backgroundColor: "rgba(15, 23, 42, 0.8)"
             }}
             whileTap={{ scale: 0.95 }}
-            className="absolute left-2 -top-8 sm:-top-0 w-11 h-11 flex items-center justify-center bg-gray-800/40 hover:bg-gray-700/40 text-gray-200 rounded-full transition-all duration-300 backdrop-blur-sm border border-gray-700/50 shadow-lg hover:shadow-blue-500/20"
+            className="absolute left-0 -top-2 sm:top-2 w-12 h-12 flex items-center justify-center bg-slate-900/50 text-gray-200 rounded-2xl transition-all duration-300 backdrop-blur-md border border-white/5 shadow-xl hover:shadow-blue-500/10"
             title="Voltar para o Dashboard"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -1236,8 +1241,8 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
             <div className="absolute inset-0 rounded-full bg-blue-400/10 animate-pulse" style={{ animationDuration: '3s' }} />
           </motion.button>
 
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-14 sm:mt-0">
-            <div className="flex-grow flex justify-center items-center">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="flex-grow flex justify-center items-center w-full">
               <div className="flex flex-col items-center gap-2">
                 <div className="flex items-center justify-center gap-3">
                   <FaMoneyBillWave className="text-blue-400 text-2xl sm:text-3xl" />
@@ -1245,26 +1250,25 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.1 }}
-                    className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300"
+                    className="text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400 uppercase tracking-tighter"
                   >
                     Financeiro
                   </motion.h1>
                 </div>
 
-                {/* Novo subtítulo */}
                 <motion.p
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 0.8 }}
                   transition={{ delay: 0.2 }}
-                  className="text-gray-400 text-sm sm:text-base"
+                  className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]"
                 >
                   Gerencie as finanças e mensalidades do time
                 </motion.p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 sm:gap-4 mt-4 md:mt-0">
-              <div className="flex items-center gap-2 bg-gray-800 bg-opacity-50 px-3 py-2 rounded-lg">
+            <div className="flex items-center gap-3 sm:gap-4 mt-6 sm:mt-0 sm:absolute sm:right-0 sm:top-2">
+              <div className="flex items-center gap-2 bg-black/40 border border-white/5 px-3 py-2 rounded-xl backdrop-blur-md">
                 <FaCalendarAlt className="text-blue-400 text-sm sm:text-base" />
                 <input
                   type="month"
@@ -1277,7 +1281,7 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                 onClick={() => setRelatorioModal(true)}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg text-xs sm:text-sm"
+                className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:shadow-blue-500/25 text-white px-4 py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] shadow-xl transition-all"
               >
                 <FaPrint className="text-xs sm:text-sm" />
                 <span>Relatório</span>
@@ -1290,34 +1294,34 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
         <div className="grid grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <motion.div
             whileHover={{ y: -5 }}
-            className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
+            className="bg-slate-900/40 backdrop-blur-3xl p-5 sm:p-8 rounded-[2rem] shadow-2xl border border-white/10"
           >
-            <h3 className="text-sm font-medium text-gray-300 mb-1 flex items-center gap-1 sm:gap-2">
+            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2">
               <FaArrowUp className="text-green-400 text-sm" /> Receitas
             </h3>
-            <p className="text-lg sm:text-xl font-bold text-white">
+            <p className="text-xl sm:text-2xl font-black text-white tracking-tighter">
               R$ {(estatisticas.totalReceitas || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </p>
           </motion.div>
 
           <motion.div
             whileHover={{ y: -5 }}
-            className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
+            className="bg-slate-900/40 backdrop-blur-3xl p-5 sm:p-8 rounded-[2rem] shadow-2xl border border-white/10"
           >
-            <h3 className="text-sm font-medium text-gray-300 mb-1 flex items-center gap-1 sm:gap-2">
+            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2">
               <FaArrowDown className="text-red-400 text-sm" /> Despesas
             </h3>
-            <p className="text-lg sm:text-xl font-bold text-white">
+            <p className="text-xl sm:text-2xl font-black text-white tracking-tighter">
               R$ {(estatisticas.totalDespesas || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </p>
           </motion.div>
 
           <motion.div
             whileHover={{ y: -5 }}
-            className={`bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border ${(estatisticas.saldo || 0) >= 0 ? 'border-green-500/30' : 'border-red-500/30'}`}
+            className={`bg-slate-900/40 backdrop-blur-3xl p-5 sm:p-8 rounded-[2rem] shadow-2xl border border-white/10 ${(estatisticas.saldo || 0) >= 0 ? 'border-green-500/30' : 'border-red-500/30'}`}
           >
-            <h3 className="text-sm font-medium text-gray-300 mb-1">Saldo</h3>
-            <p className={`text-lg sm:text-xl font-bold ${(estatisticas.saldo || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Saldo</h3>
+            <p className={`text-xl sm:text-2xl font-black tracking-tighter ${(estatisticas.saldo || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
               R$ {(estatisticas.saldo || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </p>
           </motion.div>
@@ -1328,38 +1332,42 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
+              className="bg-slate-900/40 backdrop-blur-3xl p-6 sm:p-10 rounded-[2.5rem] shadow-2xl border border-white/10 relative overflow-hidden"
             >
-              <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Novo Lançamento</h2>
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50" />
+              <h2 className="text-xl font-black text-white tracking-tighter uppercase mb-8 flex items-center gap-3">Novo Lançamento</h2>
 
               <form onSubmit={adicionarTransacao} className="space-y-3 sm:space-y-4">
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Data</label>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Data</label>
                   <input
                     type="date"
                     name="data"
                     value={novaTransacao.data}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                    className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white transition-all text-sm"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Descrição</label>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Descrição</label>
                   <input
                     type="text"
                     name="descricao"
                     value={novaTransacao.descricao}
                     onChange={handleInputChange}
                     placeholder="Ex: Mensalidade João"
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                    className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white placeholder-slate-600 transition-all text-sm"
                     required
                   />
                 </div>
 
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Valor</label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Valor</label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs">R$</span>
                   <input
                     type="number"
                     name="valor"
@@ -1367,29 +1375,30 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                     step="0.01"
                     value={novaTransacao.valor}
                     onChange={handleInputChange}
-                    placeholder="0,00"
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                        className="w-full pl-10 pr-4 py-3 bg-black/40 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white placeholder-slate-600 transition-all text-sm"
+                        placeholder="0.00"
                     required
                   />
-                </div>
+                    </div>
+                  </div>
 
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Tipo</label>
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Tipo</label>
                   <select
                     name="tipo"
                     value={novaTransacao.tipo}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                      className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white transition-all text-sm appearance-none"
                   >
-                    <option value="receita">Receita</option>
-                    <option value="despesa">Despesa</option>
-                    
+                      <option value="receita" className="bg-slate-900">Receita</option>
+                      <option value="despesa" className="bg-slate-900">Despesa</option>
                   </select>
+                  </div>
                 </div>
 
                 {novaTransacao.tipo === "receita" && (
-  <div className="relative">
-    <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">Jogador (opcional)</label>
+  <div>
+    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Jogador (opcional)</label>
     <div className="relative">
       <input
         type="text"
@@ -1397,7 +1406,7 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
         onClick={() => setMostrarListaJogadores(true)}
         readOnly
         placeholder="Selecione um jogador (opcional)"
-        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm cursor-pointer"
+        className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white placeholder-slate-600 transition-all text-sm cursor-pointer"
       />
       <FaUser className="absolute right-3 top-2.5 text-gray-400 text-xs sm:text-sm" />
       {novaTransacao.jogadorNome && (
@@ -1423,7 +1432,7 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                   type="submit"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg text-xs sm:text-sm"
+                  className="w-full py-4 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:shadow-blue-500/25 text-white rounded-xl font-black uppercase tracking-widest shadow-xl transition-all flex items-center justify-center gap-3 text-[11px]"
                 >
                   <FaPlus className="text-xs sm:text-sm" /> Adicionar
                 </motion.button>
@@ -1492,10 +1501,10 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700 mt-4 sm:mt-6"
+              className="bg-slate-900/40 backdrop-blur-3xl p-6 sm:p-10 rounded-[2.5rem] shadow-2xl border border-white/10 mt-4 sm:mt-6 relative overflow-hidden"
             >
-              <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Status de Pagamentos</h2>
-              <div className="h-48 sm:h-64">
+              <h2 className="text-xl font-black text-white tracking-tighter uppercase mb-8">Status de Pagamentos</h2>
+              <div className="h-48 sm:h-64 relative z-10">
                 <Pie
                   data={dadosGraficoPizza}
                   options={{
@@ -1514,7 +1523,7 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                   }}
                 />
               </div>
-              <div className="mt-3 sm:mt-4 text-center text-xs sm:text-sm text-gray-400">
+              <div className="mt-6 text-center text-[10px] font-black text-slate-500 uppercase tracking-widest">
                 {estatisticas.pagamentosPendentes} Pagamentos pendentes este ano
               </div>
             </motion.div>
@@ -1525,16 +1534,17 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
+              className="bg-slate-900/40 backdrop-blur-3xl p-6 sm:p-10 rounded-[2.5rem] shadow-2xl border border-white/10 relative overflow-hidden"
             >
-              <div className="flex justify-between items-center mb-3 sm:mb-4">
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50" />
+              <div className="flex justify-between items-center mb-8">
                 <div className="flex items-center justify-between w-full">
-                  <h2 className="text-lg sm:text-xl font-semibold text-white">Histórico de Transações</h2>
+                  <h2 className="text-xl font-black text-white tracking-tighter uppercase">Histórico</h2>
                   <motion.button
                     onClick={() => compartilharHistorico('tabela-historico')}
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
-                    className="bg-blue-600 p-2 rounded-lg text-white hover:bg-blue-600 transition-colors"
+                    className="bg-blue-600/10 border border-blue-500/20 p-2.5 rounded-xl text-blue-400 hover:bg-blue-600 hover:text-white transition-all shadow-lg"
                     title="Compartilhar histórico de transações"
                   >
                     <FaShare className="text-sm sm:text-base" />
@@ -1550,7 +1560,7 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                     placeholder="Filtrar por jogador"
                     value={filtroHistorico.jogador}
                     onChange={(e) => setFiltroHistorico({...filtroHistorico, jogador: e.target.value})}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                    className="w-full px-3 py-2 bg-black/40 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white text-xs sm:text-sm"
                   />
                   <FaSearch className="absolute right-3 top-2.5 text-gray-400 text-xs sm:text-sm" />
                 </div>
@@ -1558,27 +1568,27 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                 <select
                   value={filtroHistorico.tipo}
                   onChange={(e) => setFiltroHistorico({...filtroHistorico, tipo: e.target.value})}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                  className="w-full px-3 py-2 bg-black/40 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white text-xs sm:text-sm"
                 >
-                  <option value="todos">Todos os tipos</option>
-                  <option value="receita">Receitas</option>
-                  <option value="despesa">Despesas</option>
+                  <option value="todos" className="bg-slate-900">Todos os tipos</option>
+                  <option value="receita" className="bg-slate-900">Receitas</option>
+                  <option value="despesa" className="bg-slate-900">Despesas</option>
                 </select>
 
                 <select
                   value={filtroHistorico.ano}
                   onChange={(e) => setFiltroHistorico({...filtroHistorico, ano: e.target.value})}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+                  className="w-full px-3 py-2 bg-black/40 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white text-xs sm:text-sm"
                 >
-                  <option value="Todos">Todos os anos</option>
+                  <option value="Todos" className="bg-slate-900">Todos os anos</option>
                   {anosDisponiveis.map(y => (
-                    <option key={y} value={y}>{y}</option>
+                    <option key={y} value={y} className="bg-slate-900">{y}</option>
                   ))}
                 </select>
                 
                 <button
                   onClick={() => setFiltroHistorico({ jogador: '', tipo: 'todos', categoria: '', ano: anoAtual })}
-                  className="w-full bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-xs sm:text-sm"
+                  className="w-full bg-white/5 hover:bg-white/10 text-slate-400 px-3 py-2 rounded-xl text-xs sm:text-sm transition-all font-black uppercase tracking-widest"
                 >
                   Limpar filtros
                 </button>
@@ -1599,18 +1609,18 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
               ) : (
                 <div className="overflow-x-auto">
                   <div className="max-h-[400px] overflow-y-auto no-scrollbar" id="tabela-historico" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                    <table className="min-w-full divide-y divide-gray-700">
-                      <thead className="bg-gray-700 sticky top-0">
+                    <table className="min-w-full divide-y divide-white/5">
+                      <thead className="bg-black/40 backdrop-blur-md sticky top-0 z-10">
                         <tr>
-                          <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Data</th>
-                          <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Descrição</th>
-                          <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Valor</th>
-                          <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Ações</th>
+                          <th className="px-4 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Data</th>
+                          <th className="px-4 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Descrição</th>
+                          <th className="px-4 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Valor</th>
+                          <th className="px-4 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Gestão</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-700">
                       {transacoesFiltradas.map((t) => (
-<tr className={`${t.isento ? "bg-yellow-100/10 border-l-4 border-yellow-400/50" : ""}`}>
+<tr key={t._id} className={`${t.isento ? "bg-yellow-100/10 border-l-4 border-yellow-400/50" : ""}`}>
    <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-gray-300">
       {new Date(t.data || t.createdAt).toLocaleDateString('pt-BR')}
     </td>
@@ -1657,10 +1667,10 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
   initial={{ opacity: 0, y: 20 }}
   animate={{ opacity: 1, y: 0 }}
   transition={{ delay: 0.3 }}
-  className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
+  className="bg-slate-900/40 backdrop-blur-3xl p-6 sm:p-10 rounded-[2.5rem] shadow-2xl border border-white/10 relative overflow-hidden"
 >
-  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3 sm:mb-4">
-    <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Controle de Mensalidades</h2>
+  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-8">
+    <h2 className="text-xl font-black text-white tracking-tighter uppercase">Mensalidades</h2>
     <div className="flex items-center gap-2 w-full sm:w-auto">
       <div className="relative flex-1 sm:flex-none">
         <input
@@ -1668,7 +1678,7 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
           placeholder="Buscar jogador..."
           value={filtroJogador}
           onChange={(e) => setFiltroJogador(e.target.value)}
-          className="w-full sm:w-40 px-2 sm:px-3 py-1 sm:py-1.5 bg-gray-700 border border-gray-600 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+          className="w-full sm:w-40 px-4 py-2 bg-black/40 border border-white/5 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white text-xs"
         />
         <FaSearch className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs sm:text-sm" />
       </div>
@@ -1677,19 +1687,19 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
       <select
         value={filtroStatusFinanceiro}
         onChange={(e) => setFiltroStatusFinanceiro(e.target.value)}
-        className="w-full sm:w-40 px-2 sm:px-3 py-1 sm:py-1.5 bg-gray-700 border border-gray-600 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-xs sm:text-sm"
+        className="w-full sm:w-40 px-4 py-2 bg-black/40 border border-white/5 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white text-xs appearance-none"
       >
-        <option value="">Todos</option>
-        <option value="Adimplente">Adimplente</option>
-        <option value="Inadimplente">Inadimplente</option>
-        <option value="Isento">Isento</option>
+        <option value="" className="bg-slate-900">Todos</option>
+        <option value="Adimplente" className="bg-slate-900">Adimplente</option>
+        <option value="Inadimplente" className="bg-slate-900">Inadimplente</option>
+        <option value="Isento" className="bg-slate-900">Isento</option>
       </select>
 
       <motion.button
         onClick={async () => await compartilharControle('tabela-mensalidades')}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
-        className="bg-blue-600 p-1.5 sm:p-2 rounded-lg text-white hover:bg-blue-700 transition-colors flex-shrink-0"
+        className="bg-blue-600/10 border border-blue-500/20 p-2.5 rounded-xl text-blue-400 hover:bg-blue-600 hover:text-white transition-all shadow-lg flex-shrink-0"
         title="Compartilhar controle de mensalidades"
       >
         <FaShare className="text-sm sm:text-base" />
@@ -1712,13 +1722,13 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
   ) : (
     <div className="overflow-x-auto max-h-[60vh] sm:max-h-[70vh] md:max-h-[80vh] no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
       <div id="tabela-mensalidades" className="min-w-[800px]">
-        <table className="w-full divide-y divide-gray-700">
-          <thead className="bg-gray-700 sticky top-0">
+        <table className="w-full divide-y divide-white/5">
+          <thead className="bg-black/40 backdrop-blur-md sticky top-0 z-10">
             <tr>
-              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Jogador</th>
-              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
+              <th className="px-3 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Jogador</th>
+              <th className="px-3 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Status</th>
               {dadosGraficoFluxoCaixa.labels.map((mes, i) => (
-                <th key={i} className="px-1 sm:px-2 py-2 sm:py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">
+                <th key={i} className="px-1 py-4 text-center text-[10px] font-black text-slate-500 uppercase tracking-widest">
                   {mes}
                 </th>
               ))}
@@ -1752,7 +1762,7 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                 return jogador.statusFinanceiro === filtroStatusFinanceiro;
               })
               .map((jogador) => (
-                <tr key={jogador._id} className="hover:bg-gray-700/50">
+                <tr key={jogador._id} className="hover:bg-white/5 transition-colors">
                   <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium text-white">
                     {jogador.nome}
                   </td>
@@ -1827,10 +1837,11 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700"
+              className="bg-slate-900/40 backdrop-blur-3xl p-6 sm:p-10 rounded-[2.5rem] shadow-2xl border border-white/10 relative overflow-hidden"
             >
-              <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Fluxo de Caixa</h2>
-<div className="h-48 sm:h-64">
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-50" />
+              <h2 className="text-xl font-black text-white tracking-tighter uppercase mb-8">Fluxo de Caixa</h2>
+<div className="h-48 sm:h-64 relative z-10">
   <Bar
     data={dadosGraficoFluxoCaixa}
     options={{
