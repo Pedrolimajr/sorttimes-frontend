@@ -56,41 +56,41 @@ export default function PaginaInicial() {
           className="space-y-5 sm:space-y-7 flex flex-col items-center w-full"
         >
           {/* Cabeçalho com logo */}
-          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
-            <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center bg-black/40 border border-white/10 p-3 sm:p-4 rounded-2xl sm:rounded-[2.5rem] shadow-2xl backdrop-blur-md">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-24 h-24 sm:w-32 sm:h-32 flex items-center justify-center bg-black/40 border border-white/10 p-4 rounded-[2rem] sm:rounded-[2.5rem] shadow-2xl backdrop-blur-md">
               <img
                 src="/img/logo_time.png"
                 alt="Logo SortTimes"
                 className="w-full h-full object-contain drop-shadow-[0_0_10px_rgba(59,130,246,0.5)]"
               />
             </div>
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tighter uppercase bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-blue-500 to-cyan-400 flex items-center gap-3 sm:gap-4">
+            <h1 className="text-3xl sm:text-5xl font-black tracking-tighter uppercase bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-blue-500 to-cyan-400 flex items-center gap-3">
               <motion.div 
                 whileHover={{ rotate: 360, scale: 1.2 }} 
                 transition={{ type: "spring", stiffness: 200, damping: 10 }}
               >
-                <FaFutbol className="text-blue-500 text-2xl sm:text-4xl lg:text-5xl" />
+                <FaFutbol className="text-blue-500 text-2xl sm:text-4xl" />
               </motion.div>
               SortTimes
             </h1>
           </div>
 
-          {/* Título mais compacto */}
-          <div className="space-y-2">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black leading-[1.1] tracking-tight text-white drop-shadow-sm">
-              Plataforma de Gerenciamento <br/>
+          {/* Título principal e Subtítulo organizados */}
+          <div className="space-y-4 max-w-xl">
+            <h2 className="text-4xl sm:text-6xl font-black leading-[1.1] tracking-tight text-white drop-shadow-sm">
+              A revolução na sua <br/>
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-blue-500 to-cyan-400">
-              Futebol
+              Arena de Futebol
             </span>
           </h2>
-            <div className="h-1 w-12 bg-gradient-to-r from-blue-600 to-cyan-400 rounded-full mx-auto" />
-          </div>
-
-          {/* Subtítulo */}
-          <div className="flex flex-col gap-3">
-            <p className="text-sm sm:text-base text-slate-500 font-semibold max-w-md leading-relaxed">
-              O sistema definitivo para boleiros e gestores. Organize sorteios e o financeiro de forma profissional.
-            </p>
+            <div className="h-1.5 w-20 bg-gradient-to-r from-blue-600 to-cyan-400 rounded-full mx-auto opacity-50" />
+            
+            <div className="pt-2">
+              <p className="text-base sm:text-lg text-slate-400 font-medium leading-relaxed">
+                O sistema definitivo para boleiros e gestores. <br className="hidden sm:block"/>
+                Organize sorteios, presença e financeiro com excelência.
+              </p>
+            </div>
           </div>
 
           {/* Imagem central reduzida para caber no viewport */}
@@ -131,15 +131,18 @@ export default function PaginaInicial() {
           </div>
 
           {/* Botão de ação principal */}
-          <Link to="/login" className="block w-fit group relative">
+          <Link to="/login" className="block w-full sm:w-fit group relative px-4">
             {/* Button Outer Glow */}
-            <div className="absolute inset-0 bg-blue-500/20 blur-2xl group-hover:bg-blue-500/40 transition-all duration-500 rounded-full" />
+            <div className="absolute inset-0 bg-blue-500/30 blur-3xl group-hover:bg-blue-500/50 transition-all duration-500 rounded-full" />
             
             <motion.button
-              whileHover={{ scale: 1.05 }}
+              whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.95 }}
-              className="relative bg-gradient-to-br from-blue-600 to-blue-500 text-white font-black py-3.5 px-10 rounded-[1.2rem] shadow-2xl border border-white/10 transition-all flex items-center gap-3 text-xs sm:text-sm uppercase tracking-[0.2em] overflow-hidden"
+              className="relative w-full sm:w-auto bg-gradient-to-br from-blue-600 via-blue-500 to-blue-700 text-white font-black py-5 px-16 rounded-2xl shadow-[0_20px_50px_rgba(8,_112,_184,_0.7)] border border-white/20 transition-all flex items-center justify-center gap-4 text-sm sm:text-base uppercase tracking-[0.25em] overflow-hidden"
             >
+              {/* Efeito de brilho interno animado */}
+              <div className="absolute top-0 -left-full w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-30deg] group-hover:animate-shine" />
+              
               <div className="absolute top-0 -left-full w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-30deg] group-hover:left-[150%] transition-all duration-1000 ease-in-out" />
               Acessar Painel <FaArrowRight />
             </motion.button>
