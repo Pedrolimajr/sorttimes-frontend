@@ -79,9 +79,9 @@ export default function PaginaInicial() {
           {/* Título e Subtítulo */}
           <div className="space-y-3 max-w-xl text-center">
             <h2 className="text-3xl sm:text-5xl font-black leading-[1.1] tracking-tight text-white drop-shadow-sm px-2">
-              Domine a sua <br/>
+              Sistema de Gestão <br/>
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-blue-500 to-cyan-400">
-              Arena de Futebol
+              Gestão de Futebol
             </span>
           </h2>
             <div className="h-1 w-12 sm:w-16 bg-gradient-to-r from-blue-600 to-cyan-400 rounded-full mx-auto opacity-50" />
