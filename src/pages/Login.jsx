@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FaEye, FaEyeSlash, FaSignInAlt, FaKey, FaEnvelope, FaLock, FaHome, FaUserPlus, FaRandom, FaCalendarAlt, FaCog } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaSignInAlt, FaKey, FaEnvelope, FaLock } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { authService } from "../services/authService";
@@ -45,7 +45,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] flex flex-col items-center justify-between p-4 relative overflow-hidden pb-24 selection:bg-blue-500/30">
+    <div className="min-h-screen bg-[#020617] flex items-center justify-center p-4 relative overflow-hidden">
       {/* Efeitos de luz de fundo (Glow) para profundidade */}
       <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
         <div className="absolute -top-[10%] -left-[10%] w-[60%] h-[60%] rounded-full bg-blue-900/20 blur-[140px]" />
@@ -80,8 +80,8 @@ export default function Login() {
         ))}
       </div>
 
-      {/* Container principal centralizado */}
-      <div className="flex-1 flex flex-col items-center justify-center w-full max-w-xs xs:max-w-sm sm:max-w-md mx-2 relative z-10 py-8">
+      {/* Container principal com breakpoints específicos */}
+      <div className="w-full max-w-xs xs:max-w-sm sm:max-w-md mx-2 relative">
         {/* Botão Voltar - Agora fora do form */}
         <motion.button 
           type="button"
@@ -99,6 +99,7 @@ export default function Login() {
           transition={{ duration: 0.3 }}
         >
           <RiArrowLeftDoubleLine className="text-blue-400 text-xl transform transition-transform group-hover:translate-x-1" />
+          <div className="absolute inset-0 rounded-full bg-blue-400/10 animate-pulse" style={{ animationDuration: '3s' }} />
         </motion.button>
 
         <motion.div
@@ -251,26 +252,6 @@ export default function Login() {
           pauseOnHover
           theme="dark"
         />
-      </div>
-
-      {/* Rodapé fixo na base */}
-      <footer className="w-full py-4 text-center relative z-10 opacity-30">
-        <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em]">
-          © {new Date().getFullYear()} SortTimes Suite
-        </p>
-      </footer>
-
-      {/* Simulação de Bottom Navigation (Visível em Mobile) */}
-      <div className="fixed bottom-0 left-0 right-0 p-6 z-50 md:hidden pointer-events-none">
-        <div className="max-w-xs mx-auto bg-slate-900/90 backdrop-blur-xl border border-slate-700/50 rounded-full h-16 flex items-center justify-around px-8 shadow-2xl pointer-events-auto">
-          <Link to="/" className="text-blue-500" title="Home"><FaHome size={20}/></Link>
-          <Link to="/cadastro-jogadores" className="text-slate-500 hover:text-blue-400 transition-colors" title="Novo Jogador"><FaUserPlus size={20}/></Link>
-          <div className="w-12 h-12 bg-blue-600 rounded-full -mt-12 flex items-center justify-center shadow-lg shadow-blue-500/40 text-white border-4 border-[#020617]">
-            <FaRandom />
-          </div>
-          <Link to="/agendar-partida" className="text-slate-500 hover:text-blue-400 transition-colors" title="Novo Jogo"><FaCalendarAlt size={20}/></Link>
-          <Link to="/configuracoes" className="text-slate-500 hover:text-blue-400 transition-colors" title="Opções"><FaCog size={20}/></Link>
-        </div>
       </div>
     </div>
   );
