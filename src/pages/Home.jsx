@@ -111,13 +111,6 @@ export default function PaginaInicial() {
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
 
-              {/* Detalhe flutuante (Painel Operacional) */}
-              <div className="absolute top-6 left-4 sm:top-10 sm:left-6 bg-slate-900/90 border border-white/10 p-2 sm:p-4 rounded-xl sm:rounded-2xl shadow-2xl backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-green-500 animate-pulse" />
-                  <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-slate-300">Live Management</span>
-                </div>
-              </div>
             </motion.div>
           </div>
 
