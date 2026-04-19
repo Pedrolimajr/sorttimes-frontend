@@ -1,11 +1,11 @@
 // src/pages/Home.jsx
 import { Link } from "react-router-dom";
-import { FaFutbol, FaArrowRight, FaHome, FaUserPlus, FaRandom, FaCalendarAlt, FaCog } from "react-icons/fa";
+import { FaFutbol, FaArrowRight } from "react-icons/fa";
 import { motion } from "framer-motion";
 
 export default function PaginaInicial() {
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-100 flex flex-col items-center justify-between p-4 sm:p-6 relative overflow-hidden selection:bg-blue-500/30 pb-24">
+    <div className="min-h-screen bg-[#020617] text-slate-100 flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden selection:bg-blue-500/30">
       {/* Background Effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-20%] w-[60%] h-[60%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse" />
@@ -48,8 +48,7 @@ export default function PaginaInicial() {
         ))}
       </div>
 
-      {/* Espaçador superior para empurrar o conteúdo para o centro */}
-      <div className="flex-1 flex flex-col items-center justify-center max-w-2xl mx-auto w-full relative z-10 py-4">
+      <div className="max-w-2xl mx-auto flex flex-col items-center text-center relative z-10">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -79,9 +78,9 @@ export default function PaginaInicial() {
           {/* Título mais compacto */}
           <div className="space-y-2">
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black leading-[1.1] tracking-tight text-white drop-shadow-sm">
-              Domine a sua <br/>
+              Plataforma de Gerenciamento <br/>
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-blue-500 to-cyan-400">
-              Arena
+              Futebol
             </span>
           </h2>
             <div className="h-1 w-12 bg-gradient-to-r from-blue-600 to-cyan-400 rounded-full mx-auto" />
@@ -146,26 +145,6 @@ export default function PaginaInicial() {
             </motion.button>
           </Link>
         </motion.div>
-      </div>
-
-      {/* Rodapé fixo na base */}
-      <footer className="w-full py-4 text-center relative z-10 opacity-30">
-        <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em]">
-          © {new Date().getFullYear()} SortTimes Suite
-        </p>
-      </footer>
-
-      {/* Simulação de Bottom Navigation (Visível em Mobile) */}
-      <div className="fixed bottom-0 left-0 right-0 p-6 z-50 md:hidden pointer-events-none">
-        <div className="max-w-xs mx-auto bg-slate-900/90 backdrop-blur-xl border border-slate-700/50 rounded-full h-16 flex items-center justify-around px-8 shadow-2xl pointer-events-auto">
-          <button className="text-blue-500" title="Home"><FaHome size={20}/></button>
-          <Link to="/cadastro-jogadores" className="text-slate-500 hover:text-blue-400 transition-colors" title="Novo Jogador"><FaUserPlus size={20}/></Link>
-          <div className="w-12 h-12 bg-blue-600 rounded-full -mt-12 flex items-center justify-center shadow-lg shadow-blue-500/40 text-white border-4 border-[#020617]">
-            <FaRandom />
-          </div>
-          <Link to="/agendar-partida" className="text-slate-500 hover:text-blue-400 transition-colors" title="Novo Jogo"><FaCalendarAlt size={20}/></Link>
-          <Link to="/configuracoes" className="text-slate-500 hover:text-blue-400 transition-colors" title="Opções"><FaCog size={20}/></Link>
-        </div>
       </div>
     </div>
   );
