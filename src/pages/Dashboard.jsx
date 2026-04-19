@@ -25,16 +25,16 @@ const cardsDashboard = [
       {
         titulo: "Cadastro de Jogadores",
         caminho: "/cadastro-jogadores",
-        icone: <FaUserPlus className="text-gray-300" />,
+        icone: <FaUserPlus />,
         descricao: "Adicione ou edite jogadores do sistema",
-        cor: "bg-gray-700 hover:bg-gray-600"
+        cor: "from-blue-600 to-blue-400"
       },
       {
         titulo: "Listar Jogadores",
         caminho: "/lista-jogadores",
-        icone: <FaUsers className="text-gray-300" />,
+        icone: <FaUsers />,
         descricao: "Visualize e gerencie todos os jogadores",
-        cor: "bg-gray-700 hover:bg-gray-600"
+        cor: "from-blue-600 to-blue-400"
       }
     ]
   },
@@ -44,30 +44,30 @@ const cardsDashboard = [
       {
         titulo: "Agendar Partida",
         caminho: "/agendar-partida",
-        icone: <FaCalendarAlt className="text-gray-300" />,
+        icone: <FaCalendarAlt />,
         descricao: "Marque novos jogos e treinos",
-        cor: "bg-gray-700 hover:bg-gray-600"
+        cor: "from-blue-600 to-blue-400"
       },
       {
         titulo: "Partidas Agendadas",
         caminho: "/partidas-agendadas",
-        icone: <FaClipboardList className="text-gray-300" />,
+        icone: <FaClipboardList />,
         descricao: "Visualize todas as partidas",
-        cor: "bg-gray-700 hover:bg-gray-600"
+        cor: "from-blue-600 to-blue-400"
       },
       {
         titulo: "Informações de Partidas",
         caminho: "/informacoes-partida",
-        icone: <FaInfoCircle className="text-gray-300" />,
+        icone: <FaInfoCircle />,
         descricao: "Detalhes e estatísticas das partidas",
-        cor: "bg-gray-700 hover:bg-gray-600"
+        cor: "from-blue-600 to-blue-400"
       },
       {
         titulo: "Sorteio de Times",
         caminho: "/sorteio-times",
-        icone: <FaRandom className="text-gray-300" />,
+        icone: <FaRandom />,
         descricao: "Divida os jogadores em equipes",
-        cor: "bg-gray-700 hover:bg-gray-600"
+        cor: "from-blue-600 to-blue-400"
       }
     ]
   },
@@ -77,23 +77,23 @@ const cardsDashboard = [
       {
         titulo: "Financeiro",
         caminho: "/financeiro",
-        icone: <FaMoneyBillWave className="text-gray-300" />,
+        icone: <FaMoneyBillWave />,
         descricao: "Controle pagamentos e mensalidades",
-        cor: "bg-gray-700 hover:bg-gray-600"
+        cor: "from-blue-600 to-blue-400"
       },
       {
         titulo: "Configurações",
         caminho: "/configuracoes",
-        icone: <FaCog className="text-gray-300" />,
+        icone: <FaCog />,
         descricao: "Gerencie suas informações pessoais",
-        cor: "bg-gray-700 hover:bg-gray-600"
+        cor: "from-blue-600 to-blue-400"
       },
       {
         titulo: "Voltar à Home",
         caminho: "/",
-        icone: <FaHome className="text-gray-300" />,
+        icone: <FaHome />,
         descricao: "Retornar à página inicial",
-        cor: "bg-gray-700 hover:bg-gray-600"
+        cor: "from-gray-600 to-gray-500"
       }
     ]
   }
@@ -118,29 +118,38 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-900 px-4 py-6 sm:py-8">
+      {/* Efeitos de luz de fundo (Glow) */}
+      <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-blue-600/10 blur-[120px]" />
+        <div className="absolute top-[40%] -right-[10%] w-[40%] h-[40%] rounded-full bg-cyan-500/10 blur-[100px]" />
+        <div className="absolute -bottom-[10%] left-[20%] w-[30%] h-[30%] rounded-full bg-blue-500/5 blur-[100px]" />
+      </div>
+
       {/* Cabeçalho com animação */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 120 }}
-        className="mb-8 sm:mb-12 text-center"
+        className="mb-10 sm:mb-16 text-center"
       >
-        <h1 className="text-3xl sm:text-4xl font-bold text-gray-200 flex items-center justify-center gap-3">
-          <FaTachometerAlt className="text-blue-400 text-2xl sm:text-3xl" />
-          <span>Painel de Controle</span>
-        </h1>
+        <div className="inline-flex items-center justify-center gap-3 mb-2">
+          <FaTachometerAlt className="text-blue-400 text-3xl sm:text-4xl" />
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300 tracking-tight uppercase">
+            Painel de Controle
+          </h1>
+        </div>
         <motion.p 
           initial={{ opacity: 0 }}
           animate={{ opacity: 0.8 }}
           transition={{ delay: 0.2 }}
-          className="text-gray-400 mt-2 sm:mt-3 text-base sm:text-lg"
+          className="text-gray-400 mt-1 sm:mt-2 text-base sm:text-lg font-medium"
         >
           Central de gerenciamento do time
         </motion.p>
       </motion.div>
 
       {/* Grid organizado por categorias */}
-      <div className="max-w-7xl mx-auto space-y-8 sm:space-y-10">
+      <div className="max-w-7xl mx-auto space-y-10 sm:space-y-14">
         {cardsDashboard.map((categoria, index) => (
           <motion.div
             key={index}
@@ -150,7 +159,7 @@ export default function Dashboard() {
           >
             <motion.h2 
               whileHover={{ x: 5 }}
-              className="text-xl sm:text-2xl font-semibold text-gray-300 mb-4 sm:mb-6 pl-3 border-l-4 border-gray-500"
+              className="text-xs sm:text-sm font-black text-gray-500 mb-6 sm:mb-8 pl-4 border-l-4 border-blue-500/50 uppercase tracking-[0.3em]"
             >
               {categoria.categoria}
             </motion.h2>
@@ -159,11 +168,8 @@ export default function Dashboard() {
               {categoria.itens.map((card, idx) => (
                 <motion.div
                   key={idx}
-                  whileHover={{ 
-                    y: -5,
-                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.2)"
-                  }}
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={{ y: -8 }}
+                  whileTap={{ scale: 0.97 }}
                   transition={{ 
                     type: "spring", 
                     stiffness: 400, 
@@ -172,27 +178,26 @@ export default function Dashboard() {
                 >
                   <Link
                     to={card.caminho}
-                    className={`block ${card.cor} p-4 sm:p-6 rounded-lg shadow-md transition-all duration-300 h-full group border border-gray-600`}
+                    className="block bg-gray-800/40 backdrop-blur-md p-6 rounded-2xl shadow-xl transition-all duration-300 h-full group border border-gray-700/50 hover:border-blue-500/30 hover:shadow-blue-500/10 relative overflow-hidden"
                   >
-                    <div className="flex items-start">
-                      <div className="p-2 sm:p-3 bg-gray-600 rounded-lg mr-3 sm:mr-4 group-hover:bg-gray-500 transition-all">
-                        {card.icone}
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-500/10 to-transparent rounded-bl-full -mr-10 -mt-10 group-hover:scale-150 transition-transform duration-500" />
+                    
+                    <div className="relative flex flex-col h-full">
+                      <div className={`w-12 h-12 flex items-center justify-center rounded-xl bg-gradient-to-br ${card.cor} text-white text-xl mb-5 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                        {React.cloneElement(card.icone, { className: "text-white" })}
                       </div>
                       <div>
                         <h3 className="font-bold text-base sm:text-lg text-white">
                           {card.titulo}
                         </h3>
-                        <p className="text-gray-300 text-xs sm:text-sm mt-1 sm:mt-2">
+                        <p className="text-gray-400 text-xs sm:text-sm mt-2 leading-relaxed">
                           {card.descricao}
                         </p>
                       </div>
+                      <div className="mt-auto pt-6 flex justify-end opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
+                         <div className="w-8 h-1 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full" />
+                      </div>
                     </div>
-                    <motion.div
-                      initial={{ width: 0 }}
-                      whileHover={{ width: "100%" }}
-                      className="h-px bg-gray-500 mt-2 sm:mt-3"
-                      transition={{ duration: 0.3 }}
-                    />
                   </Link>
                 </motion.div>
               ))}
@@ -203,11 +208,11 @@ export default function Dashboard() {
 
       {/* Efeito de partículas de fundo mais discreto */}
       <div className="fixed inset-0 overflow-hidden -z-10">
-        {[...Array(15)].map((_, i) => (
+        {[...Array(20)].map((_, i) => (
           <motion.div
             key={i}
             initial={{ 
-              x: Math.random() * 100,
+              x: Math.random() * 100, 
               y: Math.random() * 100,
               opacity: 0.05
             }}
