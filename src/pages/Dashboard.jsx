@@ -141,7 +141,7 @@ export default function Dashboard() {
             </h1>
             <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] -mt-1">Management Suite</p>
           </div>
-          <div className="w-12 h-12 rounded-2xl overflow-hidden border border-white/10 shadow-2xl rotate-3 hover:rotate-0 transition-transform duration-500">
+          <div className="w-12 h-12 rounded-2xl overflow-hidden border border-white/10 shadow-2xl hover:scale-105 transition-all duration-300">
             <img 
               src="/img/Logo_Melhorado.png" 
               alt="Logo Administrador" 
