@@ -221,6 +221,13 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Rodapé fixo na base */}
+      <footer className="w-full py-4 text-center relative z-10 opacity-30 mt-8">
+        <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em]">
+          © {new Date().getFullYear()} SortTimes Suite
+        </p>
+      </footer>
+
       {/* Simulação de Bottom Navigation (Visível em Mobile) */}
       <div className="fixed bottom-0 left-0 right-0 p-6 z-50 md:hidden pointer-events-none">
         <div className="max-w-xs mx-auto bg-slate-900/90 backdrop-blur-xl border border-slate-700/50 rounded-full h-16 flex items-center justify-around px-8 shadow-2xl pointer-events-auto">

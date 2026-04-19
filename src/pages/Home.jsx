@@ -1,11 +1,11 @@
 // src/pages/Home.jsx
 import { Link } from "react-router-dom";
-import { FaFutbol, FaArrowRight } from "react-icons/fa";
+import { FaFutbol, FaArrowRight, FaHome, FaUserPlus, FaRandom, FaCalendarAlt, FaCog } from "react-icons/fa";
 import { motion } from "framer-motion";
 
 export default function PaginaInicial() {
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-100 flex flex-col items-center justify-between p-4 sm:p-6 relative overflow-hidden selection:bg-blue-500/30">
+    <div className="min-h-screen bg-[#020617] text-slate-100 flex flex-col items-center justify-between p-4 sm:p-6 relative overflow-hidden selection:bg-blue-500/30 pb-24">
       {/* Background Effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-20%] w-[60%] h-[60%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse" />
@@ -154,6 +154,19 @@ export default function PaginaInicial() {
           © {new Date().getFullYear()} SortTimes Suite
         </p>
       </footer>
+
+      {/* Simulação de Bottom Navigation (Visível em Mobile) */}
+      <div className="fixed bottom-0 left-0 right-0 p-6 z-50 md:hidden pointer-events-none">
+        <div className="max-w-xs mx-auto bg-slate-900/90 backdrop-blur-xl border border-slate-700/50 rounded-full h-16 flex items-center justify-around px-8 shadow-2xl pointer-events-auto">
+          <button className="text-blue-500" title="Home"><FaHome size={20}/></button>
+          <Link to="/cadastro-jogadores" className="text-slate-500 hover:text-blue-400 transition-colors" title="Novo Jogador"><FaUserPlus size={20}/></Link>
+          <div className="w-12 h-12 bg-blue-600 rounded-full -mt-12 flex items-center justify-center shadow-lg shadow-blue-500/40 text-white border-4 border-[#020617]">
+            <FaRandom />
+          </div>
+          <Link to="/agendar-partida" className="text-slate-500 hover:text-blue-400 transition-colors" title="Novo Jogo"><FaCalendarAlt size={20}/></Link>
+          <Link to="/configuracoes" className="text-slate-500 hover:text-blue-400 transition-colors" title="Opções"><FaCog size={20}/></Link>
+        </div>
+      </div>
     </div>
   );
 }
