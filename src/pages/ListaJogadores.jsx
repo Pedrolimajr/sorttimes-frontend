@@ -1097,11 +1097,11 @@ export default function ListaJogadores({
                       <table className="min-w-full divide-y divide-white/5">
                         <thead className="bg-slate-900/80 backdrop-blur-md sticky top-0 z-10">
                           <tr>
-                            <th className="px-4 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest sm:px-8">Jogador</th>
-                            <th className="px-4 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest sm:px-8">Informações</th>
-                            <th className="px-4 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest sm:px-8">Contato</th>
-                            <th className="px-4 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest sm:px-8">Financeiro</th>
-                            <th className="px-4 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest sm:px-8 text-center">Gestão</th>
+                            <th className="px-4 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest sm:px-6">Jogador</th>
+                            <th className="px-4 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest sm:px-6">Informações</th>
+                            <th className="px-4 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest sm:px-6">Contato</th>
+                            <th className="px-4 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest sm:px-6">Financeiro</th>
+                            <th className="px-4 py-4 text-center text-[10px] font-black text-slate-500 uppercase tracking-widest sm:px-6 min-w-[180px]">Gestão</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5 bg-transparent">
@@ -1113,7 +1113,7 @@ export default function ListaJogadores({
                               whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.02)' }}
                               className="transition-colors"
                             >
-                              <td className="px-4 py-6 whitespace-nowrap sm:px-8">
+                              <td className="px-4 py-6 whitespace-nowrap sm:px-6">
                                 <div className="flex items-center space-x-3">
                                   {jogador.foto ? (
                                     <div 
@@ -1148,7 +1148,7 @@ export default function ListaJogadores({
                                 </div>
                               </td>
                               
-                              <td className="px-4 py-4 whitespace-nowrap sm:px-8">
+                              <td className="px-4 py-4 sm:px-6">
                                 <div className="space-y-1">
                                   <div className="text-sm text-slate-100 font-bold flex items-center gap-2">
                                     <FaTshirt className="text-gray-400 hidden sm:inline" />
@@ -1167,7 +1167,7 @@ export default function ListaJogadores({
                                 </div>
                               </td>
                               
-                              <td className="px-4 py-4 whitespace-nowrap sm:px-8">
+                              <td className="px-4 py-4 sm:px-6">
                                 <div className="space-y-1">
                                   <div className="text-sm text-slate-200 flex items-center gap-2">
                                     <FaPhone className="hidden sm:inline" />
@@ -1177,14 +1177,14 @@ export default function ListaJogadores({
                                     <FaEnvelope className="hidden sm:inline" />
                                     {jogador.email || 'Não informado'}
                                   </div>
-                                  <div className="text-xs text-gray-400 flex items-center gap-2">
-                                    <FaMapMarkerAlt className="hidden sm:inline" />
+                                  <div className="text-xs text-gray-400 flex items-start gap-2">
+                                    <FaMapMarkerAlt className="hidden sm:inline mt-0.5" />
                                     {jogador.endereco || 'Endereço não informado'}
                                   </div>
                                 </div>
                               </td>
                               
-                              <td className="px-4 py-4 whitespace-nowrap sm:px-8">
+                              <td className="px-4 py-4 whitespace-nowrap sm:px-6">
                                 {jogador.ativo === false ? (
                                   <div className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 bg-red-500/10 text-red-400 border border-red-500/20 w-fit cursor-not-allowed">
                                     <FaBan className="text-xs" />
@@ -1221,7 +1221,7 @@ export default function ListaJogadores({
                                 )}
                               </td>
                               
-                              <td className="px-4 py-4 whitespace-nowrap text-sm font-medium sm:px-8">
+                              <td className="px-4 py-4 whitespace-nowrap text-sm font-medium sm:px-6 min-w-[180px]">
                                 <div className="flex justify-center gap-3">
                                   {/* Isentar Jogador */}
                                   <motion.button
