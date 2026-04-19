@@ -120,7 +120,7 @@ export default function Login() {
                   whileHover={{ rotate: 5, scale: 1.05 }}
                   className="w-24 h-24 rounded-3xl overflow-hidden border-2 border-white/10 shadow-2xl p-1 bg-slate-900/50"
                 >
-                  <img src="/img/Logo_Melhorado.png" alt="Logo SortTimes" className="w-full h-full object-cover rounded-2xl" />
+                  <img src="/img/logo_time.png" alt="Logo SortTimes" className="w-full h-full object-cover rounded-2xl" />
                 </motion.div>
               </div>
               <h1 className="text-3xl font-black text-white tracking-tighter uppercase mb-1">
