@@ -117,39 +117,46 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-900 px-4 py-6 sm:py-8">
-      {/* Efeitos de luz de fundo (Glow) */}
-      <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
-        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-blue-600/10 blur-[120px]" />
-        <div className="absolute top-[40%] -right-[10%] w-[40%] h-[40%] rounded-full bg-cyan-500/10 blur-[100px]" />
-        <div className="absolute -bottom-[10%] left-[20%] w-[30%] h-[30%] rounded-full bg-blue-500/5 blur-[100px]" />
-      </div>
+    <div className="min-h-screen bg-[#0a0f1d] px-4 py-8 sm:py-12 relative selection:bg-blue-500/30">
+      {/* Fundo com padrão de grid técnico */}
+      <div className="fixed inset-0 pointer-events-none -z-10 opacity-[0.03]" 
+        style={{ backgroundImage: `radial-gradient(#ffffff 1px, transparent 1px)`, backgroundSize: '32px 32px' }} 
+      />
 
       {/* Cabeçalho com animação */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 120 }}
-        className="mb-10 sm:mb-16 text-center"
+        className="mb-12 sm:mb-20 max-w-7xl mx-auto flex flex-col md:flex-row md:items-end md:justify-between border-b border-white/5 pb-8"
       >
-        <div className="inline-flex items-center justify-center gap-3 mb-2">
-          <FaTachometerAlt className="text-blue-400 text-3xl sm:text-4xl" />
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300 tracking-tight uppercase">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-600/20 rounded-lg">
+              <FaTachometerAlt className="text-blue-500 text-2xl" />
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
             Painel de Controle
           </h1>
+          </div>
+          <p className="text-gray-500 text-sm font-medium">
+            Bem-vindo ao centro administrativo do SortTimes.
+          </p>
         </div>
-        <motion.p 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.8 }}
-          transition={{ delay: 0.2 }}
-          className="text-gray-400 mt-1 sm:mt-2 text-base sm:text-lg font-medium"
-        >
-          Central de gerenciamento do time
-        </motion.p>
+        
+        <div className="mt-6 md:mt-0 flex items-center gap-4">
+           <div className="text-right hidden sm:block">
+             <p className="text-white text-[10px] font-black uppercase tracking-widest opacity-40">Status do Sistema</p>
+             <p className="text-green-500 text-[10px] font-bold flex items-center justify-end gap-1.5 mt-1">
+               <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" /> 
+               SISTEMA OPERACIONAL
+             </p>
+           </div>
+        </div>
       </motion.div>
 
-      {/* Grid organizado por categorias */}
-      <div className="max-w-7xl mx-auto space-y-10 sm:space-y-14">
+      {/* Grid organizado por módulos */}
+      <div className="max-w-7xl mx-auto grid grid-cols-1 gap-12">
         {cardsDashboard.map((categoria, index) => (
           <motion.div
             key={index}
@@ -157,45 +164,37 @@ export default function Dashboard() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.15 }}
           >
-            <motion.h2 
-              whileHover={{ x: 5 }}
-              className="text-xs sm:text-sm font-black text-gray-500 mb-6 sm:mb-8 pl-4 border-l-4 border-blue-500/50 uppercase tracking-[0.3em]"
-            >
-              {categoria.categoria}
-            </motion.h2>
+            <div className="flex items-center gap-4 mb-8">
+              <h2 className="text-[10px] font-black text-blue-500/80 uppercase tracking-[0.4em] whitespace-nowrap">
+                {categoria.categoria}
+              </h2>
+              <div className="h-px w-full bg-gradient-to-r from-blue-500/20 to-transparent" />
+            </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               {categoria.itens.map((card, idx) => (
                 <motion.div
                   key={idx}
-                  whileHover={{ y: -8 }}
+                  whileHover={{ y: -4 }}
                   whileTap={{ scale: 0.97 }}
-                  transition={{ 
-                    type: "spring", 
-                    stiffness: 400, 
-                    damping: 15 
-                  }}
                 >
                   <Link
                     to={card.caminho}
-                    className="block bg-gray-800/40 backdrop-blur-md p-6 rounded-2xl shadow-xl transition-all duration-300 h-full group border border-gray-700/50 hover:border-blue-500/30 hover:shadow-blue-500/10 relative overflow-hidden"
+                    className="block bg-[#161b2c] p-6 rounded-xl border border-white/5 hover:border-blue-500/40 transition-all duration-300 h-full group relative overflow-hidden"
                   >
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-500/10 to-transparent rounded-bl-full -mr-10 -mt-10 group-hover:scale-150 transition-transform duration-500" />
+                    <div className="absolute inset-0 bg-blue-600/0 group-hover:bg-blue-600/[0.02] transition-colors" />
                     
                     <div className="relative flex flex-col h-full">
-                      <div className={`w-12 h-12 flex items-center justify-center rounded-xl bg-gradient-to-br ${card.cor} text-white text-xl mb-5 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                        {React.cloneElement(card.icone, { className: "text-white" })}
+                      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-gray-900 border border-white/10 text-blue-500 text-lg mb-6 group-hover:border-blue-500/50 group-hover:text-white group-hover:bg-blue-600 transition-all duration-300">
+                        {card.icone}
                       </div>
                       <div>
-                        <h3 className="font-bold text-base sm:text-lg text-white">
+                        <h3 className="font-bold text-sm sm:text-base text-gray-100 group-hover:text-blue-400 transition-colors">
                           {card.titulo}
                         </h3>
-                        <p className="text-gray-400 text-xs sm:text-sm mt-2 leading-relaxed">
+                        <p className="text-gray-500 text-xs mt-2 leading-relaxed">
                           {card.descricao}
                         </p>
-                      </div>
-                      <div className="mt-auto pt-6 flex justify-end opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
-                         <div className="w-8 h-1 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full" />
                       </div>
                     </div>
                   </Link>
@@ -206,34 +205,6 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Efeito de partículas de fundo mais discreto */}
-      <div className="fixed inset-0 overflow-hidden -z-10">
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            initial={{ 
-              x: Math.random() * 100, 
-              y: Math.random() * 100,
-              opacity: 0.05
-            }}
-            animate={{ 
-              y: [null, (Math.random() - 0.5) * 30],
-              x: [null, (Math.random() - 0.5) * 30],
-            }}
-            transition={{ 
-              duration: 15 + Math.random() * 20,
-              repeat: Infinity,
-              repeatType: "reverse",
-              ease: "easeInOut"
-            }}
-            className="absolute w-1 h-1 bg-gray-400 rounded-full"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-          />
-        ))}
-      </div>
     </div>
   );
 }
