@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FaEye, FaEyeSlash, FaSignInAlt, FaKey } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaSignInAlt, FaKey, FaEnvelope, FaLock } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { authService } from "../services/authService";
@@ -45,7 +45,13 @@ export default function Login() {
   };
 
   return (
-    <div className="h-full bg-gray-900 flex items-center justify-center p-3 xs:p-4 sm:p-6 relative">
+    <div className="min-h-screen bg-[#0f172a] flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Efeitos de luz de fundo (Glow) para profundidade */}
+      <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+        <div className="absolute -top-[10%] -left-[10%] w-[50%] h-[50%] rounded-full bg-blue-600/10 blur-[120px]" />
+        <div className="absolute -bottom-[10%] -right-[10%] w-[50%] h-[50%] rounded-full bg-cyan-500/10 blur-[120px]" />
+      </div>
+
       {/* Efeito de partículas de fundo */}
       <div className="fixed inset-0 overflow-hidden -z-10 opacity-10">
         {[...Array(20)].map((_, i) => (
@@ -86,7 +92,7 @@ export default function Login() {
             backgroundColor: "rgba(37, 99, 235, 0.1)"
           }}
           whileTap={{ scale: 0.95 }}
-          className="mb-6 w-10 h-10 flex items-center justify-center bg-gray-800/40 hover:bg-gray-700/40 text-gray-200 rounded-full transition-all duration-300 backdrop-blur-sm border border-gray-700/50 shadow-lg hover:shadow-blue-500/20"
+          className="mb-8 w-12 h-12 flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/50 text-gray-200 rounded-2xl transition-all duration-300 backdrop-blur-md border border-white/5 shadow-xl hover:shadow-blue-500/10"
           title="Voltar para Home"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -99,70 +105,71 @@ export default function Login() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ type: "spring", stiffness: 100 }}
         >
           <form 
             onSubmit={fazerLogin} 
-            className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-4 xs:p-5 sm:p-6 md:p-8 rounded-xl shadow-xl border border-gray-700 space-y-4 xs:space-y-5 sm:space-y-6"
+            className="bg-slate-800/40 backdrop-blur-2xl p-8 xs:p-10 rounded-[2.5rem] shadow-2xl border border-white/5 space-y-6 relative overflow-hidden"
           >
-            {/* Cabeçalho dentro do formulário */}
-            <div className="text-center mb-4 xs:mb-5 sm:mb-6">
-              <div className="flex justify-center mb-2 xs:mb-3 sm:mb-4">
-                <div className="bg-gradient-to-r from-blue-500 to-cyan-400 p-1 xs:p-1.5 sm:p-2 rounded-lg shadow-lg">
-                  <img 
-                    src="/img/logo_time.png" 
-                    alt="Logo" 
-                    className="w-14 h-14 xs:w-16 xs:h-16 sm:w-20 sm:h-20 object-contain"
-                  />
-                </div>
+            {/* Decoração sutil no topo do card */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-blue-500/50 to-transparent" />
+
+            <div className="text-center">
+              <div className="flex justify-center mb-6">
+                <motion.div 
+                  whileHover={{ rotate: 5, scale: 1.05 }}
+                  className="w-24 h-24 rounded-3xl overflow-hidden border-2 border-white/10 shadow-2xl p-1 bg-slate-900/50"
+                >
+                  <img src="/img/Logo_Melhorado.png" alt="Logo SortTimes" className="w-full h-full object-cover rounded-2xl" />
+                </motion.div>
               </div>
-              <h1 className="text-xl xs:text-2xl sm:text-3xl font-bold text-white mb-1 xs:mb-2">
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300">
+              <h1 className="text-3xl font-black text-white tracking-tighter uppercase mb-1">
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400">
                   SortTimes
                 </span>
               </h1>
-              <h2 className="text-xs xs:text-sm sm:text-lg text-gray-400 flex items-center justify-center gap-1 xs:gap-2">
+              <h2 className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em] flex items-center justify-center gap-2">
                 <FaKey className="text-yellow-400 text-xs xs:text-sm" /> Acesse sua conta
               </h2>
             </div>
 
             {/* Campo Email */}
             <div>
-              <label htmlFor="email" className="block text-xs xs:text-sm font-medium text-gray-400 mb-1 xs:mb-2">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 xs:px-4 py-2 xs:py-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs xs:text-sm"
-                placeholder="Digite seu email"
-                required
-              />
+              <label htmlFor="email" className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Email</label>
+              <div className="relative group">
+                <FaEnvelope className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-12 pr-4 py-4 bg-slate-900/50 border border-white/5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white placeholder-slate-600 transition-all text-sm"
+                  placeholder="exemplo@email.com"
+                  required
+                />
+              </div>
             </div>
 
             {/* Campo Senha */}
             <div>
-              <div className="flex justify-between items-center mb-1 xs:mb-2">
-                <label htmlFor="senha" className="block text-xs xs:text-sm font-medium text-gray-400">
-                  Senha
-                </label>
+              <div className="flex justify-between items-center mb-2 ml-1">
+                <label htmlFor="senha" className="block text-xs font-black text-slate-500 uppercase tracking-widest">Senha</label>
                 <Link 
                   to="/recuperar-senha" 
-                  className="text-xs xs:text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                  className="text-[10px] font-bold text-blue-400 hover:text-blue-300 transition-colors uppercase tracking-wider"
                 >
                   Esqueceu a senha?
                 </Link>
               </div>
-              <div className="relative">
+              <div className="relative group">
+                <FaLock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
                 <input
                   id="senha"
                   type={mostrarSenha ? "text" : "password"}
                   value={senha}
                   onChange={(e) => setSenha(e.target.value)}
-                  className="w-full px-3 xs:px-4 py-2 xs:py-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10 xs:pr-12 text-xs xs:text-sm"
-                  placeholder="Digite sua senha"
+                  className="w-full pl-12 pr-12 py-4 bg-slate-900/50 border border-white/5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white placeholder-slate-600 transition-all text-sm"
+                  placeholder="Sua senha secreta"
                   required
                 />
                 <motion.button
@@ -170,7 +177,7 @@ export default function Login() {
                   onClick={() => setMostrarSenha(!mostrarSenha)}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
-                  className="absolute right-2 xs:right-3 top-2 xs:top-3 text-gray-400 hover:text-gray-300 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
                 >
                   {mostrarSenha ? 
                     <FaEyeSlash className="w-3 h-3 xs:w-4 xs:h-4" /> : 
@@ -182,20 +189,20 @@ export default function Login() {
 
             {/* Exibição de erros */}
             {erro ? (
-              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-red-400 text-sm font-medium">
-                    {erro}
-                  </p>
-                  <button 
-                    type="button"
-                    onClick={() => setErro("")}
-                    className="ml-3 text-red-400 hover:text-red-300 transition-colors"
-                  >
-                    <span className="text-xl">×</span>
-                  </button>
-                </div>
-              </div>
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 flex items-center justify-between"
+              >
+                <p className="text-red-400 text-xs font-bold leading-tight">{erro}</p>
+                <button 
+                  type="button"
+                  onClick={() => setErro("")}
+                  className="text-red-400 hover:text-red-300 text-lg font-bold px-2"
+                >
+                  ×
+                </button>
+              </motion.div>
             ) : null}
 
             {/* Botão de Login */}
@@ -204,10 +211,10 @@ export default function Login() {
               whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={carregando}
-              className={`w-full py-2 xs:py-3 px-4 rounded-lg font-medium transition-all flex items-center justify-center gap-1 xs:gap-2 text-xs xs:text-sm ${
+              className={`w-full py-4 rounded-2xl font-black transition-all flex items-center justify-center gap-3 text-sm uppercase tracking-[0.1em] ${
                 carregando
-                  ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-                  : "bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white shadow-lg"
+                  ? "bg-slate-700 text-slate-400 cursor-not-allowed"
+                  : "bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:shadow-blue-500/25 text-white shadow-xl"
               }`}
             >
               {carregando ? (
@@ -220,14 +227,16 @@ export default function Login() {
             </motion.button>
 
             {/* Link para cadastro */}
-            <div className="text-center text-xs xs:text-sm text-gray-400 pt-2 xs:pt-3 sm:pt-4 border-t border-gray-700">
-              Não tem uma conta?{" "}
+            <div className="text-center pt-4 border-t border-white/5">
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-tighter">
+                Não tem uma conta?{" "}
               <Link
                 to="/cadastro"
-                className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
+                  className="text-blue-400 hover:text-blue-300 transition-colors ml-1 underline underline-offset-4"
               >
                 Cadastre-se
               </Link>
+              </p>
             </div>
           </form>
         </motion.div>
