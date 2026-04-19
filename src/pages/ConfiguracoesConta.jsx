@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { FaKey, FaEnvelope } from "react-icons/fa";
+import { FaKey, FaEnvelope, FaLock } from "react-icons/fa";
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { useNavigate } from "react-router-dom";
 import { authService } from "../services/authService";
