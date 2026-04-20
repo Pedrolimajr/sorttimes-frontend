@@ -805,7 +805,7 @@ const aplicarFiltroPosicao = () => {
          <div className="p-4 sm:p-10">
             {/* Filtro de posição */}
             <div className="mb-6 p-4 bg-blue-900/10 border border-blue-500/20 rounded-2xl shadow-inner">
-              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1 flex items-center gap-2">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1 flex items-center gap-2">
                 <FaCalendarAlt /> Vincular este Sorteio a uma Partida Agendada
               </label>
               <select
@@ -824,7 +824,7 @@ const aplicarFiltroPosicao = () => {
             </div>
             <div className="mb-4 flex flex-col sm:flex-row gap-4 items-end">
     <div className="flex-1 max-sm:w-full">
-      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1 flex items-center gap-2">
+      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1 flex items-center gap-2">
         <FaTshirt className="text-blue-400" /> Definir mesma posição para todos
       </label>
       <div className="flex gap-2 max-sm:flex-col">
@@ -854,7 +854,7 @@ const aplicarFiltroPosicao = () => {
             {/* Lista de jogadores */}
             
 <div className="mb-4">
-              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1 flex items-center gap-2">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1 flex items-center gap-2">
                 <FaUser className="text-blue-400 text-sm sm:text-base" /> Jogadores Disponíveis
               </label>
 
@@ -892,7 +892,7 @@ const aplicarFiltroPosicao = () => {
 
             {/* Seletor de balanceamento */}
             <div className="mb-4">
-              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1 flex items-center gap-2">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1 flex items-center gap-2">
                 <FaBalanceScale className="text-blue-400 text-sm sm:text-base" /> Balanceamento
               </label>
               <select
@@ -910,7 +910,7 @@ const aplicarFiltroPosicao = () => {
             {/* Lista de jogadores selecionados */}
             <div className="mb-4 sm:mb-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-                <h3 className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1 flex items-center gap-2">
+                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1 flex items-center gap-2">
                   <FaTshirt className="text-blue-400 text-sm sm:text-base" />
                   Jogadores Selecionados ({jogadoresSelecionados.filter(j => j.presente).length}/{jogadoresSelecionados.length})
                 </h3>
