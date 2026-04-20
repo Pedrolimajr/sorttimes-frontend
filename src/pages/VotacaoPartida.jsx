@@ -203,12 +203,14 @@ export default function VotacaoPartida() {
 
       if (element) {
         const dataUrl = await toPng(element, {
-          backgroundColor: '#1f2937', // bg-gray-900 aproximado
+          backgroundColor: '#0f172a', // Fundo azul marinho profundo para contraste
           cacheBust: true,
+          pixelRatio: 3, // Aumenta a resolução para o print não sair embaçado
           filter: (node) => node.classList ? !node.classList.contains('no-export') : true,
           style: {
-            padding: '20px',
+            padding: '30px',
             borderRadius: '24px',
+            width: '400px', // Largura ideal para visualização mobile no WhatsApp
           }
         });
 
@@ -384,10 +386,19 @@ export default function VotacaoPartida() {
               ref={areaResultadosRef}
               className="bg-gray-800 rounded-3xl p-6 border border-gray-700 shadow-2xl space-y-6"
             >
-              <h2 className="text-xl font-black text-center bg-gradient-to-r from-yellow-400 to-amber-600 bg-clip-text text-transparent flex items-center justify-center gap-2">
-                <FaChartBar className="text-amber-500" /> 
-                {isExporting ? 'Resultado da Votação' : (tipoLink === 'resultado' ? 'Resultado Final da Votação' : 'Apuração em Tempo Real')}
+              {/* Cabeçalho exclusivo para o Print */}
+              {isExporting && (
+                <div className="flex flex-col items-center gap-2 border-b border-gray-700/50 pb-4 mb-2">
+                  <img src="/img/logo_time.png" className="w-16 h-16 object-contain" alt="Logo" />
+                  <p className="text-[9px] font-black text-gray-500 uppercase tracking-[0.3em]">Universo Cajazeiras</p>
+                </div>
+              )}
+
+              <h2 className={`text-xl font-black text-center bg-gradient-to-r from-yellow-400 to-amber-600 bg-clip-text text-transparent flex items-center justify-center gap-2 ${isExporting ? 'text-2xl' : ''}`}>
+                {!isExporting && <FaChartBar className="text-amber-500" />} 
+                {isExporting ? 'RESULTADO DA VOTAÇÃO' : (tipoLink === 'resultado' ? 'Resultado Final da Votação' : 'Apuração em Tempo Real')}
               </h2>
+
               <div className="space-y-4">
                 {[
                   { id: 'melhorPartida', label: 'Melhor da Partida', icon: <FaAward className="text-yellow-500" /> },
@@ -432,6 +443,16 @@ export default function VotacaoPartida() {
                   );
                 })}
               </div>
+
+              {/* Rodapé exclusivo para o Print */}
+              {isExporting && (
+                <div className="pt-4 text-center border-t border-gray-700/50">
+                   <p className="text-[8px] font-bold text-gray-600 uppercase tracking-widest">
+                     Gerado por SortTimes • {new Date().toLocaleDateString('pt-BR')}
+                   </p>
+                </div>
+              )}
+
               {tipoLink !== 'resultado' ? (
                 <>
                   <button onClick={compartilharResultados} className="no-export w-full bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 py-4 rounded-2xl font-black flex items-center justify-center gap-2 transition-all shadow-lg">
