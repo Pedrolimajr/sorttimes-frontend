@@ -182,10 +182,7 @@ export default function SorteioTimes() {
   const [times, setTimes] = usePersistedState('timesSorteados', []);
   const [balanceamento, setBalanceamento] = useState(TIPOS_BALANCEAMENTO.POSICAO);
   const [carregando, setCarregando] = useState(false);
-  const [historico, setHistorico] = useState(() => {
-    const saved = localStorage.getItem('historicoSorteios');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [historico, setHistorico] = usePersistedState(LOCAL_STORAGE_KEYS.HISTORICO_SORTEIOS, []);
   const [carregandoJogadores, setCarregandoJogadores] = useState(false);
   const [modoEdicao, setModoEdicao] = useState(false);
   const [filtroPosicao, setFiltroPosicao] = useState('');
@@ -197,15 +194,6 @@ export default function SorteioTimes() {
   const [modalAddPlayer, setModalAddPlayer] = useState({ open: false, teamIndex: null });
   const [nomeNovoJogador, setNomeNovoJogador] = useState("");
   const [sugestoes, setSugestoes] = useState([]);
-
-  // Carrega dados do localStorage ao montar o componente
-  useEffect(() => {
-    // Carregar jogadores selecionados com estado de presença
-    const jogadoresSalvos = localStorage.getItem(LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS);
-    if (jogadoresSalvos) {
-      setJogadoresSelecionados(JSON.parse(jogadoresSalvos));
-    }
-  }, []);
 
   // Configuração do socket.io para atualizações em tempo real.
   useEffect(() => {
@@ -371,11 +359,6 @@ const parseNivel = (nivelStr) => {
          nivelStr === 'Convidado' ? NIVEL_JOGADOR.CONVIDADO : 
          NIVEL_JOGADOR.INICIANTE;
 };
-
-  // Persiste o histórico no localStorage
-  useEffect(() => {
-    localStorage.setItem('historicoSorteios', JSON.stringify(historico));
-  }, [historico]);
 
   /**
    * Alterna o estado de presença de um jogador
@@ -606,8 +589,15 @@ const aplicarFiltroPosicao = () => {
 
     setTimes(timesComIds);
 
-    // Vincular participantes à partida agendada para permitir votação restrita
-    await vincularParticipantesNoSorteio(timesComIds);
+    // Vincular participantes à partida agendada (não bloqueia o fluxo se falhar)
+    try {
+      if (partidaVinculadaId) {
+        await vincularParticipantesNoSorteio(timesComIds);
+      }
+    } catch (syncErr) {
+      console.error("Erro ao sincronizar participantes:", syncErr);
+      toast.warning("Sorteio concluído, mas não foi possível sincronizar com a agenda.");
+    }
 
     const novoSorteio = {
       times: timesComIds,
@@ -702,8 +692,25 @@ const aplicarFiltroPosicao = () => {
    * @param {number} index - Índice do sorteio no histórico
    */
   const excluirDoHistorico = (index) => {
+    const itemSorteio = historico[index];
+    
+    // Se o item excluído for o mesmo que está na tela, limpa a exibição atual (apagar geral)
+    if (itemSorteio && JSON.stringify(itemSorteio.times) === JSON.stringify(times)) {
+      setTimes([]);
+      setModoEdicao(false);
+    }
+
     setHistorico(prev => prev.filter((_, i) => i !== index));
-    toast.success('Sorteio removido do histórico');
+    toast.success('Sorteio removido!');
+  };
+
+  const limparTodoHistorico = () => {
+    if (window.confirm("Deseja apagar TODO o histórico? Esta ação limpará todos os registros salvos.")) {
+      setHistorico([]);
+      setTimes([]); // Limpa também o resultado atual da tela
+      setModoEdicao(false);
+      toast.success("Histórico limpo com sucesso!");
+    }
   };
 
   /**
@@ -991,7 +998,7 @@ const aplicarFiltroPosicao = () => {
         </motion.div>
 
         {/* Seção de times sorteados */}
-        {partidaVinculadaId && times.length > 0 && (
+        {times.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1062,6 +1069,12 @@ const aplicarFiltroPosicao = () => {
                 <h3 className="text-xl font-black text-white tracking-tighter uppercase flex items-center gap-3">
                   <FaHistory className="text-blue-400" /> Últimos Sorteios
                 </h3>
+                <button 
+                  onClick={limparTodoHistorico}
+                  className="text-[10px] font-black text-red-400 uppercase tracking-widest hover:text-red-300 transition-colors bg-red-400/10 px-3 py-1.5 rounded-lg border border-red-400/20 flex items-center gap-2"
+                >
+                  <FaTrash size={10} /> Apagar Geral
+                </button>
               </div>
               
               <div className="space-y-3 sm:space-y-4 max-h-96 overflow-y-auto pr-2 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
@@ -1081,13 +1094,13 @@ const aplicarFiltroPosicao = () => {
                     </div>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                      {sorteio.times.map((time, i) => (
+                      {sorteio.times?.map((time, i) => (
                         <div key={i}>
                           <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">
                             {i === 0 ? "Time (Preto)" : i === 1 ? "Time (Amarelo)" : (time.nome || `Time ${i + 1}`)} ({time.jogadores.length})
                           </h4>
                           <ul className="text-xs sm:text-sm space-y-1 text-gray-400">
-                            {time.jogadores.slice(0, 3).map((j, jIdx) => (
+                            {time.jogadores?.slice(0, 3).map((j, jIdx) => (
                               <li key={jIdx} className="truncate">
                                 {j.nome} <span className="text-gray-500 text-xs">({j.posicao})</span>
                               </li>
