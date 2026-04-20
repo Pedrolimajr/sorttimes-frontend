@@ -203,14 +203,12 @@ export default function VotacaoPartida() {
 
       if (element) {
         const dataUrl = await toPng(element, {
-          backgroundColor: '#0f172a', // Fundo azul marinho profundo para contraste
+          backgroundColor: '#111827', // Fundo escuro sólido para um recorte limpo
           cacheBust: true,
-          pixelRatio: 3, // Aumenta a resolução para o print não sair embaçado
+          pixelRatio: 2, // Resolução dobrada para nitidez sem peso excessivo
           filter: (node) => node.classList ? !node.classList.contains('no-export') : true,
           style: {
-            padding: '30px',
-            borderRadius: '24px',
-            width: '400px', // Largura ideal para visualização mobile no WhatsApp
+            margin: '0', // Garante que não haja margens extras no recorte
           }
         });
 
@@ -386,14 +384,6 @@ export default function VotacaoPartida() {
               ref={areaResultadosRef}
               className="bg-gray-800 rounded-3xl p-6 border border-gray-700 shadow-2xl space-y-6"
             >
-              {/* Cabeçalho exclusivo para o Print */}
-              {isExporting && (
-                <div className="flex flex-col items-center gap-2 border-b border-gray-700/50 pb-4 mb-2">
-                  <img src="/img/logo_time.png" className="w-16 h-16 object-contain" alt="Logo" />
-                  <p className="text-[9px] font-black text-gray-500 uppercase tracking-[0.3em]">Universo Cajazeiras</p>
-                </div>
-              )}
-
               <h2 className={`text-xl font-black text-center bg-gradient-to-r from-yellow-400 to-amber-600 bg-clip-text text-transparent flex items-center justify-center gap-2 ${isExporting ? 'text-2xl' : ''}`}>
                 {!isExporting && <FaChartBar className="text-amber-500" />} 
                 {isExporting ? 'RESULTADO DA VOTAÇÃO' : (tipoLink === 'resultado' ? 'Resultado Final da Votação' : 'Apuração em Tempo Real')}
@@ -443,15 +433,6 @@ export default function VotacaoPartida() {
                   );
                 })}
               </div>
-
-              {/* Rodapé exclusivo para o Print */}
-              {isExporting && (
-                <div className="pt-4 text-center border-t border-gray-700/50">
-                   <p className="text-[8px] font-bold text-gray-600 uppercase tracking-widest">
-                     Gerado por SortTimes • {new Date().toLocaleDateString('pt-BR')}
-                   </p>
-                </div>
-              )}
 
               {tipoLink !== 'resultado' ? (
                 <>
