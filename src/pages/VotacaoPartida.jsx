@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTrophy, FaUserTimes, FaAward, FaFutbol, FaCheckCircle, FaLock, FaUser, FaChartBar, FaShareAlt, FaEye, FaEyeSlash } from 'react-icons/fa';
@@ -22,6 +22,8 @@ export default function VotacaoPartida() {
   const [expireAt, setExpireAt] = useState(null);
   const [countdown, setCountdown] = useState('');
   const [tipoLink, setTipoLink] = useState(''); // eventos | votacao | resultado
+  const [isExporting, setIsExporting] = useState(false);
+  const areaResultadosRef = useRef(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -190,6 +192,44 @@ export default function VotacaoPartida() {
 
   const compartilharResultados = async () => {
     try {
+      // 1. Inicia o processo de captura (muda o título e prepara o DOM)
+      setIsExporting(true);
+      
+      // Pequeno delay para o React processar a mudança do título no DOM
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const { toPng } = await import('html-to-image');
+      const element = areaResultadosRef.current;
+
+      if (element) {
+        const dataUrl = await toPng(element, {
+          backgroundColor: '#1f2937', // bg-gray-900 aproximado
+          cacheBust: true,
+          filter: (node) => node.classList ? !node.classList.contains('no-export') : true,
+          style: {
+            padding: '20px',
+            borderRadius: '24px',
+          }
+        });
+
+        const blob = await (await fetch(dataUrl)).blob();
+        const file = new File([blob], 'resultado-votacao.png', { type: 'image/png' });
+
+        if (navigator.share && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: 'Resultado da Votação - SortTimes',
+          });
+        } else {
+          const link = document.createElement('a');
+          link.download = 'resultado-votacao.png';
+          link.href = dataUrl;
+          link.click();
+          toast.info("Imagem do resultado baixada!");
+        }
+      }
+      setIsExporting(false);
+
       // Encerra a votação, deleta o link antigo e gera o novo de 12h no backend
       const res = await api.post(`/partida-publica/${linkId}/encerrar-votacao`);
       if (res.data.success) {
@@ -211,7 +251,9 @@ export default function VotacaoPartida() {
         toast.info("A votação foi encerrada. Este link atual expirará ao atualizar a página.", { autoClose: 6000 });
       }
     } catch (err) {
-      toast.error("Erro ao gerar link de resultado.");
+      setIsExporting(false);
+      console.error("Erro ao processar resultados:", err);
+      toast.error("Erro ao gerar ou compartilhar resultados.");
     }
   };
 
@@ -339,11 +381,12 @@ export default function VotacaoPartida() {
           {etapa === 'admin' && (
             <motion.div 
               initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              ref={areaResultadosRef}
               className="bg-gray-800 rounded-3xl p-6 border border-gray-700 shadow-2xl space-y-6"
             >
               <h2 className="text-xl font-black text-center bg-gradient-to-r from-yellow-400 to-amber-600 bg-clip-text text-transparent flex items-center justify-center gap-2">
                 <FaChartBar className="text-amber-500" /> 
-                {tipoLink === 'resultado' ? 'Resultado Final da Votação' : 'Apuração em Tempo Real'}
+                {isExporting ? 'Resultado da Votação' : (tipoLink === 'resultado' ? 'Resultado Final da Votação' : 'Apuração em Tempo Real')}
               </h2>
               <div className="space-y-4">
                 {[
@@ -391,10 +434,10 @@ export default function VotacaoPartida() {
               </div>
               {tipoLink !== 'resultado' ? (
                 <>
-                  <button onClick={compartilharResultados} className="w-full bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 py-4 rounded-2xl font-black flex items-center justify-center gap-2 transition-all shadow-lg">
+                  <button onClick={compartilharResultados} className="no-export w-full bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 py-4 rounded-2xl font-black flex items-center justify-center gap-2 transition-all shadow-lg">
                     <FaShareAlt /> COMPARTILHAR RESULTADOS
                   </button>
-                  <button onClick={() => setAba('login')} className="w-full text-xs text-gray-500">Sair do Modo Admin</button>
+                  <button onClick={() => setAba('login')} className="no-export w-full text-xs text-gray-500">Sair do Modo Admin</button>
                 </>
               ) : (
                 <p className="text-center text-[10px] text-gray-500 font-bold uppercase tracking-widest pt-4">Visualização Final Disponível por 12h</p>
