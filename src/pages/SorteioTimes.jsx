@@ -43,7 +43,8 @@ const NIVEL_JOGADOR = {
 // Chaves para localStorage
 const LOCAL_STORAGE_KEYS = {
   JOGADORES_SELECIONADOS: "jogadoresSelecionados",
-  HISTORICO_SORTEIOS: "historicoSorteios"
+  HISTORICO_SORTEIOS: "historicoSorteios",
+  PARTIDA_VINCULADA_ID: "partidaVinculadaId"
   
 };
 
@@ -188,7 +189,7 @@ export default function SorteioTimes() {
   const [filtroPosicao, setFiltroPosicao] = useState('');
   const [filtroJogadoresSelecionados, setFiltroJogadoresSelecionados] = useState('');
   const [partidasAgenda, setPartidasAgenda] = useState([]);
-  const [partidaVinculadaId, setPartidaVinculadaId] = useState('');
+  const [partidaVinculadaId, setPartidaVinculadaId] = usePersistedState(LOCAL_STORAGE_KEYS.PARTIDA_VINCULADA_ID, '');
 
   // Estados para inclusão manual de jogadores pós-sorteio
   const [modalAddPlayer, setModalAddPlayer] = useState({ open: false, teamIndex: null });
@@ -446,19 +447,20 @@ useEffect(() => {
    * Aplica a mesma posição para todos os jogadores
    */
 const aplicarFiltroPosicao = () => {
-  setJogadoresSelecionados(prev => 
-    prev.map(jogador => ({
-      ...jogador,
-      posicao: filtroPosicao ? filtroPosicao : jogador.posicaoOriginal,
-      // NÃO altera posicaoOriginal aqui
-    }))
-  );
-  toast.info(`Todos os jogadores definidos como ${filtroPosicao || 'posição original'}`);
+  if (window.confirm(`Deseja definir a posição "${filtroPosicao || 'Original'}" para todos os jogadores presentes?`)) {
+    setJogadoresSelecionados(prev => 
+      prev.map(jogador => ({
+        ...jogador,
+        posicao: filtroPosicao ? filtroPosicao : jogador.posicaoOriginal,
+      }))
+    );
+    toast.info(`Posições atualizadas para o sorteio.`);
+  }
 };
 
   // Helper para vincular participantes à partida (integração com votação)
   const vincularParticipantesNoSorteio = async (timesData) => {
-    if (!partidaVinculadaId) return;
+    if (!partidaVinculadaId || !timesData || timesData.length === 0) return;
     
     try {
       // Extrai IDs válidos (MongoDB ObjectIds) de todos os jogadores nos times
@@ -468,10 +470,13 @@ const aplicarFiltroPosicao = () => {
         .map(id => (id ? String(id) : null)) // Garante que seja string para o regex
         .filter(id => id && id.match(/^[0-9a-fA-F]{24}$/));
 
-      if (participantesIds.length > 0) {
+      // Remove duplicatas se houver
+      const idsUnicos = [...new Set(participantesIds)];
+
+      if (idsUnicos.length > 0) {
         console.log("[FRONTEND - SORTEIOTIMES] Sincronizando participantes para votação:", participantesIds);
         await api.post(`/partida-publica/vincular-participantes/${partidaVinculadaId}`, { 
-          participantes: participantesIds 
+          participantes: idsUnicos 
         });
       }
     } catch (err) {
