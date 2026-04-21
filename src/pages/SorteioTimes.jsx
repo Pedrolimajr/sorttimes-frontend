@@ -109,11 +109,11 @@ const TimeSorteado = ({ time, index, modoEdicao, onAddPlayer, onMoverJogador }) 
       <div className="flex justify-between items-center mb-3 sm:mb-4 px-1">
         <div className="w-10"></div>
         <h3 className="text-xl font-black tracking-tighter uppercase flex items-center justify-center gap-2">
-          <div
-            className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 ${
-              index === 0 ? 'bg-gray-300 border-gray-400' : 'bg-yellow-500 border-yellow-400'
-            }`}
-          ></div>
+          <img 
+            src={index === 0 ? "/img/preto.png" : "/img/amarelo.png"} 
+            alt={nomeTime}
+            className="w-7 h-7 sm:w-9 sm:h-9 object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.1)] transform transition-transform hover:scale-110"
+          />
           {nomeTime}
         </h3>
         <div className="flex gap-2">
@@ -1101,8 +1101,15 @@ const aplicarFiltroPosicao = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                       {sorteio.times?.map((time, i) => (
                         <div key={i}>
-                          <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">
-                            {i === 0 ? "Time (Preto)" : i === 1 ? "Time (Amarelo)" : (time.nome || `Time ${i + 1}`)} ({time.jogadores.length})
+                          <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm flex items-center gap-2">
+                            {(i === 0 || i === 1) && (
+                              <img 
+                                src={i === 0 ? "/img/preto.png" : "/img/amarelo.png"} 
+                                className="w-4 h-4 object-contain opacity-80" 
+                                alt="" 
+                              />
+                            )}
+                            {i === 0 ? "Time (Preto)" : i === 1 ? "Time (Amarelo)" : (time.nome || `Time ${i + 1}`)} ({time.jogadores?.length || 0})
                           </h4>
                           <ul className="text-xs sm:text-sm space-y-1 text-gray-400">
                             {time.jogadores?.slice(0, 3).map((j, jIdx) => (
