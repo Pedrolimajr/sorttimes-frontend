@@ -43,8 +43,7 @@ const NIVEL_JOGADOR = {
 // Chaves para localStorage
 const LOCAL_STORAGE_KEYS = {
   JOGADORES_SELECIONADOS: "jogadoresSelecionados",
-  HISTORICO_SORTEIOS: "historicoSorteios",
-  PARTIDA_VINCULADA_ID: "partidaVinculadaId"
+  HISTORICO_SORTEIOS: "historicoSorteios"
   
 };
 
@@ -180,33 +179,21 @@ export default function SorteioTimes() {
   // Estados do componente
   const [jogadoresCadastrados, setJogadoresCadastrados] = useState([]);
   const [jogadoresSelecionados, setJogadoresSelecionados] = usePersistedState(LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS, []);
-  const [times, setTimes] = useState([]); // Agora inicia sempre vazio ao abrir a página
+  const [times, setTimes] = usePersistedState('timesSorteados', []);
   const [balanceamento, setBalanceamento] = useState(TIPOS_BALANCEAMENTO.POSICAO);
   const [carregando, setCarregando] = useState(false);
-  const [historico, setHistorico] = useState([]); // Histórico global vindo do banco
+  const [historico, setHistorico] = usePersistedState(LOCAL_STORAGE_KEYS.HISTORICO_SORTEIOS, []);
   const [carregandoJogadores, setCarregandoJogadores] = useState(false);
   const [modoEdicao, setModoEdicao] = useState(false);
   const [filtroPosicao, setFiltroPosicao] = useState('');
   const [filtroJogadoresSelecionados, setFiltroJogadoresSelecionados] = useState('');
   const [partidasAgenda, setPartidasAgenda] = useState([]);
-  const [partidaVinculadaId, setPartidaVinculadaId] = usePersistedState(LOCAL_STORAGE_KEYS.PARTIDA_VINCULADA_ID, '');
+  const [partidaVinculadaId, setPartidaVinculadaId] = useState('');
 
   // Estados para inclusão manual de jogadores pós-sorteio
   const [modalAddPlayer, setModalAddPlayer] = useState({ open: false, teamIndex: null });
   const [nomeNovoJogador, setNomeNovoJogador] = useState("");
   const [sugestoes, setSugestoes] = useState([]);
-
-  // Função para carregar o histórico do banco de dados
-  const carregarHistoricoGlobal = async () => {
-    try {
-      const res = await api.get('/sorteio-times/historico');
-      if (res.data.success) {
-        setHistorico(res.data.data);
-      }
-    } catch (err) {
-      console.error("Erro ao carregar histórico global:", err);
-    }
-  };
 
   // Configuração do socket.io para atualizações em tempo real.
   useEffect(() => {
@@ -214,6 +201,7 @@ export default function SorteioTimes() {
 
   const connectToSocket = async () => {
     try {
+      // Conecta ao Socket.IO
       socket.connect();
 
       // Configura listeners
@@ -265,9 +253,6 @@ export default function SorteioTimes() {
   };
 
   connectToSocket();
-  
-  // Carrega o histórico ao montar o componente
-  carregarHistoricoGlobal();
 
   // Cleanup quando o componente desmonta
   return () => {
@@ -447,20 +432,19 @@ useEffect(() => {
    * Aplica a mesma posição para todos os jogadores
    */
 const aplicarFiltroPosicao = () => {
-  if (window.confirm(`Deseja definir a posição "${filtroPosicao || 'Original'}" para todos os jogadores presentes?`)) {
-    setJogadoresSelecionados(prev => 
-      prev.map(jogador => ({
-        ...jogador,
-        posicao: filtroPosicao ? filtroPosicao : jogador.posicaoOriginal,
-      }))
-    );
-    toast.info(`Posições atualizadas para o sorteio.`);
-  }
+  setJogadoresSelecionados(prev => 
+    prev.map(jogador => ({
+      ...jogador,
+      posicao: filtroPosicao ? filtroPosicao : jogador.posicaoOriginal,
+      // NÃO altera posicaoOriginal aqui
+    }))
+  );
+  toast.info(`Todos os jogadores definidos como ${filtroPosicao || 'posição original'}`);
 };
 
   // Helper para vincular participantes à partida (integração com votação)
   const vincularParticipantesNoSorteio = async (timesData) => {
-    if (!partidaVinculadaId || !timesData || timesData.length === 0) return;
+    if (!partidaVinculadaId) return;
     
     try {
       // Extrai IDs válidos (MongoDB ObjectIds) de todos os jogadores nos times
@@ -470,13 +454,10 @@ const aplicarFiltroPosicao = () => {
         .map(id => (id ? String(id) : null)) // Garante que seja string para o regex
         .filter(id => id && id.match(/^[0-9a-fA-F]{24}$/));
 
-      // Remove duplicatas se houver
-      const idsUnicos = [...new Set(participantesIds)];
-
-      if (idsUnicos.length > 0) {
+      if (participantesIds.length > 0) {
         console.log("[FRONTEND - SORTEIOTIMES] Sincronizando participantes para votação:", participantesIds);
         await api.post(`/partida-publica/vincular-participantes/${partidaVinculadaId}`, { 
-          participantes: idsUnicos 
+          participantes: participantesIds 
         });
       }
     } catch (err) {
@@ -570,23 +551,65 @@ const aplicarFiltroPosicao = () => {
 
   setCarregando(true);
   try {
-    // Realiza o sorteio através do backend para garantir persistência global
-    const res = await api.post('/sorteio-times/sortear', {
-      jogadoresIds: jogadoresPresentes.map(j => j._id),
-      quantidadeTimes: 2,
-      balanceamento,
-      posicaoUnica: filtroPosicao,
-      partidaId: partidaVinculadaId // Envia o ID para o backend vincular atomicamente
+    // Identifica a posição mais comum (posição padrão)
+    const posicoes = jogadoresPresentes.map(j => j.posicao);
+    const posicaoMaisComum = posicoes.sort((a,b) =>
+      posicoes.filter(p => p === a).length - posicoes.filter(p => p === b).length
+    ).pop();
+
+    // Separa jogadores com posição diferente da mais comum
+    const jogadoresDiferentes = jogadoresPresentes.filter(j => j.posicao !== posicaoMaisComum);
+    const jogadoresPadrao = jogadoresPresentes.filter(j => j.posicao === posicaoMaisComum);
+
+    // Embaralha os jogadores padrão
+    const embaralhar = arr => arr.sort(() => Math.random() - 0.5);
+    const jogadoresPadraoEmbaralhados = embaralhar([...jogadoresPadrao]);
+
+    // Cria os times e garante que jogadores diferentes fiquem em times opostos
+    let times = [[], []];
+
+    // Distribui jogadores diferentes (um para cada time)
+    jogadoresDiferentes.forEach((jogador, idx) => {
+      times[idx % 2].push(jogador);
     });
 
-    if (!res.data.success) throw new Error(res.data.message);
+    // Distribui o restante dos jogadores
+    jogadoresPadraoEmbaralhados.forEach((jogador, idx) => {
+      times[idx % 2].push(jogador);
+    });
 
-    const dadosSorteio = res.data.data;
-    setTimes(dadosSorteio.times);
+    // Monta o objeto de times para o restante do código
+    const timesComIds = times.map((jogadores, idx) => ({
+      nome: idx === 0 ? "Time (Preto)" : "Time (Amarelo)",
+      jogadores: jogadores.map(j => ({
+        ...j,
+        id: j._id || Math.random().toString(36).substr(2, 9),
+      }))
+    }));
 
-    // Atualiza o histórico global
-    await carregarHistoricoGlobal();
-    toast.success(`Times sorteados e salvos globalmente!`);
+    setTimes(timesComIds);
+
+    // Vincular participantes à partida agendada (não bloqueia o fluxo se falhar)
+    try {
+      if (partidaVinculadaId) {
+        await vincularParticipantesNoSorteio(timesComIds);
+      }
+    } catch (syncErr) {
+      console.error("Erro ao sincronizar participantes:", syncErr);
+      toast.warning("Sorteio concluído, mas não foi possível sincronizar com a agenda.");
+    }
+
+    const novoSorteio = {
+      times: timesComIds,
+      data: new Date(),
+      jogadoresPresentes: jogadoresPresentes.length,
+      balanceamento,
+      posicaoUnica: filtroPosicao
+    };
+
+    // Adiciona ao histórico mantendo apenas os 5 últimos
+    setHistorico(prev => [novoSorteio, ...prev].slice(0, 5));
+    toast.success(`Times sorteados com sucesso! ${timesComIds.length} times formados`);
   } catch (error) {
     console.error("Erro ao sortear times:", error);
     toast.error(error.message || 'Erro ao sortear times');
@@ -668,48 +691,34 @@ const aplicarFiltroPosicao = () => {
    * Remove um sorteio do histórico
    * @param {number} index - Índice do sorteio no histórico
    */
-  const excluirDoHistorico = async (id) => {
-    try {
-      await api.delete(`/sorteio-times/historico/${id}`);
-      setHistorico(prev => prev.filter(h => h._id !== id));
-      
-      // Se o sorteio excluído for o que está na tela, limpa a visualização
-      if (times.length > 0 && !historico.find(h => h._id === id)) {
-        setTimes([]);
-      }
-      toast.success('Sorteio removido do banco!');
-    } catch (err) {
-      toast.error("Erro ao excluir do histórico global.");
+  const excluirDoHistorico = (index) => {
+    const itemSorteio = historico[index];
+    
+    // Se o item excluído for o mesmo que está na tela, limpa a exibição atual (apagar geral)
+    if (itemSorteio && JSON.stringify(itemSorteio.times) === JSON.stringify(times)) {
+      setTimes([]);
+      setModoEdicao(false);
     }
+
+    setHistorico(prev => prev.filter((_, i) => i !== index));
+    toast.success('Sorteio removido!');
   };
 
-  const limparTodoHistorico = async () => {
+  const limparTodoHistorico = () => {
     if (window.confirm("Deseja apagar TODO o histórico? Esta ação limpará todos os registros salvos.")) {
-      try {
-        await api.delete('/sorteio-times/historico');
-        setHistorico([]);
-        setTimes([]);
-        setModoEdicao(false);
-        toast.success("Histórico global limpo!");
-      } catch (err) {
-        toast.error("Erro ao limpar histórico.");
-      }
+      setHistorico([]);
+      setTimes([]); // Limpa também o resultado atual da tela
+      setModoEdicao(false);
+      toast.success("Histórico limpo com sucesso!");
     }
   };
-
-  // Efeito para sincronizar automaticamente quando a partida ou os times mudam
-  useEffect(() => {
-    if (partidaVinculadaId && times.length > 0 && !modoEdicao) {
-      vincularParticipantesNoSorteio(times);
-    }
-  }, [partidaVinculadaId, times.length, modoEdicao]);
 
   /**
    * Compartilha os times sorteados
    */
    const compartilharTimes = () => {
     const texto = times.map((time, idx) => {
-      let nomeTime = "";
+      let nomeTime;
       if (idx === 0) nomeTime = "Time (Preto)";
       else if (idx === 1) nomeTime = "Time (Amarelo)";
       else nomeTime = time.nome || `Time ${idx + 1}`;
@@ -1081,7 +1090,7 @@ const aplicarFiltroPosicao = () => {
                         <div className="text-xs text-gray-400">{new Date(sorteio.data).toLocaleString()}</div>
                         <div className="text-xs text-gray-500">{sorteio.jogadoresPresentes} jogadores • {sorteio.times.length} times</div>
                       </div>
-                      <button onClick={() => excluirDoHistorico(sorteio._id)} className="text-red-400 hover:text-red-300 p-1"><FaTrash size={14} /></button>
+                      <button onClick={() => excluirDoHistorico(idx)} className="text-red-400 hover:text-red-300 p-1"><FaTrash size={14} /></button>
                     </div>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
