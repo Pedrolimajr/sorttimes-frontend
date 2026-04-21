@@ -570,23 +570,14 @@ const aplicarFiltroPosicao = () => {
       jogadoresIds: jogadoresPresentes.map(j => j._id),
       quantidadeTimes: 2,
       balanceamento,
-      posicaoUnica: filtroPosicao
+      posicaoUnica: filtroPosicao,
+      partidaId: partidaVinculadaId // Envia o ID para o backend vincular atomicamente
     });
 
     if (!res.data.success) throw new Error(res.data.message);
 
     const dadosSorteio = res.data.data;
     setTimes(dadosSorteio.times);
-
-    // Vincular participantes à partida agendada (não bloqueia o fluxo se falhar)
-    try {
-      if (partidaVinculadaId) {
-        await vincularParticipantesNoSorteio(dadosSorteio.times);
-      }
-    } catch (syncErr) {
-      console.error("Erro ao sincronizar participantes:", syncErr);
-      toast.warning("Sorteio concluído, mas não foi possível sincronizar com a agenda.");
-    }
 
     // Atualiza o histórico global
     await carregarHistoricoGlobal();
@@ -701,12 +692,19 @@ const aplicarFiltroPosicao = () => {
     }
   };
 
+  // Efeito para sincronizar automaticamente quando a partida ou os times mudam
+  useEffect(() => {
+    if (partidaVinculadaId && times.length > 0 && !modoEdicao) {
+      vincularParticipantesNoSorteio(times);
+    }
+  }, [partidaVinculadaId, times.length, modoEdicao]);
+
   /**
    * Compartilha os times sorteados
    */
    const compartilharTimes = () => {
     const texto = times.map((time, idx) => {
-      let nomeTime;
+      let nomeTime = "";
       if (idx === 0) nomeTime = "Time (Preto)";
       else if (idx === 1) nomeTime = "Time (Amarelo)";
       else nomeTime = time.nome || `Time ${idx + 1}`;
