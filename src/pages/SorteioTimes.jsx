@@ -13,6 +13,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import socket from '../services/socket';
 import usePersistedState from '../hooks/usePersistedState';
 import api from '../services/api';
+import ConfirmModal from '../components/ConfirmModal';
 // Constantes para organizar os valores fixos
 const POSICOES = {
   GOLEIRO: "Goleiro",
@@ -187,6 +188,7 @@ export default function SorteioTimes() {
   const [modoEdicao, setModoEdicao] = useState(false);
   const [filtroPosicao, setFiltroPosicao] = useState('');
   const [filtroJogadoresSelecionados, setFiltroJogadoresSelecionados] = useState('');
+  const [showLimparHistoricoModal, setShowLimparHistoricoModal] = useState(false);
   const [partidasAgenda, setPartidasAgenda] = useState([]);
   const [partidaVinculadaId, setPartidaVinculadaId] = useState('');
 
@@ -705,12 +707,15 @@ const aplicarFiltroPosicao = () => {
   };
 
   const limparTodoHistorico = () => {
-    if (window.confirm("Deseja apagar TODO o histórico? Esta ação limpará todos os registros salvos.")) {
-      setHistorico([]);
-      setTimes([]); // Limpa também o resultado atual da tela
-      setModoEdicao(false);
-      toast.success("Histórico limpo com sucesso!");
-    }
+    setShowLimparHistoricoModal(true);
+  };
+
+  const confirmarLimparHistorico = () => {
+    setHistorico([]);
+    setTimes([]); // Limpa também o resultado atual da tela
+    setModoEdicao(false);
+    setShowLimparHistoricoModal(false);
+    toast.success("Histórico limpo com sucesso!");
   };
 
   /**
@@ -1175,6 +1180,16 @@ const aplicarFiltroPosicao = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ConfirmModal
+        open={showLimparHistoricoModal}
+        title="Confirmar exclusão de histórico"
+        description="Deseja apagar TODO o histórico? Esta ação limpará todos os registros salvos e não pode ser desfeita."
+        confirmLabel="Apagar Tudo"
+        cancelLabel="Cancelar"
+        onConfirm={confirmarLimparHistorico}
+        onCancel={() => setShowLimparHistoricoModal(false)}
+      />
 
       <ToastContainer
         position="top-right"
