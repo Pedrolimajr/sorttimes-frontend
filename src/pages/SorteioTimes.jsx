@@ -508,6 +508,34 @@ const aplicarFiltroPosicao = () => {
   };
 
   /**
+   * Altera a partida vinculada e atualiza o histórico se houver um sorteio ativo
+   */
+  const handleVincularPartida = async (id) => {
+    setPartidaVinculadaId(id);
+    
+    // Se já houver um sorteio ativo na tela, atualiza o vínculo no banco de dados imediatamente
+    if (currentSorteioId && times.length > 0) {
+      try {
+        const totalJogadores = times.reduce((acc, t) => acc + t.jogadores.length, 0);
+        await api.put(`/sorteio-times/historico/${currentSorteioId}`, {
+          times: times,
+          jogadoresPresentes: totalJogadores,
+          partidaId: id || null
+        });
+        
+        // Sincroniza participantes com a agenda para permitir votação
+        await vincularParticipantesNoSorteio(times);
+        
+        // Atualiza a lista de histórico local para refletir a mudança visualmente
+        setHistorico(prev => prev.map(h => h._id === currentSorteioId ? { ...h, partidaId: id } : h));
+        toast.success("Vínculo com a partida atualizado!");
+      } catch (err) {
+        console.error("Erro ao atualizar vínculo da partida:", err);
+      }
+    }
+  };
+
+  /**
    * Adiciona um jogador manualmente a um time após o sorteio
    */
   const adicionarJogadorAoTime = async () => {
@@ -737,6 +765,7 @@ const aplicarFiltroPosicao = () => {
   const restaurarSorteio = (sorteio) => {
     setTimes(sorteio.times);
     setCurrentSorteioId(sorteio._id); // Define como o sorteio ativo para edições futuras
+    setPartidaVinculadaId(sorteio.partidaId || ''); // Restaura o vínculo da partida agendada
     setBalanceamento(sorteio.balanceamento);
     toast.success('Sorteio restaurado!');
   };
@@ -882,7 +911,7 @@ const aplicarFiltroPosicao = () => {
               </label>
               <select
                 value={partidaVinculadaId}
-                onChange={(e) => setPartidaVinculadaId(e.target.value)}
+                onChange={(e) => handleVincularPartida(e.target.value)}
                 className="w-full px-4 py-2 bg-black/40 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white transition-all text-sm appearance-none"
               >
                 <option value="">Selecione a partida da agenda...</option>
