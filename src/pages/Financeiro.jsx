@@ -1955,15 +1955,19 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 20, opacity: 0 }}
-              className="bg-gray-800 rounded-xl shadow-2xl w-full max-w-md sm:max-w-2xl border border-gray-700 flex flex-col max-h-[90vh]"
+              className="bg-slate-900 border border-white/10 rounded-[2.5rem] shadow-2xl w-full max-w-md sm:max-w-2xl flex flex-col max-h-[90vh] relative overflow-hidden backdrop-blur-xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex justify-between items-center px-4 sm:px-6 pt-4 pb-2 border-b border-gray-700">
-                <h3 className="text-lg sm:text-xl font-bold text-white">Relatório Financeiro</h3>
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50" />
+              
+              <div className="flex justify-between items-center px-6 sm:px-10 py-6 border-b border-white/5 bg-black/20">
+                <h3 className="text-xl font-black text-white tracking-tighter uppercase flex items-center gap-3">
+                  <FaPrint className="text-blue-400" /> Relatório Financeiro
+                </h3>
                 <motion.button
                   onClick={() => setRelatorioModal(false)}
                   whileHover={{ rotate: 90 }}
-                  className="text-gray-400 hover:text-white text-sm sm:text-base"
+                  className="text-slate-500 hover:text-white transition-colors"
                 >
                   <FaTimes />
                 </motion.button>
@@ -1971,94 +1975,101 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
 
               <div
                 id="relatorio-content"
-                className="space-y-3 sm:space-y-4 px-4 sm:px-6 py-4 overflow-y-auto flex-1 no-scrollbar"
+                className="space-y-6 px-6 sm:px-10 py-8 overflow-y-auto flex-1 no-scrollbar"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
-                {/* Conteúdo existente do modal */}
-                <div className="grid grid-cols-1 gap-3 sm:gap-4">
-                  <div className="bg-gray-700/50 p-3 sm:p-4 rounded-lg">
-                    <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-sm sm:text-base">Receitas</h4>
-                    <p className="text-2xl sm:text-3xl font-bold text-green-400">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="bg-black/40 p-5 rounded-2xl border border-white/5 shadow-inner">
+                    <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2">
+                      <FaArrowUp className="text-green-400" /> Receitas
+                    </h4>
+                    <p className="text-2xl font-black text-green-400 tracking-tighter">
                       R$ {estatisticas.totalReceitas.toFixed(2)}
                     </p>
                   </div>
-                  <div className="bg-gray-700/50 p-3 sm:p-4 rounded-lg">
-                    <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-sm sm:text-base">Despesas</h4>
-                    <p className="text-2xl sm:text-3xl font-bold text-red-400">
+                  <div className="bg-black/40 p-5 rounded-2xl border border-white/5 shadow-inner">
+                    <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2">
+                      <FaArrowDown className="text-red-400" /> Despesas
+                    </h4>
+                    <p className="text-2xl font-black text-red-400 tracking-tighter">
                       R$ {estatisticas.totalDespesas.toFixed(2)}
                     </p>
                   </div>
                 </div>
-                {/* Resto do conteúdo do modal */}
-                <div className="bg-gray-700/50 p-3 sm:p-4 rounded-lg">
-                  <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">Saldo</h4>
-                  <p className={`text-xl sm:text-2xl font-bold ${estatisticas.saldo >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+
+                <div className="bg-black/40 p-5 rounded-2xl border border-white/5 shadow-inner">
+                  <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Saldo Líquido</h4>
+                  <p className={`text-3xl font-black tracking-tighter ${estatisticas.saldo >= 0 ? 'text-blue-400' : 'text-red-400'}`}>
                     R$ {estatisticas.saldo.toFixed(2)}
                   </p>
                 </div>
 
-
-
-                <div className="bg-gray-700/50 p-3 sm:p-4 rounded-lg">
-                  <h4 className="font-medium text-gray-300 mb-1 sm:mb-2 text-xs sm:text-sm">Detalhes das Transações ({anoFiltro})</h4>
-                  <p className="text-xs sm:text-sm text-gray-300 mb-1">
-                    Total de transações: <span className="font-semibold text-white">{transacoesAno.length}</span>
-                  </p>
-                  <p className="text-xs sm:text-sm text-green-300 mb-1">
-                    Receitas: <span className="font-semibold">{qtdReceitasAno}</span> lançamentos
-                  </p>
-                  <p className="text-xs sm:text-sm text-red-300">
-                    Despesas: <span className="font-semibold">{qtdDespesasAno}</span> lançamentos
-                  </p>
+                <div className="bg-black/40 p-5 rounded-2xl border border-white/5 shadow-inner">
+                  <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <FaFileAlt className="text-blue-400" /> Resumo de Atividades ({anoFiltro})
+                  </h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-slate-400">Total de transações</span>
+                      <span className="font-bold text-white">{transacoesAno.length}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-slate-400">Receitas registradas</span>
+                      <span className="font-bold text-green-400">{qtdReceitasAno}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-slate-400">Despesas registradas</span>
+                      <span className="font-bold text-red-400">{qtdDespesasAno}</span>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Seção de Exportação do Histórico de Transações */}
-                <div className="bg-gradient-to-r from-gray-700/50 to-gray-600/50 p-4 sm:p-5 rounded-lg border border-gray-600">
-                  <h4 className="font-semibold text-white mb-3 sm:mb-4 text-sm sm:text-base flex items-center gap-2">
+                <div className="bg-blue-600/5 border border-blue-500/20 p-6 rounded-[1.5rem] shadow-inner">
+                  <h4 className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-6 flex items-center gap-2">
                     <FaFileAlt className="text-green-400" />
-                    Exportar Histórico de Transações para Excel
+                    Exportação para Excel
                   </h4>
                   
-                  <div className="space-y-3 sm:space-y-4">
+                  <div className="space-y-5">
                     <div>
-                      <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-2">
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">
                         Tipo de Exportação
                       </label>
                       <select
                         value={filtroExportacao.tipo}
                         onChange={(e) => setFiltroExportacao({...filtroExportacao, tipo: e.target.value})}
-                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white text-xs sm:text-sm"
+                        className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white text-xs sm:text-sm appearance-none"
                       >
-                        <option value="ano">Por Ano</option>
-                        <option value="mes">Por Mês</option>
+                        <option value="ano" className="bg-slate-900">Histórico Anual</option>
+                        <option value="mes" className="bg-slate-900">Fechamento Mensal</option>
                       </select>
                     </div>
 
                     {filtroExportacao.tipo === 'ano' ? (
                       <div>
-                        <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-2">
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">
                           Selecionar Ano
                         </label>
                         <select
                           value={filtroExportacao.ano}
                           onChange={(e) => setFiltroExportacao({...filtroExportacao, ano: e.target.value})}
-                          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white text-xs sm:text-sm"
+                          className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white text-xs sm:text-sm appearance-none"
                         >
                           {anosDisponiveis.map(y => (
-                            <option key={y} value={y}>{y}</option>
+                            <option key={y} value={y} className="bg-slate-900">{y}</option>
                           ))}
                         </select>
                       </div>
                     ) : (
                       <div>
-                        <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-2">
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">
                           Selecionar Mês
                         </label>
                         <input
                           type="month"
                           value={filtroExportacao.mes}
                           onChange={(e) => setFiltroExportacao({...filtroExportacao, mes: e.target.value})}
-                          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white text-xs sm:text-sm"
+                          className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white text-xs sm:text-sm"
                         />
                       </div>
                     )}
@@ -2067,7 +2078,7 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                       onClick={exportarExcel}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      className="w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg text-xs sm:text-sm font-medium"
+                      className="w-full bg-slate-800 hover:bg-slate-700 text-green-400 border border-green-500/20 py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg text-[10px] font-black uppercase tracking-widest"
                     >
                       <FaFileAlt className="text-sm sm:text-base" />
                       Exportar para Excel
@@ -2076,22 +2087,22 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                 </div>
               </div>
 
-              <div className="mt-2 sm:mt-4 px-4 sm:px-6 pb-4 pt-2 border-t border-gray-700 flex justify-end gap-2 sm:gap-3 bg-gray-800/90">
+              <div className="px-6 sm:px-10 py-6 border-t border-white/5 flex flex-col sm:flex-row justify-end gap-3 bg-black/20">
                 <motion.button
                   onClick={exportarPDF}
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
-                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 transition-all text-xs sm:text-sm"
+                  className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-6 py-3 rounded-xl flex items-center justify-center gap-2 transition-all text-[10px] font-black uppercase tracking-widest"
                 >
-                  <FaFilePdf className="text-xs sm:text-sm" /> Exportar PDF
+                  <FaFilePdf /> Gerar PDF
                 </motion.button>
                 <motion.button
                   onClick={exportarImagem}
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 transition-all text-xs sm:text-sm"
+                  className="bg-gradient-to-r from-blue-600 to-cyan-500 text-white px-6 py-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg text-[10px] font-black uppercase tracking-widest"
                 >
-                  <FaFileImage className="text-xs sm:text-sm" /> Exportar Imagem
+                  <FaFileImage /> Salvar Imagem
                 </motion.button>
               </div>
             </motion.div>
