@@ -39,7 +39,7 @@ import api from '../services/api';
 export default function InformacoesPartida() {
   const navigate = useNavigate();
   const { id: partidaIdUrl } = useParams();
-  const [abaAtiva, setAbaAtiva] = useState('planilhas'); // 'planilhas' ou 'partida'
+  const [abaAtiva, setAbaAtiva] = useState('partida'); // 'planilhas' ou 'partida'
   
   // Estados da Planilha (Existentes)
   const [planilhas, setPlanilhas] = useState([]);
@@ -895,7 +895,7 @@ export default function InformacoesPartida() {
                 abaAtiva === 'partida' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : 'text-slate-500 hover:text-slate-300'
               }`}
             >
-              Live & Eventos
+              Informações Gerais
             </button>
           </div>
 
