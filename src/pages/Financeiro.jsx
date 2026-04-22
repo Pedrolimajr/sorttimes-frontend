@@ -652,36 +652,22 @@ export default function Financeiro() {
   ]
 };
 
-  const dadosStatusPagamentosMensal = {
-    labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
-    datasets: [
-      {
-        label: 'Em Dia',
-        data: Array(12).fill(0).map((_, i) =>
-          jogadores.filter(j => j.nivel === 'Associado').reduce((total, jogador) =>
-            total + (jogador.pagamentos?.[i]?.pago || jogador.pagamentos?.[i]?.isento ? 1 : 0), 0
-          )
+  const dadosGraficoPizza = {
+    labels: ['Pagamentos em dia', 'Pagamentos pendentes'],
+    datasets: [{
+      data: [
+        jogadores.reduce((total, jogador) =>
+          total + jogador.pagamentos.filter(p => p.pago || p.isento).length, 0
         ),
-        backgroundColor: 'rgba(34, 197, 94, 0.7)',
-        borderColor: '#4ade80',
-        borderWidth: 2,
-        borderRadius: 6,
-        hoverBackgroundColor: 'rgba(34, 197, 94, 1)',
-      },
-      {
-        label: 'Pendentes',
-        data: Array(12).fill(0).map((_, i) =>
-          jogadores.filter(j => j.nivel === 'Associado').reduce((total, jogador) =>
-            total + (!jogador.pagamentos?.[i]?.pago && !jogador.pagamentos?.[i]?.isento ? 1 : 0), 0
-          )
-        ),
-        backgroundColor: 'rgba(239, 68, 68, 0.7)',
-        borderColor: '#f87171',
-        borderWidth: 2,
-        borderRadius: 6,
-        hoverBackgroundColor: 'rgba(239, 68, 68, 1)',
-      }
-    ]
+        jogadores.reduce((total, jogador) =>
+          total + jogador.pagamentos.filter(p => !p.pago && !p.isento).length, 0
+        )
+      ],
+      backgroundColor: ['rgba(74, 222, 128, 0.8)', 'rgba(248, 113, 113, 0.8)'],
+      borderColor: ['#4ade80', '#f87171'],
+      borderWidth: 2,
+      hoverOffset: 15,
+    }]
   };
 
   const exportarPDF = async () => {
@@ -1527,40 +1513,31 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
               className="bg-slate-900/40 backdrop-blur-3xl p-6 sm:p-10 rounded-[2.5rem] shadow-2xl border border-white/10 mt-4 sm:mt-6 relative overflow-hidden"
             >
               <h2 className="text-xl font-black text-white tracking-tighter uppercase mb-8">Status de Pagamentos</h2>
-              <div className="h-64 sm:h-80 relative z-10">
-                <Bar 
-                  data={dadosStatusPagamentosMensal}
+              <div className="h-48 sm:h-64 relative z-10">
+                <Pie
+                  data={dadosGraficoPizza}
                   options={{
                     maintainAspectRatio: false,
-                    scales: {
-                      x: {
-                        stacked: true,
-                        grid: { display: false },
-                        ticks: { color: '#94a3b8', font: { size: 10, weight: 'bold' } }
-                      },
-                      y: {
-                        stacked: true,
-                        beginAtZero: true,
-                        grid: { color: 'rgba(255, 255, 255, 0.03)' },
-                        ticks: { color: '#94a3b8', font: { size: 10 }, stepSize: 1 }
-                      }
-                    },
+                    cutout: '70%',
                     plugins: {
                       legend: {
                         position: 'bottom',
                         labels: {
-                          color: '#cbd5e1',
-                          usePointStyle: true,
-                          padding: 20,
-                          font: { size: 11, weight: '600' }
+                          color: '#e5e7eb',
+                          font: {
+                            size: window.innerWidth < 640 ? 10 : 12,
+                            weight: 'bold'
+                          }
                         }
                       },
                       tooltip: {
-                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                        padding: 12,
-                        cornerRadius: 12,
                         callbacks: {
-                          label: (context) => ` ${context.dataset.label}: ${context.raw} Atletas`
+                          label: (context) => {
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const value = context.raw;
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return ` ${context.label}: ${value} (${percentage}%)`;
+                          }
                         }
                       }
                     }
