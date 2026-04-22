@@ -181,6 +181,7 @@ export default function SorteioTimes() {
   const [jogadoresCadastrados, setJogadoresCadastrados] = useState([]);
   const [jogadoresSelecionados, setJogadoresSelecionados] = usePersistedState(LOCAL_STORAGE_KEYS.JOGADORES_SELECIONADOS, []);
   const [times, setTimes] = usePersistedState('timesSorteados', []);
+  const [currentSorteioId, setCurrentSorteioId] = usePersistedState('currentSorteioId', null);
   const [balanceamento, setBalanceamento] = useState(TIPOS_BALANCEAMENTO.POSICAO);
   const [carregando, setCarregando] = useState(false);
   const [historico, setHistorico] = useState([]);
@@ -363,6 +364,18 @@ export default function SorteioTimes() {
   carregarJogadores();
 }, []); // Executa apenas uma vez ao montar
 
+// Efeito para sincronizar a tela com o histórico (Multidispositivos)
+// Se o sorteio atual sumir do histórico (excluído em outro lugar), ele some da tela.
+useEffect(() => {
+  if (currentSorteioId && historico.length > 0) {
+    const existeNoHistorico = historico.some(h => h._id === currentSorteioId);
+    if (!existeNoHistorico) {
+      setTimes([]);
+      setCurrentSorteioId(null);
+    }
+  }
+}, [historico, currentSorteioId]);
+
 //Carregar estado salvo
 // Carrega estado salvo ao iniciar
 
@@ -532,17 +545,27 @@ const aplicarFiltroPosicao = () => {
       return time;
     });
     
+    // Atualiza o estado local para feedback imediato
     setTimes(novosTimes);
 
-    // Atualiza o histórico para garantir persistência ao restaurar
-    if (historico.length > 0) {
-      setHistorico(prev => prev.map((h, i) => i === 0 ? { ...h, times: novosTimes } : h));
+    //  const totalJogadores = novosTimes.reduce((acc, t) => acc + t.jogadores.length, 0);
+        await api.put(`/sorteio-times/historico/${currentSorteioId}`, {
+          times: novosTimes,
+          jogadoresPresentes: totalJogadores,
+          partidaId: partidaVinculadaId || null
+        });
+        
+        // Atualiza a lista de histórico localmente
+        setHistorico(prev => prev.map(h => h._id === currentSorteioId ? { ...h, times: novosTimes, jogadoresPresentes: totalJogadores } : h));
+      } catch (err) {
+        console.error("Erro ao atualizar sorteio no histórico:", err);
+        toast.error("Erro ao salvar alteração no histórico.");
+      }
     }
 
-    // Integração automática com a votação
-    if (partidaVinculadaId) {
-      await vincularParticipantesNoSorteio(novosTimes);
-    } else {
+    // Integração com a Agenda (Votação)
+    i      await vincularParticipantesNoSorteio(novosTimes);
+
       console.warn("[SorteioTimes] Jogador adicionado apenas visualmente. Vincule uma partida para registrar na votação.");
     }
 
@@ -603,32 +626,24 @@ const aplicarFiltroPosicao = () => {
 
     setTimes(timesComIds);
 
-    // Vincular participantes à partida agendada (não bloqueia o fluxo se falhar)
-    try {
-      if (partidaVinculadaId) {
-        await vincularParticipantesNoSorteio(timesComIds);
-      }
-    } catch (syncErr) {
-      console.error("Erro ao sincronizar participantes:", syncErr);
-      toast.warning("Sorteio concluído, mas não foi possível sincronizar com a agenda.");
-    }
-
     const novoSorteio = {
       times: timesComIds,
-      data: new Date(),
-      jogadoresPresentes: jogadoresPresentes.length,
-      balanceamento,
-      posicaoUnica: filtroPosicao
-    };
+      daw(PERSISTÊNCIA INICIAL
 
-    // Salva no banco de dados para compartilhamento entre dispositivos
-    try {
-      await api.post('/sorteio-times/historico', { ...novoSorteio, partidaVinculadaId });
+    consi ..
       const resH = await api.get('/sorteio-times/historico');
       setHistorico(resH.data.data);
     } catch (err) {
       console.error("Erro ao persistir sorteio:", err);
       setHistorico(prev => [novoSorteio, ...prev].slice(0, 5));
+    }
+
+    try {
+      if (partidaVinculadaId) {
+      (
+    } catch (syncErr) {
+      console.error("Erro ao sincronizar participantes:", syncErr);
+      toast.warning("Sorteio concluído, mas não sincronizado com a agenda.");
     }
 
     toast.success(`Times sorteados com sucesso! ${timesComIds.length} times formados`);
@@ -705,6 +720,7 @@ const aplicarFiltroPosicao = () => {
    */
   const restaurarSorteio = (sorteio) => {
     setTimes(sorteio.times);
+    setCurrentSorteioId(sorteio._id); // Define como o sorteio ativo para edições futuras
     setBalanceamento(sorteio.balanceamento);
     toast.success('Sorteio restaurado!');
   };
@@ -719,15 +735,16 @@ const aplicarFiltroPosicao = () => {
     if (itemSorteio && itemSorteio._id) {
       try {
         await api.delete(`/sorteio-times/historico/${itemSorteio._id}`);
+        
+        // Se o item excluído for o que está na tela, limpa a visualização
+        if (itemSorteio._id === currentSorteioId) {
+          setTimes([]);
+          setCurrentSorteioId(null);
+          setModoEdicao(false);
+        }
       } catch (e) {
         console.error("Erro ao remover do histórico global:", e);
       }
-    }
-
-    // Se o item excluído for o mesmo que está na tela, limpa a exibição atual (apagar geral)
-    if (itemSorteio && JSON.stringify(itemSorteio.times) === JSON.stringify(times)) {
-      setTimes([]);
-      setModoEdicao(false);
     }
 
     setHistorico(prev => prev.filter((_, i) => i !== index));
@@ -741,16 +758,12 @@ const aplicarFiltroPosicao = () => {
   const confirmarLimparHistorico = async () => {
     try {
       await api.delete('/sorteio-times/historico');
-    } catch (e) {
-      console.error("Erro ao limpar histórico global:", e);
-    }
-
-    setHistorico([]);
-    setTimes([]); // Limpa também o resultado atual da tela
-    setModoEdicao(false);
-    setShowLimparHistoricoModal(false);
-    toast.success("Histórico limpo com sucesso!");
-  };
+      
+      setHistorico([]);
+      setTimes([]); // Limpa os resultados da tela
+      setCurrentSorteioId(null);
+      setModoEdicao(false);
+ioas 
 
   /**
    * Compartilha os times sorteados
@@ -771,13 +784,7 @@ const aplicarFiltroPosicao = () => {
         text: texto
       }).catch(err => console.log('Erro ao compartilhar:', err));
     } else {
-      navigator.clipboard.writeText(texto);
-      toast.success('Times copiados para área de transferência!');
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-[#020617] text-slate-100 selection:bg-blue-500/30 px-4 py-8 sm:px-6 lg:px-8 relative overflow-hidden">
+     -slate-100 selection:bg-blue-500/30 px-4 py-8 sm:px-6 lg:px-8 relative overflow-hidden">
       <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
       
       {/* Aurora Background Effects */}
