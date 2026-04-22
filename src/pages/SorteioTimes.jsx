@@ -183,7 +183,7 @@ export default function SorteioTimes() {
   const [times, setTimes] = usePersistedState('timesSorteados', []);
   const [balanceamento, setBalanceamento] = useState(TIPOS_BALANCEAMENTO.POSICAO);
   const [carregando, setCarregando] = useState(false);
-  const [historico, setHistorico] = usePersistedState(LOCAL_STORAGE_KEYS.HISTORICO_SORTEIOS, []);
+  const [historico, setHistorico] = useState([]);
   const [carregandoJogadores, setCarregandoJogadores] = useState(false);
   const [modoEdicao, setModoEdicao] = useState(false);
   const [filtroPosicao, setFiltroPosicao] = useState('');
@@ -316,6 +316,17 @@ export default function SorteioTimes() {
   }, []);
 
   useEffect(() => {
+    const carregarHistoricoGlobal = async () => {
+      try {
+        const res = await api.get('/sorteio-times/historico');
+        if (res.data && res.data.success) {
+          setHistorico(res.data.data);
+        }
+      } catch (err) {
+        console.error("Erro ao carregar histórico global:", err);
+      }
+    };
+
   const carregarJogadores = async () => {
     setCarregandoJogadores(true);
     try {
@@ -348,6 +359,7 @@ export default function SorteioTimes() {
     }
   };
 
+    carregarHistoricoGlobal();
   carregarJogadores();
 }, []); // Executa apenas uma vez ao montar
 
@@ -609,8 +621,16 @@ const aplicarFiltroPosicao = () => {
       posicaoUnica: filtroPosicao
     };
 
-    // Adiciona ao histórico mantendo apenas os 5 últimos
-    setHistorico(prev => [novoSorteio, ...prev].slice(0, 5));
+    // Salva no banco de dados para compartilhamento entre dispositivos
+    try {
+      await api.post('/sorteio-times/historico', { ...novoSorteio, partidaVinculadaId });
+      const resH = await api.get('/sorteio-times/historico');
+      setHistorico(resH.data.data);
+    } catch (err) {
+      console.error("Erro ao persistir sorteio:", err);
+      setHistorico(prev => [novoSorteio, ...prev].slice(0, 5));
+    }
+
     toast.success(`Times sorteados com sucesso! ${timesComIds.length} times formados`);
   } catch (error) {
     console.error("Erro ao sortear times:", error);
@@ -693,9 +713,17 @@ const aplicarFiltroPosicao = () => {
    * Remove um sorteio do histórico
    * @param {number} index - Índice do sorteio no histórico
    */
-  const excluirDoHistorico = (index) => {
+  const excluirDoHistorico = async (index) => {
     const itemSorteio = historico[index];
     
+    if (itemSorteio && itemSorteio._id) {
+      try {
+        await api.delete(`/sorteio-times/historico/${itemSorteio._id}`);
+      } catch (e) {
+        console.error("Erro ao remover do histórico global:", e);
+      }
+    }
+
     // Se o item excluído for o mesmo que está na tela, limpa a exibição atual (apagar geral)
     if (itemSorteio && JSON.stringify(itemSorteio.times) === JSON.stringify(times)) {
       setTimes([]);
@@ -710,7 +738,13 @@ const aplicarFiltroPosicao = () => {
     setShowLimparHistoricoModal(true);
   };
 
-  const confirmarLimparHistorico = () => {
+  const confirmarLimparHistorico = async () => {
+    try {
+      await api.delete('/sorteio-times/historico');
+    } catch (e) {
+      console.error("Erro ao limpar histórico global:", e);
+    }
+
     setHistorico([]);
     setTimes([]); // Limpa também o resultado atual da tela
     setModoEdicao(false);
