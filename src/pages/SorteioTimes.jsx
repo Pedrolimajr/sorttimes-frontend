@@ -367,7 +367,7 @@ export default function SorteioTimes() {
 // Efeito para sincronizar a tela com o histórico (Multidispositivos)
 // Se o sorteio atual sumir do histórico (excluído em outro lugar), ele some da tela.
 useEffect(() => {
-  if (currentSorteioId && historico.length > 0) {
+  if (currentSorteioId) {
     const existeNoHistorico = historico.some(h => h._id === currentSorteioId);
     if (!existeNoHistorico) {
       setTimes([]);
@@ -753,11 +753,10 @@ const aplicarFiltroPosicao = () => {
         await api.delete(`/sorteio-times/historico/${itemSorteio._id}`);
         
         // Se o item excluído for o que está na tela, limpa a visualização
-        if (itemSorteio._id === currentSorteioId) {
-          setTimes([]);
-          setCurrentSorteioId(null);
-          setModoEdicao(false);
-        }
+        setTimes([]);
+        setCurrentSorteioId(null);
+        setModoEdicao(false);
+
       } catch (e) {
         console.error("Erro ao remover do histórico global:", e);
       }
