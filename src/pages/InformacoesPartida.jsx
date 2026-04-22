@@ -670,19 +670,9 @@ export default function InformacoesPartida() {
       return;
     }
 
-    const dataObj = new Date(partidaSelecionada.data);
-    const dataFormatada = dataObj.toLocaleDateString('pt-BR', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long'
-    });
-    const dataFinal = dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1);
-    const horaFormatada = partidaSelecionada.horario;
-
     const mensagem = `🔥⚽ FALA, GALERA! ⚽🔥\n\n` +
       `Chegou a hora da resenha mais esperada 😎\n\n` +
-      `🗓 Data: ${dataFinal} às ${horaFormatada}\n\n` +
-      `🗳️ A votação tá liberada!\n` +
+      `️ A votação tá liberada!\n` +
       `Escolha seus destaques do jogo:\n\n` +
       `🥇 Melhor da Partida – quem brilhou em campo ✨\n` +
       `😅 Pereba da Partida – aquele que tava no modo economia 🐢\n` +
@@ -1350,15 +1340,17 @@ export default function InformacoesPartida() {
                         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                           <button 
                             onClick={compartilharLinkVotacaoComMensagem}
-                            className="bg-amber-600 hover:bg-amber-500 px-6 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center gap-2 w-full sm:w-auto text-white transition-all shadow-lg"
+                            className="bg-amber-600 hover:bg-amber-500 px-6 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center w-full sm:w-auto text-white transition-all shadow-lg"
+                            title="Compartilhar Mensagem"
                           >
-                            <FaShareAlt /> Compartilhar
+                            <FaShareAlt />
                           </button>
                           <button 
                             onClick={() => { navigator.clipboard.writeText(linkVotacao); toast.info("Link de Votação copiado!"); }}
-                            className="bg-amber-600 hover:bg-amber-500 px-6 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center gap-2 w-full sm:w-auto text-white transition-all shadow-lg"
+                            className="bg-amber-600 hover:bg-amber-500 px-6 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center w-full sm:w-auto text-white transition-all shadow-lg"
+                            title="Copiar URL"
                           >
-                            <FaCopy /> Copiar URL
+                            <FaCopy />
                           </button>
                         </div>
                       </div>
