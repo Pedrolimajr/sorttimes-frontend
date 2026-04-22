@@ -596,8 +596,11 @@ export default function Financeiro() {
           })
           .reduce((acc, t) => acc + (Number(t.valor) || 0), 0);
       }),
-      backgroundColor: '#4ade80',
-      borderRadius: 6
+      backgroundColor: 'rgba(74, 222, 128, 0.8)',
+      borderColor: '#4ade80',
+      borderWidth: 2,
+      borderRadius: 8,
+      hoverBackgroundColor: '#4ade80',
     },
     {
       label: 'Despesas',
@@ -612,8 +615,11 @@ export default function Financeiro() {
           })
           .reduce((acc, t) => acc + (Number(t.valor) || 0), 0);
       }),
-      backgroundColor: '#f87171',
-      borderRadius: 6
+      backgroundColor: 'rgba(248, 113, 113, 0.8)',
+      borderColor: '#f87171',
+      borderWidth: 2,
+      borderRadius: 8,
+      hoverBackgroundColor: '#f87171',
     },
     {
       label: 'Saldo',
@@ -637,8 +643,11 @@ export default function Financeiro() {
           .reduce((acc, t) => acc + (Number(t.valor) || 0), 0);
         return receitas - despesas;
       }),
-      backgroundColor: '#60a5fa',
-      borderRadius: 6
+      backgroundColor: 'rgba(96, 165, 250, 0.8)',
+      borderColor: '#60a5fa',
+      borderWidth: 2,
+      borderRadius: 8,
+      hoverBackgroundColor: '#60a5fa',
     }
   ]
 };
@@ -654,9 +663,10 @@ export default function Financeiro() {
           total + jogador.pagamentos.filter(p => !p.pago && !p.isento).length, 0
         )
       ],
-      backgroundColor: ['#4ade80', '#f87171'],
-      hoverOffset: 4,
-      borderWidth: 0
+      backgroundColor: ['rgba(74, 222, 128, 0.8)', 'rgba(248, 113, 113, 0.8)'],
+      borderColor: ['#4ade80', '#f87171'],
+      borderWidth: 2,
+      hoverOffset: 15,
     }]
   };
 
@@ -1508,13 +1518,25 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
                   data={dadosGraficoPizza}
                   options={{
                     maintainAspectRatio: false,
+                    cutout: '70%',
                     plugins: {
                       legend: {
                         position: 'bottom',
                         labels: {
                           color: '#e5e7eb',
                           font: {
-                            size: window.innerWidth < 640 ? 10 : 12
+                            size: window.innerWidth < 640 ? 10 : 12,
+                            weight: 'bold'
+                          }
+                        }
+                      },
+                      tooltip: {
+                        callbacks: {
+                          label: (context) => {
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const value = context.raw;
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return ` ${context.label}: ${value} (${percentage}%)`;
                           }
                         }
                       }
@@ -1851,11 +1873,12 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
           grid: { color: 'rgba(229, 231, 235, 0.1)' },
           ticks: {
             color: '#e5e7eb',
-            font: { size: window.innerWidth < 640 ? 10 : 12 }
+            font: { size: window.innerWidth < 640 ? 10 : 12 },
+            callback: (value) => 'R$ ' + value
           }
         },
         x: {
-          grid: { color: 'rgba(229, 231, 235, 0.1)' },
+          grid: { display: false },
           ticks: {
             color: '#e5e7eb',
             font: { size: window.innerWidth < 640 ? 10 : 12 }
@@ -1867,7 +1890,12 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
           position: 'bottom',
           labels: {
             color: '#e5e7eb',
-            font: { size: window.innerWidth < 640 ? 10 : 12 }
+            font: { size: window.innerWidth < 640 ? 10 : 12, weight: 'bold' }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: (context) => ` ${context.dataset.label}: R$ ${context.raw.toFixed(2)}`
           }
         }
       }
