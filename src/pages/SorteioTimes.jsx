@@ -185,6 +185,7 @@ export default function SorteioTimes() {
   const [balanceamento, setBalanceamento] = useState(TIPOS_BALANCEAMENTO.POSICAO);
   const [carregando, setCarregando] = useState(false);
   const [historico, setHistorico] = useState([]);
+  const [loadingHistorico, setLoadingHistorico] = useState(true);
   const [carregandoJogadores, setCarregandoJogadores] = useState(false);
   const [modoEdicao, setModoEdicao] = useState(false);
   const [filtroPosicao, setFiltroPosicao] = useState('');
@@ -367,14 +368,14 @@ export default function SorteioTimes() {
 // Efeito para sincronizar a tela com o histórico (Multidispositivos)
 // Se o sorteio atual sumir do histórico (excluído em outro lugar), ele some da tela.
 useEffect(() => {
-  if (currentSorteioId) {
+  if (currentSorteioId && !loadingHistorico) {
     const existeNoHistorico = historico.some(h => h._id === currentSorteioId);
     if (!existeNoHistorico) {
       setTimes([]);
       setCurrentSorteioId(null);
     }
   }
-}, [historico, currentSorteioId]);
+}, [historico, currentSorteioId, loadingHistorico]);
 
 //Carregar estado salvo
 // Carrega estado salvo ao iniciar
@@ -670,14 +671,16 @@ const aplicarFiltroPosicao = () => {
     try {
       const resSave = await api.post('/sorteio-times/historico', { ...novoSorteio, partidaVinculadaId });
       if (resSave.data.success) {
-        setCurrentSorteioId(resSave.data.data._id);
+        const novoSalvo = resSave.data.data;
+        // Atualiza o histórico local primeiro para que o useEffect de sincronização reconheça o ID
+        setHistorico(prev => [novoSalvo, ...prev.filter(h => h._id !== novoSalvo._id)].slice(0, 5));
+        setCurrentSorteioId(novoSalvo._id);
       }
-
-      const resH = await api.get('/sorteio-times/historico');
-      setHistorico(resH.data.data);
     } catch (err) {
       console.error("Erro ao persistir sorteio:", err);
-      setHistorico(prev => [novoSorteio, ...prev].slice(0, 5));
+      const tempId = `temp-${Date.now()}`;
+      setHistorico(prev => [{ ...novoSorteio, _id: tempId }, ...prev].slice(0, 5));
+      setCurrentSorteioId(tempId);
     }
 
     // Vincular participantes à partida agendada
