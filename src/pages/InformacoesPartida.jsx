@@ -1318,7 +1318,8 @@ export default function InformacoesPartida() {
                         </div>
                         <button 
                           onClick={() => { navigator.clipboard.writeText(linkGeradoPartida); toast.info("Link de Eventos copiado!"); }}
-                          className="bg-blue-600 hover:bg-blue-500 px-6 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center gap-2 w-full sm:w-auto transition-all shadow-lg"
+                          className="bg-blue-600 hover:bg-blue-500 px-6 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center w-full sm:w-auto transition-all shadow-lg"
+                          title="Copiar URL"
                         >
                           <FaCopy />
                         </button>
