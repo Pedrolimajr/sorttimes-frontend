@@ -652,22 +652,34 @@ export default function Financeiro() {
   ]
 };
 
-  const dadosGraficoPizza = {
-    labels: ['Pagamentos em dia', 'Pagamentos pendentes'],
-    datasets: [{
-      data: [
-        jogadores.reduce((total, jogador) =>
-          total + jogador.pagamentos.filter(p => p.pago || p.isento).length, 0
+  const dadosGraficoStatusMensal = {
+    labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+    datasets: [
+      {
+        label: 'Em Dia',
+        data: Array(12).fill(0).map((_, i) =>
+          jogadores.filter(j => j.nivel === 'Associado').reduce((total, jogador) =>
+            total + (jogador.pagamentos?.[i]?.pago || jogador.pagamentos?.[i]?.isento ? 1 : 0), 0
+          )
         ),
-        jogadores.reduce((total, jogador) =>
-          total + jogador.pagamentos.filter(p => !p.pago && !p.isento).length, 0
-        )
-      ],
-      backgroundColor: ['rgba(74, 222, 128, 0.8)', 'rgba(248, 113, 113, 0.8)'],
-      borderColor: ['#4ade80', '#f87171'],
-      borderWidth: 2,
-      hoverOffset: 15,
-    }]
+        backgroundColor: 'rgba(74, 222, 128, 0.8)',
+        borderColor: '#4ade80',
+        borderWidth: 1,
+        borderRadius: 4,
+      },
+      {
+        label: 'Pendentes',
+        data: Array(12).fill(0).map((_, i) =>
+          jogadores.filter(j => j.nivel === 'Associado').reduce((total, jogador) =>
+            total + (!jogador.pagamentos?.[i]?.pago && !jogador.pagamentos?.[i]?.isento ? 1 : 0), 0
+          )
+        ),
+        backgroundColor: 'rgba(248, 113, 113, 0.8)',
+        borderColor: '#f87171',
+        borderWidth: 1,
+        borderRadius: 4,
+      }
+    ]
   };
 
   const exportarPDF = async () => {
@@ -1514,30 +1526,33 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
             >
               <h2 className="text-xl font-black text-white tracking-tighter uppercase mb-8">Status de Pagamentos</h2>
               <div className="h-48 sm:h-64 relative z-10">
-                <Pie
-                  data={dadosGraficoPizza}
+                <Bar
+                  data={dadosGraficoStatusMensal}
                   options={{
                     maintainAspectRatio: false,
-                    cutout: '70%',
+                    scales: {
+                      x: {
+                        stacked: true,
+                        grid: { display: false },
+                        ticks: { color: '#e5e7eb', font: { size: 10 } }
+                      },
+                      y: {
+                        stacked: true,
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: '#e5e7eb', font: { size: 10 } }
+                      }
+                    },
                     plugins: {
                       legend: {
                         position: 'bottom',
                         labels: {
                           color: '#e5e7eb',
-                          font: {
-                            size: window.innerWidth < 640 ? 10 : 12,
-                            weight: 'bold'
-                          }
+                          font: { size: 10, weight: 'bold' }
                         }
                       },
                       tooltip: {
                         callbacks: {
-                          label: (context) => {
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const value = context.raw;
-                            const percentage = ((value / total) * 100).toFixed(1);
-                            return ` ${context.label}: ${value} (${percentage}%)`;
-                          }
+                          label: (context) => ` ${context.dataset.label}: ${context.raw} atletas`
                         }
                       }
                     }
