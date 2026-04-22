@@ -231,7 +231,7 @@ export default function Dashboard() {
             <FaRandom />
           </Link>
           <Link to="/agendar-partida" className="text-slate-500 hover:text-blue-400 transition-colors" title="Novo Jogo"><FaCalendarAlt size={20}/></Link>
-          <Link to="/configuracoes" className="text-slate-500 hover:text-blue-400 transition-colors" title="Opções"><FaCog size={20}/></Link>
+          <Link to="/financeiro" className="text-slate-500 hover:text-blue-400 transition-colors" title="Financeiro"><FaMoneyBillWave size={20}/></Link>
         </div>
       </div>
     </div>
