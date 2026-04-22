@@ -122,6 +122,7 @@ export default function Dashboard() {
   const saudacao = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
   const relogioFormatado = time.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   const segundos = time.toLocaleTimeString('pt-BR', { second: '2-digit' });
+  const dataFormatada = time.toLocaleDateString('pt-BR');
 
   return (
     <div className="min-h-screen bg-[#020617] text-slate-100 selection:bg-blue-500/30 pb-24 relative overflow-hidden">
@@ -171,7 +172,7 @@ export default function Dashboard() {
 
             <div className="bg-black/20 backdrop-blur-xl px-8 py-5 rounded-[2rem] border border-white/10 flex flex-col items-center justify-center min-w-[180px] shadow-2xl relative overflow-hidden group">
               <div className="absolute inset-0 bg-gradient-to-t from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              <span className="text-[10px] font-black text-blue-200 uppercase tracking-[0.3em] mb-2 opacity-70">Status Tempo Real</span>
+              <span className="text-[10px] font-black text-blue-200 uppercase tracking-[0.3em] mb-2 opacity-70">{dataFormatada}</span>
               <div className="flex items-baseline gap-2 relative">
                 <span className="text-5xl font-black text-white tabular-nums tracking-tighter drop-shadow-lg">{relogioFormatado}</span>
                 <span className="text-xl font-bold text-cyan-300 tabular-nums opacity-90">{segundos}</span>
