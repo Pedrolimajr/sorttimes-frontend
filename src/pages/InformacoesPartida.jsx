@@ -664,6 +664,38 @@ export default function InformacoesPartida() {
     toast.info("Link copiado!");
   };
 
+  const compartilharLinkVotacaoComMensagem = async () => {
+    if (!linkVotacao || !partidaSelecionada) {
+      toast.warn("Nenhum link de votação gerado ou partida selecionada.");
+      return;
+    }
+
+    const dataObj = new Date(partidaSelecionada.data);
+    const dataFormatada = dataObj.toLocaleDateString('pt-BR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long'
+    });
+    const dataFinal = dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1);
+    const horaFormatada = partidaSelecionada.horario;
+
+    const mensagem = `🔥⚽ FALA, GALERA! ⚽🔥\n\n` +
+      `Chegou a hora da resenha mais esperada 😎\n\n` +
+      `🗓 Data: ${dataFinal} às ${horaFormatada}\n\n` +
+      `🗳️ A votação tá liberada!\n` +
+      `Escolha seus destaques do jogo:\n\n` +
+      `🥇 Melhor da Partida – quem brilhou em campo ✨\n` +
+      `😅 Pereba da Partida – aquele que tava no modo economia 🐢\n` +
+      `🚀 Gol Mais Bonito – o golaço da rodada 🎯\n\n` +
+      `👇Clique no link abaixo e participe agora!\n\n` +
+      `${linkVotacao}\n\n` +
+      `Não fique de fora dessa resenha! 🔥\n\n` +
+      `📲 Sua votação faz parte do jogo! ⚽💬`;
+
+    await navigator.clipboard.writeText(mensagem);
+    toast.success("Mensagem de votação copiada para a área de transferência!");
+  };
+
   const compartilharResultados = () => {
     compartilharDestaques();
   };
@@ -1314,13 +1346,21 @@ export default function InformacoesPartida() {
                           {countdownVotacao && (
                             <p className="text-[10px] text-slate-500 mt-2 font-black uppercase tracking-widest">Expira em: <span className="text-white">{countdownVotacao}</span></p>
                           )}
+                        </div> 
+                        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                          <button 
+                            onClick={compartilharLinkVotacaoComMensagem}
+                            className="bg-amber-600 hover:bg-amber-500 px-6 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center gap-2 w-full sm:w-auto text-white transition-all shadow-lg"
+                          >
+                            <FaShareAlt /> Compartilhar
+                          </button>
+                          <button 
+                            onClick={() => { navigator.clipboard.writeText(linkVotacao); toast.info("Link de Votação copiado!"); }}
+                            className="bg-amber-600 hover:bg-amber-500 px-6 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center gap-2 w-full sm:w-auto text-white transition-all shadow-lg"
+                          >
+                            <FaCopy /> Copiar URL
+                          </button>
                         </div>
-                        <button 
-                          onClick={() => { navigator.clipboard.writeText(linkVotacao); toast.info("Link de Votação copiado!"); }}
-                          className="bg-amber-600 hover:bg-amber-500 px-6 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center gap-2 w-full sm:w-auto text-white transition-all shadow-lg"
-                        >
-                          <FaCopy /> Copiar
-                        </button>
                       </div>
                       )}
                     </motion.div>
