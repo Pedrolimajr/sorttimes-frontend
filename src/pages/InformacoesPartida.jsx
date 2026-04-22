@@ -1282,14 +1282,14 @@ export default function InformacoesPartida() {
                       <button
                         onClick={() => gerarLinkPublicoPartida('eventos')}
                         disabled={!partidaSelecionada || carregando}
-                        className="flex-1 bg-blue-600 hover:shadow-blue-500/25 text-white py-2 px-3 rounded-xl font-black uppercase tracking-widest transition-all disabled:opacity-50 text-[10px] flex items-center justify-center gap-1.5"
+                        className="bg-blue-600 hover:shadow-blue-500/25 text-white py-2 px-4 rounded-xl font-black uppercase tracking-widest transition-all disabled:opacity-50 text-[10px] flex items-center justify-center gap-1.5 w-full sm:w-auto"
                       >
                         <FaFutbol className="animate-bounce" /> Link de Eventos
                       </button>
                       <button
                         onClick={() => gerarLinkPublicoPartida('votacao')}
                         disabled={!partidaSelecionada || carregando}
-                        className="flex-1 bg-amber-600 hover:shadow-amber-500/25 text-white py-2 px-3 rounded-xl font-black uppercase tracking-widest transition-all disabled:opacity-50 text-[10px] flex items-center justify-center gap-1.5"
+                        className="bg-amber-600 hover:shadow-amber-500/25 text-white py-2 px-4 rounded-xl font-black uppercase tracking-widest transition-all disabled:opacity-50 text-[10px] flex items-center justify-center gap-1.5 w-full sm:w-auto"
                       >
                         <FaAward /> Link de Votação (Pós-Jogo)
                       </button>
@@ -1306,7 +1306,7 @@ export default function InformacoesPartida() {
                     >
                       {/* Card do Link de Eventos */}
                       {linkGeradoPartida && (
-                        <div className="bg-blue-500/5 border border-blue-500/20 p-5 rounded-2xl flex flex-col sm:flex-row items-center gap-4">
+                        <div className="bg-blue-500/5 border border-blue-500/20 p-5 rounded-2xl flex flex-col sm:flex-row items-center gap-4 w-full sm:w-fit">
                         <div className="flex-1">
                           <p className="text-[10px] font-bold text-blue-400 uppercase mb-1">Link de Eventos (Gols e Cartões)</p>
                           <div className="text-xs font-mono text-blue-300 break-all bg-black/40 p-3 rounded-lg border border-white/5">
@@ -1328,7 +1328,7 @@ export default function InformacoesPartida() {
 
                       {/* Card do Link de Votação */}
                       {linkVotacao && (
-                        <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-xl flex flex-col sm:flex-row items-center gap-4">
+                        <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-xl flex flex-col sm:flex-row items-center gap-4 w-full sm:w-fit">
                         <div className="flex-1">
                           <p className="text-[10px] font-bold text-amber-500 uppercase mb-1">Link de Votação para Atletas</p>
                           <div className="text-xs font-mono text-amber-400 break-all bg-black/40 p-3 rounded-lg border border-white/5">
