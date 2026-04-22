@@ -664,6 +664,29 @@ export default function InformacoesPartida() {
     toast.info("Link copiado!");
   };
 
+  const compartilharLinkEventosComMensagem = async () => {
+    if (!linkGeradoPartida) {
+      toast.warn("Nenhum link de eventos gerado.");
+      return;
+    }
+
+    const mensagem = `📋 EVENTOS DA PARTIDA ⚽\n\n` +
+      `Atenção, árbitro! 🧑‍⚖️\n\n` +
+      `Este espaço é destinado ao registro oficial dos acontecimentos da partida.\n\n` +
+      `Utilize para anotar todas as informações do jogo, como:\n` +
+      `⚽ Gols\n` +
+      `🟨🟥 Cartões\n` +
+      `📝 Ocorrências gerais\n\n` +
+      `O preenchimento correto garante a organização, transparência e atualização das estatísticas da partida.\n\n` +
+      `🔗 Acesse o link abaixo para registrar os eventos:\n` +
+      `👇\n\n` +
+      `${linkGeradoPartida}\n\n` +
+      `Obrigado pela colaboração e bom jogo!`;
+
+    await navigator.clipboard.writeText(mensagem);
+    toast.success("Mensagem de eventos copiada para a área de transferência!");
+  };
+
   const compartilharLinkVotacaoComMensagem = async () => {
     if (!linkVotacao || !partidaSelecionada) {
       toast.warn("Nenhum link de votação gerado ou partida selecionada.");
@@ -1282,14 +1305,14 @@ export default function InformacoesPartida() {
                       <button
                         onClick={() => gerarLinkPublicoPartida('eventos')}
                         disabled={!partidaSelecionada || carregando}
-                        className="flex-1 bg-blue-600 hover:shadow-blue-500/25 text-white p-4 rounded-xl font-black uppercase tracking-widest transition-all disabled:opacity-50 text-[10px] flex items-center justify-center gap-2"
+                        className="bg-blue-600 hover:shadow-blue-500/25 text-white py-2 px-4 rounded-xl font-black uppercase tracking-widest transition-all disabled:opacity-50 text-[10px] flex items-center justify-center gap-1.5 w-full sm:w-auto"
                       >
                         <FaFutbol className="animate-bounce" /> Link de Eventos
                       </button>
                       <button
                         onClick={() => gerarLinkPublicoPartida('votacao')}
                         disabled={!partidaSelecionada || carregando}
-                        className="flex-1 bg-amber-600 hover:shadow-amber-500/25 text-white p-4 rounded-xl font-black uppercase tracking-widest transition-all disabled:opacity-50 text-[10px] flex items-center justify-center gap-2"
+                        className="bg-amber-600 hover:shadow-amber-500/25 text-white py-2 px-4 rounded-xl font-black uppercase tracking-widest transition-all disabled:opacity-50 text-[10px] flex items-center justify-center gap-1.5 w-full sm:w-auto"
                       >
                         <FaAward /> Link de Votação (Pós-Jogo)
                       </button>
@@ -1315,14 +1338,23 @@ export default function InformacoesPartida() {
                           {countdownEventos && (
                             <p className="text-[10px] text-slate-500 mt-2 font-black uppercase tracking-widest">Expira em: <span className="text-white">{countdownEventos}</span></p>
                           )}
+                        </div> 
+                        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                          <button 
+                            onClick={compartilharLinkEventosComMensagem}
+                            className="bg-blue-600 hover:bg-blue-500 p-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center w-full sm:w-auto text-white transition-all shadow-lg"
+                            title="Compartilhar Mensagem"
+                          >
+                            <FaShareAlt />
+                          </button>
+                          <button 
+                            onClick={() => { navigator.clipboard.writeText(linkGeradoPartida); toast.info("Link de Eventos copiado!"); }}
+                            className="bg-blue-600 hover:bg-blue-500 p-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center w-full sm:w-auto text-white transition-all shadow-lg"
+                            title="Copiar URL"
+                          >
+                            <FaCopy />
+                          </button>
                         </div>
-                        <button 
-                          onClick={() => { navigator.clipboard.writeText(linkGeradoPartida); toast.info("Link de Eventos copiado!"); }}
-                          className="bg-blue-600 hover:bg-blue-500 px-6 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center w-full sm:w-auto transition-all shadow-lg"
-                          title="Copiar URL"
-                        >
-                          <FaCopy />
-                        </button>
                       </div>
                       )}
 
@@ -1341,14 +1373,14 @@ export default function InformacoesPartida() {
                         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                           <button 
                             onClick={compartilharLinkVotacaoComMensagem}
-                            className="bg-amber-600 hover:bg-amber-500 px-6 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center w-full sm:w-auto text-white transition-all shadow-lg"
+                            className="bg-amber-600 hover:bg-amber-500 p-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center w-full sm:w-auto text-white transition-all shadow-lg"
                             title="Compartilhar Mensagem"
                           >
                             <FaShareAlt />
                           </button>
                           <button 
                             onClick={() => { navigator.clipboard.writeText(linkVotacao); toast.info("Link de Votação copiado!"); }}
-                            className="bg-amber-600 hover:bg-amber-500 px-6 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center w-full sm:w-auto text-white transition-all shadow-lg"
+                            className="bg-amber-600 hover:bg-amber-500 p-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center w-full sm:w-auto text-white transition-all shadow-lg"
                             title="Copiar URL"
                           >
                             <FaCopy />
