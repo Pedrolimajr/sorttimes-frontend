@@ -548,7 +548,10 @@ const aplicarFiltroPosicao = () => {
     // Atualiza o estado local para feedback imediato
     setTimes(novosTimes);
 
-    //  const totalJogadores = novosTimes.reduce((acc, t) => acc + t.jogadores.length, 0);
+    // PERSISTÊNCIA NO BACKEND (Sincronização entre dispositivos)
+    if (currentSorteioId) {
+      try {
+        const totalJogadores = novosTimes.reduce((acc, t) => acc + t.jogadores.length, 0);
         await api.put(`/sorteio-times/historico/${currentSorteioId}`, {
           times: novosTimes,
           jogadoresPresentes: totalJogadores,
@@ -564,8 +567,9 @@ const aplicarFiltroPosicao = () => {
     }
 
     // Integração com a Agenda (Votação)
-    i      await vincularParticipantesNoSorteio(novosTimes);
-
+    if (partidaVinculadaId) {
+      await vincularParticipantesNoSorteio(novosTimes);
+    } else {
       console.warn("[SorteioTimes] Jogador adicionado apenas visualmente. Vincule uma partida para registrar na votação.");
     }
 
@@ -626,11 +630,21 @@ const aplicarFiltroPosicao = () => {
 
     setTimes(timesComIds);
 
+    const totalJogadores = timesComIds.reduce((acc, t) => acc + t.jogadores.length, 0);
     const novoSorteio = {
       times: timesComIds,
-      daw(PERSISTÊNCIA INICIAL
+      jogadoresPresentes: totalJogadores,
+      balanceamento: balanceamento,
+      posicaoUnica: filtroPosicao
+    };
 
-    consi ..
+    // PERSISTÊNCIA INICIAL
+    try {
+      const resSave = await api.post('/sorteio-times/historico', { ...novoSorteio, partidaVinculadaId });
+      if (resSave.data.success) {
+        setCurrentSorteioId(resSave.data.data._id);
+      }
+
       const resH = await api.get('/sorteio-times/historico');
       setHistorico(resH.data.data);
     } catch (err) {
@@ -638,9 +652,11 @@ const aplicarFiltroPosicao = () => {
       setHistorico(prev => [novoSorteio, ...prev].slice(0, 5));
     }
 
+    // Vincular participantes à partida agendada
     try {
       if (partidaVinculadaId) {
-      (
+        await vincularParticipantesNoSorteio(timesComIds);
+      }
     } catch (syncErr) {
       console.error("Erro ao sincronizar participantes:", syncErr);
       toast.warning("Sorteio concluído, mas não sincronizado com a agenda.");
@@ -763,7 +779,13 @@ const aplicarFiltroPosicao = () => {
       setTimes([]); // Limpa os resultados da tela
       setCurrentSorteioId(null);
       setModoEdicao(false);
-ioas 
+      setShowLimparHistoricoModal(false);
+      toast.success("Histórico e visualização limpos com sucesso!");
+    } catch (e) {
+      console.error("Erro ao limpar histórico global:", e);
+      toast.error("Erro ao limpar histórico.");
+    }
+  };
 
   /**
    * Compartilha os times sorteados
@@ -784,9 +806,14 @@ ioas
         text: texto
       }).catch(err => console.log('Erro ao compartilhar:', err));
     } else {
-     -slate-100 selection:bg-blue-500/30 px-4 py-8 sm:px-6 lg:px-8 relative overflow-hidden">
+      navigator.clipboard.writeText(texto);
+      toast.success("Lista copiada!");
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#020617] text-slate-100 selection:bg-blue-500/30 px-4 py-8 sm:px-6 lg:px-8 relative overflow-hidden">
       <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
-      
       {/* Aurora Background Effects */}
       <div className="fixed inset-0 pointer-events-none -z-10">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse" />
