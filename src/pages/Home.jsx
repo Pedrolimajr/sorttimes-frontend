@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 
 export default function PaginaInicial() {
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-100 flex flex-col items-center justify-center p-4 sm:p-8 py-12 sm:py-16 relative">
+    <div className="min-h-screen bg-[#020617] text-slate-100 flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden">
       {/* Aurora & Grid Background Effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse" />
@@ -49,7 +49,7 @@ export default function PaginaInicial() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="space-y-6 sm:space-y-8 lg:space-y-10 flex flex-col items-center"
+          className="space-y-6 sm:space-y-8 lg:space-y-4 flex flex-col items-center"
         >
           {/* Cabeçalho com logo */}
           <div className="flex flex-col items-center gap-4">
@@ -90,7 +90,7 @@ export default function PaginaInicial() {
           </div>
 
           {/* Imagem unificada - estilo App centralizado com efeito de chute */}
-          <div className="w-full px-2 max-w-lg lg:max-w-xl">
+          <div className="w-full mt-4 lg:mt-2 px-2 max-w-lg lg:max-w-md">
             <motion.div
               whileHover={{
                 rotate: [0, -6, 4, 0],
@@ -122,7 +122,7 @@ export default function PaginaInicial() {
             <motion.button
               whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(37, 99, 235, 0.3)" }}
               whileTap={{ scale: 0.95 }}
-              className="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 text-white font-black py-4 px-10 lg:px-12 rounded-[2rem] shadow-xl hover:shadow-blue-500/25 transition-all flex items-center gap-4 text-xs lg:text-sm uppercase tracking-[0.2em]"
+              className="mt-4 lg:mt-2 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 text-white font-black py-4 lg:py-3 px-10 lg:px-8 rounded-[2rem] shadow-xl hover:shadow-blue-500/25 transition-all flex items-center gap-4 text-xs lg:text-sm uppercase tracking-[0.2em]"
             >
               Acessar Painel <FaArrowRight />
             </motion.button>
@@ -132,3 +132,5 @@ export default function PaginaInicial() {
     </div>
   );
 }
+
+
