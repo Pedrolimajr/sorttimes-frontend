@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 
 export default function PaginaInicial() {
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-100 flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden">
+    <div className="min-h-screen bg-[#020617] text-slate-100 flex flex-col items-center py-12 sm:py-20 px-4 sm:px-8 relative">
       {/* Aurora & Grid Background Effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse" />
@@ -44,15 +44,15 @@ export default function PaginaInicial() {
       </div>
 
       {/* Container principal simplificado para Coluna Única (Estilo App) */}
-      <div className="max-w-2xl mx-auto flex flex-col items-center text-center relative z-10">
+      <div className="max-w-2xl mx-auto flex flex-col items-center text-center relative z-10 w-full my-auto">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="space-y-6 sm:space-y-8 lg:space-y-4 flex flex-col items-center"
+          className="space-y-8 sm:space-y-10 lg:space-y-12 flex flex-col items-center"
         >
           {/* Cabeçalho com logo */}
-          <div className="flex flex-col items-center gap-4">
+          <div className="flex flex-col items-center gap-6">
             <motion.div 
               whileHover={{ scale: 1.1, rotate: 5 }}
               className="w-20 h-20 md:w-24 md:h-24 flex items-center justify-center bg-slate-800/40 border border-white/10 p-4 rounded-[2rem] shadow-2xl backdrop-blur-sm"
@@ -90,7 +90,7 @@ export default function PaginaInicial() {
           </div>
 
           {/* Imagem unificada - estilo App centralizado com efeito de chute */}
-          <div className="w-full mt-4 lg:mt-2 px-2 max-w-lg lg:max-w-md">
+          <div className="w-full px-2 max-w-lg lg:max-w-xl">
             <motion.div
               whileHover={{
                 rotate: [0, -6, 4, 0],
@@ -122,7 +122,7 @@ export default function PaginaInicial() {
             <motion.button
               whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(37, 99, 235, 0.3)" }}
               whileTap={{ scale: 0.95 }}
-              className="mt-4 lg:mt-2 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 text-white font-black py-4 lg:py-3 px-10 lg:px-8 rounded-[2rem] shadow-xl hover:shadow-blue-500/25 transition-all flex items-center gap-4 text-xs lg:text-sm uppercase tracking-[0.2em]"
+              className="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 text-white font-black py-5 px-12 rounded-[2rem] shadow-xl hover:shadow-blue-500/25 transition-all flex items-center gap-4 text-xs lg:text-sm uppercase tracking-[0.2em]"
             >
               Acessar Painel <FaArrowRight />
             </motion.button>
@@ -132,5 +132,3 @@ export default function PaginaInicial() {
     </div>
   );
 }
-
-
