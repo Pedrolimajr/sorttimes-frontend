@@ -1291,7 +1291,7 @@ export default function ListaJogadores({
                         </tbody>
                       </table>
                     </div>
-                    <div className="sticky bottom-0 left-0 w-full bg-slate-950/90 backdrop-blur-xl border-t border-white/5 py-4 px-6 text-center z-20 shadow-2xl">
+                    <div className="sticky bottom-0 left-0 w-full bg-[#020617]/90 backdrop-blur-xl border-t border-white/5 py-4 px-6 text-center z-20 shadow-2xl">
                       <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
                         <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Associados: <span className="text-white ml-1">{totalAssociados}</span></span>
                         <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Bloqueados: <span className="text-red-400 ml-1">{totalBloqueados}</span></span>
