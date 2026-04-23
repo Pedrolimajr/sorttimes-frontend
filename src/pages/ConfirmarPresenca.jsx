@@ -297,16 +297,27 @@ export default function ConfirmarPresenca() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 px-4 py-8 flex flex-col items-center justify-center">
+    <div className="min-h-screen bg-[#020617] text-slate-100 selection:bg-blue-500/30 px-4 py-8 flex flex-col items-center justify-center relative overflow-hidden">
+      {/* Aurora Background Effects - Consistente com as demais telas */}
+      <div className="fixed inset-0 pointer-events-none -z-10">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-cyan-500/10 blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
+      </div>
+
       <div className="max-w-md w-full">
         <motion.div
           initial={{ opacity: 0, y: -24 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-b from-gray-800/90 to-gray-900/90 rounded-3xl p-8 shadow-2xl border border-gray-700/80 backdrop-blur-sm"
+          className="bg-slate-900/40 backdrop-blur-3xl rounded-[2.5rem] p-8 shadow-2xl border border-white/10 relative overflow-hidden"
         >
+          {/* Decoração sutil no topo do card */}
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50" />
+
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-extrabold text-white mb-2 tracking-tight">SortTimes</h1>
-            <p className="text-blue-400 font-semibold text-sm uppercase tracking-wide">Confirmação de Presença</p>
+            <h1 className="text-3xl font-black text-white mb-1 tracking-tighter uppercase">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400">SortTimes</span>
+            </h1>
+            <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.3em]">Confirmação de Presença</p>
             {eventoData && (
               <p className="text-gray-400 text-sm mt-2 flex items-center justify-center gap-2">
                 <FaCalendarAlt className="text-blue-500" /> {eventoData}
