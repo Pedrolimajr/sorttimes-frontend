@@ -63,7 +63,6 @@ export default function InformacoesPartida() {
   const [linkVotacaoExpireAt, setLinkVotacaoExpireAt] = useState(null);
   const [countdownEventos, setCountdownEventos] = useState('');
   const [countdownVotacao, setCountdownVotacao] = useState('');
-  const [modalCompartilhar, setModalCompartilhar] = useState({ aberto: false, titulo: '', mensagem: '' });
   
   // Estados para Estatísticas de Atletas
   const [atletaParaStats, setAtletaParaStats] = useState("");
@@ -665,17 +664,13 @@ export default function InformacoesPartida() {
     toast.info("Link copiado!");
   };
 
-  const abrirModalCompartilhamento = (titulo, mensagem) => {
-    setModalCompartilhar({ aberto: true, titulo, mensagem });
-  };
-
-  const compartilharLinkEventosComMensagem = () => {
+  const compartilharLinkEventosComMensagem = async () => {
     if (!linkGeradoPartida) {
       toast.warn("Nenhum link de eventos gerado.");
       return;
     }
 
-    const msg = `📋 EVENTOS DA PARTIDA ⚽\n\n` +
+    const mensagem = `📋 EVENTOS DA PARTIDA ⚽\n\n` +
       `Atenção, árbitro! 🧑‍⚖️\n\n` +
       `Este espaço é destinado ao registro oficial dos acontecimentos da partida.\n\n` +
       `Utilize para anotar todas as informações do jogo, como:\n` +
@@ -687,16 +682,26 @@ export default function InformacoesPartida() {
       `👇\n\n` +
       `${linkGeradoPartida}\n\n` +
       `Obrigado pela colaboração e bom jogo!`;
-    abrirModalCompartilhamento('Link de Eventos', msg);
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Eventos da Partida', text: mensagem });
+      } catch (err) {
+        if (err.name !== 'AbortError') console.error('Erro ao compartilhar:', err);
+      }
+    } else {
+      await navigator.clipboard.writeText(mensagem);
+      toast.success("Mensagem de eventos copiada!");
+    }
   };
 
-  const compartilharLinkVotacaoComMensagem = () => {
+  const compartilharLinkVotacaoComMensagem = async () => {
     if (!linkVotacao || !partidaSelecionada) {
       toast.warn("Nenhum link de votação gerado ou partida selecionada.");
       return;
     }
 
-    const msg = `🔥⚽ FALA, GALERA! ⚽🔥\n\n` +
+    const mensagem = `🔥⚽ FALA, GALERA! ⚽🔥\n\n` +
       `Chegou a hora da resenha mais esperada 😎\n\n` +
       `🗳️ A votação tá liberada!\n` +
       `Escolha seus destaques do jogo:\n\n` +
@@ -707,7 +712,17 @@ export default function InformacoesPartida() {
       `${linkVotacao}\n\n` +
       `Não fique de fora dessa resenha! 🔥\n\n` +
       `📲 Sua votação faz parte do jogo! ⚽💬`;
-    abrirModalCompartilhamento('Link de Votação', msg);
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Votação Pós-Jogo', text: mensagem });
+      } catch (err) {
+        if (err.name !== 'AbortError') console.error('Erro ao compartilhar:', err);
+      }
+    } else {
+      await navigator.clipboard.writeText(mensagem);
+      toast.success("Mensagem de votação copiada!");
+    }
   };
 
   const compartilharResultados = () => {
@@ -1964,78 +1979,6 @@ export default function InformacoesPartida() {
         onConfirm={confirmarExportarPDF}
         onCancel={cancelarExportarImagem}
       />
-
-      {/* Modal de Opções de Compartilhamento */}
-      <AnimatePresence>
-        {modalCompartilhar.aberto && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }} 
-              animate={{ scale: 1, opacity: 1 }} 
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-gray-800 border border-gray-700 p-6 rounded-[2rem] max-w-sm w-full text-center shadow-2xl relative overflow-hidden"
-            >
-              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50" />
-              
-              <div className="w-16 h-16 bg-blue-500/20 text-blue-400 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-500/30">
-                <FaShareAlt size={24} />
-              </div>
-              
-              <h3 className="text-xl font-black mb-1 text-white uppercase tracking-tighter">{modalCompartilhar.titulo}</h3>
-              <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-6">Escolha uma opção de envio</p>
-              
-              <div className="space-y-3">
-                <button 
-                  onClick={() => {
-                    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(modalCompartilhar.mensagem)}`;
-                    window.open(url, '_blank');
-                    setModalCompartilhar({ ...modalCompartilhar, aberto: false });
-                  }}
-                  className="w-full py-4 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 transition-all shadow-lg"
-                >
-                  <FaShareAlt /> WhatsApp
-                </button>
-
-                <button 
-                  onClick={() => {
-                    navigator.clipboard.writeText(modalCompartilhar.mensagem);
-                    toast.success("Mensagem copiada!");
-                    setModalCompartilhar({ ...modalCompartilhar, aberto: false });
-                  }}
-                  className="w-full py-4 bg-slate-700 hover:bg-slate-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 transition-all shadow-lg"
-                >
-                  <FaCopy /> Copiar Mensagem
-                </button>
-
-                {navigator.share && (
-                  <button 
-                    onClick={async () => {
-                      try {
-                        await navigator.share({
-                          title: 'SortTimes',
-                          text: modalCompartilhar.mensagem
-                        });
-                        setModalCompartilhar({ ...modalCompartilhar, aberto: false });
-                      } catch (err) { console.log('Erro ao compartilhar:', err); }
-                    }}
-                    className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 transition-all shadow-lg"
-                  >
-                    <FaShareAlt /> Outras Opções
-                  </button>
-                )}
-              </div>
-
-              <button 
-                onClick={() => setModalCompartilhar({ ...modalCompartilhar, aberto: false })} 
-                className="mt-6 w-full py-2 text-slate-500 hover:text-white font-black uppercase tracking-widest text-[10px] transition-colors"
-              >
-                Cancelar
-              </button>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
       <ToastContainer
         position="top-right"
         autoClose={3000}
