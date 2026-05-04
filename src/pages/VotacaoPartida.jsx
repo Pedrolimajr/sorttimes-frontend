@@ -190,6 +190,20 @@ export default function VotacaoPartida() {
       .sort((a, b) => a.localeCompare(b));
   }, [partida, jogadores, jogadorAutenticado]);
 
+  // Lista de jogadores que fizeram gol, filtrada para incluir apenas elegíveis para votar
+  const jogadoresQueFizeramGol = useMemo(() => {
+    if (!partida?.gols || partida.gols.length === 0) return [];
+    const goleadores = new Set();
+    const elegiveisParaVotarSet = new Set(jogadoresParaVotar); // Convert to Set for faster lookup
+
+    partida.gols.forEach(gol => {
+      if (gol.jogador && elegiveisParaVotarSet.has(gol.jogador)) {
+        goleadores.add(gol.jogador);
+      }
+    });
+    return Array.from(goleadores).sort((a, b) => a.localeCompare(b));
+  }, [partida?.gols, jogadoresParaVotar]);
+
   const compartilharResultados = async () => {
     try {
       // 1. Inicia o processo de captura (muda o título e prepara o DOM)
@@ -361,7 +375,7 @@ export default function VotacaoPartida() {
                     className="w-full bg-gray-900 border border-gray-700 rounded-xl p-4 text-sm outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
                   >
                     <option value="">Selecione um jogador...</option>
-                    {jogadoresParaVotar.map(nome => (
+                    {(premio.id === 'golMaisBonito' ? jogadoresQueFizeramGol : jogadoresParaVotar).map(nome => (
                       <option key={nome} value={nome}>{nome}</option>
                     ))}
                   </select>
