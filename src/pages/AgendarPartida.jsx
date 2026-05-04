@@ -91,12 +91,7 @@ export default function AgendarPartida() {
       const dataJogo = `${formData.data}T${formData.horario}`;
 
       const response = await api.post('/gerar-link-presenca', {
-        jogadores: jogadores.map(j => ({
-          id: j._id,
-          nome: j.nome,
-          foto: j.foto,
-          presente: false // Inicialmente ninguém confirmou
-        })),
+        // Não enviamos mais a lista de jogadores, o backend buscará dinamicamente
         dataJogo
       });
 
@@ -503,3 +498,5 @@ export default function AgendarPartida() {
     </div>
   );
 }
+
+
