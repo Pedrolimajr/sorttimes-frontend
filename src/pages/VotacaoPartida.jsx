@@ -271,13 +271,21 @@ export default function VotacaoPartida() {
     }
   };
 
-  if (carregando && etapa === 'login') return <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div></div>;
+  if (carregando && etapa === 'login') return <div className="min-h-screen bg-[#020617] flex items-center justify-center text-white"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div></div>;
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-4 font-sans">
+    <div className="min-h-screen bg-[#020617] text-slate-100 px-4 py-8 sm:px-6 lg:px-8 font-sans relative overflow-hidden selection:bg-blue-500/30">
+      {/* Aurora Background Effects */}
+      <div className="fixed inset-0 pointer-events-none -z-10">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-cyan-500/10 blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
+      </div>
+
       <div className="max-w-md mx-auto space-y-8">
         <header className="text-center py-6">
-          <h1 className="text-2xl font-black text-blue-400 uppercase tracking-tighter">Premiações da Partida</h1>
+          <h1 className="text-2xl font-black uppercase tracking-tighter">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400">Premiações da Partida</span>
+          </h1>
           <p className="text-gray-500 text-xs font-bold">{tipoLink === 'resultado' ? 'RESULTADO FINAL' : 'VOTAÇÃO DOS ATLETAS'}</p>
           {countdown && (
             <div className="mt-2 inline-block px-3 py-1 bg-red-500/10 border border-red-500/20 rounded-full">
@@ -291,7 +299,7 @@ export default function VotacaoPartida() {
             <motion.form 
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
               onSubmit={handleLogin}
-              className="bg-gray-800 rounded-3xl p-8 border border-gray-700 shadow-2xl space-y-6"
+              className="bg-slate-900/40 backdrop-blur-3xl rounded-[2.5rem] p-8 border border-white/10 shadow-2xl space-y-6"
             >
               <div className="text-center space-y-2 mb-4">
                 <FaLock className="mx-auto text-3xl text-gray-600" />
@@ -303,7 +311,7 @@ export default function VotacaoPartida() {
                   <FaUser className="absolute left-4 top-4 text-gray-500" />
                   <input 
                     type="text" placeholder="Nome e primeiro sobrenome" required
-                    className="w-full bg-gray-900 border-none rounded-2xl p-4 pl-12 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full bg-black/40 border border-white/5 rounded-2xl p-4 pl-12 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                     onChange={(e) => setCredenciais({...credenciais, nome: e.target.value})}
                   />
                 </div>
@@ -311,7 +319,7 @@ export default function VotacaoPartida() {
                   <FaLock className="absolute left-4 top-4 text-gray-500" />
                   <input 
                     type={mostrarSenha ? "text" : "password"} placeholder="Data de Nasc. (Ex: 10051990)" required
-                    className="w-full bg-gray-900 border-none rounded-2xl p-4 pl-12 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full bg-black/40 border border-white/5 rounded-2xl p-4 pl-12 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                     onChange={(e) => setCredenciais({...credenciais, senha: e.target.value.replace(/\D/g, '')})}
                   />
                   <button type="button" onClick={() => setMostrarSenha(!mostrarSenha)} className="absolute right-4 top-4 text-gray-500">
@@ -331,7 +339,7 @@ export default function VotacaoPartida() {
           {etapa === 'votacao' && (
             <motion.div 
               initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-              className="bg-gray-800 rounded-3xl p-6 border border-gray-700 shadow-2xl space-y-8"
+              className="bg-slate-900/40 backdrop-blur-3xl rounded-[2.5rem] p-6 border border-white/10 shadow-2xl space-y-8"
             >
               <div className="border-b border-gray-700 pb-4 flex items-center gap-4">
                 {getFotoJogador(jogadorAutenticado?.nome) ? (
@@ -372,7 +380,7 @@ export default function VotacaoPartida() {
                   <select 
                     value={votos[premio.id]}
                     onChange={(e) => setVotos({...votos, [premio.id]: e.target.value})}
-                    className="w-full bg-gray-900 border border-gray-700 rounded-xl p-4 text-sm outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
+                    className="w-full bg-black/40 border border-white/5 rounded-xl p-4 text-sm outline-none focus:ring-2 focus:ring-blue-500 appearance-none transition-all"
                   >
                     <option value="">Selecione um jogador...</option>
                     {(premio.id === 'golMaisBonito' ? jogadoresQueFizeramGol : jogadoresParaVotar).map(nome => (
@@ -396,7 +404,7 @@ export default function VotacaoPartida() {
             <motion.div 
               initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               ref={areaResultadosRef}
-              className="bg-gray-800 rounded-3xl p-6 border border-gray-700 shadow-2xl space-y-6"
+              className="bg-slate-900/40 backdrop-blur-3xl rounded-[2.5rem] p-6 border border-white/10 shadow-2xl space-y-6"
             >
               <h2 className={`text-xl font-black text-center bg-gradient-to-r from-yellow-400 to-amber-600 bg-clip-text text-transparent flex items-center justify-center gap-2 ${isExporting ? 'text-2xl' : ''}`}>
                 {!isExporting && <FaChartBar className="text-amber-500" />} 
@@ -464,7 +472,7 @@ export default function VotacaoPartida() {
           {etapa === 'enviado' && (
             <motion.div 
               initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
-              className="bg-gray-800 rounded-3xl p-10 border border-gray-700 shadow-2xl text-center space-y-4"
+              className="bg-slate-900/40 backdrop-blur-3xl rounded-[2.5rem] p-10 border border-white/10 shadow-2xl text-center space-y-4"
             >
               <FaCheckCircle className="text-6xl text-green-500 mx-auto animate-bounce" />
               <h1 className="text-2xl font-black">Voto Registrado!</h1>
@@ -486,7 +494,7 @@ export default function VotacaoPartida() {
                 initial={{ scale: 0.9, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
                 exit={{ scale: 0.9, y: 20 }}
-                className="bg-gray-800 border border-gray-700 p-6 rounded-3xl w-full max-w-sm shadow-2xl space-y-6"
+                className="bg-slate-900/60 backdrop-blur-md border border-white/10 p-6 rounded-[2.5rem] w-full max-w-sm shadow-2xl space-y-6"
               >
                 <div className="text-center">
                   <div className="w-12 h-12 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-3 border border-amber-500/30">
@@ -500,7 +508,7 @@ export default function VotacaoPartida() {
                   <input 
                     type="text" 
                     placeholder="Usuário"
-                    className="w-full bg-gray-900 border-none rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-yellow-500"
+                    className="w-full bg-black/40 border border-white/5 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-yellow-500 transition-all"
                     value={adminCreds.username}
                     onChange={(e) => setAdminCreds({...adminCreds, username: e.target.value})}
                     required
@@ -509,7 +517,7 @@ export default function VotacaoPartida() {
                     <input 
                       type={mostrarSenhaAdminCred ? "text" : "password"} 
                       placeholder="Senha"
-                      className="w-full bg-gray-900 border-none rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-yellow-500 pr-10"
+                      className="w-full bg-black/40 border border-white/5 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-yellow-500 pr-10 transition-all"
                       value={adminCreds.password}
                       onChange={(e) => setAdminCreds({...adminCreds, password: e.target.value})}
                       required

@@ -966,12 +966,12 @@ export default function InformacoesPartida() {
               <div className="flex items-center justify-center gap-3">
                 <motion.h1 className="text-3xl sm:text-4xl font-black text-white tracking-tighter uppercase mb-1 flex items-center justify-center gap-3">
                   <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400">
-                    {abaAtiva === 'planilhas' ? 'Gestão de Planilhas' : 'Painel Live'}
+                    {abaAtiva === 'planilhas' ? 'Gestão de Planilhas' : 'Informações da Partida'}
                   </span>
                 </motion.h1>
               </div>
               <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">
-                {abaAtiva === 'planilhas' ? 'Administração de Dados' : 'Monitoramento em Tempo Real'}
+                {abaAtiva === 'planilhas' ? 'Administração de Dados' : 'UNIVERSO CAJAZEIRAS'}
               </p>
             </div>
 
