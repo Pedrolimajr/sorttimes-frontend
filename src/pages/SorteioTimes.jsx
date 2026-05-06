@@ -94,7 +94,7 @@ const JogadorItem = ({ jogador, onAlternarPresenca, onAtualizarPosicao }) => (
   </motion.div>
 );
 
-const TimeSorteado = ({ time, index, modoEdicao, onAddPlayer, onMoverJogador }) => {
+const TimeSorteado = ({ time, index, modoEdicao, onAddPlayer, onMoverJogador, onDeletePlayer }) => {
   const isTimeAmarelo = index === 1;
   const nomeTime = index === 0 ? "Time (Preto)" : isTimeAmarelo ? "Time (Amarelo)" : time.nome;
 
@@ -152,7 +152,16 @@ const TimeSorteado = ({ time, index, modoEdicao, onAddPlayer, onMoverJogador }) 
           >
             <div className="flex justify-between items-center">
               <span className={`text-sm sm:text-base font-bold ${isTimeAmarelo ? 'text-black' : 'text-white'}`}>{jogador.nome}</span>
-              <span className="text-yellow-400 text-xs sm:text-sm">{jogador.nivel} ⭐</span>
+              <div className="flex items-center gap-2">
+                <span className="text-yellow-400 text-xs sm:text-sm">{jogador.nivel} ⭐</span>
+                <button 
+                  onClick={() => onDeletePlayer(index, jogador.id)}
+                  className={`p-1 hover:scale-125 transition-transform ${isTimeAmarelo ? 'text-red-700' : 'text-red-400'}`}
+                  title="Remover jogador do time"
+                >
+                  <FaTrash size={12} />
+                </button>
+              </div>
             </div>
             <div className={`text-[10px] font-black uppercase tracking-widest mt-1 ${isTimeAmarelo ? 'text-black/60' : 'text-slate-500'}`}>
               Posição: {jogador.posicao}
@@ -506,6 +515,48 @@ const aplicarFiltroPosicao = () => {
     } else {
       setSugestoes([]);
     }
+  };
+
+  /**
+   * Remove um jogador de um time específico após o sorteio
+   */
+  const removerJogadorDoTime = async (teamIdx, jogadorId) => {
+    const novosTimes = times.map((time, idx) => {
+      if (idx === teamIdx) {
+        const jogadoresAtualizados = time.jogadores.filter(j => j.id !== jogadorId);
+        const nivelTotal = jogadoresAtualizados.reduce((sum, j) => sum + (Number(j.nivel) || 1), 0);
+        return {
+          ...time,
+          jogadores: jogadoresAtualizados,
+          nivelMedio: jogadoresAtualizados.length > 0 ? (nivelTotal / jogadoresAtualizados.length).toFixed(2) : "0.00"
+        };
+      }
+      return time;
+    });
+
+    setTimes(novosTimes);
+
+    // Persiste a alteração no histórico se for um sorteio salvo
+    if (currentSorteioId) {
+      try {
+        const totalJogadores = novosTimes.reduce((acc, t) => acc + t.jogadores.length, 0);
+        await api.put(`/sorteio-times/historico/${currentSorteioId}`, {
+          times: novosTimes,
+          jogadoresPresentes: totalJogadores,
+          partidaId: partidaVinculadaId || null
+        });
+        setHistorico(prev => prev.map(h => h._id === currentSorteioId ? { ...h, times: novosTimes, jogadoresPresentes: totalJogadores } : h));
+      } catch (err) {
+        console.error("Erro ao atualizar sorteio no histórico:", err);
+      }
+    }
+
+    // Sincroniza participantes com a agenda para manter a votação atualizada
+    if (partidaVinculadaId) {
+      await vincularParticipantesNoSorteio(novosTimes);
+    }
+
+    toast.success("Jogador removido do time");
   };
 
   /**
@@ -1152,7 +1203,8 @@ const aplicarFiltroPosicao = () => {
                     index={index} 
                     modoEdicao={modoEdicao} 
                     onAddPlayer={(idx) => setModalAddPlayer({ open: true, teamIndex: idx })} 
-                    onMoverJogador={moverJogador} />
+                    onMoverJogador={moverJogador}
+                    onDeletePlayer={removerJogadorDoTime} />
                 ))}
               </div>
             </div>
