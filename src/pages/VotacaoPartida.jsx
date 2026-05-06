@@ -193,10 +193,14 @@ export default function VotacaoPartida() {
     if (!partida?.gols || partida.gols.length === 0) return [];
     
     const associadosAtivosSet = new Set(jogadores); // Lista do backend de quem não está bloqueado
+    const nomeLogado = jogadorAutenticado?.nome?.trim().toLowerCase();
     const goleadoresNomes = [...new Set(partida.gols.map(g => g.jogador))].filter(Boolean);
 
     return goleadoresNomes
-      .filter(nome => associadosAtivosSet.has(nome))
+      .filter(nome => {
+        const nomeAtleta = nome.trim().toLowerCase();
+        return associadosAtivosSet.has(nome) && nomeAtleta !== nomeLogado;
+      })
       .sort((a, b) => a.localeCompare(b));
   }, [partida?.gols, jogadores]);
 
