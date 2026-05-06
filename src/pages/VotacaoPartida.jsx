@@ -175,12 +175,15 @@ export default function VotacaoPartida() {
         // 1. Regra: Somente Associados (Exclui Convidados e Visitantes)
         if (j.nivel && j.nivel !== 'Associado') return false;
 
-        // 2. Regra: Ocultar o jogador logado (não votar em si mesmo)
+        // 2. Regra: Ocultar jogadores bloqueados/inativos
+        if (j.ativo === false) return false;
+
+        // 3. Regra: Ocultar o jogador logado (não votar em si mesmo)
         const nomeAtleta = j.nome.trim().toLowerCase();
         const nomeLogado = jogadorAutenticado?.nome?.trim().toLowerCase();
         if (nomeAtleta === nomeLogado) return false;
 
-        // 3. Regra: Ignorar termos genéricos ou de teste
+        // 4. Regra: Ignorar termos genéricos ou de teste
         const placeholders = ['convidado', 'visitante', 'outro', 'teste'];
         if (placeholders.some(p => nomeAtleta.includes(p))) return false;
 
