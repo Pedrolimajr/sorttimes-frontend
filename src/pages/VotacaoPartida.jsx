@@ -202,7 +202,7 @@ export default function VotacaoPartida() {
         return associadosAtivosSet.has(nome) && nomeAtleta !== nomeLogado;
       })
       .sort((a, b) => a.localeCompare(b));
-  }, [partida?.gols, jogadores]);
+  }, [partida?.gols, jogadores, jogadorAutenticado]);
 
   const compartilharResultados = async () => {
     try {
