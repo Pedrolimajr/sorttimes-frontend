@@ -150,15 +150,15 @@ export default function PublicMatchInfo() {
   };
 
   if (carregando) return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+    <div className="min-h-screen bg-[#020617] flex items-center justify-center">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
     </div>
   );
 
   if (!partida) return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4 text-center">
+    <div className="min-h-screen bg-[#020617] text-white flex flex-col items-center justify-center p-4 text-center">
       <FaClock className="text-6xl text-gray-600 mb-4" />
-      <h1 className="text-2xl font-bold">Link Expirado</h1>
+      <h1 className="text-2xl font-black uppercase tracking-tighter">Link Expirado</h1>
       <p className="text-gray-400 mt-2">As informações da partida agora estão disponíveis apenas no painel administrativo.</p>
     </div>
   );
@@ -207,14 +207,20 @@ export default function PublicMatchInfo() {
   const golsAmarelo = partida?.gols?.filter(g => g.time === 'Amarelo').length || 0;
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-2 sm:p-4 font-sans pb-20">
+    <div className="min-h-screen bg-[#020617] text-slate-100 p-4 font-sans pb-24 relative overflow-hidden selection:bg-blue-500/30">
+      {/* Aurora Background Effects */}
+      <div className="fixed inset-0 pointer-events-none -z-10">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-cyan-500/10 blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
+      </div>
+
       <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="max-w-2xl mx-auto space-y-8">
         <header className="text-center py-6">
-          <h1 className="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300 uppercase tracking-tighter">
-            Informações da Partida
+          <h1 className="text-2xl font-black uppercase tracking-tighter">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400">Informações da Partida</span>
           </h1>
-          <p className="text-gray-500 text-xs font-bold">UNIVERSO CAJAZEIRAS</p>
+          <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.3em]">UNIVERSO CAJAZEIRAS</p>
           {countdown && (
             <div className="mt-2 inline-block px-3 py-1 bg-red-500/10 border border-red-500/20 rounded-full">
               <p className="text-[10px] text-red-400 font-bold">Este link expira em: {countdown}</p>
@@ -223,16 +229,16 @@ export default function PublicMatchInfo() {
         </header>
 
         {/* Seção de Gols */}
-        <section className="bg-gray-800/80 backdrop-blur-md rounded-3xl p-4 sm:p-6 border border-gray-700 shadow-2xl relative overflow-hidden">
+        <section className="bg-slate-900/40 backdrop-blur-3xl rounded-[2.5rem] p-6 sm:p-10 border border-white/10 shadow-2xl relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 to-transparent pointer-events-none" />
 
           {/* Placar Bonito da Partida */}
           <div className="flex items-center justify-center gap-2 mb-2">
-            <div className="h-px w-12 bg-gradient-to-r from-transparent to-gray-600"></div>
+            <div className="h-px w-12 bg-gradient-to-r from-transparent to-slate-700"></div>
             <span className="text-[11px] font-black text-blue-400 uppercase tracking-[0.4em] drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]">PLACAR</span>
-            <div className="h-px w-12 bg-gradient-to-l from-transparent to-gray-600"></div>
+            <div className="h-px w-12 bg-gradient-to-l from-transparent to-slate-700"></div>
           </div>
-          <div className="flex items-center justify-center gap-4 sm:gap-8 bg-black/40 p-6 rounded-[2rem] border border-gray-700/50 shadow-inner ring-1 ring-white/5 group">
+          <div className="flex items-center justify-center gap-4 sm:gap-8 bg-black/40 p-8 rounded-[2.5rem] border border-white/5 shadow-inner ring-1 ring-white/5 group">
             <div className="flex flex-col items-center gap-1 flex-shrink-0">
               <img src="/img/preto.png" className="w-14 h-14 object-contain drop-shadow-[0_5px_15px_rgba(0,0,0,0.5)] transform group-hover:scale-110 transition-transform duration-500" alt="Preto" />
               <span className="text-[10px] font-black text-gray-500 uppercase tracking-tighter">PRETO</span>
@@ -249,16 +255,16 @@ export default function PublicMatchInfo() {
           </div>
 
           {/* Formulário de Registro (Abaixo do Placar) */}
-          <div className="mt-8 bg-gray-900/40 p-6 rounded-3xl border border-gray-700/50 shadow-inner">
-            <h2 className="flex items-center gap-2 text-md font-bold mb-4 text-green-400">
+          <div className="mt-8 bg-black/20 p-6 rounded-3xl border border-white/5 shadow-inner">
+            <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-widest mb-4 text-green-400">
               <FaFutbol className="animate-bounce" /> Registrar Novo Gol
             </h2>
             <div className="flex gap-2 relative">
               <input 
                 value={inputGol}
                 onChange={(e) => setInputGol(e.target.value)}
-                placeholder="Nome do Jogador..."
-                className="flex-1 bg-gray-900 border border-gray-700 rounded-2xl p-4 pr-12 text-sm focus:ring-2 focus:ring-green-500 outline-none transition-all text-white"
+                placeholder="Buscar jogador associado..."
+                className="flex-1 bg-black/40 border border-white/5 rounded-xl p-4 pr-12 text-sm focus:ring-2 focus:ring-green-500 outline-none transition-all text-white"
               />
               <button 
                 type="button"
@@ -275,7 +281,7 @@ export default function PublicMatchInfo() {
                 onClick={() => registrarEvento('gol', inputGol, 'Preto')}
                 className="flex flex-col items-center gap-2 group"
               >
-                <div className="w-16 h-16 bg-gray-700/30 rounded-full flex items-center justify-center border-2 border-gray-600 group-hover:border-white transition-all p-2 overflow-hidden shadow-lg">
+                <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center border-2 border-white/10 group-hover:border-white transition-all p-2 overflow-hidden shadow-lg">
                   <img src="/img/preto.png" className="w-full h-full object-contain" alt="Camisa Preta" />
                 </div>
                 <span className="text-[10px] font-bold text-gray-400">TIME PRETO</span>
@@ -285,7 +291,7 @@ export default function PublicMatchInfo() {
                 onClick={() => registrarEvento('gol', inputGol, 'Amarelo')}
                 className="flex flex-col items-center gap-2 group"
               >
-                <div className="w-16 h-16 bg-yellow-400/10 rounded-full flex items-center justify-center border-2 border-yellow-500/30 group-hover:border-yellow-400 transition-all p-2 overflow-hidden shadow-lg">
+                <div className="w-16 h-16 bg-yellow-400/10 rounded-full flex items-center justify-center border-2 border-yellow-500/20 group-hover:border-yellow-400 transition-all p-2 overflow-hidden shadow-lg">
                   <img src="/img/amarelo.png" className="w-full h-full object-contain" alt="Camisa Amarela" />
                 </div>
                 <span className="text-[10px] font-bold text-gray-400">TIME AMARELO</span>
@@ -294,10 +300,10 @@ export default function PublicMatchInfo() {
           </div>
 
           <div className="mt-10">
-            <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest flex items-center gap-2 mb-4">
-              <div className="h-px flex-1 bg-gray-700"></div>
+            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 mb-4">
+              <div className="h-px flex-1 bg-white/5"></div>
               Gols da Partida
-              <div className="h-px flex-1 bg-gray-700"></div>
+              <div className="h-px flex-1 bg-white/5"></div>
             </h3>
             
             <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
@@ -309,20 +315,20 @@ export default function PublicMatchInfo() {
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, scale: 0.9 }}
-                    className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${bgTime[g.time] || 'bg-gray-800/40 border-gray-700'}`}
+                    className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${g.time === 'Amarelo' ? 'bg-yellow-400/5 border-yellow-500/20' : 'bg-black/20 border-white/5'}`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gray-900/50 border border-gray-700 flex items-center justify-center p-1.5 overflow-hidden shadow-inner">
+                      <div className="w-10 h-10 rounded-full bg-black/40 border border-white/5 flex items-center justify-center p-1.5 overflow-hidden shadow-inner">
                         <img src={`/img/${g.time?.toLowerCase()}.png`} className="w-full h-full object-contain" alt={g.time} />
                       </div>
                       <div>
-                        <p className="text-sm font-bold flex items-center gap-2">
+                        <p className="text-sm font-black text-white flex items-center gap-2 uppercase tracking-tight">
                           {g.jogador === vencedorCoroa && <FaCrown className="text-yellow-500 drop-shadow-glow" />}
                           {g.jogador}
                         </p>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="bg-green-600 text-white text-[10px] font-black px-2 py-0.5 rounded shadow-sm border border-green-500/50 uppercase">{g.total} {g.total > 1 ? 'GOLS' : 'GOL'}</span>
-                          <span className="text-[10px] text-gray-500 font-bold uppercase">• TIME {g.time?.toUpperCase()}</span>
+                          <span className="bg-green-600 text-white text-[9px] font-black px-2 py-0.5 rounded shadow-lg shadow-green-500/20 uppercase">{g.total} {g.total > 1 ? 'GOLS' : 'GOL'}</span>
+                          <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest">• TIME {g.time?.toUpperCase()}</span>
                         </div>
                       </div>
                     </div>
@@ -342,15 +348,15 @@ export default function PublicMatchInfo() {
         </section>
 
         {/* Seção de Anotações do Juiz */}
-        <section className="bg-gray-800/50 backdrop-blur-sm rounded-3xl p-4 sm:p-6 border border-gray-700 shadow-2xl">
-          <h2 className="flex items-center gap-2 text-lg font-bold mb-4 text-blue-400">
+        <section className="bg-slate-900/40 backdrop-blur-3xl rounded-[2.5rem] p-6 sm:p-10 border border-white/10 shadow-2xl">
+          <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-widest mb-4 text-blue-400">
             <FaStickyNote /> Anotações do Juiz
           </h2>
           <textarea
             value={partida?.observacoes || ''}
             onChange={(e) => setPartida({ ...partida, observacoes: e.target.value })}
             onBlur={(e) => salvarNotas(e.target.value)}
-            placeholder="Clique aqui para escrever observações sobre a partida (ex: conduta, clima, incidentes)..."
+            placeholder="Observações da arbitragem..."
             className="w-full bg-gray-900 border border-gray-700 rounded-2xl p-4 text-sm text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none h-32 placeholder:text-gray-600 shadow-inner"
           />
           <div className="mt-2 text-[10px] text-gray-500 italic text-right">
@@ -359,7 +365,7 @@ export default function PublicMatchInfo() {
         </section>
 
         {/* Seção de Cartões (Grid Rápido) */}
-    <h2 className="flex items-center justify-center gap-2 text-lg font-bold mb-4 text-orange-400">
+    <h2 className="flex items-center justify-center gap-2 text-sm font-black uppercase tracking-widest mb-4 text-orange-400">
       <FaIdCard /> Cartões da Partida
     </h2>
         <section className="grid grid-cols-3 gap-3">
@@ -370,14 +376,14 @@ export default function PublicMatchInfo() {
           ].map(card => (
             <div 
               key={card.tipo} 
-              className={`bg-gray-800/60 backdrop-blur-md p-4 rounded-3xl border border-gray-700 text-center flex flex-col items-center shadow-2xl transition-all hover:scale-[1.02] ${card.shadow}`}
+              className={`bg-slate-900/40 backdrop-blur-3xl p-6 rounded-[2rem] border border-white/10 text-center flex flex-col items-center shadow-2xl transition-all hover:scale-[1.02] ${card.shadow}`}
             >
-              <div className={`w-8 h-12 ${card.cor} rounded-lg mb-4 shadow-lg ring-2 ring-black/20`} />
+              <div className={`w-8 h-12 ${card.cor} rounded-lg mb-6 shadow-lg ring-2 ring-black/20`} />
               <div className="relative w-full mb-3">
                 <input 
                   id={`input-${card.tipo}`}
-                  placeholder="Nome do Jogador..."
-                  className="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 pr-10 text-sm text-center outline-none focus:border-white transition-all text-white placeholder:text-gray-600"
+                  placeholder="Nome..."
+                  className="w-full bg-black/40 border border-white/5 rounded-xl p-3 pr-10 text-sm text-center outline-none focus:border-white transition-all text-white placeholder:text-gray-600"
                 />
                 <button 
                   type="button"
@@ -394,14 +400,14 @@ export default function PublicMatchInfo() {
                   registrarEvento(card.tipo, inp.value);
                   inp.value = '';
                 }}
-                className="bg-gray-700 hover:bg-gray-600 text-xs font-black px-2 py-3 rounded-xl w-full transition-all"
+                className="bg-slate-800 hover:bg-slate-700 text-[10px] font-black tracking-widest uppercase px-2 py-3 rounded-xl w-full transition-all text-slate-300"
               >
                 REGISTRAR
               </button>
 
               {/* Lista de jogadores com este cartão - Aplicado scroll oculto para manter padrão */}
               <div className="mt-3 w-full space-y-2 max-h-[150px] overflow-y-auto no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                {partida[card.field]?.map((nome, idx) => (
+                {partida && partida[card.field]?.map((nome, idx) => (
                   <div key={`${nome}-${idx}`} className="text-sm bg-gray-900/80 text-white font-bold py-3 px-3 rounded-2xl border border-gray-700 flex justify-between items-center shadow-inner">
                     <span className="truncate flex-1 text-left">{nome}</span>
                     <div className="flex gap-1">
@@ -423,10 +429,10 @@ export default function PublicMatchInfo() {
               initial={{ scale: 0.9, opacity: 0 }} 
               animate={{ scale: 1, opacity: 1 }} 
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-gray-800 border border-gray-700 p-6 rounded-3xl max-w-sm w-full flex flex-col max-h-[70vh] shadow-2xl"
+              className="bg-slate-900 border border-white/10 p-8 rounded-[2.5rem] max-w-sm w-full flex flex-col max-h-[70vh] shadow-2xl backdrop-blur-xl"
             >
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold flex items-center gap-2 text-white">
+                <h3 className="text-xl font-black uppercase tracking-tighter flex items-center gap-2 text-white">
                   <FaUser className="text-blue-400" /> Escolher Jogador
                 </h3>
                 <button onClick={() => setModalSelecao({ aberto: false, tipo: '', inputId: null })} className="text-gray-400 hover:text-white">
@@ -441,7 +447,7 @@ export default function PublicMatchInfo() {
                   placeholder="Pesquisar jogador..."
                   value={filtroPesquisa}
                   onChange={(e) => setFiltroPesquisa(e.target.value)}
-                  className="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 pl-10 text-sm text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                  className="w-full bg-black/40 border border-white/5 rounded-xl p-3 pl-10 text-sm text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                 />
                 <FaUser className="absolute left-3 top-3.5 text-gray-500 text-sm" />
               </div>
@@ -475,7 +481,7 @@ export default function PublicMatchInfo() {
                         setModalSelecao({ aberto: false, tipo: '', inputId: null });
                         setFiltroPesquisa('');
                       }}
-                      className="w-full text-left p-3 rounded-xl bg-gray-900/50 hover:bg-gray-700 border border-gray-700 transition-colors text-sm font-bold text-white truncate"
+                      className="w-full text-left p-3 rounded-xl bg-black/20 hover:bg-white/5 border border-white/5 transition-colors text-sm font-bold text-white truncate"
                     >
                       {nome}
                     </button>
@@ -485,7 +491,7 @@ export default function PublicMatchInfo() {
               </div>
               <button 
                 onClick={() => setModalSelecao({ aberto: false, tipo: '', inputId: null })} 
-                className="mt-4 w-full py-3 bg-gray-700 hover:bg-gray-600 rounded-xl font-bold text-xs text-white uppercase">Cancelar</button>
+                className="mt-4 w-full py-3 bg-slate-800 hover:bg-slate-700 rounded-xl font-black text-[10px] tracking-widest text-slate-400 uppercase transition-all">Cancelar</button>
             </motion.div>
           </div>
         )}
@@ -495,15 +501,15 @@ export default function PublicMatchInfo() {
       <AnimatePresence>
         {modalConfirm.aberto && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-gray-800 border border-gray-700 p-6 rounded-3xl max-w-sm w-full text-center">
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-slate-900 border border-white/10 p-8 rounded-[2.5rem] max-w-sm w-full text-center shadow-2xl">
               <div className="w-16 h-16 bg-red-500/20 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <FaExclamationTriangle size={30} />
               </div>
-              <h3 className="text-xl font-bold mb-2">{modalConfirm.titulo}</h3>
+              <h3 className="text-xl font-black uppercase tracking-tighter mb-2">{modalConfirm.titulo}</h3>
               <p className="text-gray-400 text-sm mb-6">{modalConfirm.msg}</p>
               <div className="flex gap-3">
-                <button onClick={() => setModalConfirm({ ...modalConfirm, aberto: false })} className="flex-1 py-3 rounded-2xl bg-gray-700 font-bold">VOLTAR</button>
-                <button onClick={confirmarRemover} className="flex-1 py-3 rounded-2xl bg-red-600 font-bold">EXCLUIR</button>
+                <button onClick={() => setModalConfirm({ ...modalConfirm, aberto: false })} className="flex-1 py-3 rounded-xl bg-slate-800 font-black text-[10px] tracking-widest">VOLTAR</button>
+                <button onClick={confirmarRemover} className="flex-1 py-3 rounded-xl bg-red-600 font-black text-[10px] tracking-widest">EXCLUIR</button>
               </div>
             </motion.div>
           </div>
@@ -514,18 +520,18 @@ export default function PublicMatchInfo() {
       <AnimatePresence>
         {modalEdit.aberto && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="bg-gray-800 border border-gray-700 p-6 rounded-3xl max-w-sm w-full">
-              <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><FaEdit className="text-blue-400" /> Editar Registro</h3>
+            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="bg-slate-900 border border-white/10 p-8 rounded-[2.5rem] max-w-sm w-full shadow-2xl">
+              <h3 className="text-xl font-black uppercase tracking-tighter mb-4 flex items-center gap-2"><FaEdit className="text-blue-400" /> Editar Registro</h3>
               <form onSubmit={confirmarEditar} className="space-y-4">
                 <input 
                   autoFocus
                   value={modalEdit.valor}
                   onChange={(e) => setModalEdit({ ...modalEdit, valor: e.target.value })}
-                  className="w-full bg-gray-900 border border-gray-700 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full bg-black/40 border border-white/5 p-4 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-white"
                 />
                 <div className="flex gap-3">
-                  <button type="button" onClick={() => setModalEdit({ ...modalEdit, aberto: false })} className="flex-1 py-3 rounded-2xl bg-gray-700 font-bold">CANCELAR</button>
-                  <button type="submit" className="flex-1 py-3 rounded-2xl bg-blue-600 font-bold">SALVAR</button>
+                  <button type="button" onClick={() => setModalEdit({ ...modalEdit, aberto: false })} className="flex-1 py-3 rounded-xl bg-slate-800 font-black text-[10px] tracking-widest uppercase">CANCELAR</button>
+                  <button type="submit" className="flex-1 py-3 rounded-xl bg-blue-600 font-black text-[10px] tracking-widest uppercase shadow-lg shadow-blue-500/20">SALVAR</button>
                 </div>
               </form>
             </motion.div>
