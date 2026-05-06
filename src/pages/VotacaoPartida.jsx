@@ -159,31 +159,26 @@ export default function VotacaoPartida() {
     return p?.foto || null;
   };
 
-  // Lista filtrada de jogadores para votação: 
-  // Somente associados sorteados na partida, excluindo o jogador logado e placeholders.
+  // 1. Lista para Melhor e Pereba da Partida (Baseada no Sorteio/Participantes ativos)
   const jogadoresParaVotar = useMemo(() => {
-    // Prioridade: Usar os participantes sorteados vinculados à partida.
-    // Fallback: Usar a lista 'jogadores' enviada pelo backend (que contém os associados gerais).
+    const associadosAtivosSet = new Set(jogadores); // Lista do backend de quem não está bloqueado
     const base = (partida?.participantes && partida.participantes.length > 0)
       ? partida.participantes
       : jogadores.map(n => ({ nome: n, nivel: 'Associado' }));
 
+    const nomeLogado = jogadorAutenticado?.nome?.trim().toLowerCase();
+
     return base
       .filter(j => {
         if (!j || !j.nome) return false;
+        if (!associadosAtivosSet.has(j.nome)) return false; // Bloqueio soberano
         
-        // 1. Regra: Somente Associados (Exclui Convidados e Visitantes)
         if (j.nivel && j.nivel !== 'Associado') return false;
-
-        // 2. Regra: Ocultar jogadores bloqueados/inativos
         if (j.ativo === false) return false;
 
-        // 3. Regra: Ocultar o jogador logado (não votar em si mesmo)
         const nomeAtleta = j.nome.trim().toLowerCase();
-        const nomeLogado = jogadorAutenticado?.nome?.trim().toLowerCase();
         if (nomeAtleta === nomeLogado) return false;
 
-        // 4. Regra: Ignorar termos genéricos ou de teste
         const placeholders = ['convidado', 'visitante', 'outro', 'teste'];
         if (placeholders.some(p => nomeAtleta.includes(p))) return false;
 
@@ -193,19 +188,17 @@ export default function VotacaoPartida() {
       .sort((a, b) => a.localeCompare(b));
   }, [partida, jogadores, jogadorAutenticado]);
 
-  // Lista de jogadores que fizeram gol, filtrada para incluir apenas elegíveis para votar
+  // 2. Lista para Gol Mais Bonito (Baseada no Resumo de Gols, respeitando bloqueios)
   const jogadoresQueFizeramGol = useMemo(() => {
     if (!partida?.gols || partida.gols.length === 0) return [];
-    const goleadores = new Set();
-    const elegiveisParaVotarSet = new Set(jogadoresParaVotar); // Convert to Set for faster lookup
+    
+    const associadosAtivosSet = new Set(jogadores); // Lista do backend de quem não está bloqueado
+    const goleadoresNomes = [...new Set(partida.gols.map(g => g.jogador))].filter(Boolean);
 
-    partida.gols.forEach(gol => {
-      if (gol.jogador && elegiveisParaVotarSet.has(gol.jogador)) {
-        goleadores.add(gol.jogador);
-      }
-    });
-    return Array.from(goleadores).sort((a, b) => a.localeCompare(b));
-  }, [partida?.gols, jogadoresParaVotar]);
+    return goleadoresNomes
+      .filter(nome => associadosAtivosSet.has(nome))
+      .sort((a, b) => a.localeCompare(b));
+  }, [partida?.gols, jogadores]);
 
   const compartilharResultados = async () => {
     try {
