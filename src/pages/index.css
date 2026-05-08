@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body {
+    @apply bg-[#020617] text-slate-100; /* Define a cor de fundo e texto padrão para todo o app */
+  }
+}
