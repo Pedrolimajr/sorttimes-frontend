@@ -12,8 +12,6 @@ export default function ConfirmarPresenca() {
   // Modo de visualização: jogador ou admin
   const [modo, setModo] = useState('jogador'); // 'jogador' | 'admin'
 
-  // Modo de login do jogador
-  const [loginMode, setLoginMode] = useState('nome'); // 'nome' | 'telefone'
   const [tentandoLoginAutomatico, setTentandoLoginAutomatico] = useState(true);
 
   // Estado jogador
@@ -36,7 +34,6 @@ export default function ConfirmarPresenca() {
   const [formData, setFormData] = useState({
     nome: '',
     password: '', // DDMMAAAA
-    telefone: ''
   });
 
   // Nome salvo localmente para agilizar login de jogador
@@ -393,31 +390,8 @@ export default function ConfirmarPresenca() {
                   onSubmit={handleLogin}
                   className="space-y-4"
                 >
-                  {/* Abas de Login do Jogador */}
-                  <div className="flex bg-gray-800/70 rounded-xl p-1 mb-6">
-                    <button
-                      type="button"
-                      onClick={() => setLoginMode('nome')}
-                      className={`flex-1 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
-                        loginMode === 'nome' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'
-                      }`}
-                    >
-                      <FaUser /> Nome
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setLoginMode('telefone')}
-                      className={`flex-1 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
-                        loginMode === 'telefone' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'
-                      }`}
-                    >
-                      <FaPhone /> Telefone
-                    </button>
-                  </div>
-
                   <AnimatePresence mode="wait">
-                    {loginMode === 'nome' ? (
-                      <motion.div key="login-nome" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
+                    <motion.div key="login-nome" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
                         {/* Nome opcional – fica oculto quando já existe nome salvo para agilizar confirmação */}
                         {!usarNomeSalvo && (
                           <div className="space-y-2">
@@ -493,54 +467,20 @@ export default function ConfirmarPresenca() {
                           </div>
                           <p className="text-gray-500 text-xs mt-1">Apenas números. Ex: 15051990</p>
                         </div>
-                      </motion.div>
-                    ) : (
-                      <motion.div key="login-telefone" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
-                        <div className="space-y-2">
-                          <label className="text-gray-300 text-sm font-medium flex items-center gap-2">
-                            <GiSmartphone className="text-blue-500" /> Seu Telefone (com DDD)
-                          </label>
-                          <input
-                            type="tel"
-                            inputMode="numeric"
-                            value={formData.telefone}
-                            onChange={(e) => setFormData({ ...formData, telefone: e.target.value.replace(/\D/g, '') })}
-                            placeholder="Ex: 11987654321"
-                            className="w-full bg-gray-700 border border-gray-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                            required
-                          />
-                          <p className="text-gray-500 text-xs mt-1">Apenas números. O login é sem senha.</p>
-                        </div>
-                      </motion.div>
-                    )}
+                    </motion.div>
                   </AnimatePresence>
 
-                  {loginMode === 'nome' ? (
-                    <button
-                      type="submit"
-                      disabled={submetendo}
-                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold py-3 rounded-2xl shadow-lg shadow-blue-600/30 transition-all transform active:scale-95 flex items-center justify-center gap-2"
-                    >
-                      {submetendo ? (
-                        <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
-                      ) : (
-                        'Acessar com Nome'
-                      )}
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleLoginTelefone}
-                      disabled={submetendo}
-                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold py-3 rounded-2xl shadow-lg shadow-blue-600/30 transition-all transform active:scale-95 flex items-center justify-center gap-2"
-                    >
-                      {submetendo ? (
-                        <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
-                      ) : (
-                        'Acessar com Telefone'
-                      )}
-                    </button>
-                  )}
+                  <button
+                    type="submit"
+                    disabled={submetendo}
+                    className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold py-3 rounded-2xl shadow-lg shadow-blue-600/30 transition-all transform active:scale-95 flex items-center justify-center gap-2"
+                  >
+                    {submetendo ? (
+                      <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+                    ) : (
+                      'Acessar'
+                    )}
+                  </button>
                 </motion.form>
               ) : (
                 <motion.div
