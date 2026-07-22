@@ -396,7 +396,7 @@ export default function ConfirmarPresenca() {
                         {!usarNomeSalvo && (
                           <div className="space-y-2">
                             <label className="text-gray-300 text-sm font-medium flex items-center gap-2">
-                              <FaUser className="text-blue-500" /> Nome e Sobrenome
+                              <FaUser className="text-blue-500" /> Nome
                             </label>
                             <input
                               type="text"
