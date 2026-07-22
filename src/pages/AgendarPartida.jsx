@@ -215,8 +215,16 @@ export default function AgendarPartida() {
     const toastId = toast.loading("Gerando convites...");
 
     try {
+      // Busca o linkId da convocação geral que já foi gerada.
+      const linkIdConvocacaoGeral = localStorage.getItem('linkPresencaId');
+      if (!linkIdConvocacaoGeral) {
+        toast.dismiss(toastId);
+        toast.error("É necessário gerar a 'Convocação Geral' primeiro.");
+        return;
+      }
+
       // A rota correta usa o linkId da convocação geral já existente
-      const res = await api.post(`/gerar-convites-individuais/${linkIdGerado}`, {
+      const res = await api.post(`/gerar-convites-individuais/${linkIdConvocacaoGeral}`, {
         jogadoresIds: Array.from(jogadoresSelecionados), // Envia os IDs selecionados
       });
 
