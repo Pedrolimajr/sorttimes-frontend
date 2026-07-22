@@ -169,8 +169,9 @@ export default function AgendarPartida() {
   };
 
   const abrirModalSelecao = () => {
-    if (!linkIdGerado) {
-      toast.warn('Primeiro, gere o link de convocação geral.');
+    // Agora não depende mais do link geral, apenas dos dados do formulário
+    if (!formData.data || !formData.horario) {
+      toast.warn('Preencha a data e o horário da partida antes de enviar os convites.');
       return;
     }
     setModalSelecaoJogadoresAberto(true);
@@ -178,18 +179,23 @@ export default function AgendarPartida() {
 
   const handleToggleJogador = (id) => {
     setJogadoresSelecionados(prev => {
-      const novosSelecionados = new Set(prev);
-      if (novosSelecionados.has(id)) {
-        novosSelecionados.delete(id);
+      const newSelection = new Set(prev);
+      if (newSelection.has(id)) {
+        newSelection.delete(id);
       } else {
-        novosSelecionados.add(id);
+        newSelection.add(id);
       }
-      return novosSelecionados;
+      return newSelection;
     });
   };
 
   const handleToggleTodosJogadores = () => {
-    if (jogadoresSelecionados.size === jogadoresParaSelecao.length) {
+    // Filtra apenas jogadores com telefone para a seleção em massa
+    const jogadoresComTelefone = jogadoresParaSelecao.filter(j => j.telefone && j.telefone.trim() !== '');
+    const todosComTelefoneIds = new Set(jogadoresComTelefone.map(j => j._id));
+
+    // Se todos com telefone já estão selecionados, desmarca todos. Senão, marca todos com telefone.
+    if (jogadoresSelecionados.size === todosComTelefoneIds.size) {
       setJogadoresSelecionados(new Set()); // Desmarcar todos
     } else {
       const todosIds = new Set(jogadoresParaSelecao.map(j => j._id));
@@ -209,14 +215,19 @@ export default function AgendarPartida() {
     const toastId = toast.loading("Gerando convites...");
 
     try {
-      const res = await api.post(`/gerar-convites-individuais/${linkIdGerado}`, {
-        jogadoresIds: Array.from(jogadoresSelecionados) // Envia os IDs selecionados
+      // Combina data e hora para o formato esperado pelo backend
+      const dataJogo = `${formData.data}T${formData.horario}`;
+
+      const res = await api.post(`/gerar-convocacao-e-convites`, {
+        jogadoresIds: Array.from(jogadoresSelecionados), // Envia os IDs selecionados
+        dataJogo: dataJogo // Envia os dados da partida
       });
+
       if (res.data.convites && res.data.convites.length > 0) {
         setListaConvites(res.data.convites);
         setModalConvitesAberto(true);
         toast.update(toastId, { render: `${res.data.convites.length} convites gerados!`, type: "success", isLoading: false, autoClose: 4000 });
-      } else {
+      } else if (res.data.message) { // Se o backend retornar uma mensagem específica
         toast.update(toastId, { render: "Nenhum dos jogadores selecionados possui telefone.", type: "info", isLoading: false, autoClose: 4000 });
       }
     } catch (error) {
@@ -470,7 +481,7 @@ export default function AgendarPartida() {
                   <motion.button
                     type="button"
                     onClick={abrirModalSelecao}
-                    disabled={!linkIdGerado}
+                    disabled={!formData.data || !formData.horario}
                     className="flex-1 py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white rounded-xl font-black uppercase tracking-widest shadow-xl transition-all flex items-center justify-center gap-3 text-sm"
                   >
                     {loadingConvites ? (
@@ -661,7 +672,10 @@ export default function AgendarPartida() {
                   onClick={handleToggleTodosJogadores}
                   className="w-full text-center text-xs font-bold uppercase tracking-wider py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
                 >
-                  {jogadoresSelecionados.size === jogadoresParaSelecao.length ? 'Desmarcar Todos' : 'Marcar Todos'}
+                  {jogadoresSelecionados.size === jogadoresParaSelecao.filter(j => j.telefone).length 
+                    ? 'Desmarcar Todos' 
+                    : 'Marcar Todos (com telefone)'
+                  }
                 </button>
               </div>
 
@@ -682,7 +696,10 @@ export default function AgendarPartida() {
                       ) : (
                         <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center"><FaUser className="text-gray-500" /></div>
                       )}
-                      <span className="text-white font-medium">{jogador.nome}</span>
+                      <div className="flex flex-col">
+                        <span className="text-white font-medium">{jogador.nome}</span>
+                        {!jogador.telefone && <span className="text-red-500 text-[9px] font-bold">SEM TELEFONE</span>}
+                      </div>
                     </div>
                     <div className={`w-5 h-5 rounded-full flex items-center justify-center border-2 ${jogadoresSelecionados.has(jogador._id) ? 'bg-blue-500 border-blue-400' : 'border-gray-600'}`}>
                       {jogadoresSelecionados.has(jogador._id) && <FaCheck className="text-white text-xs" />}
