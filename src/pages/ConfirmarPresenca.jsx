@@ -444,7 +444,7 @@ export default function ConfirmarPresenca() {
 
                         <div className="space-y-2">
                           <label className="text-gray-300 text-sm font-medium flex items-center gap-2">
-                            <FaLock className="text-blue-500" /> Data de Nascimento (Senha)
+                            <FaLock className="text-blue-500" /> Data de Nascimento
                           </label>
                           <div className="relative">
                             <input
