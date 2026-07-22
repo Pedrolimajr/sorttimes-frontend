@@ -1,7 +1,7 @@
 // src/pages/AgendarPartida.jsx
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FaCalendarAlt, FaClock, FaMapMarkerAlt, FaStickyNote, FaSave, FaShare, FaLink, FaBullhorn, FaTimes, FaCheck, FaWhatsapp } from "react-icons/fa";
+import { FaCalendarAlt, FaClock, FaMapMarkerAlt, FaStickyNote, FaSave, FaShare, FaLink, FaBullhorn, FaTimes, FaCheck, FaWhatsapp, FaUser, FaSearch } from "react-icons/fa";
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import api from '../services/api';
 import { toast, ToastContainer } from 'react-toastify';
@@ -32,6 +32,11 @@ export default function AgendarPartida() {
   const [linkIdGerado, setLinkIdGerado] = useState(() => localStorage.getItem('linkPresencaId')); // Carrega do localStorage
   const [modalConvitesAberto, setModalConvitesAberto] = useState(false);
   const [listaConvites, setListaConvites] = useState([]);
+  
+  // Estados para o novo modal de seleção de jogadores
+  const [modalSelecaoJogadoresAberto, setModalSelecaoJogadoresAberto] = useState(false);
+  const [jogadoresParaSelecao, setJogadoresParaSelecao] = useState([]);
+  const [jogadoresSelecionados, setJogadoresSelecionados] = useState(new Set());
 
   // Carrega dados da partida para edição
   useEffect(() => {
@@ -62,6 +67,19 @@ export default function AgendarPartida() {
       }
     };
     fetchJogadores();
+
+    // Carrega todos os jogadores ativos para o modal de seleção
+    const fetchJogadoresParaSelecao = async () => {
+      try {
+        const response = await api.get('/jogadores'); // A rota já filtra por ativos por padrão
+        const jogadoresAtivos = response.data?.data || [];
+        setJogadoresParaSelecao(jogadoresAtivos);
+      } catch (error) {
+        console.error("Erro ao carregar jogadores para seleção", error);
+      }
+    };
+    fetchJogadoresParaSelecao();
+
   }, []);
 
   const openTimePicker = () => {
@@ -150,24 +168,56 @@ export default function AgendarPartida() {
     }
   };
 
-  // Função para gerar os convites individuais via WhatsApp
-  const gerarConvitesIndividuais = async () => {
+  const abrirModalSelecao = () => {
     if (!linkIdGerado) {
       toast.warn('Primeiro, gere o link de convocação geral.');
       return;
     }
+    setModalSelecaoJogadoresAberto(true);
+  };
+
+  const handleToggleJogador = (id) => {
+    setJogadoresSelecionados(prev => {
+      const novosSelecionados = new Set(prev);
+      if (novosSelecionados.has(id)) {
+        novosSelecionados.delete(id);
+      } else {
+        novosSelecionados.add(id);
+      }
+      return novosSelecionados;
+    });
+  };
+
+  const handleToggleTodosJogadores = () => {
+    if (jogadoresSelecionados.size === jogadoresParaSelecao.length) {
+      setJogadoresSelecionados(new Set()); // Desmarcar todos
+    } else {
+      const todosIds = new Set(jogadoresParaSelecao.map(j => j._id));
+      setJogadoresSelecionados(todosIds); // Marcar todos
+    }
+  };
+
+  // Função para gerar os convites individuais via WhatsApp
+  const gerarConvitesIndividuais = async () => {
+    if (jogadoresSelecionados.size === 0) {
+      toast.warn('Selecione pelo menos um jogador.');
+      return;
+    }
 
     setLoadingConvites(true);
+    setModalSelecaoJogadoresAberto(false); // Fecha o modal de seleção
     const toastId = toast.loading("Gerando convites...");
 
     try {
-      const res = await api.post(`/gerar-convites-individuais/${linkIdGerado}`);
+      const res = await api.post(`/gerar-convites-individuais/${linkIdGerado}`, {
+        jogadoresIds: Array.from(jogadoresSelecionados) // Envia os IDs selecionados
+      });
       if (res.data.convites && res.data.convites.length > 0) {
         setListaConvites(res.data.convites);
         setModalConvitesAberto(true);
         toast.update(toastId, { render: `${res.data.convites.length} convites gerados!`, type: "success", isLoading: false, autoClose: 4000 });
       } else {
-        toast.update(toastId, { render: "Nenhum jogador com telefone para enviar convite.", type: "info", isLoading: false, autoClose: 4000 });
+        toast.update(toastId, { render: "Nenhum dos jogadores selecionados possui telefone.", type: "info", isLoading: false, autoClose: 4000 });
       }
     } catch (error) {
       toast.update(toastId, { render: error.response?.data?.message || 'Erro ao gerar convites.', type: "error", isLoading: false, autoClose: 4000 });
@@ -419,8 +469,8 @@ export default function AgendarPartida() {
                   </motion.button>
                   <motion.button
                     type="button"
-                    onClick={gerarConvitesIndividuais}
-                    disabled={!linkIdGerado || loadingConvites}
+                    onClick={abrirModalSelecao}
+                    disabled={!linkIdGerado}
                     className="flex-1 py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white rounded-xl font-black uppercase tracking-widest shadow-xl transition-all flex items-center justify-center gap-3 text-sm"
                   >
                     {loadingConvites ? (
@@ -573,6 +623,82 @@ export default function AgendarPartida() {
                     <FaShare className="text-green-400" />
                   </a>
                 ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal de Seleção de Jogadores */}
+      <AnimatePresence>
+        {modalSelecaoJogadoresAberto && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+            onClick={() => setModalSelecaoJogadoresAberto(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-slate-900 border border-white/10 rounded-[2rem] w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6 border-b border-white/5 bg-black/20">
+                <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+                  <FaUser className="text-blue-400" />
+                  Selecionar Jogadores para Convite
+                </h3>
+                <p className="text-gray-400 text-sm">
+                  Escolha para quem enviar o convite individual.
+                </p>
+              </div>
+
+              <div className="p-4 border-b border-white/5">
+                <button
+                  onClick={handleToggleTodosJogadores}
+                  className="w-full text-center text-xs font-bold uppercase tracking-wider py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
+                >
+                  {jogadoresSelecionados.size === jogadoresParaSelecao.length ? 'Desmarcar Todos' : 'Marcar Todos'}
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto space-y-2 p-6 no-scrollbar">
+                {jogadoresParaSelecao.map((jogador) => (
+                  <div
+                    key={jogador._id}
+                    onClick={() => handleToggleJogador(jogador._id)}
+                    className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all border ${
+                      jogadoresSelecionados.has(jogador._id)
+                        ? 'bg-blue-600/10 border-blue-500/30'
+                        : 'bg-gray-900 border-gray-800 hover:bg-gray-700'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      {jogador.foto ? (
+                        <img src={jogador.foto} alt={jogador.nome} className="w-8 h-8 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center"><FaUser className="text-gray-500" /></div>
+                      )}
+                      <span className="text-white font-medium">{jogador.nome}</span>
+                    </div>
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center border-2 ${jogadoresSelecionados.has(jogador._id) ? 'bg-blue-500 border-blue-400' : 'border-gray-600'}`}>
+                      {jogadoresSelecionados.has(jogador._id) && <FaCheck className="text-white text-xs" />}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="p-6 border-t border-white/5 bg-black/20">
+                <button
+                  onClick={gerarConvitesIndividuais}
+                  disabled={jogadoresSelecionados.size === 0 || loadingConvites}
+                  className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:cursor-not-allowed text-white rounded-xl font-black uppercase tracking-widest shadow-xl transition-all flex items-center justify-center gap-2 text-sm"
+                >
+                  Gerar {jogadoresSelecionados.size > 0 ? `(${jogadoresSelecionados.size})` : ''} Convites
+                </button>
               </div>
             </motion.div>
           </motion.div>
