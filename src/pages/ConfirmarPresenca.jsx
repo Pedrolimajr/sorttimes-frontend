@@ -34,8 +34,7 @@ export default function ConfirmarPresenca() {
   
   const [formData, setFormData] = useState({
     nome: '',
-    password: '', // DDMMAAAA
-    telefone: ''
+    password: '' // DDMMAAAA
   });
 
   // Nome salvo localmente para agilizar login de jogador
@@ -156,35 +155,6 @@ export default function ConfirmarPresenca() {
       toast.error(error.response?.data?.message || 'Erro ao autenticar. Verifique seus dados.');
     } finally {
       setSubmetendo(false);
-    }
-  };
-
-  const handleLoginTelefone = async (e) => {
-    e.preventDefault();
-    if (!formData.telefone) {
-      toast.warn('Preencha seu número de telefone com DDD.');
-      return;
-    }
-
-    try {
-      setSubmetendo(true);
-      const response = await api.post(`/presenca/${linkId}/auth-telefone`, {
-        telefone: formData.telefone
-      });
-
-      if (response.data.success) {
-        setJogadorLogado(response.data.jogador);
-        setSessionId(response.data.sessionId || null);
-        setAutenticado(true);
-
-        toast.success(`Bem-vindo, ${response.data.jogador.nome}!`);
-      }
-    } catch (error) {
-      console.error('Erro na autenticação por telefone:', error);
-      toast.error(error.response?.data?.message || 'Erro ao autenticar. Verifique seu número.');
-    } finally {
-      setSubmetendo(false);
-      setFormData(prev => ({ ...prev, telefone: '' })); // Limpa o campo após a tentativa
     }
   };
 
