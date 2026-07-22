@@ -17,6 +17,7 @@ export default function AgendarPartida() {
     observacoes: ""
   });
   const [loading, setLoading] = useState(false);
+  const [loadingConvites, setLoadingConvites] = useState(false); // Estado de loading para convites
   const [jogadores, setJogadores] = useState([]);
   const [error, setError] = useState(null);
   const [modoEdicao, setModoEdicao] = useState(false);
@@ -28,7 +29,7 @@ export default function AgendarPartida() {
   const minutes = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'));
 
   // Estados para convites individuais
-  const [linkIdGerado, setLinkIdGerado] = useState(null);
+  const [linkIdGerado, setLinkIdGerado] = useState(() => localStorage.getItem('linkPresencaId')); // Carrega do localStorage
   const [modalConvitesAberto, setModalConvitesAberto] = useState(false);
   const [listaConvites, setListaConvites] = useState([]);
 
@@ -156,21 +157,22 @@ export default function AgendarPartida() {
       return;
     }
 
-    const toastId = toast.loading("Gerando convites individuais...");
+    setLoadingConvites(true);
+    const toastId = toast.loading("Gerando convites...");
 
     try {
       const res = await api.post(`/gerar-convites-individuais/${linkIdGerado}`);
       if (res.data.convites && res.data.convites.length > 0) {
         setListaConvites(res.data.convites);
         setModalConvitesAberto(true);
-        toast.update(toastId, { render: `${res.data.convites.length} convites gerados!`, type: "success", isLoading: false, autoClose: 3000 });
+        toast.update(toastId, { render: `${res.data.convites.length} convites gerados!`, type: "success", isLoading: false, autoClose: 4000 });
       } else {
-        toast.update(toastId, { render: "Nenhum jogador com telefone para enviar convite.", type: "info", isLoading: false, autoClose: 3000 });
+        toast.update(toastId, { render: "Nenhum jogador com telefone para enviar convite.", type: "info", isLoading: false, autoClose: 4000 });
       }
     } catch (error) {
-      toast.update(toastId, { render: error.response?.data?.message || 'Erro ao gerar convites.', type: "error", isLoading: false, autoClose: 3000 });
+      toast.update(toastId, { render: error.response?.data?.message || 'Erro ao gerar convites.', type: "error", isLoading: false, autoClose: 4000 });
     } finally {
-      setLoading(false);
+      setLoadingConvites(false);
     }
   };
 
@@ -418,11 +420,17 @@ export default function AgendarPartida() {
                   <motion.button
                     type="button"
                     onClick={gerarConvitesIndividuais}
-                    disabled={!linkIdGerado}
+                    disabled={!linkIdGerado || loadingConvites}
                     className="flex-1 py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white rounded-xl font-black uppercase tracking-widest shadow-xl transition-all flex items-center justify-center gap-3 text-sm"
                   >
-                    <FaWhatsapp className="text-lg" />
-                    Convites Individuais
+                    {loadingConvites ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <span>Gerando...</span>
+                      </>
+                    ) : (
+                      <><FaWhatsapp className="text-lg" /> Convites Individuais</>
+                    )}
                   </motion.button>
                 </div>
               </div>
