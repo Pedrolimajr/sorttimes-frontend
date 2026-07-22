@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaUser, FaCheckCircle, FaTimesCircle, FaSpinner } from 'react-icons/fa';
+import { FaUser, FaCheckCircle, FaTimesCircle, FaSpinner, FaShieldAlt } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { toast, ToastContainer } from 'react-toastify';
 import api from '../services/api';
@@ -76,11 +76,6 @@ export default function ConfirmacaoPresencaToken() {
         <button onClick={() => navigate('/')} className="mt-6 bg-blue-600 px-4 py-2 rounded-lg">Voltar ao Início</button>
       </div>
     );
-  }
-
-  // Adiciona uma verificação para garantir que 'jogador' não é nulo antes de renderizar
-  if (!jogador) {
-    return null; // Ou um componente de "Nenhum dado encontrado"
   }
 
   return (
