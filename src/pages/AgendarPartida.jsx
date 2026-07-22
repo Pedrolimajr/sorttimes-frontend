@@ -71,8 +71,10 @@ export default function AgendarPartida() {
     // Carrega todos os jogadores ativos para o modal de seleção
     const fetchJogadoresParaSelecao = async () => {
       try {
-        const response = await api.get('/jogadores'); // A rota já filtra por ativos por padrão
-        const jogadoresAtivos = response.data?.data || [];
+        const response = await api.get('/jogadores');
+        const todosJogadores = response.data?.data || [];
+        // Filtra para incluir apenas associados ativos (não bloqueados)
+        const jogadoresAtivos = todosJogadores.filter(j => j.nivel === 'Associado' && j.ativo !== false);
         setJogadoresParaSelecao(jogadoresAtivos);
       } catch (error) {
         console.error("Erro ao carregar jogadores para seleção", error);
@@ -201,6 +203,18 @@ export default function AgendarPartida() {
       const todosIds = new Set(jogadoresParaSelecao.map(j => j._id));
       setJogadoresSelecionados(todosIds); // Marcar todos
     }
+  };
+
+  // Função para abrir todos os links de convite do WhatsApp
+  const enviarTodosConvites = () => {
+    if (listaConvites.length === 0) return;
+
+    listaConvites.forEach((convite, index) => {
+      // Adiciona um pequeno atraso para evitar que o navegador bloqueie os pop-ups
+      setTimeout(() => {
+        window.open(convite.whatsappUrl, '_blank');
+      }, index * 300); // Atraso de 300ms entre cada abertura
+    });
   };
 
   // Função para gerar os convites individuais via WhatsApp
@@ -618,13 +632,23 @@ export default function AgendarPartida() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-6 border-b border-white/5 bg-black/20">
-                <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
-                  <FaWhatsapp className="text-green-400" />
-                  Convites Individuais Gerados
-                </h3>
-                <p className="text-gray-400 text-sm">
-                  Clique em cada nome para abrir o WhatsApp e enviar o convite.
-                </p>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+                      <FaWhatsapp className="text-green-400" />
+                      Convites Individuais Gerados
+                    </h3>
+                    <p className="text-gray-400 text-sm">
+                      Clique em cada nome ou em "Enviar para Todos".
+                    </p>
+                  </div>
+                  <button
+                    onClick={enviarTodosConvites}
+                    className="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-lg"
+                  >
+                    Enviar para Todos
+                  </button>
+                </div>
               </div>
               <div className="max-h-80 overflow-y-auto space-y-2 p-6 no-scrollbar">
                 {listaConvites.map((convite, index) => (
