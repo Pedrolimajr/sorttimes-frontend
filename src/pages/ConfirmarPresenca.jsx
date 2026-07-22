@@ -14,6 +14,7 @@ export default function ConfirmarPresenca() {
 
   // Modo de login do jogador
   const [loginMode, setLoginMode] = useState('nome'); // 'nome' | 'telefone'
+  const [tentandoLoginAutomatico, setTentandoLoginAutomatico] = useState(true);
 
   // Estado jogador
   const [autenticado, setAutenticado] = useState(false);
@@ -34,7 +35,8 @@ export default function ConfirmarPresenca() {
   
   const [formData, setFormData] = useState({
     nome: '',
-    password: '' // DDMMAAAA
+    password: '', // DDMMAAAA
+    telefone: ''
   });
 
   // Nome salvo localmente para agilizar login de jogador
@@ -617,7 +619,7 @@ export default function ConfirmarPresenca() {
                   </button>
                 </motion.div>
               )
-            ) : (
+            ) : ( // Modo Admin
               !adminAutenticado ? (
                 <motion.form
                   key="admin-login-form"
