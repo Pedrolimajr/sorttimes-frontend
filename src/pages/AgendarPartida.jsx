@@ -206,18 +206,34 @@ export default function AgendarPartida() {
   };
 
   // Função para abrir todos os links de convite do WhatsApp
-  const enviarTodosConvites = () => {
+  const enviarTodosConvites = async () => {
     if (listaConvites.length === 0) return;
 
-    toast.info(`Iniciando envio de ${listaConvites.length} convites. Permita os pop-ups se o navegador solicitar.`);
-
-    // Abre cada link do WhatsApp em uma nova aba com um pequeno atraso para
-    // tentar evitar o bloqueador de pop-ups do navegador.
-    listaConvites.forEach((convite, index) => {
-      setTimeout(() => {
-        window.open(convite.whatsappUrl, '_blank');
-      }, index * 350); // Atraso de 350ms entre cada abertura
+    const dataJogo = new Date(formData.data + 'T12:00:00').toLocaleDateString('pt-BR', {
+      weekday: 'long', day: 'numeric', month: 'long'
     });
+
+    let mensagem = `✅ *CONVITES INDIVIDUAIS* ✅\n\n`;
+    mensagem += `Partida de ${dataJogo}\n`;
+    mensagem += `━━━━━━━━━━━━━━━━━━\n\n`;
+
+    listaConvites.forEach(convite => {
+      // Extrai a URL de confirmação do link do WhatsApp
+      const urlMatch = convite.whatsappUrl.match(/(https?:\/\/[^\s]+)/);
+      if (urlMatch) {
+        mensagem += `*${convite.nome}:* ${urlMatch[0]}\n\n`;
+      }
+    });
+
+    if (navigator.share) {
+      await navigator.share({
+        title: 'Convites Individuais',
+        text: mensagem,
+      });
+    } else {
+      await navigator.clipboard.writeText(mensagem);
+      toast.success('Lista de convites copiada!');
+    }
   };
 
   // Função para gerar os convites individuais via WhatsApp
