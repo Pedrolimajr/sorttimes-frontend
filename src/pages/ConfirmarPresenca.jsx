@@ -3,14 +3,17 @@ import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast, ToastContainer } from 'react-toastify';
 import api from '../services/api';
-import { GiSoccerKick } from 'react-icons/gi';
-import { FaUser, FaLock, FaCalendarAlt, FaUserShield, FaEye, FaEyeSlash, FaSignOutAlt, FaShare } from 'react-icons/fa';
+import { GiSoccerKick, GiSmartphone } from 'react-icons/gi';
+import { FaUser, FaLock, FaCalendarAlt, FaUserShield, FaEye, FaEyeSlash, FaSignOutAlt, FaShare, FaPhone } from 'react-icons/fa';
 
 export default function ConfirmarPresenca() {
   const { linkId } = useParams();
 
   // Modo de visualização: jogador ou admin
   const [modo, setModo] = useState('jogador'); // 'jogador' | 'admin'
+
+  // Modo de login do jogador
+  const [loginMode, setLoginMode] = useState('nome'); // 'nome' | 'telefone'
 
   // Estado jogador
   const [autenticado, setAutenticado] = useState(false);
@@ -31,7 +34,8 @@ export default function ConfirmarPresenca() {
   
   const [formData, setFormData] = useState({
     nome: '',
-    password: '' // DDMMAAAA
+    password: '', // DDMMAAAA
+    telefone: ''
   });
 
   // Nome salvo localmente para agilizar login de jogador
@@ -41,6 +45,41 @@ export default function ConfirmarPresenca() {
   const [mostrarSenhaJogador, setMostrarSenhaJogador] = useState(false);
 
   const [mostrarSenhaAdmin, setMostrarSenhaAdmin] = useState(false);
+
+  // Efeito principal para login automático
+  useEffect(() => {
+    const tentarLoginComToken = async () => {
+      const persistentToken = localStorage.getItem('persistentAuthToken');
+      if (!persistentToken) {
+        setTentandoLoginAutomatico(false);
+        return;
+      }
+
+      try {
+        const response = await api.post(`/presenca/${linkId}/auth-token`, { token: persistentToken });
+        if (response.data.success) {
+          setJogadorLogado(response.data.jogador);
+          setSessionId(response.data.sessionId);
+          setAutenticado(true);
+          toast.success(`Bem-vindo de volta, ${response.data.jogador.nome}!`);
+        } else {
+          // Se o token for inválido (ex: jogador bloqueado), remove-o
+          localStorage.removeItem('persistentAuthToken');
+        }
+      } catch (error) {
+        console.error("Token inválido ou expirado:", error);
+        localStorage.removeItem('persistentAuthToken'); // Limpa token inválido
+      } finally {
+        setTentandoLoginAutomatico(false);
+      }
+    };
+
+    if (modo === 'jogador' && !autenticado) {
+      tentarLoginComToken();
+    } else {
+      setTentandoLoginAutomatico(false);
+    }
+  }, [linkId, modo, autenticado]);
 
   // Carregamento inicial dos dados do evento (sem lista de jogadores)
   useEffect(() => {
@@ -106,26 +145,46 @@ export default function ConfirmarPresenca() {
       });
 
       if (response.data.success) {
-        setJogadorLogado(response.data.jogador);
-        setSessionId(response.data.sessionId || null);
-        setAutenticado(true);
-
-        // Salva nome usado para agilizar próximos acessos
-        if (nomeParaLogin) {
-          localStorage.setItem(storageKey, nomeParaLogin);
-          localStorage.setItem(storageKeyFoto, response.data.jogador.foto || '');
-          setNomeSalvo(nomeParaLogin);
-          setFotoSalva(response.data.jogador.foto || '');
-          setUsarNomeSalvo(true);
-        }
-
-        toast.success(`Bem-vindo, ${response.data.jogador.nome}!`);
+        // Salva o token persistente e recarrega a página para o login automático funcionar
+        localStorage.setItem('persistentAuthToken', response.data.persistentToken);
+        toast.success('Login realizado! Redirecionando...');
+        // Força um reload para que o useEffect de login automático seja acionado
+        window.location.reload();
       }
     } catch (error) {
       console.error('Erro na autenticação:', error);
       toast.error(error.response?.data?.message || 'Erro ao autenticar. Verifique seus dados.');
     } finally {
       setSubmetendo(false);
+    }
+  };
+
+  const handleLoginTelefone = async (e) => {
+    e.preventDefault();
+    if (!formData.telefone) {
+      toast.warn('Preencha seu número de telefone com DDD.');
+      return;
+    }
+
+    try {
+      setSubmetendo(true);
+      const response = await api.post(`/presenca/${linkId}/auth-telefone`, {
+        telefone: formData.telefone
+      });
+
+      if (response.data.success) {
+        setJogadorLogado(response.data.jogador);
+        setSessionId(response.data.sessionId || null);
+        setAutenticado(true);
+
+        toast.success(`Bem-vindo, ${response.data.jogador.nome}!`);
+      }
+    } catch (error) {
+      console.error('Erro na autenticação por telefone:', error);
+      toast.error(error.response?.data?.message || 'Erro ao autenticar. Verifique seu número.');
+    } finally {
+      setSubmetendo(false);
+      setFormData(prev => ({ ...prev, telefone: '' })); // Limpa o campo após a tentativa
     }
   };
 
@@ -360,95 +419,156 @@ export default function ConfirmarPresenca() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
                   onSubmit={handleLogin}
-                  className="space-y-6"
+                  className="space-y-4"
                 >
-                  {/* Nome opcional – fica oculto quando já existe nome salvo para agilizar confirmação */}
-                  {!usarNomeSalvo && (
-                    <div className="space-y-2">
-                      <label className="text-gray-300 text-sm font-medium flex items-center gap-2">
-                        <FaUser className="text-blue-500" /> Nome e Sobrenome
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.nome}
-                        onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                        placeholder="Ex: Pedro Jr"
-                        className="w-full bg-gray-700 border border-gray-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                        required
-                      />
-                    </div>
-                  )}
-
-                  {usarNomeSalvo && nomeSalvo && (
-                    <motion.div 
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="bg-gray-800/60 border border-blue-500/30 rounded-2xl p-4 mb-6 relative overflow-hidden"
+                  {/* Abas de Login do Jogador */}
+                  <div className="flex bg-gray-800/70 rounded-xl p-1 mb-6">
+                    <button
+                      type="button"
+                      onClick={() => setLoginMode('nome')}
+                      className={`flex-1 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
+                        loginMode === 'nome' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'
+                      }`}
                     >
-                      <div className="flex items-center gap-4">
-                        {fotoSalva ? (
-                          <img 
-                            src={fotoSalva} 
-                            alt={nomeSalvo} 
-                            className="w-12 h-12 rounded-full object-cover border-2 border-blue-500 shadow-lg shadow-blue-500/20"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/20">
-                            <FaUser className="text-white text-xl" />
-                          </div>
-                        )}
-                        <div className="flex-1">
-                          <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-0.5">Confirmando presença como:</p>
-                          <p className="text-xl font-bold text-white">{nomeSalvo}</p>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setUsarNomeSalvo(false)}
-                        className="mt-3 text-xs text-red-400 hover:text-red-300 hover:underline w-full text-left pl-[4rem] transition-colors"
-                      >
-                        Não sou essa pessoa
-                      </button>
-                    </motion.div>
-                  )}
-
-                  <div className="space-y-2">
-                    <label className="text-gray-300 text-sm font-medium flex items-center gap-2">
-                      <FaLock className="text-blue-500" /> Data de Nascimento (Senha)
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={mostrarSenhaJogador ? 'text' : 'password'}
-                        inputMode="numeric"
-                        value={formData.password}
-                        onChange={(e) => setFormData({ ...formData, password: e.target.value.replace(/\D/g, '').slice(0, 8) })}
-                        placeholder="DDMMAAAA"
-                        className="w-full bg-gray-700 border border-gray-600 rounded-xl px-4 py-3 pr-10 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setMostrarSenhaJogador((prev) => !prev)}
-                        className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-200"
-                        aria-label={mostrarSenhaJogador ? 'Ocultar senha' : 'Mostrar senha'}
-                      >
-                        {mostrarSenhaJogador ? <FaEyeSlash /> : <FaEye />}
-                      </button>
-                    </div>
-                    <p className="text-gray-500 text-xs mt-1">Apenas números. Ex: 15051990</p>
+                      <FaUser /> Nome
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLoginMode('telefone')}
+                      className={`flex-1 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
+                        loginMode === 'telefone' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'
+                      }`}
+                    >
+                      <FaPhone /> Telefone
+                    </button>
                   </div>
 
-                  <button
-                    type="submit"
-                    disabled={submetendo}
-                    className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold py-3 rounded-2xl shadow-lg shadow-blue-600/30 transition-all transform active:scale-95 flex items-center justify-center gap-2"
-                  >
-                    {submetendo ? (
-                      <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+                  <AnimatePresence mode="wait">
+                    {loginMode === 'nome' ? (
+                      <motion.div key="login-nome" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
+                        {/* Nome opcional – fica oculto quando já existe nome salvo para agilizar confirmação */}
+                        {!usarNomeSalvo && (
+                          <div className="space-y-2">
+                            <label className="text-gray-300 text-sm font-medium flex items-center gap-2">
+                              <FaUser className="text-blue-500" /> Nome e Sobrenome
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.nome}
+                              onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                              placeholder="Ex: Pedro Jr"
+                              className="w-full bg-gray-700 border border-gray-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                              required
+                            />
+                          </div>
+                        )}
+
+                        {usarNomeSalvo && nomeSalvo && (
+                          <motion.div 
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="bg-gray-800/60 border border-blue-500/30 rounded-2xl p-4 relative overflow-hidden"
+                          >
+                            <div className="flex items-center gap-4">
+                              {fotoSalva ? (
+                                <img 
+                                  src={fotoSalva} 
+                                  alt={nomeSalvo} 
+                                  className="w-12 h-12 rounded-full object-cover border-2 border-blue-500 shadow-lg shadow-blue-500/20"
+                                />
+                              ) : (
+                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                                  <FaUser className="text-white text-xl" />
+                                </div>
+                              )}
+                              <div className="flex-1">
+                                <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-0.5">Confirmando como:</p>
+                                <p className="text-xl font-bold text-white">{nomeSalvo}</p>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setUsarNomeSalvo(false)}
+                              className="mt-3 text-xs text-red-400 hover:text-red-300 hover:underline w-full text-left pl-[4rem] transition-colors"
+                            >
+                              Não sou essa pessoa
+                            </button>
+                          </motion.div>
+                        )}
+
+                        <div className="space-y-2">
+                          <label className="text-gray-300 text-sm font-medium flex items-center gap-2">
+                            <FaLock className="text-blue-500" /> Data de Nascimento (Senha)
+                          </label>
+                          <div className="relative">
+                            <input
+                              type={mostrarSenhaJogador ? 'text' : 'password'}
+                              inputMode="numeric"
+                              value={formData.password}
+                              onChange={(e) => setFormData({ ...formData, password: e.target.value.replace(/\D/g, '').slice(0, 8) })}
+                              placeholder="DDMMAAAA"
+                              className="w-full bg-gray-700 border border-gray-600 rounded-xl px-4 py-3 pr-10 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                              required
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setMostrarSenhaJogador((prev) => !prev)}
+                              className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-200"
+                              aria-label={mostrarSenhaJogador ? 'Ocultar senha' : 'Mostrar senha'}
+                            >
+                              {mostrarSenhaJogador ? <FaEyeSlash /> : <FaEye />}
+                            </button>
+                          </div>
+                          <p className="text-gray-500 text-xs mt-1">Apenas números. Ex: 15051990</p>
+                        </div>
+                      </motion.div>
                     ) : (
-                      'Acessar Confirmação'
+                      <motion.div key="login-telefone" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
+                        <div className="space-y-2">
+                          <label className="text-gray-300 text-sm font-medium flex items-center gap-2">
+                            <GiSmartphone className="text-blue-500" /> Seu Telefone (com DDD)
+                          </label>
+                          <input
+                            type="tel"
+                            inputMode="numeric"
+                            value={formData.telefone}
+                            onChange={(e) => setFormData({ ...formData, telefone: e.target.value.replace(/\D/g, '') })}
+                            placeholder="Ex: 11987654321"
+                            className="w-full bg-gray-700 border border-gray-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                            required
+                          />
+                          <p className="text-gray-500 text-xs mt-1">Apenas números. O login é sem senha.</p>
+                        </div>
+                      </motion.div>
                     )}
-                  </button>
+                  </AnimatePresence>
+
+                  {loginMode === 'nome' ? (
+                    <button
+                      type="submit"
+                      disabled={submetendo}
+                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold py-3 rounded-2xl shadow-lg shadow-blue-600/30 transition-all transform active:scale-95 flex items-center justify-center gap-2"
+                    >
+                      {submetendo ? (
+                        <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+                      ) : (
+                        'Acessar com Nome'
+                      )}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleLoginTelefone}
+                      disabled={submetendo}
+                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold py-3 rounded-2xl shadow-lg shadow-blue-600/30 transition-all transform active:scale-95 flex items-center justify-center gap-2"
+                    >
+                      {submetendo ? (
+                        <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+                      ) : (
+                        'Acessar com Telefone'
+                      )}
+                    </button>
+                  )}
                 </motion.form>
               ) : (
                 <motion.div
@@ -517,11 +637,13 @@ export default function ConfirmarPresenca() {
                       setAutenticado(false);
                       setJogadorLogado(null);
                       setSessionId(null);
+                      // Limpa o token para forçar login manual se o usuário quiser trocar
+                      localStorage.removeItem('persistentAuthToken');
                     }}
                     className="w-full mt-6 py-3 rounded-xl border border-gray-700 text-gray-300 hover:text-white hover:bg-gray-800 transition-all flex items-center justify-center gap-2 text-sm font-medium group"
                   >
                     <FaSignOutAlt className="group-hover:text-red-400 transition-colors text-lg" />
-                    <span>Sair / Entrar com outro nome</span>
+                    <span>Sair / Trocar de Usuário</span>
                   </button>
                 </motion.div>
               )
