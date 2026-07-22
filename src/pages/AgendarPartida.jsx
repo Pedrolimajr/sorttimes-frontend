@@ -215,12 +215,9 @@ export default function AgendarPartida() {
     const toastId = toast.loading("Gerando convites...");
 
     try {
-      // Combina data e hora para o formato esperado pelo backend
-      const dataJogo = `${formData.data}T${formData.horario}`;
-
-      const res = await api.post(`/gerar-convocacao-e-convites`, {
+      // A rota correta usa o linkId da convocação geral já existente
+      const res = await api.post(`/gerar-convites-individuais/${linkIdGerado}`, {
         jogadoresIds: Array.from(jogadoresSelecionados), // Envia os IDs selecionados
-        dataJogo: dataJogo // Envia os dados da partida
       });
 
       if (res.data.convites && res.data.convites.length > 0) {
