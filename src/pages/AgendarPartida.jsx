@@ -211,12 +211,12 @@ export default function AgendarPartida() {
 
     toast.info(`Iniciando envio de ${listaConvites.length} convites. Permita os pop-ups se o navegador solicitar.`);
 
-    // Abre cada link do WhatsApp em uma nova aba com um pequeno atraso
-    listaConvites.forEach(convite => {
-      // O window.open tentará abrir uma nova aba para cada convite.
-      // Navegadores podem bloquear isso após a primeira, então o usuário
-      // precisará permitir a abertura de múltiplos pop-ups.
-      window.open(convite.whatsappUrl, '_blank');
+    // Abre cada link do WhatsApp em uma nova aba com um pequeno atraso para
+    // tentar evitar o bloqueador de pop-ups do navegador.
+    listaConvites.forEach((convite, index) => {
+      setTimeout(() => {
+        window.open(convite.whatsappUrl, '_blank');
+      }, index * 350); // Atraso de 350ms entre cada abertura
     });
   };
 
