@@ -79,54 +79,73 @@ export default function ConfirmacaoPresencaToken() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center p-4">
-      <ToastContainer theme="dark" />
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-md bg-gray-800/50 backdrop-blur-lg rounded-2xl shadow-2xl p-8 text-center border border-gray-700"
-      >
-        {jogador.foto ? (
-          <img src={jogador.foto} alt={jogador.nome} className="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-blue-500 object-cover" />
-        ) : (
-          <div className="w-24 h-24 rounded-full bg-gray-700 flex items-center justify-center mx-auto mb-4 border-4 border-blue-500">
-            <FaUser className="text-4xl text-gray-400" />
+    <div className="min-h-screen bg-[#020617] text-slate-100 selection:bg-blue-500/30 flex items-center justify-center p-4 relative overflow-hidden">
+      <div className="fixed inset-0 pointer-events-none -z-10">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-cyan-500/10 blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
+      </div>
+      <ToastContainer theme="dark" position="bottom-center" />
+      
+      {/* A renderização do conteúdo só acontece se 'jogador' existir */}
+      {jogador && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-md bg-slate-900/40 backdrop-blur-3xl rounded-[2.5rem] p-8 text-center border border-white/10 shadow-2xl relative overflow-hidden"
+        >
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50" />
+          
+          <div className="relative inline-block mb-6">
+            {jogador.foto ? (
+              <img src={jogador.foto} alt={jogador.nome} className="w-28 h-28 rounded-full mx-auto object-cover border-4 border-blue-500 shadow-lg shadow-blue-500/20" />
+            ) : (
+              <div className="w-28 h-28 rounded-full bg-slate-800 flex items-center justify-center mx-auto border-4 border-blue-500 shadow-lg shadow-blue-500/20">
+                <FaUser className="text-5xl text-slate-600" />
+              </div>
+            )}
+            <div className="absolute -bottom-2 -right-2 bg-blue-600 text-white p-2 rounded-full shadow-lg border-2 border-slate-900">
+              <FaShieldAlt size={16} />
+            </div>
           </div>
-        )}
 
-        <h1 className="text-2xl font-bold text-white">Olá, {jogador.nome}!</h1>
-        <p className="text-gray-400 mt-2 mb-6">Confirme sua presença para o próximo baba.</p>
+          <h1 className="text-3xl font-black text-white tracking-tighter">Olá, {jogador.nome}!</h1>
+          <p className="text-slate-400 mt-2 mb-8">Confirme sua presença para o próximo baba.</p>
 
-        {jogador.presente ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <div className="bg-green-500/10 text-green-400 p-4 rounded-lg mb-6 border border-green-500/20">
-              <p className="font-bold">Sua presença está confirmada!</p>
-            </div>
-            <button
-              onClick={() => handleConfirmarPresenca(false)}
-              disabled={processando}
-              className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {processando ? <FaSpinner className="animate-spin" /> : <FaTimesCircle />}
-              Desmarcar Presença
-            </button>
-          </motion.div>
-        ) : (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <div className="bg-yellow-500/10 text-yellow-400 p-4 rounded-lg mb-6 border border-yellow-500/20">
-              <p className="font-bold">Aguardando sua confirmação.</p>
-            </div>
-            <button
-              onClick={() => handleConfirmarPresenca(true)}
-              disabled={processando}
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {processando ? <FaSpinner className="animate-spin" /> : <FaCheckCircle />}
-              Confirmar Presença
-            </button>
-          </motion.div>
-        )}
-      </motion.div>
+          {jogador.presente ? (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+              <div className="bg-green-500/10 text-green-300 p-4 rounded-2xl border border-green-500/20">
+                <p className="font-bold text-sm uppercase tracking-wider">Sua presença está confirmada!</p>
+              </div>
+              <motion.button
+                onClick={() => handleConfirmarPresenca(false)}
+                disabled={processando}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full bg-red-600 hover:bg-red-500 text-white font-black py-4 rounded-xl transition-all shadow-lg shadow-red-500/20 disabled:opacity-50 flex items-center justify-center gap-2 uppercase tracking-widest text-sm"
+              >
+                {processando ? <FaSpinner className="animate-spin" /> : <FaTimesCircle />}
+                Desmarcar Presença
+              </motion.button>
+            </motion.div>
+          ) : (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+              <div className="bg-yellow-500/10 text-yellow-300 p-4 rounded-2xl border border-yellow-500/20">
+                <p className="font-bold text-sm uppercase tracking-wider">Aguardando sua confirmação.</p>
+              </div>
+              <motion.button
+                onClick={() => handleConfirmarPresenca(true)}
+                disabled={processando}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full bg-green-600 hover:bg-green-500 text-white font-black py-4 rounded-xl transition-all shadow-lg shadow-green-500/20 disabled:opacity-50 flex items-center justify-center gap-2 uppercase tracking-widest text-sm"
+              >
+                {processando ? <FaSpinner className="animate-spin" /> : <FaCheckCircle />}
+                Confirmar Presença
+              </motion.button>
+            </motion.div>
+          )}
+        </motion.div>
+      )}
     </div>
   );
 }
