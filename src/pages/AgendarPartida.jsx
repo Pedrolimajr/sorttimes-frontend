@@ -1,7 +1,7 @@
 // src/pages/AgendarPartida.jsx
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FaCalendarAlt, FaClock, FaMapMarkerAlt, FaStickyNote, FaSave, FaShare, FaLink, FaBullhorn, FaTimes, FaCheck } from "react-icons/fa";
+import { FaCalendarAlt, FaClock, FaMapMarkerAlt, FaStickyNote, FaSave, FaShare, FaLink, FaBullhorn, FaTimes, FaCheck, FaWhatsapp } from "react-icons/fa";
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import api from '../services/api';
 import { toast, ToastContainer } from 'react-toastify';
@@ -26,6 +26,11 @@ export default function AgendarPartida() {
   const [tempTime, setTempTime] = useState({ hour: '20', minute: '00' });
   const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
   const minutes = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'));
+
+  // Estados para convites individuais
+  const [linkIdGerado, setLinkIdGerado] = useState(null);
+  const [modalConvitesAberto, setModalConvitesAberto] = useState(false);
+  const [listaConvites, setListaConvites] = useState([]);
 
   // Carrega dados da partida para edição
   useEffect(() => {
@@ -99,6 +104,7 @@ export default function AgendarPartida() {
       if (!linkId) throw new Error('Não foi possível gerar link');
 
       localStorage.setItem('linkPresencaId', linkId);
+      setLinkIdGerado(linkId); // Salva o ID no estado para usar nos convites individuais
 
       const linkCompleto = `${window.location.origin}/confirmar-presenca/${linkId}`;
       
@@ -140,6 +146,31 @@ export default function AgendarPartida() {
       toast.dismiss(toastId);
       console.error('Erro ao gerar link:', error);
       toast.error('Erro ao gerar link de presença');
+    }
+  };
+
+  // Função para gerar os convites individuais via WhatsApp
+  const gerarConvitesIndividuais = async () => {
+    if (!linkIdGerado) {
+      toast.warn('Primeiro, gere o link de convocação geral.');
+      return;
+    }
+
+    const toastId = toast.loading("Gerando convites individuais...");
+
+    try {
+      const res = await api.post(`/gerar-convites-individuais/${linkIdGerado}`);
+      if (res.data.convites && res.data.convites.length > 0) {
+        setListaConvites(res.data.convites);
+        setModalConvitesAberto(true);
+        toast.update(toastId, { render: `${res.data.convites.length} convites gerados!`, type: "success", isLoading: false, autoClose: 3000 });
+      } else {
+        toast.update(toastId, { render: "Nenhum jogador com telefone para enviar convite.", type: "info", isLoading: false, autoClose: 3000 });
+      }
+    } catch (error) {
+      toast.update(toastId, { render: error.response?.data?.message || 'Erro ao gerar convites.', type: "error", isLoading: false, autoClose: 3000 });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -372,17 +403,28 @@ export default function AgendarPartida() {
               </div>
 
               <div className="mt-auto pt-4">
-                <motion.button 
-                  type="button"
-                  onClick={gerarLinkPresenca}
-                  disabled={!formData.data || !formData.horario}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full py-4 bg-green-600 hover:bg-green-500 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white rounded-xl font-black uppercase tracking-widest shadow-xl transition-all flex items-center justify-center gap-3 text-sm"
-                >
-                  <FaShare className="text-lg" />
-                  Gerar e Compartilhar
-                </motion.button>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <motion.button 
+                    type="button"
+                    onClick={gerarLinkPresenca}
+                    disabled={!formData.data || !formData.horario}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="flex-1 py-4 bg-green-600 hover:bg-green-500 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white rounded-xl font-black uppercase tracking-widest shadow-xl transition-all flex items-center justify-center gap-3 text-sm"
+                  >
+                    <FaShare className="text-lg" />
+                    Convocação Geral
+                  </motion.button>
+                  <motion.button
+                    type="button"
+                    onClick={gerarConvitesIndividuais}
+                    disabled={!linkIdGerado}
+                    className="flex-1 py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white rounded-xl font-black uppercase tracking-widest shadow-xl transition-all flex items-center justify-center gap-3 text-sm"
+                  >
+                    <FaWhatsapp className="text-lg" />
+                    Convites Individuais
+                  </motion.button>
+                </div>
               </div>
             </div>
           </motion.div>
@@ -483,6 +525,51 @@ export default function AgendarPartida() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Modal para exibir os links de convite individual */}
+      <AnimatePresence>
+        {modalConvitesAberto && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+            onClick={() => setModalConvitesAberto(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-slate-900 border border-white/10 rounded-[2rem] w-full max-w-md shadow-2xl overflow-hidden backdrop-blur-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6 border-b border-white/5 bg-black/20">
+                <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+                  <FaWhatsapp className="text-green-400" />
+                  Convites Individuais Gerados
+                </h3>
+                <p className="text-gray-400 text-sm">
+                  Clique em cada nome para abrir o WhatsApp e enviar o convite.
+                </p>
+              </div>
+              <div className="max-h-80 overflow-y-auto space-y-2 p-6 no-scrollbar">
+                {listaConvites.map((convite, index) => (
+                  <a
+                    key={index}
+                    href={convite.whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between p-4 bg-gray-900 rounded-lg hover:bg-gray-700 transition-colors"
+                  >
+                    <span className="text-white font-medium">{convite.nome}</span>
+                    <FaShare className="text-green-400" />
+                  </a>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <ToastContainer
         position="top-right"
         autoClose={3000}
@@ -498,5 +585,3 @@ export default function AgendarPartida() {
     </div>
   );
 }
-
-
