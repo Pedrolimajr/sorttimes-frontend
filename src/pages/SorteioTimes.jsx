@@ -14,7 +14,6 @@ import socket from '../services/socket';
 import usePersistedState from '../hooks/usePersistedState';
 import api from '../services/api';
 import ConfirmModal from '../components/ConfirmModal';
-// Constantes para organizar os valores fixos
 const POSICOES = {
   GOLEIRO: "Goleiro",
   ZAGUEIRO: "Defensor",
@@ -200,7 +199,6 @@ export default function SorteioTimes() {
   const [filtroPosicao, setFiltroPosicao] = useState('');
   const [filtroJogadoresSelecionados, setFiltroJogadoresSelecionados] = useState('');
   const [showLimparHistoricoModal, setShowLimparHistoricoModal] = useState(false);
-  const [partidasAgenda, setPartidasAgenda] = useState([]);
   const [partidaVinculadaId, setPartidaVinculadaId] = useState('');
 
   // Estados para inclusão manual de jogadores pós-sorteio
@@ -314,17 +312,6 @@ export default function SorteioTimes() {
 };
 
   // Carrega jogadores do backend ao montar o componente
-  useEffect(() => {
-    const carregarPartidas = async () => {
-      try {
-        const res = await api.get('/agenda');
-        setPartidasAgenda(res.data?.data || res.data || []);
-      } catch (err) {
-        console.error("Erro ao carregar agenda");
-      }
-    };
-    carregarPartidas();
-  }, []);
 
   useEffect(() => {
     const carregarHistoricoGlobal = async () => {
@@ -849,10 +836,21 @@ const aplicarFiltroPosicao = () => {
     toast.success('Sorteio removido!');
   };
 
-  const limparTodoHistorico = () => {
-    setShowLimparHistoricoModal(true);
+  const limparTodoHistorico = async () => {
+    try {
+      await api.delete('/sorteio-times/historico');
+      
+      setHistorico([]);
+      setTimes([]); // Limpa os resultados da tela
+      setCurrentSorteioId(null);
+      setModoEdicao(false);
+      toast.success("Histórico e visualização limpos com sucesso!");
+    } catch (e) {
+      console.error("Erro ao limpar histórico global:", e);
+      toast.error("Erro ao limpar histórico.");
+    }
   };
-
+  
   const confirmarLimparHistorico = async () => {
     try {
       await api.delete('/sorteio-times/historico');
@@ -963,18 +961,6 @@ const aplicarFiltroPosicao = () => {
               <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1 flex items-center gap-2">
                 <FaCalendarAlt /> Vincular este Sorteio a uma Partida Agendada
               </label>
-              <select
-                value={partidaVinculadaId}
-                onChange={(e) => handleVincularPartida(e.target.value)}
-                className="w-full px-4 py-2 bg-black/40 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white transition-all text-sm appearance-none"
-              >
-                <option value="">Selecione a partida da agenda...</option>
-                {partidasAgenda.map(p => (
-                  <option key={p._id} value={p._id}>
-                    {new Date(p.data).toLocaleDateString()} - {p.local}
-                  </option>
-                ))}
-              </select>
               <p className="text-[10px] text-gray-500 mt-1">* Necessário para que apenas quem jogou possa votar depois.</p>
             </div>
             <div className="mb-4 flex flex-col sm:flex-row gap-4 items-end">
@@ -1290,64 +1276,6 @@ const aplicarFiltroPosicao = () => {
           </motion.div>
         )}
       </div>
-
-      {/* Modal para inclusão de jogador pós-sorteio */}
-      <AnimatePresence>
-        {modalAddPlayer.open && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
-            onClick={() => setModalAddPlayer({ open: false, teamIndex: null })}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-gray-800 rounded-xl w-full max-w-md border border-gray-700 shadow-2xl p-6"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                <FaUserPlus className="text-blue-400" /> 
-                Adicionar ao {modalAddPlayer.teamIndex === 0 ? 'Time Preto' : 'Time Amarelo'}
-              </h3>
-              <p className="text-gray-400 text-sm mb-4">Digite o nome do jogador que chegou para a partida ou selecione um da lista.</p>
-              
-              <input
-                autoFocus
-                list="jogadores-cadastrados-datalist"
-                value={nomeNovoJogador}
-                onChange={(e) => setNomeNovoJogador(e.target.value)}
-                placeholder="Ex: Pedro Silva..."
-                className="w-full bg-gray-900 border border-gray-700 rounded-xl p-4 text-white outline-none focus:ring-2 focus:ring-blue-500 mb-6"
-                onKeyPress={(e) => e.key === 'Enter' && adicionarJogadorAoTime()}
-              />
-              
-              <datalist id="jogadores-cadastrados-datalist">
-                {jogadoresSelecionados.map(j => (
-                  <option key={j._id} value={j.nome} />
-                ))}
-              </datalist>
-
-              <div className="flex gap-3">
-                <button onClick={() => setModalAddPlayer({ open: false, teamIndex: null })} className="flex-1 py-3 rounded-xl bg-gray-700 text-white font-bold hover:bg-gray-600 transition-colors">CANCELAR</button>
-                <button onClick={adicionarJogadorAoTime} className="flex-1 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors">ADICIONAR</button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <ConfirmModal
-        open={showLimparHistoricoModal}
-        title="Confirmar exclusão de histórico"
-        description="Deseja apagar TODO o histórico? Esta ação limpará todos os registros salvos e não pode ser desfeita."
-        confirmLabel="Apagar Tudo"
-        cancelLabel="Cancelar"
-        onConfirm={confirmarLimparHistorico}
-        onCancel={() => setShowLimparHistoricoModal(false)}
-      />
 
       <ToastContainer
         position="top-right"
