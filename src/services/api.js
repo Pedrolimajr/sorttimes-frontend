@@ -38,7 +38,11 @@ api.interceptors.response.use(
     if (error.response) {
       switch (error.response.status) {
         case 401:
-          toast.error('Não autorizado. Por favor, faça login novamente.');
+          // Não exibe o toast de "Não autorizado" na rota de login,
+          // pois a própria página já trata o erro de credenciais.
+          if (!error.config.url.includes('/auth/login')) {
+            toast.error('Não autorizado. Por favor, faça login novamente.');
+          }
           break;
         case 403:
           toast.error('Acesso negado.');
