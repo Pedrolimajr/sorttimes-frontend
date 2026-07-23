@@ -59,10 +59,6 @@ export default function ConfirmarPresenca() {
           setJogadorLogado(response.data.jogador);
           setSessionId(response.data.sessionId);
           setAutenticado(true);
-          // Mostra o toast apenas se não for um redirecionamento pós-login
-          if (!sessionStorage.getItem('justLoggedIn')) {
-            toast.success(`Bem-vindo de volta, ${response.data.jogador.nome}!`);
-          }
         } else {
           // Se o token for inválido (ex: jogador bloqueado), remove-o
           localStorage.removeItem('persistentAuthToken');
@@ -71,8 +67,6 @@ export default function ConfirmarPresenca() {
         console.error("Token inválido ou expirado:", error);
         localStorage.removeItem('persistentAuthToken'); // Limpa token inválido
       } finally {
-        // Limpa a flag após a tentativa de login automático
-        sessionStorage.removeItem('justLoggedIn');
         setTentandoLoginAutomatico(false);
       }
     };
@@ -150,8 +144,7 @@ export default function ConfirmarPresenca() {
       if (response.data.success) {
         // Salva o token persistente e recarrega a página para o login automático funcionar
         localStorage.setItem('persistentAuthToken', response.data.persistentToken);
-        sessionStorage.setItem('justLoggedIn', 'true'); // Define uma flag temporária
-        toast.success('Login realizado! Redirecionando...', { autoClose: 1500 });
+        toast.success('Login realizado! Redirecionando...');
         // Força um reload para que o useEffect de login automático seja acionado
         window.location.reload();
       }
