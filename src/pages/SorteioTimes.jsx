@@ -642,7 +642,7 @@ const aplicarFiltroPosicao = () => {
         setHistorico(prev => prev.map(h => h._id === currentSorteioId ? { ...h, times: novosTimes, jogadoresPresentes: totalJogadores } : h));
       } catch (err) {
         console.error("Erro ao atualizar sorteio no histórico:", err);
-        toast.error("Erro ao salvar alteração no histórico.");
+        // toast.error("Erro ao salvar alteração no histórico.");
       }
     }
 
