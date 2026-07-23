@@ -34,7 +34,7 @@ export default function Login() {
       navigate("/dashboard");
     } catch (error) {
       console.error('Erro ao fazer login:', error);
-      toast.error(error.response?.data?.message || 'Erro ao fazer login');
+      setErro(error.response?.data?.message || 'Erro ao fazer login');
     } finally {
       setCarregando(false);
     }
