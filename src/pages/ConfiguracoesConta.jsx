@@ -4,7 +4,6 @@ import { FaKey, FaEnvelope, FaLock } from "react-icons/fa";
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import { useNavigate } from "react-router-dom";
 import { authService } from "../services/authService";
-import { toast, ToastContainer } from "react-toastify";
 import { useAuth } from "../context/AuthContext";
 
 export default function ConfiguracoesConta() {
@@ -32,12 +31,12 @@ export default function ConfiguracoesConta() {
         login(result.user);
       }
 
-      toast.success('Email atualizado com sucesso!');
+      // toast.success('Email atualizado com sucesso!');
       setNovoEmail('');
       setSenha('');
     } catch (error) {
       console.error('Erro completo:', error);
-      toast.error(error.response?.data?.message || 'Erro ao atualizar email');
+      // toast.error(error.response?.data?.message || 'Erro ao atualizar email');
     } finally {
       setCarregando(false);
     }
@@ -47,7 +46,7 @@ export default function ConfiguracoesConta() {
     e.preventDefault();
     
     if (novaSenha !== confirmarNovaSenha) {
-      toast.error("As senhas não coincidem");
+      // toast.error("As senhas não coincidem");
       return;
     }
 
@@ -59,14 +58,14 @@ export default function ConfiguracoesConta() {
       // authService.atualizarSenha já faz logout (limpa localStorage),
       // aqui garantimos que o contexto também seja limpo e forçamos novo login.
       logout();
-      toast.success("Senha atualizada com sucesso! Faça login novamente.");
+      // toast.success("Senha atualizada com sucesso! Faça login novamente.");
 
       navigate("/login");
       setSenhaAtual("");
       setNovaSenha("");
       setConfirmarNovaSenha("");
     } catch (error) {
-      toast.error(error.message);
+      // toast.error(error.message);
     } finally {
       setCarregando(false);
     }
@@ -306,18 +305,6 @@ export default function ConfiguracoesConta() {
           </motion.form>
         </div>
       </div>
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="dark"
-      />
     </div>
   );
 }
