@@ -5,7 +5,7 @@ import {
   FaSync, FaArrowLeft, FaHistory, FaEdit, FaShare, FaSave, 
   FaTrash, FaUserCheck, FaUserTimes, FaSearch, FaCalendarAlt, FaUserPlus
 } from "react-icons/fa";
-import { RiArrowLeftDoubleLine } from "react-icons/ri";
+import { RiArrowLeftDoubleLine } from "react-icons/ri"; // eslint-disable-line no-unused-vars
 import { GiSoccerKick } from "react-icons/gi";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from 'react-router-dom';
@@ -221,7 +221,7 @@ export default function SorteioTimes() {
       const setupListeners = () => {
         socket.on('connect', () => {
           console.log('Conectado ao Socket.IO');
-          toast.success('Conexão em tempo real ativa');
+          // toast.success('Conexão em tempo real ativa');
         });
 
         socket.on('times-atualizados', (novosTimes) => {
@@ -240,7 +240,7 @@ export default function SorteioTimes() {
 
         socket.on('connect_error', (err) => {
           console.error('Erro de conexão Socket.IO:', err);
-          toast.warning('Conexão em tempo real interrompida');
+          // toast.warning('Conexão em tempo real interrompida');
           
           // Tentar reconectar após 5 segundos
           setTimeout(() => {
@@ -261,7 +261,7 @@ export default function SorteioTimes() {
 
     } catch (err) {
       console.error('Erro ao configurar Socket.IO:', err);
-      toast.error('Recursos em tempo real não disponíveis');
+      // toast.error('Recursos em tempo real não disponíveis');
     }
   };
 
@@ -292,7 +292,7 @@ export default function SorteioTimes() {
   const jogadoresPresentes = jogadoresSelecionados.filter(j => j.presente);
 
   if (jogadoresPresentes.length === 0) {
-    toast.info("Nenhum jogador marcado como presente.");
+    // toast.info("Nenhum jogador marcado como presente.");
     return;
   }
 
@@ -309,7 +309,7 @@ export default function SorteioTimes() {
     }).catch(err => console.error('Erro ao compartilhar:', err));
   } else {
     navigator.clipboard.writeText(texto);
-    toast.success("Lista copiada para área de transferência!");
+    // toast.success("Lista copiada para área de transferência!");
   }
 };
 
@@ -361,9 +361,9 @@ export default function SorteioTimes() {
     } catch (error) {
       console.error("Erro ao carregar jogadores:", error);
       if (error.response?.status === 401) {
-        toast.error('Sessão expirada. Faça login novamente.');
+        // toast.error('Sessão expirada. Faça login novamente.');
       } else {
-        toast.error("Erro ao carregar jogadores");
+        // toast.error("Erro ao carregar jogadores");
       }
     } finally {
       setCarregandoJogadores(false);
@@ -429,10 +429,10 @@ const alternarPresenca = async (jogadorId) => {
       throw new Error(response.data?.message || 'Erro ao confirmar presença');
     }
 
-    toast.success(novoEstado ? '✅ Presença confirmada!' : '❌ Presença desmarcada!');
+    // toast.success(novoEstado ? '✅ Presença confirmada!' : '❌ Presença desmarcada!');
   } catch (error) {
     console.error('Erro ao atualizar presença:', error);
-    toast.error('Erro ao comunicar com o servidor.');
+    // toast.error('Erro ao comunicar com o servidor.');
   }
 };
 
@@ -476,7 +476,7 @@ const aplicarFiltroPosicao = () => {
       // NÃO altera posicaoOriginal aqui
     }))
   );
-  toast.info(`Todos os jogadores definidos como ${filtroPosicao || 'posição original'}`);
+  // toast.info(`Todos os jogadores definidos como ${filtroPosicao || 'posição original'}`);
 };
 
   // Helper para vincular participantes à partida (integração com votação)
@@ -556,7 +556,7 @@ const aplicarFiltroPosicao = () => {
       await vincularParticipantesNoSorteio(novosTimes);
     }
 
-    toast.success("Jogador removido do time");
+    // toast.success("Jogador removido do time");
   };
 
   /**
@@ -580,7 +580,7 @@ const aplicarFiltroPosicao = () => {
         
         // Atualiza a lista de histórico local para refletir a mudança visualmente
         setHistorico(prev => prev.map(h => h._id === currentSorteioId ? { ...h, partidaId: id } : h));
-        toast.success("Vínculo com a partida atualizado!");
+        // toast.success("Vínculo com a partida atualizado!");
       } catch (err) {
         console.error("Erro ao atualizar vínculo da partida:", err);
       }
@@ -651,13 +651,13 @@ const aplicarFiltroPosicao = () => {
       await vincularParticipantesNoSorteio(novosTimes);
     } else {
       console.warn("[SorteioTimes] Jogador adicionado apenas visualmente. Vincule uma partida para registrar na votação.");
-    }
+    } 
 
-    toast.success(`${nomeLimpado} adicionado ao ${novosTimes[index].nome}`);
+    // toast.success(`${nomeLimpado} adicionado ao ${novosTimes[index].nome}`);
     setModalAddPlayer({ open: false, teamIndex: null });
     setNomeNovoJogador("");
   };
-  
+
   /**
    * Realiza o sorteio dos times com base nos jogadores selecionados
    */
@@ -666,7 +666,7 @@ const aplicarFiltroPosicao = () => {
   const jogadoresPresentes = jogadoresSelecionados.filter(j => j.presente);
 
   if (jogadoresPresentes.length < 2) {
-    toast.error("Mínimo de 2 jogadores necessários");
+    // toast.error("Mínimo de 2 jogadores necessários");
     return;
   }
 
@@ -741,13 +741,13 @@ const aplicarFiltroPosicao = () => {
       }
     } catch (syncErr) {
       console.error("Erro ao sincronizar participantes:", syncErr);
-      toast.warning("Sorteio concluído, mas não sincronizado com a agenda.");
+      // toast.warning("Sorteio concluído, mas não sincronizado com a agenda.");
     }
 
-    toast.success(`Times sorteados com sucesso! ${timesComIds.length} times formados`);
+    // toast.success(`Times sorteados com sucesso! ${timesComIds.length} times formados`);
   } catch (error) {
     console.error("Erro ao sortear times:", error);
-    toast.error(error.message || 'Erro ao sortear times');
+    // toast.error(error.message || 'Erro ao sortear times');
   } finally {
     setCarregando(false);
   }
@@ -776,14 +776,14 @@ const aplicarFiltroPosicao = () => {
               NIVEL_JOGADOR.INICIANTE
       };
     }));
-    
-    toast.success('Jogadores atualizados com sucesso');
+
+    // toast.success('Jogadores atualizados com sucesso');
   } catch (error) {
     console.error("Erro:", error);
     if (error.response?.status === 401) {
-      toast.error('Sessão expirada. Faça login novamente.');
+      // toast.error('Sessão expirada. Faça login novamente.');
     } else {
-      toast.error(error.message || 'Erro ao atualizar jogadores');
+      // toast.error(error.message || 'Erro ao atualizar jogadores');
     }
   } finally {
     setCarregandoJogadores(false);
@@ -821,7 +821,7 @@ const aplicarFiltroPosicao = () => {
     setCurrentSorteioId(sorteio._id); // Define como o sorteio ativo para edições futuras
     setPartidaVinculadaId(sorteio.partidaId || ''); // Restaura o vínculo da partida agendada
     setBalanceamento(sorteio.balanceamento);
-    toast.success('Sorteio restaurado!');
+    // toast.success('Sorteio restaurado!');
   };
 
   /**
@@ -846,7 +846,7 @@ const aplicarFiltroPosicao = () => {
     }
 
     setHistorico(prev => prev.filter((_, i) => i !== index));
-    toast.success('Sorteio removido!');
+    // toast.success('Sorteio removido!');
   };
 
   const limparTodoHistorico = () => {
@@ -862,10 +862,10 @@ const aplicarFiltroPosicao = () => {
       setCurrentSorteioId(null);
       setModoEdicao(false);
       setShowLimparHistoricoModal(false);
-      toast.success("Histórico e visualização limpos com sucesso!");
+      // toast.success("Histórico e visualização limpos com sucesso!");
     } catch (e) {
       console.error("Erro ao limpar histórico global:", e);
-      toast.error("Erro ao limpar histórico.");
+      // toast.error("Erro ao limpar histórico.");
     }
   };
 
@@ -889,7 +889,7 @@ const aplicarFiltroPosicao = () => {
       }).catch(err => console.log('Erro ao compartilhar:', err));
     } else {
       navigator.clipboard.writeText(texto);
-      toast.success("Lista copiada!");
+      // toast.success("Lista copiada!");
     }
   };
 
@@ -1033,7 +1033,7 @@ const aplicarFiltroPosicao = () => {
       ...j,
       presente: !todosPresentes
     })));
-    toast.info(todosPresentes ? 'Todos os jogadores desmarcados' : 'Todos os jogadores marcados');
+    // toast.info(todosPresentes ? 'Todos os jogadores desmarcados' : 'Todos os jogadores marcados');
   }}
   whileHover={{ scale: 1.02 }}
   whileTap={{ scale: 0.98 }}
@@ -1347,19 +1347,6 @@ const aplicarFiltroPosicao = () => {
         cancelLabel="Cancelar"
         onConfirm={confirmarLimparHistorico}
         onCancel={() => setShowLimparHistoricoModal(false)}
-      />
-
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="dark"
       />
     </div>
   );

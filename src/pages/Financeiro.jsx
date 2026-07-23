@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { toast, ToastContainer } from "react-toastify";
 import {
   FaMoneyBillWave,
   FaArrowUp,
@@ -153,7 +152,7 @@ export default function Financeiro() {
 
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
-      toast.error('Erro ao carregar dados. Usando cache local se disponível.');
+      // toast.error('Erro ao carregar dados. Usando cache local se disponível.');
     } finally {
       setCarregando(false);
     }
@@ -205,7 +204,7 @@ export default function Financeiro() {
 
       } catch (error) {
         console.error("Erro ao calcular estatísticas:", error);
-        toast.error('Erro ao calcular estatísticas');
+        // toast.error('Erro ao calcular estatísticas');
       }
     };
 
@@ -278,7 +277,7 @@ export default function Financeiro() {
     });
 
     // Resetar formulário
-    toast.success('Transação registrada com sucesso!');
+    // toast.success('Transação registrada com sucesso!');
       setNovaTransacao({
       descricao: "",
       valor: "",
@@ -298,20 +297,20 @@ export default function Financeiro() {
       setTransacoes(prev => prev.filter(t => t._id !== transacaoTemporaria._id));
     }
     
-    toast.error(error.message || 'Erro ao adicionar transação');
+    // toast.error(error.message || 'Erro ao adicionar transação');
   }
 };
 
   const togglePagamento = async (jogadorId, mesIndex) => {
     const jogadorAtual = jogadores.find(j => j._id === jogadorId);
     if (!jogadorAtual) {
-      toast.error('Jogador não encontrado');
+      // toast.error('Jogador não encontrado');
       return;
     }
 
     // Não permite alterar manualmente um pagamento isento
     if (jogadorAtual.pagamentos[mesIndex].isento) {
-      toast.info('Este jogador é isento para este mês. A alteração manual não é permitida.');
+      // toast.info('Este jogador é isento para este mês. A alteração manual não é permitida.');
       return;
     }
 
@@ -377,7 +376,7 @@ export default function Financeiro() {
 
     } catch (error) {
       console.error("Erro ao atualizar pagamento:", error);
-      toast.error('Erro ao atualizar pagamento');
+      // toast.error('Erro ao atualizar pagamento');
       
       // Reverte a mudança em caso de erro
       setJogadores(prevJogadores => {
@@ -405,7 +404,7 @@ export default function Financeiro() {
   const toggleStatus = async (jogadorId) => {
     const jogadorAtual = jogadores.find(j => j._id === jogadorId);
     if (!jogadorAtual) {
-      toast.error('Jogador não encontrado');
+      // toast.error('Jogador não encontrado');
       return;
     }
 
@@ -445,7 +444,7 @@ export default function Financeiro() {
 
     } catch (error) {
       console.error("Erro ao atualizar status:", error);
-      toast.error('Erro ao atualizar status');
+      // toast.error('Erro ao atualizar status');
       
       // Reverte a mudança em caso de erro
       setJogadores(prevJogadores => {
@@ -492,12 +491,12 @@ export default function Financeiro() {
       // Chamada à API para deletar
       await api.delete(`/financeiro/transacoes/${id}`);
 
-      toast.success('Transação removida com sucesso!');
+      // toast.success('Transação removida com sucesso!');
     } catch (error) {
       console.error("Erro ao deletar transação:", error);
       // Reverte as mudanças em caso de erro
       setTransacoes(originalTransacoes);
-      toast.error(error.message || 'Erro ao deletar transação');
+      // toast.error(error.message || 'Erro ao deletar transação');
     } finally {
       setConfirmDeleteModal({ open: false, transacao: null });
     }
@@ -520,8 +519,8 @@ export default function Financeiro() {
       const anoTransacao = Number(dataStr.slice(0,4));
       const filtroAnoSelecionado = filtroHistorico.ano;
 
-      if (filtroAnoSelecionado && filtroAnoSelecionado !== 'Todos' && Number(filtroAnoSelecionado) !== anoTransacao) {
-        toast.error('A exclusão só pode ser feita para transações do ano atualmente filtrado.');
+      if (filtroAnoSelecionado && filtroAnoSelecionado !== 'Todos' && Number(filtroAnoSelecionado) !== anoTransacao) { // eslint-disable-line
+        // toast.error('A exclusão só pode ser feita para transações do ano atualmente filtrado.');
         return;
       }
 
@@ -530,7 +529,7 @@ export default function Financeiro() {
       return;
     } catch (error) {
       console.error("Erro ao deletar transação:", error);
-      toast.error(error.message || 'Erro ao deletar transação');
+      // toast.error(error.message || 'Erro ao deletar transação');
     }
   };
 
@@ -541,10 +540,10 @@ export default function Financeiro() {
 
       setJogadores(jogadores.filter(j => j._id !== id));
       setEditarModal(false);
-      toast.success('Jogador removido com sucesso!');
+      // toast.success('Jogador removido com sucesso!');
     } catch (error) {
       console.error("Erro ao deletar jogador:", error);
-      toast.error('Erro ao deletar jogador');
+      // toast.error('Erro ao deletar jogador');
     }
   };
 
@@ -674,7 +673,7 @@ export default function Financeiro() {
     try {
       const element = document.getElementById('relatorio-content');
       if (!element) {
-        toast.error('Abra o relatório antes de exportar.');
+        // toast.error('Abra o relatório antes de exportar.');
         return;
       }
 
@@ -706,10 +705,10 @@ export default function Financeiro() {
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`relatorio-financeiro-${filtroMes}.pdf`);
 
-      toast.success('Relatório PDF gerado com sucesso!');
+      // toast.success('Relatório PDF gerado com sucesso!');
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
-      toast.error('Erro ao gerar PDF. Tente novamente.');
+      // toast.error('Erro ao gerar PDF. Tente novamente.');
     }
   };
 
@@ -717,7 +716,7 @@ export default function Financeiro() {
     try {
       const element = document.getElementById('relatorio-content');
       if (!element) {
-        toast.error('Abra o relatório antes de exportar.');
+        // toast.error('Abra o relatório antes de exportar.');
         return;
       }
 
@@ -746,10 +745,10 @@ export default function Financeiro() {
       link.href = canvas.toDataURL('image/png');
       link.click();
 
-      toast.success('Imagem gerada com sucesso!');
+      // toast.success('Imagem gerada com sucesso!');
     } catch (error) {
       console.error('Erro ao gerar imagem:', error);
-      toast.error('Erro ao gerar imagem. Tente novamente.');
+      // toast.error('Erro ao gerar imagem. Tente novamente.');
     }
   };
 
@@ -777,7 +776,7 @@ export default function Financeiro() {
       }
 
       if (transacoesParaExportar.length === 0) {
-        toast.warning('Nenhuma transação encontrada para o período selecionado.');
+        // toast.warning('Nenhuma transação encontrada para o período selecionado.');
         return;
       }
 
@@ -933,10 +932,10 @@ export default function Financeiro() {
 
       XLSX.writeFile(wb, nomeArquivo);
 
-      toast.success('Excel exportado com sucesso!');
+      // toast.success('Excel exportado com sucesso!');
     } catch (error) {
       console.error('Erro ao exportar Excel:', error);
-      toast.error('Erro ao exportar Excel. Tente novamente.');
+      // toast.error('Erro ao exportar Excel. Tente novamente.');
     }
   };
 
@@ -960,12 +959,12 @@ export default function Financeiro() {
   //         files: [file]
   //       });
   //     } else {
-  //       toast.info('Compartilhamento não suportado neste navegador');
+  //       // toast.info('Compartilhamento não suportado neste navegador');
   //     }
   //   } catch (error) {
   //     console.error('Erro ao compartilhar:', error);
   //     if (error.name !== 'AbortError') {
-  //       toast.error('Erro ao compartilhar relatório');
+  //       // toast.error('Erro ao compartilhar histórico');
   //     }
   //   }
   // };
@@ -1098,10 +1097,10 @@ export default function Financeiro() {
       document.body.removeChild(link);
     }
 
-    toast.success('Imagem gerada com sucesso!');
+    // toast.success('Imagem gerada com sucesso!');
   } catch (error) {
     console.error('Erro:', error);
-    toast.error(error.message);
+    // toast.error(error.message);
   }
 };
 
@@ -2225,19 +2224,6 @@ const resumoCategoriasAno = transacoesAno.reduce((acc, t) => {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="dark"
-      />
     </div>
   );
 }
