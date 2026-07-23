@@ -8,10 +8,9 @@ import {
   FaCheck, FaMoneyBillWave, FaTshirt, FaMapMarkerAlt, FaAward,
   FaStar, FaCalendarAlt, FaPhone, FaEnvelope, FaBan, FaUnlock, FaFileExcel
 } from 'react-icons/fa';
-import { RiArrowLeftDoubleLine } from 'react-icons/ri';
-import { motion, AnimatePresence } from 'framer-motion';
-import * as XLSX from 'xlsx';
-import { toast, ToastContainer } from 'react-toastify';
+import { RiArrowLeftDoubleLine } from 'react-icons/ri'; // eslint-disable-line no-unused-vars
+import { motion, AnimatePresence } from 'framer-motion'; // eslint-disable-line no-unused-vars
+import * as XLSX from 'xlsx'; // eslint-disable-line no-unused-vars
 import { useJogadores } from '../context/JogadoresContext';
 import { calcularIdade } from '../utils/dateUtils';
 import api from '../services/api';
@@ -111,7 +110,7 @@ export default function ListaJogadores({
       });
 
       const data = response.data;
-      toast.success(data.message || (novoIsento ? 'Jogador isento de pagamentos' : 'Isenção do jogador removida'));
+      // toast.success(data.message || (novoIsento ? 'Jogador isento de pagamentos' : 'Isenção do jogador removida'));
 
       // Atualiza o jogador no contexto e no estado local
       const jogadorAtualizado = data.data;
@@ -120,7 +119,7 @@ export default function ListaJogadores({
 
     } catch (error) {
       console.error('Erro ao atualizar isenção do jogador:', error);
-      toast.error(error.response?.data?.message || error.message || 'Erro ao atualizar isenção');
+      // toast.error(error.response?.data?.message || error.message || 'Erro ao atualizar isenção');
     } finally {
       fecharModalIsencao();
     }
@@ -137,13 +136,13 @@ export default function ListaJogadores({
       });
 
       const data = response.data;
-      toast.success(data.message || (novoAtivo ? 'Jogador desbloqueado' : 'Jogador bloqueado'));
+      // toast.success(data.message || (novoAtivo ? 'Jogador desbloqueado' : 'Jogador bloqueado'));
 
       atualizarJogador(data.data);
       setJogadores(prev => prev.map(j => j._id === data.data._id ? data.data : j));
     } catch (error) {
       console.error('Erro ao bloquear/desbloquear jogador:', error);
-      toast.error(error.response?.data?.message || error.message || 'Erro ao atualizar bloqueio');
+      // toast.error(error.response?.data?.message || error.message || 'Erro ao atualizar bloqueio');
     } finally {
       fecharModalBloqueio();
     }
@@ -298,7 +297,7 @@ export default function ListaJogadores({
     });
 
     const data = response.data;
-    toast.success(`Jogador ${data.data.nome} ${editando ? 'atualizado' : 'cadastrado'} com sucesso!`);
+    // toast.success(`Jogador ${data.data.nome} ${editando ? 'atualizado' : 'cadastrado'} com sucesso!`);
     
     // Atualização usando o contexto
     if (editando) {
@@ -327,7 +326,7 @@ export default function ListaJogadores({
     });
   } catch (error) {
     console.error("Erro ao salvar jogador:", error);
-    toast.error(error.message || 'Erro ao salvar jogador');
+    // toast.error(error.message || 'Erro ao salvar jogador');
   }
 };
 
@@ -351,7 +350,7 @@ export default function ListaJogadores({
   const handleExcluir = (id) => {
     const jogador = jogadores.find(j => j._id === id);
     if (!jogador) {
-      toast.error('Jogador não encontrado');
+      // toast.error('Jogador não encontrado');
       return;
     }
 
@@ -366,11 +365,11 @@ export default function ListaJogadores({
       const response = await api.delete(`/jogadores/${id}`);
       const data = response.data;
 
-      toast.success(data.message || 'Jogador excluído com sucesso');
+      // toast.success(data.message || 'Jogador excluído com sucesso');
     } catch (error) {
       console.error('Erro ao excluir jogador:', error);
       setJogadores(original);
-      toast.error(error.response?.data?.message || error.message || 'Erro ao excluir jogador');
+      // toast.error(error.response?.data?.message || error.message || 'Erro ao excluir jogador');
     } finally {
       setConfirmDeleteJogador({ open: false, jogador: null });
     }
@@ -380,13 +379,13 @@ export default function ListaJogadores({
     try {
       const sucesso = await atualizarStatusFinanceiro(id, status);
       if (sucesso) {
-        toast.success(`Status atualizado para ${status}`);
+        // toast.success(`Status atualizado para ${status}`);
       } else {
-        toast.error('Erro ao atualizar status');
+        // toast.error('Erro ao atualizar status');
       }
     } catch (error) {
       console.error("Erro ao atualizar status:", error);
-      toast.error('Erro ao atualizar status');
+      // toast.error('Erro ao atualizar status');
     }
   };
 
@@ -406,7 +405,7 @@ export default function ListaJogadores({
       const listaParaExportar = jogadoresFiltrados;
 
       if (listaParaExportar.length === 0) {
-        toast.warn('Nenhum jogador para exportar');
+        // toast.warn('Nenhum jogador para exportar');
         return;
       }
 
@@ -432,10 +431,10 @@ export default function ListaJogadores({
       const dataStr = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
       XLSX.writeFile(wb, `lista_jogadores_${dataStr}.xlsx`);
 
-      toast.success('Excel exportado com sucesso!');
+      // toast.success('Excel exportado com sucesso!');
     } catch (error) {
       console.error("Erro ao exportar Excel:", error);
-      toast.error('Erro ao gerar arquivo Excel');
+      // toast.error('Erro ao gerar arquivo Excel');
     } finally {
       setExportando(false);
     }
@@ -595,18 +594,6 @@ export default function ListaJogadores({
         cancelLabel="Cancelar"
         onConfirm={() => confirmDeleteJogador.jogador && performDeleteJogador(confirmDeleteJogador.jogador._id)}
         onCancel={() => setConfirmDeleteJogador({ open: false, jogador: null })}
-      />
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="dark"
       />
 
       {!modoSelecao && (
