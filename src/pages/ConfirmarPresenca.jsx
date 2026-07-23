@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { toast, ToastContainer } from 'react-toastify';
 import api from '../services/api';
 import { GiSoccerKick, GiSmartphone } from 'react-icons/gi';
 import { FaUser, FaLock, FaCalendarAlt, FaUserShield, FaEye, FaEyeSlash, FaSignOutAlt, FaShare, FaPhone } from 'react-icons/fa';
@@ -98,7 +97,7 @@ export default function ConfirmarPresenca() {
         }
       } catch (error) {
         console.error('Erro ao carregar evento:', error);
-        toast.error('Link inválido ou expirado');
+        // toast.error('Link inválido ou expirado');
       } finally {
         setCarregando(false);
       }
@@ -124,7 +123,7 @@ export default function ConfirmarPresenca() {
   const handleLogin = async (e) => {
     e.preventDefault();
     if (!formData.nome || !formData.password) {
-      toast.warn('Preencha seu nome e data de nascimento (DDMMAAAA)');
+      // toast.warn('Preencha seu nome e data de nascimento (DDMMAAAA)');
       return;
     }
 
@@ -144,13 +143,13 @@ export default function ConfirmarPresenca() {
       if (response.data.success) {
         // Salva o token persistente e recarrega a página para o login automático funcionar
         localStorage.setItem('persistentAuthToken', response.data.persistentToken);
-        toast.success('Login realizado! Redirecionando...');
+        // toast.success('Login realizado! Redirecionando...');
         // Força um reload para que o useEffect de login automático seja acionado
         window.location.reload();
       }
     } catch (error) {
       console.error('Erro na autenticação:', error);
-      toast.error(error.response?.data?.message || 'Erro ao autenticar. Verifique seus dados.');
+      // toast.error(error.response?.data?.message || 'Erro ao autenticar. Verifique seus dados.');
     } finally {
       setSubmetendo(false);
     }
@@ -170,11 +169,11 @@ export default function ConfirmarPresenca() {
 
       if (response.data.success) {
         setJogadorLogado(prev => ({ ...prev, presente: novoEstado }));
-        toast.success(novoEstado ? '✅ Presença confirmada!' : '❌ Presença removida!');
+        // toast.success(novoEstado ? '✅ Presença confirmada!' : '❌ Presença removida!');
       }
     } catch (error) {
       console.error('Erro ao atualizar presença:', error);
-      toast.error(error.response?.data?.message || 'Erro ao atualizar presença');
+      // toast.error(error.response?.data?.message || 'Erro ao atualizar presença');
     } finally {
       setSubmetendo(false);
     }
@@ -184,7 +183,7 @@ export default function ConfirmarPresenca() {
     e.preventDefault();
 
     if (!adminForm.username || !adminForm.password) {
-      toast.warn('Informe usuário e senha de admin');
+      // toast.warn('Informe usuário e senha de admin');
       return;
     }
 
@@ -209,11 +208,11 @@ export default function ConfirmarPresenca() {
 
         setJogadoresAdmin(jogadores || []);
         setAdminAutenticado(true);
-        toast.success('Login de admin realizado com sucesso!');
+        // toast.success('Login de admin realizado com sucesso!');
       }
     } catch (error) {
       console.error('Erro no login admin:', error);
-      toast.error(error.response?.data?.message || 'Erro ao autenticar admin.');
+      // toast.error(error.response?.data?.message || 'Erro ao autenticar admin.');
     } finally {
       setSubmetendo(false);
     }
@@ -235,11 +234,11 @@ export default function ConfirmarPresenca() {
             j.id === jogadorId ? { ...j, presente: novoEstado } : j
           )
         );
-        toast.success(novoEstado ? '✅ Presença confirmada!' : '❌ Presença removida!');
+        // toast.success(novoEstado ? '✅ Presença confirmada!' : '❌ Presença removida!');
       }
     } catch (error) {
       console.error('Erro ao atualizar presença (admin):', error);
-      toast.error(error.response?.data?.message || 'Erro ao atualizar presença');
+      // toast.error(error.response?.data?.message || 'Erro ao atualizar presença');
     } finally {
       setSubmetendo(false);
     }
@@ -249,7 +248,7 @@ export default function ConfirmarPresenca() {
     const confirmados = jogadoresAdmin.filter(j => j.presente);
 
     if (confirmados.length === 0) {
-      toast.info("Nenhum jogador confirmado.");
+      // toast.info("Nenhum jogador confirmado.");
       return;
     }
 
@@ -276,7 +275,7 @@ export default function ConfirmarPresenca() {
       }).catch(err => console.error('Erro ao compartilhar:', err));
     } else {
       navigator.clipboard.writeText(texto);
-      toast.success("Lista copiada!");
+      // toast.success("Lista copiada!");
     }
   };
 
@@ -284,7 +283,7 @@ export default function ConfirmarPresenca() {
     const naoConfirmados = jogadoresAdmin.filter(j => !j.presente);
 
     if (naoConfirmados.length === 0) {
-      toast.info("Todos os jogadores confirmaram!");
+      // toast.info("Todos os jogadores confirmaram!");
       return;
     }
 
@@ -311,7 +310,7 @@ export default function ConfirmarPresenca() {
       }).catch(err => console.error('Erro ao compartilhar:', err));
     } else {
       navigator.clipboard.writeText(texto);
-      toast.success("Lista copiada!");
+      // toast.success("Lista copiada!");
     }
   };
 
@@ -751,18 +750,6 @@ export default function ConfirmarPresenca() {
           </AnimatePresence>
         </motion.div>
       </div>
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="dark"
-      />
     </div>
   );
 }
