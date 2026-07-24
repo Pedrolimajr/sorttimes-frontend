@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../services/api';
 import { GiSoccerKick, GiSmartphone } from 'react-icons/gi';
-import { FaUser, FaLock, FaCalendarAlt, FaUserShield, FaEye, FaEyeSlash, FaSignOutAlt, FaShare, FaSun, FaMoon, FaCloudSun } from 'react-icons/fa';
+import { FaUser, FaLock, FaCalendarAlt, FaUserShield, FaEye, FaEyeSlash, FaSignOutAlt, FaShare, FaSun, FaMoon, FaCloudSun, FaSmile, FaFrown } from 'react-icons/fa';
 
 export default function ConfirmarPresenca() {
   const { linkId } = useParams();
@@ -524,16 +524,13 @@ export default function ConfirmarPresenca() {
                     <p className="text-sm text-gray-400 font-medium">Sua presença para o jogo está:</p>
                     <motion.div
                       layout
-                      className={`inline-flex items-center gap-3 px-6 py-3 rounded-2xl text-base font-black tracking-widest border-2 shadow-lg ${
+                      className={`inline-flex items-center gap-3 px-5 py-2.5 sm:px-6 sm:py-3 rounded-2xl text-sm sm:text-base font-black tracking-widest border-2 shadow-lg transition-all duration-300 ${
                         jogadorLogado.presente
-                          ? 'bg-green-500/10 text-green-300 border-green-500/50 shadow-green-500/10'
+                          ? 'bg-green-500/10 text-green-300 border-green-500/50 shadow-green-500/10 animate-pulse'
                           : 'bg-red-500/10 text-red-400 border-red-500/50 shadow-red-500/10'
                       }`}
                     >
-                      <motion.div 
-                        layout 
-                        className={`w-3 h-3 rounded-full ${jogadorLogado.presente ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`} 
-                      />
+                      {jogadorLogado.presente ? <FaSmile /> : <FaFrown />}
                       {jogadorLogado.presente ? 'CONFIRMADA' : 'NÃO CONFIRMADA'}
                     </motion.div>
                   </div>
@@ -541,10 +538,10 @@ export default function ConfirmarPresenca() {
                   <motion.button
                     onClick={alternarPresenca}
                     disabled={submetendo}
-                    whileHover={{ scale: 1.03, y: -2 }}
-                    whileTap={{ scale: 0.97, y: 0 }}
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98, y: 0 }}
                     className={`
-                      w-full py-5 rounded-3xl font-black text-lg shadow-xl transition-all duration-300 flex items-center justify-center gap-3
+                      w-full py-4 sm:py-5 rounded-3xl font-black text-base sm:text-lg shadow-xl transition-all duration-300 flex items-center justify-center gap-3
                       ${jogadorLogado.presente 
                         ? 'bg-gradient-to-br from-red-600 to-red-800 hover:from-red-700 text-white shadow-red-600/30' 
                         : 'bg-gradient-to-br from-green-500 to-green-700 hover:from-green-600 text-white shadow-green-600/30'}

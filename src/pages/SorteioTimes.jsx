@@ -1013,36 +1013,36 @@ const aplicarFiltroPosicao = () => {
                 <FaUser className="text-blue-400 text-sm sm:text-base" /> Jogadores Disponíveis
               </label>
 
-              {/* Botões */}
-              <div className="flex flex-row gap-2 w-full sm:w-auto">
-                <motion.button
-                  onClick={recarregarJogadores}
-                  disabled={carregandoJogadores}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-1/2 sm:flex-1 flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-black uppercase tracking-widest px-4 py-2.5 rounded-xl transition-all text-[10px] border border-white/5"
-                >
-                  <FaSync className={carregandoJogadores ? "animate-spin w-3 h-3 sm:w-4 sm:h-4" : "w-3 h-3 sm:w-4 sm:h-4"} />
-                  <span>Atualizar</span>
-                </motion.button>
+  {/* Botões */}
+  <div className="flex flex-row gap-2 w-full sm:w-auto">
+    <motion.button
+      onClick={recarregarJogadores}
+      disabled={carregandoJogadores}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      className="w-1/2 sm:flex-1 flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-black uppercase tracking-widest px-4 py-2.5 rounded-xl transition-all text-[10px] border border-white/5"
+    >
+      <FaSync className={carregandoJogadores ? "animate-spin w-3 h-3 sm:w-4 sm:h-4" : "w-3 h-3 sm:w-4 sm:h-4"} />
+      <span>Atualizar</span>
+    </motion.button>
 
-                <motion.button
-                  onClick={() => {
-                    const todosPresentes = jogadoresSelecionados.every(j => j.presente);
-                    setJogadoresSelecionados(jogadoresSelecionados.map(j => ({ ...j, presente: !todosPresentes })));
-                  }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className={`w-1/2 sm:flex-1 flex items-center justify-center gap-2 font-black uppercase tracking-widest px-4 py-2.5 rounded-xl transition-all duration-300 text-[10px] border ${
-                    jogadoresSelecionados.every(j => j.presente)
-                      ? 'bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20'
-                      : 'bg-green-500/10 text-green-400 border-green-500/20 hover:bg-green-500/20'
-                  }`}
-                >
-                  {jogadoresSelecionados.every(j => j.presente) ? <FaUserTimes className="w-3 h-3 sm:w-4 sm:h-4" /> : <FaUserCheck className="w-3 h-3 sm:w-4 sm:h-4" />}
-                  <span>{jogadoresSelecionados.every(j => j.presente) ? 'Desmarcar Todos' : 'Marcar Todos'}</span>
-                </motion.button>
-              </div>
+    <motion.button
+  onClick={() => {
+    const todosPresentes = jogadoresSelecionados.every(j => j.presente);
+    setJogadoresSelecionados(jogadoresSelecionados.map(j => ({
+      ...j,
+      presente: !todosPresentes
+    })));
+    // toast.info(todosPresentes ? 'Todos os jogadores desmarcados' : 'Todos os jogadores marcados');
+  }}
+  whileHover={{ scale: 1.02 }}
+  whileTap={{ scale: 0.98 }}
+  className="w-1/2 sm:flex-1 flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-black uppercase tracking-widest px-4 py-2.5 rounded-xl transition-all text-[10px] border border-white/5"
+>
+  <FaCheck className="w-3 h-3 sm:w-4 sm:h-4" />
+  <span>{jogadoresSelecionados.every(j => j.presente) ? 'Desmarcar Todos' : 'Marcar Todos'}</span>
+</motion.button>
+  </div>
 </div>
 
             {/* Seletor de balanceamento */}
