@@ -502,7 +502,7 @@ export default function ConfirmarPresenca() {
                   animate={{ opacity: 1, scale: 1 }}
                   className="space-y-6 text-center"
                 >
-                  <div className="flex flex-col sm:flex-row items-center gap-4 bg-slate-900/50 p-4 rounded-2xl border border-blue-500/20 mb-2 text-center sm:text-left shadow-inner">
+                  <div className="flex flex-row items-center gap-4 bg-slate-900/50 p-4 rounded-2xl border border-blue-500/20 mb-2 text-left shadow-inner">
                     {jogadorLogado.foto ? (
                       <img 
                         src={jogadorLogado.foto} 
@@ -515,8 +515,8 @@ export default function ConfirmarPresenca() {
                       </div>
                     )}
                     <div className="flex-1">
-                      <p className="text-lg font-bold text-slate-300 flex items-center justify-center sm:justify-start gap-2">{saudacao.icon} {saudacao.text},</p>
-                      <p className="text-3xl font-black text-white tracking-tighter -mt-1">{jogadorLogado.nome}!</p>
+                      <p className="text-lg font-bold text-slate-300 flex items-center justify-start gap-2">{saudacao.icon} {saudacao.text},</p>
+                      <p className="text-3xl font-black text-white tracking-tighter -mt-1 text-left">{jogadorLogado.nome}!</p>
                     </div>
                   </div>
 
