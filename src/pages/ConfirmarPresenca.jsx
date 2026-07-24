@@ -550,9 +550,9 @@ export default function ConfirmarPresenca() {
                     whileTap={{ scale: 0.98, y: 0 }}
                     className={`
                       w-auto inline-flex px-10 py-3 sm:py-4 rounded-3xl font-black text-base sm:text-lg shadow-xl transition-all duration-300 items-center justify-center gap-3
-                      ${jogadorLogado.presente 
-                        ? 'bg-gradient-to-br from-red-600 to-red-800 hover:from-red-700 text-white shadow-red-600/30' 
-                        : 'bg-gradient-to-br from-green-500 to-green-700 hover:from-green-600 text-white shadow-green-600/30'}
+                      ${jogadorLogado.presente
+                        ? 'bg-gradient-to-br from-red-600 to-red-800 hover:from-red-700 text-white shadow-[0_0_20px_rgba(239,68,68,0.4)]'
+                        : 'bg-gradient-to-br from-green-500 to-green-700 hover:from-green-600 text-white shadow-[0_0_20px_rgba(34,197,94,0.4)]'}
                     `}
                   >
                     {submetendo ? (
