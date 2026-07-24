@@ -541,7 +541,7 @@ export default function ConfirmarPresenca() {
                     whileHover={{ scale: 1.02, y: -2 }}
                     whileTap={{ scale: 0.98, y: 0 }}
                     className={`
-                      w-full py-4 sm:py-5 rounded-3xl font-black text-base sm:text-lg shadow-xl transition-all duration-300 flex items-center justify-center gap-3
+                      w-auto inline-flex px-12 py-4 sm:py-5 rounded-3xl font-black text-base sm:text-lg shadow-xl transition-all duration-300 items-center justify-center gap-3
                       ${jogadorLogado.presente 
                         ? 'bg-gradient-to-br from-red-600 to-red-800 hover:from-red-700 text-white shadow-red-600/30' 
                         : 'bg-gradient-to-br from-green-500 to-green-700 hover:from-green-600 text-white shadow-green-600/30'}
