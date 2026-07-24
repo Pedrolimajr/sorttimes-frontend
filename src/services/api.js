@@ -48,7 +48,11 @@ api.interceptors.response.use(
           }
           break;
         case 403:
-          toast.error('Acesso negado.');
+          // A mensagem de "Acesso negado" (ex: usuário bloqueado) já é tratada
+          // na própria página de confirmação de presença, então o toast global é desnecessário.
+          if (!error.config.url.includes('/presenca/')) {
+            toast.error('Acesso negado.');
+          }
           break;
         case 404:
           toast.error('Recurso não encontrado.');
