@@ -524,24 +524,24 @@ export default function ConfirmarPresenca() {
                     <p className="text-sm text-gray-400 font-medium">Sua presença para o jogo está:</p>
                     <motion.div
                       layout
-                      className={`inline-flex items-center gap-4 px-8 py-4 rounded-3xl text-base font-black tracking-widest border-2 shadow-2xl transition-all duration-300 ${
+                      className={`inline-flex items-center gap-4 px-8 py-4 rounded-3xl text-base font-black tracking-widest border-2 shadow-2xl transition-all duration-300 shadow-slate-950/50 ${
                         jogadorLogado.presente
-                          ? 'bg-green-500/10 text-green-300 border-green-500/50 shadow-green-500/20'
-                          : 'bg-red-500/10 text-red-400 border-red-500/50 shadow-red-500/20'
+                          ? 'bg-green-500/10 text-green-300 border-green-500/50'
+                          : 'bg-red-500/10 text-red-400 border-red-500/50'
                       }`}
                     >
                       {jogadorLogado.presente ? <FaSmile className="text-xl" /> : <FaFrown className="text-xl" />}
                       {jogadorLogado.presente ? 'CONFIRMADA' : 'NÃO CONFIRMADA'}
                     </motion.div>
                   </div>
-
+  
                   <motion.button
                     onClick={alternarPresenca}
                     disabled={submetendo}
                     whileHover={{ scale: 1.02, y: -2 }}
                     whileTap={{ scale: 0.98, y: 0 }}
                     className={`
-                      w-auto inline-flex px-12 py-4 sm:py-5 rounded-3xl font-black text-base sm:text-lg shadow-xl transition-all duration-300 items-center justify-center gap-3
+                      w-auto inline-flex px-10 py-3 sm:py-4 rounded-3xl font-black text-base sm:text-lg shadow-xl transition-all duration-300 items-center justify-center gap-3
                       ${jogadorLogado.presente 
                         ? 'bg-gradient-to-br from-red-600 to-red-800 hover:from-red-700 text-white shadow-red-600/30' 
                         : 'bg-gradient-to-br from-green-500 to-green-700 hover:from-green-600 text-white shadow-green-600/30'}
