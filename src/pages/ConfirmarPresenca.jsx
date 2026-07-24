@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../services/api';
 import { GiSoccerKick, GiSmartphone } from 'react-icons/gi';
-import { FaUser, FaLock, FaCalendarAlt, FaUserShield, FaEye, FaEyeSlash, FaSignOutAlt, FaShare, FaPhone } from 'react-icons/fa';
+import { FaUser, FaLock, FaCalendarAlt, FaUserShield, FaEye, FaEyeSlash, FaSignOutAlt, FaShare, FaSun, FaMoon, FaCloudSun } from 'react-icons/fa';
 
 export default function ConfirmarPresenca() {
   const { linkId } = useParams();
@@ -42,6 +42,21 @@ export default function ConfirmarPresenca() {
   const [mostrarSenhaJogador, setMostrarSenhaJogador] = useState(false);
 
   const [mostrarSenhaAdmin, setMostrarSenhaAdmin] = useState(false);
+
+  // Função para obter a saudação e o ícone com base na hora
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) {
+      return { text: "Bom dia", icon: <FaSun className="text-yellow-400" /> };
+    }
+    if (hour >= 12 && hour < 18) {
+      return { text: "Boa tarde", icon: <FaCloudSun className="text-orange-400" /> };
+    }
+    return { text: "Boa noite", icon: <FaMoon className="text-blue-300" /> };
+  };
+
+  const saudacao = getGreeting();
+
 
   // Efeito principal para login automático
   useEffect(() => {
@@ -487,21 +502,21 @@ export default function ConfirmarPresenca() {
                   animate={{ opacity: 1, scale: 1 }}
                   className="space-y-6 text-center"
                 >
-                  <div className="flex items-center gap-4 bg-gray-900/50 p-4 rounded-2xl border border-gray-700/50 mb-2 text-left">
+                  <div className="flex items-center gap-4 bg-slate-900/50 p-4 rounded-2xl border border-blue-500/20 mb-2 text-left shadow-inner">
                     {jogadorLogado.foto ? (
                       <img 
                         src={jogadorLogado.foto} 
                         alt={jogadorLogado.nome} 
-                        className="w-16 h-16 rounded-full object-cover border-2 border-blue-500 shadow-lg shadow-blue-500/20"
+                        className="w-16 h-16 rounded-full object-cover border-4 border-slate-700 shadow-lg"
                       />
                     ) : (
-                      <div className="w-16 h-16 rounded-full bg-gray-700 flex items-center justify-center border-2 border-gray-600">
+                      <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center border-4 border-slate-700">
                         <FaUser className="text-gray-400 text-2xl" />
                       </div>
                     )}
                     <div>
-                      <p className="text-xl font-black text-white">Olá, {jogadorLogado.nome}!</p>
-                      <p className="text-xs text-blue-400 font-bold uppercase tracking-wider">Confirme sua presença</p>
+                      <p className="text-sm font-bold text-slate-400 flex items-center gap-2">{saudacao.icon} {saudacao.text}!</p>
+                      <p className="text-2xl font-black text-white tracking-tighter">{jogadorLogado.nome}</p>
                     </div>
                   </div>
 
