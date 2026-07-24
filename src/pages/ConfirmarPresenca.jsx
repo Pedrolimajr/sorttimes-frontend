@@ -524,13 +524,13 @@ export default function ConfirmarPresenca() {
                     <p className="text-sm text-gray-400 font-medium">Sua presença para o jogo está:</p>
                     <motion.div
                       layout
-                      className={`inline-flex items-center gap-3 px-5 py-2.5 sm:px-6 sm:py-3 rounded-2xl text-sm sm:text-base font-black tracking-widest border-2 shadow-lg transition-all duration-300 ${
+                      className={`inline-flex items-center gap-4 px-8 py-4 rounded-3xl text-base font-black tracking-widest border-2 shadow-2xl transition-all duration-300 ${
                         jogadorLogado.presente
-                          ? 'bg-green-500/10 text-green-300 border-green-500/50 shadow-green-500/10 animate-pulse'
-                          : 'bg-red-500/10 text-red-400 border-red-500/50 shadow-red-500/10'
+                          ? 'bg-green-500/10 text-green-300 border-green-500/50 shadow-green-500/20 animate-pulse'
+                          : 'bg-red-500/10 text-red-400 border-red-500/50 shadow-red-500/20'
                       }`}
                     >
-                      {jogadorLogado.presente ? <FaSmile /> : <FaFrown />}
+                      {jogadorLogado.presente ? <FaSmile className="text-xl" /> : <FaFrown className="text-xl" />}
                       {jogadorLogado.presente ? 'CONFIRMADA' : 'NÃO CONFIRMADA'}
                     </motion.div>
                   </div>
