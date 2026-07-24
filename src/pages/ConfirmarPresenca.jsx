@@ -532,10 +532,10 @@ export default function ConfirmarPresenca() {
                     <p className="text-sm text-gray-400 font-medium">Sua presença para o jogo está:</p>
                     <motion.div
                       layout
-                      className={`inline-flex items-center gap-4 px-8 py-4 rounded-3xl text-base font-black tracking-widest border-2 shadow-2xl transition-all duration-300 ${
+                      className={`inline-flex items-center gap-4 px-8 py-4 rounded-3xl text-base font-black tracking-widest border-2 transition-all duration-300 ${
                         jogadorLogado.presente
-                          ? 'bg-green-500/10 text-green-300 border-green-500/50 shadow-green-500/40'
-                          : 'bg-red-500/10 text-red-400 border-red-500/50 shadow-red-500/40'
+                          ? 'bg-green-500/10 text-green-300 border-green-500/50 shadow-[0_0_20px_rgba(34,197,94,0.4)]'
+                          : 'bg-red-500/10 text-red-400 border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.4)]'
                       }`}
                     >
                       {jogadorLogado.presente ? <FaSmile className="text-xl" /> : <FaFrown className="text-xl" />}
