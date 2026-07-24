@@ -534,8 +534,8 @@ export default function ConfirmarPresenca() {
                       layout
                       className={`inline-flex items-center gap-4 px-8 py-4 rounded-3xl text-base font-black tracking-widest border-2 shadow-2xl transition-all duration-300 ${
                         jogadorLogado.presente
-                          ? 'bg-green-500/10 text-green-300 border-green-500/50 shadow-green-500/20'
-                          : 'bg-red-500/10 text-red-400 border-red-500/50 shadow-red-500/20'
+                          ? 'bg-green-500/10 text-green-300 border-green-500/50 shadow-green-500/40'
+                          : 'bg-red-500/10 text-red-400 border-red-500/50 shadow-red-500/40'
                       }`}
                     >
                       {jogadorLogado.presente ? <FaSmile className="text-xl" /> : <FaFrown className="text-xl" />}
