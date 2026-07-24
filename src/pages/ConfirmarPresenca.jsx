@@ -502,35 +502,38 @@ export default function ConfirmarPresenca() {
                   animate={{ opacity: 1, scale: 1 }}
                   className="space-y-6 text-center"
                 >
-                  <div className="flex items-center gap-4 bg-slate-900/50 p-4 rounded-2xl border border-blue-500/20 mb-2 text-left shadow-inner">
+                  <div className="flex flex-col sm:flex-row items-center gap-4 bg-slate-900/50 p-4 rounded-2xl border border-blue-500/20 mb-2 text-center sm:text-left shadow-inner">
                     {jogadorLogado.foto ? (
                       <img 
                         src={jogadorLogado.foto} 
                         alt={jogadorLogado.nome} 
-                        className="w-16 h-16 rounded-full object-cover border-4 border-slate-700 shadow-lg"
+                        className="w-20 h-20 rounded-full object-cover border-4 border-slate-700 shadow-lg"
                       />
                     ) : (
-                      <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center border-4 border-slate-700">
+                      <div className="w-20 h-20 rounded-full bg-slate-800 flex items-center justify-center border-4 border-slate-700">
                         <FaUser className="text-gray-400 text-2xl" />
                       </div>
                     )}
-                    <div>
-                      <p className="text-sm font-bold text-slate-400 flex items-center gap-2">{saudacao.icon} {saudacao.text}!</p>
-                      <p className="text-2xl font-black text-white tracking-tighter">{jogadorLogado.nome}</p>
+                    <div className="flex-1">
+                      <p className="text-lg font-bold text-slate-300 flex items-center justify-center sm:justify-start gap-2">{saudacao.icon} {saudacao.text},</p>
+                      <p className="text-3xl font-black text-white tracking-tighter -mt-1">{jogadorLogado.nome}!</p>
                     </div>
                   </div>
 
-                  <div className="space-y-3">
-                    <p className="text-sm text-gray-400">Sua presença para o jogo está:</p>
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-400 font-medium">Sua presença para o jogo está:</p>
                     <motion.div
                       layout
-                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-base font-bold tracking-wider border ${
+                      className={`inline-flex items-center gap-3 px-6 py-3 rounded-2xl text-base font-black tracking-widest border-2 shadow-lg ${
                         jogadorLogado.presente
-                          ? 'bg-green-900/50 text-green-300 border-green-500/30'
-                          : 'bg-red-900/50 text-red-400 border-red-500/30'
+                          ? 'bg-green-500/10 text-green-300 border-green-500/50 shadow-green-500/10'
+                          : 'bg-red-500/10 text-red-400 border-red-500/50 shadow-red-500/10'
                       }`}
                     >
-                      <div className={`w-2 h-2 rounded-full ${jogadorLogado.presente ? 'bg-green-400' : 'bg-red-400'}`} />
+                      <motion.div 
+                        layout 
+                        className={`w-3 h-3 rounded-full ${jogadorLogado.presente ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`} 
+                      />
                       {jogadorLogado.presente ? 'CONFIRMADA' : 'NÃO CONFIRMADA'}
                     </motion.div>
                   </div>
@@ -538,13 +541,13 @@ export default function ConfirmarPresenca() {
                   <motion.button
                     onClick={alternarPresenca}
                     disabled={submetendo}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: 1.03, y: -2 }}
+                    whileTap={{ scale: 0.97, y: 0 }}
                     className={`
-                      w-full py-4 rounded-2xl font-bold text-lg shadow-lg transition-all flex items-center justify-center gap-3
+                      w-full py-5 rounded-3xl font-black text-lg shadow-xl transition-all duration-300 flex items-center justify-center gap-3
                       ${jogadorLogado.presente 
-                        ? 'bg-red-600 hover:bg-red-700 text-white shadow-red-600/20' 
-                        : 'bg-green-600 hover:bg-green-700 text-white shadow-green-600/20'}
+                        ? 'bg-gradient-to-br from-red-600 to-red-800 hover:from-red-700 text-white shadow-red-600/30' 
+                        : 'bg-gradient-to-br from-green-500 to-green-700 hover:from-green-600 text-white shadow-green-600/30'}
                     `}
                   >
                     {submetendo ? (
