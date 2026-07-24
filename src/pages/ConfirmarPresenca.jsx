@@ -645,10 +645,10 @@ export default function ConfirmarPresenca() {
                   key="admin-panel"
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="space-y-8"
+                  className="space-y-6"
                 >
-                  <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                    <h2 className="text-xl font-black text-white tracking-tighter uppercase flex items-center gap-3">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-bold text-white flex items-center gap-2">
                       <FaUserShield className="text-amber-400" /> Painel Admin - Presenças
                     </h2>
                     <button
@@ -656,7 +656,7 @@ export default function ConfirmarPresenca() {
                         setAdminAutenticado(false);
                         setJogadoresAdmin([]);
                       }}
-                      className="text-slate-500 hover:text-slate-300 text-xs font-bold uppercase tracking-widest"
+                      className="text-gray-500 hover:text-gray-300 text-xs"
                     >
                       Sair do modo admin
                     </button>
@@ -667,40 +667,40 @@ export default function ConfirmarPresenca() {
                   </p>
 
                   {/* Resumo de quantidades */}
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="bg-slate-800/50 rounded-2xl p-4 border border-white/5 text-center shadow-inner">
-                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Total</p>
-                      <p className="text-2xl font-black text-white">
+                  <div className="grid grid-cols-3 gap-3 text-center text-xs">
+                    <div className="bg-gray-700/60 rounded-xl p-3 border border-gray-600 flex flex-col items-center justify-center">
+                      <p className="text-gray-400 mb-1">Total</p>
+                      <p className="text-lg font-bold text-white">
                         {jogadoresAdmin.length}
                       </p>
                     </div>
                     <motion.div 
                       whileTap={{ scale: 0.95 }}
                       onClick={compartilharConfirmados}
-                      className="bg-green-500/10 rounded-2xl p-4 border border-green-500/20 cursor-pointer hover:bg-green-500/20 transition-colors text-center shadow-lg shadow-green-500/5"
+                      className="bg-green-900/40 rounded-xl p-3 border border-green-600/40 cursor-pointer hover:bg-green-900/50 transition-colors flex flex-col items-center justify-center"
                       title="Clique para compartilhar a lista"
                     >
-                      <p className="text-[10px] font-black text-green-400 uppercase tracking-widest mb-1">Confirmados</p>
-                      <p className="text-2xl font-black text-green-300 mb-1">
+                      <p className="text-green-300 mb-1">Confirmados</p>
+                      <p className="text-lg font-bold text-green-400 mb-1">
                         {jogadoresAdmin.filter(j => j.presente).length}
                       </p>
-                      <FaShare size={10} className="text-green-400/50 mx-auto" />
+                      <FaShare size={12} className="text-green-400/70" />
                     </motion.div>
                     <motion.div 
                       whileTap={{ scale: 0.95 }}
                       onClick={compartilharNaoConfirmados}
-                      className="bg-red-500/10 rounded-2xl p-4 border border-red-500/20 cursor-pointer hover:bg-red-500/20 transition-colors text-center shadow-lg shadow-red-500/5"
+                      className="bg-red-900/40 rounded-xl p-3 border border-red-600/40 cursor-pointer hover:bg-red-900/50 transition-colors flex flex-col items-center justify-center"
                       title="Clique para compartilhar a lista de não confirmados"
                     >
-                      <p className="text-[10px] font-black text-red-400 uppercase tracking-widest mb-1">Pendentes</p>
-                      <p className="text-2xl font-black text-red-300 mb-1">
+                      <p className="text-red-300 mb-1">Não confirmados</p>
+                      <p className="text-lg font-bold text-red-400 mb-1">
                         {jogadoresAdmin.filter(j => !j.presente).length}
                       </p>
-                      <FaShare size={10} className="text-red-400/50 mx-auto" />
+                      <FaShare size={12} className="text-red-400/70" />
                     </motion.div>
                   </div>
 
-                  <div className="max-h-[24rem] overflow-y-auto space-y-3 pr-2 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                  <div className="max-h-96 overflow-y-auto space-y-3 pr-1 no-scrollbar flex-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                     <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
                     {jogadoresAdmin.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-8 text-gray-500">
@@ -714,9 +714,9 @@ export default function ConfirmarPresenca() {
                           key={jogador.id}
                           initial={{ opacity: 0, x: -10 }}
                           animate={{ opacity: 1, x: 0 }}
-                          className={`flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 ${
+                          className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-300 ${
                             jogador.presente 
-                              ? 'bg-green-500/10 border-green-500/20 shadow-[0_0_15px_-5px_rgba(34,197,94,0.1)]' 
+                              ? 'bg-green-900/10 border-green-500/30 shadow-[0_0_15px_-5px_rgba(34,197,94,0.1)]' 
                               : 'bg-gray-800/40 border-gray-700 hover:border-gray-600'
                           }`}
                         >
@@ -726,19 +726,19 @@ export default function ConfirmarPresenca() {
                                 <img 
                                   src={jogador.foto} 
                                   alt={jogador.nome} 
-                                  className="w-12 h-12 rounded-full object-cover border-2 border-slate-700"
+                                  className="w-10 h-10 rounded-full object-cover border border-gray-600"
                                 />
                               ) : (
-                                <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center border-2 border-slate-700">
-                                  <FaUser className="text-slate-600 text-lg" />
+                                <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center border border-gray-600">
+                                  <FaUser className="text-gray-500 text-xs" />
                                 </div>
                               )}
-                              <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-slate-800 transition-colors duration-300 ${
+                              <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-gray-800 transition-colors duration-300 ${
                                 jogador.presente ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]' : 'bg-red-400'
                               }`} />
                             </div>
                             <div>
-                              <p className={`font-bold text-base transition-colors ${
+                              <p className={`font-medium text-sm transition-colors ${
                                 jogador.presente ? 'text-white' : 'text-gray-300'
                               }`}>
                                 {jogador.nome}
@@ -753,15 +753,15 @@ export default function ConfirmarPresenca() {
                             whileHover={{ scale: 1.1, rotate: 5 }}
                             whileTap={{ scale: 0.9 }}
                             onClick={() => alternarPresencaAdmin(jogador.id, jogador.presente)}
-                            disabled={submetendo && false}
-                            className={`p-3 rounded-xl transition-all duration-300 border ${
+                            disabled={submetendo}
+                            className={`p-2.5 rounded-xl transition-all duration-300 ${
                               jogador.presente
-                                ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-500/20'
-                                : 'bg-green-500/10 text-green-400 hover:bg-green-500/20 border-green-500/20'
+                                ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20'
+                                : 'bg-red-500/10 text-red-400 hover:bg-red-500/20'
                             }`}
                             title={jogador.presente ? 'Desmarcar presença' : 'Confirmar presença'}
                           >
-                            <GiSoccerKick className={`text-2xl transition-transform duration-300 ${jogador.presente ? 'rotate-45 opacity-50' : 'rotate-0'}`} />
+                            <GiSoccerKick className="text-2xl" />
                           </motion.button>
                         </motion.div>
                       ))
