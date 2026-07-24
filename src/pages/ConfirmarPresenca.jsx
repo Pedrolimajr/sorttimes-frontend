@@ -22,7 +22,7 @@ export default function ConfirmarPresenca() {
   const [adminAutenticado, setAdminAutenticado] = useState(false);
   const [adminForm, setAdminForm] = useState({
     username: '',
-    password: ''
+    password: '',
   });
   const [jogadoresAdmin, setJogadoresAdmin] = useState([]);
 
@@ -41,6 +41,7 @@ export default function ConfirmarPresenca() {
   const [usarNomeSalvo, setUsarNomeSalvo] = useState(true);
   const [mostrarSenhaJogador, setMostrarSenhaJogador] = useState(false);
 
+  const [loginError, setLoginError] = useState('');
   const [mostrarSenhaAdmin, setMostrarSenhaAdmin] = useState(false);
 
   // Função para obter a saudação e o ícone com base na hora
@@ -137,8 +138,9 @@ export default function ConfirmarPresenca() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setLoginError(''); // Limpa erros anteriores
     if (!formData.nome || !formData.password) {
-      // toast.warn('Preencha seu nome e data de nascimento (DDMMAAAA)');
+      setLoginError('Preencha seu nome e data de nascimento (DDMMAAAA)');
       return;
     }
 
@@ -164,7 +166,8 @@ export default function ConfirmarPresenca() {
       }
     } catch (error) {
       console.error('Erro na autenticação:', error);
-      // toast.error(error.response?.data?.message || 'Erro ao autenticar. Verifique seus dados.');
+      const errorMessage = error.response?.data?.message || 'Erro ao autenticar. Verifique seus dados.';
+      setLoginError(errorMessage);
     } finally {
       setSubmetendo(false);
     }
@@ -479,6 +482,11 @@ export default function ConfirmarPresenca() {
                             </button>
                           </div>
                           <p className="text-gray-500 text-xs mt-1">Apenas números. Ex: 15051990</p>
+                          {loginError && (
+                            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-red-400 text-xs mt-2">
+                              {loginError}
+                            </motion.p>
+                          )}
                         </div>
                     </motion.div>
                   </AnimatePresence>
