@@ -128,6 +128,13 @@ export default function VotacaoPartida() {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('votacaoAuthToken');
+    setJogadorAutenticado(null);
+    setAba('login');
+    toast.info("Você foi desconectado.");
+  };
+
   const handleAdminLogin = async (e) => {
     e.preventDefault();
     try {
@@ -427,6 +434,13 @@ export default function VotacaoPartida() {
               >
                 CONFIRMAR MEUS VOTOS
               </motion.button>
+
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="w-full text-center text-[10px] text-gray-500 font-bold uppercase tracking-widest hover:text-gray-300 transition-colors pt-4">
+                Sair / Trocar Usuário
+              </button>
             </motion.div>
           )}
 
@@ -507,6 +521,12 @@ export default function VotacaoPartida() {
               <FaCheckCircle className="text-6xl text-green-500 mx-auto animate-bounce" />
               <h1 className="text-2xl font-black">Voto Registrado!</h1>
               <p className="text-gray-400 text-sm">Obrigado por participar. O resultado será compartilhado em breve pelo administrador.</p>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="w-full text-center text-[10px] text-gray-500 font-bold uppercase tracking-widest hover:text-gray-300 transition-colors pt-6">
+                Sair / Trocar Usuário
+              </button>
             </motion.div>
           )}
         </AnimatePresence>
