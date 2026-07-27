@@ -437,9 +437,9 @@ export default function VotacaoPartida() {
 
               <button
                 type="button"
-                onClick={handleLogout}
+                onClick={() => setShowAdminModal(true)}
                 className="w-full text-center text-[10px] text-gray-500 font-bold uppercase tracking-widest hover:text-gray-300 transition-colors pt-4">
-                Sair / Trocar Usuário
+                Entrar como Admin
               </button>
             </motion.div>
           )}
@@ -523,9 +523,9 @@ export default function VotacaoPartida() {
               <p className="text-gray-400 text-sm">Obrigado por participar. O resultado será compartilhado em breve pelo administrador.</p>
               <button
                 type="button"
-                onClick={handleLogout}
+                onClick={() => setShowAdminModal(true)}
                 className="w-full text-center text-[10px] text-gray-500 font-bold uppercase tracking-widest hover:text-gray-300 transition-colors pt-6">
-                Sair / Trocar Usuário
+                Entrar como Admin
               </button>
             </motion.div>
           )}
