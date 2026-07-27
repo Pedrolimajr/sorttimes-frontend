@@ -16,6 +16,7 @@ export default function VotacaoPartida() {
   const [votos, setVotos] = useState({ melhorPartida: '', perebaPartida: '', golMaisBonito: '' });
   const [carregando, setCarregando] = useState(true);
   const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [tentandoLoginAutomatico, setTentandoLoginAutomatico] = useState(true);
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [adminCreds, setAdminCreds] = useState({ username: '', password: '' });
   const [mostrarSenhaAdminCred, setMostrarSenhaAdminCred] = useState(false);
@@ -45,6 +46,38 @@ export default function VotacaoPartida() {
       }
     };
     fetchData();
+  }, [linkId]);
+
+  // Efeito para login automático com token
+  useEffect(() => {
+    const tentarLoginComToken = async () => {
+      const persistentToken = localStorage.getItem('votacaoAuthToken');
+      if (!persistentToken) {
+        setTentandoLoginAutomatico(false);
+        return;
+      }
+
+      try {
+        const response = await api.post(`/partida-publica/${linkId}/auth-token`, { token: persistentToken });
+        if (response.data.success) {
+          if (response.data.jaVotou) {
+            setAba('enviado');
+          } else {
+            setJogadorAutenticado(response.data.jogador);
+            setAba('votacao');
+          }
+        } else {
+          localStorage.removeItem('votacaoAuthToken');
+        }
+      } catch (error) {
+        console.error("Token de votação inválido:", error);
+        localStorage.removeItem('votacaoAuthToken');
+      } finally {
+        setTentandoLoginAutomatico(false);
+      }
+    };
+
+    tentarLoginComToken();
   }, [linkId]);
 
   // Efeito para contagem regressiva
@@ -83,13 +116,10 @@ export default function VotacaoPartida() {
         password: credenciais.senha
       });
       
-      if (res.data.jaVotou) {
-        toast.info("Você já realizou sua votação nesta partida!");
-        setAba('enviado');
-      } else {
-        setJogadorAutenticado(res.data.jogador);
-        setAba('votacao');
-        toast.success(`Bem-vindo, ${res.data.jogador.nome}`);
+      if (res.data.success) {
+        localStorage.setItem('votacaoAuthToken', res.data.persistentToken);
+        toast.success('Login realizado! Redirecionando...');
+        window.location.reload(); // Força o reload para o useEffect de login automático funcionar
       }
     } catch (err) {
       toast.error(err.response?.data?.message || "Erro ao autenticar.");
@@ -271,7 +301,7 @@ export default function VotacaoPartida() {
     }
   };
 
-  if (carregando && etapa === 'login') return <div className="min-h-screen bg-[#020617] flex items-center justify-center text-white"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div></div>;
+  if (carregando || tentandoLoginAutomatico) return <div className="min-h-screen bg-[#020617] flex items-center justify-center text-white"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div></div>;
 
   return (
     <div className="min-h-screen bg-[#020617] text-slate-100 px-4 py-8 sm:px-6 lg:px-8 font-sans relative overflow-hidden selection:bg-blue-500/30">
