@@ -828,11 +828,12 @@ const aplicarFiltroPosicao = () => {
    * @param {object} sorteio - Objeto contendo os times do sorteio
    */
   const restaurarSorteio = (sorteio) => {
-    setTimes(sorteio.times);
+    // Garante que o estado 'times' seja atualizado corretamente.
+    setTimes(sorteio.times || []); 
     setCurrentSorteioId(sorteio._id); // Define como o sorteio ativo para edições futuras
     setPartidaVinculadaId(sorteio.partidaId || ''); // Restaura o vínculo da partida agendada
     setBalanceamento(sorteio.balanceamento);
-    // toast.success('Sorteio restaurado!');
+    toast.success('Sorteio anterior carregado para esta partida.');
   };
 
   /**
