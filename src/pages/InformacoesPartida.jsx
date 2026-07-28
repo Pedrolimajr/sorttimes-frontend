@@ -72,8 +72,7 @@ export default function InformacoesPartida() {
 
   // Função para compartilhar a lista de jogadores do sorteio
   const compartilharJogadoresSorteio = async () => {
-    if (!partidaSelecionada || !
-        !partidaSelecionada.participantes || 
+    if (!partidaSelecionada || !partidaSelecionada.participantes || 
         partidaSelecionada.participantes.length === 0) {
       toast.info("Nenhum jogador para compartilhar.");
       return;
