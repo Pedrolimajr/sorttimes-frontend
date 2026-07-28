@@ -67,6 +67,7 @@ export default function InformacoesPartida() {
   // Estados para Estatísticas de Atletas
   const [atletaParaStats, setAtletaParaStats] = useState("");
   const [showRankingModal, setShowRankingModal] = useState(false);
+  const [showJogadoresSorteioModal, setShowJogadoresSorteioModal] = useState(false);
 
   // Modal de confirmação para exclusão de planilha
   const [confirmDeletePlanilha, setConfirmDeletePlanilha] = useState({ open: false, planilha: null });
@@ -1306,9 +1307,12 @@ export default function InformacoesPartida() {
                     {partidaSelecionada && (
                       <div className="mt-2 flex items-center gap-2">
                         {partidaSelecionada.participantes?.length > 0 ? (
-                          <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-1 rounded-full border border-green-500/30 flex items-center gap-1">
+                          <button 
+                            onClick={() => setShowJogadoresSorteioModal(true)}
+                            className="text-[10px] bg-green-500/20 text-green-400 px-2 py-1 rounded-full border border-green-500/30 flex items-center gap-1 cursor-pointer hover:bg-green-500/30 transition-colors"
+                          >
                             <FaCheckCircle /> Sorteio Realizado ({partidaSelecionada.participantes.length} atletas)
-                          </span>
+                          </button>
                         ) : (
                           <span className="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-1 rounded-full border border-amber-500/30 flex items-center gap-1">
                             <FaExclamationTriangle /> Sorteio não vinculado. Votação bloqueada.
@@ -1782,6 +1786,61 @@ export default function InformacoesPartida() {
                 </table>
               </div>
               <p className="text-[10px] text-gray-500 mt-4 text-center italic uppercase tracking-widest font-bold">* Ranking baseado no histórico completo do sistema</p>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal para exibir jogadores do sorteio */}
+      <AnimatePresence>
+        {showJogadoresSorteioModal && partidaSelecionada && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-gray-800 border border-gray-700 p-6 rounded-3xl max-w-md w-full flex flex-col max-h-[85vh] shadow-2xl"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-black flex items-center gap-3 text-white uppercase tracking-tighter">
+                  <FaUsers className="text-blue-400" /> Jogadores do Sorteio
+                </h3>
+                <button onClick={() => setShowJogadoresSorteioModal(false)} className="text-gray-400 hover:text-white p-2">
+                  <FaTimesCircle size={24} />
+                </button>
+              </div>
+
+              <div className="overflow-y-auto pr-1 no-scrollbar flex-1 space-y-2" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                {partidaSelecionada.participantes?.length > 0 ? (
+                  partidaSelecionada.participantes.map((jogador, index) => (
+                    <div key={jogador._id || index} className="flex items-center gap-4 p-3 bg-gray-900/50 rounded-xl border border-gray-700/50">
+                      {getFotoJogador(jogador.nome) ? (
+                        <img 
+                          src={getFotoJogador(jogador.nome)} 
+                          alt={jogador.nome} 
+                          className="w-10 h-10 rounded-full object-cover border-2 border-blue-500"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center border-2 border-gray-600">
+                          <FaUser className="text-gray-500" />
+                        </div>
+                      )}
+                      <span className="font-medium text-white">{jogador.nome}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center text-gray-500 py-8">
+                    Nenhum jogador encontrado neste sorteio.
+                  </div>
+                )}
+              </div>
+
+              <button 
+                onClick={() => setShowJogadoresSorteioModal(false)}
+                className="mt-6 w-full py-3 bg-slate-700 hover:bg-slate-600 rounded-xl font-black text-[10px] tracking-widest text-slate-300 uppercase transition-all"
+              >
+                Fechar
+              </button>
             </motion.div>
           </div>
         )}
