@@ -724,7 +724,7 @@ const aplicarFiltroPosicao = () => {
 
     // PERSISTÊNCIA INICIAL
     try {
-      const resSave = await api.post('/sorteio-times/historico', { ...novoSorteio, partidaVinculadaId });
+      const resSave = await api.post('/sorteio-times/historico', { ...novoSorteio, partidaId: partidaVinculadaId });
       if (resSave.data.success) {
         const novoSalvo = resSave.data.data;
         // Atualiza o histórico local primeiro para que o useEffect de sincronização reconheça o ID
