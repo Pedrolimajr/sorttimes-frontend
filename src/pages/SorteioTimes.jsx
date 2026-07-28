@@ -719,12 +719,13 @@ const aplicarFiltroPosicao = () => {
       times: timesComIds,
       jogadoresPresentes: totalJogadores,
       balanceamento: balanceamento,
-      posicaoUnica: filtroPosicao
+      posicaoUnica: filtroPosicao,
+      partidaId: partidaVinculadaId || null // Adiciona o ID da partida aqui
     };
 
     // PERSISTÊNCIA INICIAL
     try {
-      const resSave = await api.post('/sorteio-times/historico', { ...novoSorteio, partidaId: partidaVinculadaId });
+      const resSave = await api.post('/sorteio-times/historico', novoSorteio);
       if (resSave.data.success) {
         const novoSalvo = resSave.data.data;
         // Atualiza o histórico local primeiro para que o useEffect de sincronização reconheça o ID
