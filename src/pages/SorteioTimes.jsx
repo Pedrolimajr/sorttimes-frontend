@@ -562,34 +562,30 @@ const aplicarFiltroPosicao = () => {
   /**
    * Altera a partida vinculada e atualiza o histórico se houver um sorteio ativo
    */
-   const handleVincularPartida = async (id) => {
-     setPartidaVinculadaId(id);
- 
-     // Se um ID de partida for selecionado, busca o sorteio correspondente
-     if (id) {
-       try {
-         setCarregando(true);
-         const res = await api.get(`/sorteio-times/historico/por-partida/${id}`);
-         if (res.data.success) {
-           const sorteioEncontrado = res.data.data;
-           setTimes(sorteioEncontrado.times);
-           setCurrentSorteioId(sorteioEncontrado._id);
-           setBalanceamento(sorteioEncontrado.balanceamento);
-           // toast.success("Sorteio anterior carregado com sucesso!");
-         }
-       } catch (err) {
-         // Se não encontrar (404), limpa a tela para um novo sorteio
-         setTimes([]);
-         setCurrentSorteioId(null);
-         // toast.info("Nenhum sorteio prévio encontrado. Pronto para um novo!");
-       } finally {
-         setCarregando(false);
-       }
-     } else { // Se desmarcar a partida, limpa a tela
-       setTimes([]);
-       setCurrentSorteioId(null);
-     }
-   };
+  const handleVincularPartida = async (id) => {
+    setPartidaVinculadaId(id);
+    
+    // Se já houver um sorteio ativo na tela, atualiza o vínculo no banco de dados imediatamente
+    if (currentSorteioId && times.length > 0) {
+      try {
+        const totalJogadores = times.reduce((acc, t) => acc + t.jogadores.length, 0);
+        await api.put(`/sorteio-times/historico/${currentSorteioId}`, {
+          times: times,
+          jogadoresPresentes: totalJogadores,
+          partidaId: id || null
+        });
+        
+        // Sincroniza participantes com a agenda para permitir votação
+        await vincularParticipantesNoSorteio(times);
+        
+        // Atualiza a lista de histórico local para refletir a mudança visualmente
+        setHistorico(prev => prev.map(h => h._id === currentSorteioId ? { ...h, partidaId: id } : h));
+        // toast.success("Vínculo com a partida atualizado!");
+      } catch (err) {
+        console.error("Erro ao atualizar vínculo da partida:", err);
+      }
+    }
+  };
 
   /**
    * Adiciona um jogador manualmente a um time após o sorteio
@@ -719,13 +715,12 @@ const aplicarFiltroPosicao = () => {
       times: timesComIds,
       jogadoresPresentes: totalJogadores,
       balanceamento: balanceamento,
-      posicaoUnica: filtroPosicao,
-      partidaId: partidaVinculadaId || null // Adiciona o ID da partida aqui
+      posicaoUnica: filtroPosicao
     };
 
     // PERSISTÊNCIA INICIAL
     try {
-      const resSave = await api.post('/sorteio-times/historico', novoSorteio);
+      const resSave = await api.post('/sorteio-times/historico', { ...novoSorteio, partidaVinculadaId });
       if (resSave.data.success) {
         const novoSalvo = resSave.data.data;
         // Atualiza o histórico local primeiro para que o useEffect de sincronização reconheça o ID
