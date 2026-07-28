@@ -70,6 +70,29 @@ export default function InformacoesPartida() {
   const [showRankingModal, setShowRankingModal] = useState(false);
   const [showJogadoresSorteioModal, setShowJogadoresSorteioModal] = useState(false);
 
+  // Função para compartilhar a lista de jogadores do sorteio
+  const compartilharJogadoresSorteio = async () => {
+    if (!partidaSelecionada || !
+        !partidaSelecionada.participantes || 
+        partidaSelecionada.participantes.length === 0) {
+      toast.info("Nenhum jogador para compartilhar.");
+      return;
+    }
+
+    const listaNomes = partidaSelecionada.participantes
+      .map((j, i) => `${i + 1}. ${j.nome}`)
+      .join('\n');
+
+    const texto = `✅ *Jogadores do Sorteio (${new Date(partidaSelecionada.data).toLocaleDateString()}):*\n\n${listaNomes}\n\nVamos com tudo! ⚽`;
+
+    if (navigator.share) {
+      await navigator.share({ title: 'Jogadores do Sorteio', text: texto });
+    } else {
+      await navigator.clipboard.writeText(texto);
+      toast.success("Lista de jogadores copiada!");
+    }
+  };
+
   // Modal de confirmação para exclusão de planilha
   const [confirmDeletePlanilha, setConfirmDeletePlanilha] = useState({ open: false, planilha: null });
 
@@ -1836,12 +1859,20 @@ export default function InformacoesPartida() {
                 )}
               </div>
 
-              <button 
-                onClick={() => setShowJogadoresSorteioModal(false)}
-                className="mt-6 w-full py-3 bg-slate-700 hover:bg-slate-600 rounded-xl font-black text-[10px] tracking-widest text-slate-300 uppercase transition-all"
-              >
-                Fechar
-              </button>
+              <div className="mt-6 flex gap-3">
+                <button 
+                  onClick={() => setShowJogadoresSorteioModal(false)}
+                  className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 rounded-xl font-black text-[10px] tracking-widest text-slate-300 uppercase transition-all"
+                >
+                  Fechar
+                </button>
+                <button
+                  onClick={compartilharJogadoresSorteio}
+                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 rounded-xl font-black text-[10px] tracking-widest text-white uppercase transition-all flex items-center justify-center gap-2"
+                >
+                  <FaShareAlt /> Compartilhar
+                </button>
+              </div>
             </motion.div>
           </div>
         )}
