@@ -562,35 +562,27 @@ const aplicarFiltroPosicao = () => {
   /**
    * Altera a partida vinculada e atualiza o histórico se houver um sorteio ativo
    */
-  const handleVincularPartida = async (partidaId) => {
-    setPartidaVinculadaId(partidaId);
-
-    if (!partidaId) {
-      // Se o usuário desmarcou a seleção, limpa a tela
-      setTimes([]);
-      setCurrentSorteioId(null);
-      return;
-    }
-
-    try {
-      // 1. Tenta buscar um sorteio existente para a partida selecionada
-      const res = await api.get(`/sorteio-times/por-partida/${partidaId}`);
-      if (res.data && res.data.success) {
-        const sorteioEncontrado = res.data.data;
-        // Se encontrou, restaura na tela
-        restaurarSorteio(sorteioEncontrado);
-        toast.success("Sorteio anterior carregado para esta partida!");
-      }
-    } catch (error) {
-      // 2. Se não encontrou (erro 404), limpa a tela para um novo sorteio
-      if (error.response && error.response.status === 404) {
-        setTimes([]);
-        setCurrentSorteioId(null);
-        toast.info("Nenhum sorteio prévio encontrado. Pronto para um novo sorteio!");
-      } else {
-        // Outros erros de API
-        console.error("Erro ao buscar sorteio por partida:", error);
-        toast.error("Erro ao verificar sorteio anterior.");
+  const handleVincularPartida = async (id) => {
+    setPartidaVinculadaId(id);
+    
+    // Se já houver um sorteio ativo na tela, atualiza o vínculo no banco de dados imediatamente
+    if (currentSorteioId && times.length > 0) {
+      try {
+        const totalJogadores = times.reduce((acc, t) => acc + t.jogadores.length, 0);
+        await api.put(`/sorteio-times/historico/${currentSorteioId}`, {
+          times: times,
+          jogadoresPresentes: totalJogadores,
+          partidaId: id || null
+        });
+        
+        // Sincroniza participantes com a agenda para permitir votação
+        await vincularParticipantesNoSorteio(times);
+        
+        // Atualiza a lista de histórico local para refletir a mudança visualmente
+        setHistorico(prev => prev.map(h => h._id === currentSorteioId ? { ...h, partidaId: id } : h));
+        // toast.success("Vínculo com a partida atualizado!");
+      } catch (err) {
+        console.error("Erro ao atualizar vínculo da partida:", err);
       }
     }
   };
