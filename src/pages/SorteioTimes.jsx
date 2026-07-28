@@ -562,28 +562,39 @@ const aplicarFiltroPosicao = () => {
   /**
    * Altera a partida vinculada e atualiza o histórico se houver um sorteio ativo
    */
-  const handleVincularPartida = async (id) => {
-    setPartidaVinculadaId(id);
-    
-    // Se já houver um sorteio ativo na tela, atualiza o vínculo no banco de dados imediatamente
-    if (currentSorteioId && times.length > 0) {
-      try {
-        const totalJogadores = times.reduce((acc, t) => acc + t.jogadores.length, 0);
-        await api.put(`/sorteio-times/historico/${currentSorteioId}`, {
-          times: times,
-          jogadoresPresentes: totalJogadores,
-          partidaId: id || null
-        });
-        
-        // Sincroniza participantes com a agenda para permitir votação
-        await vincularParticipantesNoSorteio(times);
-        
-        // Atualiza a lista de histórico local para refletir a mudança visualmente
-        setHistorico(prev => prev.map(h => h._id === currentSorteioId ? { ...h, partidaId: id } : h));
-        // toast.success("Vínculo com a partida atualizado!");
-      } catch (err) {
-        console.error("Erro ao atualizar vínculo da partida:", err);
+  const handleVincularPartida = async (partidaId) => {
+    setPartidaVinculadaId(partidaId);
+
+    // Se nenhuma partida for selecionada, limpa a tela (opcional, mas bom para UX)
+    if (!partidaId) {
+      setTimes([]);
+      setCurrentSorteioId(null);
+      setModoEdicao(false);
+      return;
+    }
+
+    // Busca no backend se já existe um sorteio para esta partida
+    try {
+      setCarregando(true);
+      const res = await api.get(`/sorteio-times/por-partida/${partidaId}`);
+      const sorteioEncontrado = res.data?.data;
+
+      if (sorteioEncontrado) {
+        // Se encontrou, restaura o sorteio na tela
+        restaurarSorteio(sorteioEncontrado);
+        toast.success("Sorteio anterior carregado para edição.");
+      } else {
+        // Se não encontrou, limpa a tela para um novo sorteio
+        setTimes([]);
+        setCurrentSorteioId(null);
+        setModoEdicao(false);
+        toast.info("Nenhum sorteio prévio para esta partida. Pronto para um novo!");
       }
+    } catch (err) {
+      toast.error("Erro ao buscar sorteio da partida.");
+      console.error("Erro ao buscar sorteio por partida:", err);
+    } finally {
+      setCarregando(false);
     }
   };
 
