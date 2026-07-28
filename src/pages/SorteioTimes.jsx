@@ -581,7 +581,7 @@ const aplicarFiltroPosicao = () => {
       if (res.data.success) {
         const sorteioEncontrado = res.data.data;
         restaurarSorteio(sorteioEncontrado);
-        toast.success("Sorteio anterior carregado para esta partida.");
+        // toast.success("Sorteio anterior carregado para esta partida."); // Removido para evitar excesso de notificações
       }
     } catch (error) {
       // Se não encontrar (erro 404), limpa a tela para um novo sorteio
