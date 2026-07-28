@@ -21,6 +21,7 @@ import {
   FaTrophy,
   FaCheckCircle,
   FaLock,
+  FaUsers,
   FaUserTimes,
   FaUser,
   FaCrown,
