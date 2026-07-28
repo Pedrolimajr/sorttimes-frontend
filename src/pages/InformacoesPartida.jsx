@@ -82,7 +82,7 @@ export default function InformacoesPartida() {
       .map((j, i) => `${i + 1}. ${j.nome}`)
       .join('\n');
 
-    const texto = `✅ *Jogadores do Sorteio (${new Date(partidaSelecionada.data).toLocaleDateString()}):*\n\n${listaNomes}\n\nVamos com tudo! ⚽`;
+    const texto = `✅ *Jogadores do Sorteio (${new Date(partidaSelecionada.data).toLocaleDateString()}):*\n\n${listaNomes}`;
 
     if (navigator.share) {
       await navigator.share({ title: 'Jogadores do Sorteio', text: texto });
