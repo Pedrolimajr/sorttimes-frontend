@@ -1,14 +1,11 @@
 // src/pages/AgendarPartida.jsx
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FaCalendarAlt, FaClock, FaMapMarkerAlt, FaStickyNote, FaSave, FaShare, FaLink, FaBullhorn, FaTimes, FaCheck } from "react-icons/fa";
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import api from '../services/api';
 import { toast, ToastContainer } from 'react-toastify';
-import ReactDOM from 'react-dom';
 import { motion, AnimatePresence } from "framer-motion";
-import ConvitePresenca from "../components/ConvitePresenca";
-import { toPng } from 'html-to-image';
 
 export default function AgendarPartida() {
   const navigate = useNavigate();
@@ -29,7 +26,6 @@ export default function AgendarPartida() {
   const [tempTime, setTempTime] = useState({ hour: '20', minute: '00' });
   const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
   const minutes = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'));
-  const conviteRef = useRef(null);
 
   // Carrega dados da partida para edição
   useEffect(() => {
@@ -118,88 +114,33 @@ export default function AgendarPartida() {
       // Capitaliza a primeira letra da data
       const dataFinal = dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1);
 
-      // Renderiza o componente do convite dinamicamente em um container oculto
-      const container = document.createElement('div');
-      container.style.position = 'fixed';
-      container.style.left = '-9999px';
-      container.style.top = '-9999px';
-      document.body.appendChild(container);
-
-      const conviteElement = React.createElement(ConvitePresenca, {
-        ref: conviteRef,
-        data: dataFinal,
-        horario: horaFormatada,
-        local: formData.local,
-        link: linkCompleto,
-      });
-
-      // Usamos ReactDOM.render para renderizar o componente no container temporário
-      ReactDOM.render(conviteElement, container);
-
-      // Gera a imagem do convite
-      const dataUrl = await toPng(container.firstChild, {
-        cacheBust: true,
-        pixelRatio: 2, // Aumenta a resolução da imagem
-      });
-
-      // Faz o upload da imagem para o imgbb para obter um link público
-      const imgbbApiKey = 'd802b76556a850395785229b74953c6e'; // Chave de API pública para o imgbb
+      const mensagem = `📢 *CONVOCAÇÃO GERAL* ⚽\n\n` +
+        `Atenção, boleiros!\n` +
+        `A lista de presença já está liberada! 🔥\n\n` +
+        `Confirme sua participação e garanta sua vaga para mais uma grande partida.\n` +
+        `Vamos fechar os times e fazer aquele baba de respeito! 💪⚽\n\n` +
+        `🗓 *Data:* ${dataFinal} às ${horaFormatada}\n\n` +
+        ` *Confirme sua presença clicando no link abaixo:*\n` +
+        `👇\n` +
+        `� ${linkCompleto}\n\n` +
+        `🔥 _Bora pro jogo!_ 🏃⚽`;
       
-      // Converte a dataURL (base64) para um Blob (arquivo)
-      const fetchRes = await fetch(dataUrl);
-      const blob = await fetchRes.blob();
+      `aci  pismiss(toastId);
 
-      const uploadFormData = new FormData();
-      uploadFormData.append('image', blob);
-      
-      const uploadResponse = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbApiKey}`, {
-        method: 'POST',
-        body: uploadFormData,
-      });
-
-      const uploadResult = await uploadResponse.json();
-
-      if (!uploadResult.success) {
-        throw new Error('Falha ao fazer upload da imagem do convite.');
-      }
-
-      const imageUrl = uploadResult.data.url;
-
-      // Monta a mensagem final com o link da imagem e o link de confirmação
-      const mensagem = `*📢 CONVOCAÇÃO - JOGO CONFIRMADO!* 🔥\n\n` +
-        `Atenção, atletas! A lista de presença para a nossa próxima partida já está disponível.\n\n` +
-        `*Confirme sua vaga clicando no link abaixo:*\n` +
-        `🔗 ${linkCompleto}\n\n` +
-        `*Veja o convite completo aqui:*\n` +
-        `🖼️ ${imageUrl}\n\n` +
-        `Contamos com você para mais um grande jogo! 💪⚽`;
-
-      toast.dismiss(toastId);
-
-      // Agora, compartilhamos apenas o texto, que contém os links
-      if (navigator.share) {
+      if (navigator.shar   {
         await navigator.share({
           title: 'Convocação SortTimes',
           text: mensagem,
         });
       } else {
-        // Fallback para copiar o texto se o compartilhamento não for suportado
         await navigator.clipboard.writeText(mensagem);
-        toast.success('Mensagem de convocação copiada para a área de transferência!');
-      }
+        toast.success('Link de presença copiado para a área de transferência!');
+      t
     } catch (error) {
       toast.dismiss(toastId);
       console.error('Erro ao gerar link:', error);
-      if (error.name === 'AbortError') {
-        toast.info('Compartilhamento cancelado.');
-      } else {
-        toast.error(error.message || 'Erro ao gerar ou compartilhar o convite.');
-      }
-    } finally {
-      // Limpa o container temporário
-      const container = document.querySelector('div[style*="left: -9999px"]');
-      if (container) document.body.removeChild(container);
-    }
+      toast.error('Erro ao gerar link de presença');
+ efdc
   };
 
   const handleSubmit = async (e) => {
@@ -557,3 +498,5 @@ export default function AgendarPartida() {
     </div>
   );
 }
+
+
