@@ -1307,7 +1307,7 @@ export default function InformacoesPartida() {
                   <FaCalendarAlt className="text-cyan-400" /> Vínculo da Agenda
                 </h2>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
                   <div>
                     <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Partida Correspondente</label>
                     <select 
@@ -1344,18 +1344,18 @@ export default function InformacoesPartida() {
                       </div>
                     )}
                   </div>
-                    <div className="flex flex-col sm:flex-row gap-2">
+                    <div className="flex flex-col sm:flex-row lg:flex-col gap-2">
                       <button
                         onClick={() => gerarLinkPublicoPartida('eventos')}
                         disabled={!partidaSelecionada || carregando}
-                        className="bg-blue-600 hover:shadow-blue-500/25 text-white py-2 px-4 rounded-xl font-black uppercase tracking-widest transition-all disabled:opacity-50 text-[10px] flex items-center justify-center gap-1.5 w-full sm:w-auto"
+                        className="bg-blue-600 hover:shadow-blue-500/25 text-white py-3 px-4 rounded-xl font-black uppercase tracking-widest transition-all disabled:opacity-50 text-[10px] flex items-center justify-center gap-1.5 w-full"
                       >
                         <FaFutbol className="animate-bounce" /> Link de Eventos
                       </button>
                       <button
                         onClick={() => gerarLinkPublicoPartida('votacao')}
                         disabled={!partidaSelecionada || carregando}
-                        className="bg-amber-600 hover:shadow-amber-500/25 text-white py-2 px-4 rounded-xl font-black uppercase tracking-widest transition-all disabled:opacity-50 text-[10px] flex items-center justify-center gap-1.5 w-full sm:w-auto"
+                        className="bg-amber-600 hover:shadow-amber-500/25 text-white py-3 px-4 rounded-xl font-black uppercase tracking-widest transition-all disabled:opacity-50 text-[10px] flex items-center justify-center gap-1.5 w-full"
                       >
                         <FaAward /> Link de Votação (Pós-Jogo)
                       </button>
