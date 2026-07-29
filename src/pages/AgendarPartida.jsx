@@ -144,10 +144,14 @@ export default function AgendarPartida() {
 
       // Faz o upload da imagem para o imgbb para obter um link público
       const imgbbApiKey = 'd802b76556a850395785229b74953c6e'; // Chave de API pública para o imgbb
-      const uploadFormData = new FormData();
-      // Converte a dataURL (base64) para um formato que a API aceita
-      uploadFormData.append('image', dataUrl.split(',')[1]);
+      
+      // Converte a dataURL (base64) para um Blob (arquivo)
+      const fetchRes = await fetch(dataUrl);
+      const blob = await fetchRes.blob();
 
+      const uploadFormData = new FormData();
+      uploadFormData.append('image', blob);
+      
       const uploadResponse = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbApiKey}`, {
         method: 'POST',
         body: uploadFormData,
