@@ -1,11 +1,13 @@
 // src/pages/AgendarPartida.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FaCalendarAlt, FaClock, FaMapMarkerAlt, FaStickyNote, FaSave, FaShare, FaLink, FaBullhorn, FaTimes, FaCheck } from "react-icons/fa";
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import api from '../services/api';
 import { toast, ToastContainer } from 'react-toastify';
 import { motion, AnimatePresence } from "framer-motion";
+import ConvitePresenca from "../components/ConvitePresenca";
+import { toPng } from 'html-to-image';
 
 export default function AgendarPartida() {
   const navigate = useNavigate();
@@ -26,6 +28,7 @@ export default function AgendarPartida() {
   const [tempTime, setTempTime] = useState({ hour: '20', minute: '00' });
   const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
   const minutes = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'));
+  const conviteRef = useRef(null);
 
   // Carrega dados da partida para edição
   useEffect(() => {
@@ -114,32 +117,43 @@ export default function AgendarPartida() {
       // Capitaliza a primeira letra da data
       const dataFinal = dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1);
 
-      const mensagem = `📢 *CONVOCAÇÃO GERAL* ⚽\n\n` +
-        `Atenção, boleiros!\n` +
-        `A lista de presença já está liberada! 🔥\n\n` +
-        `Confirme sua participação e garanta sua vaga para mais uma grande partida.\n` +
-        `Vamos fechar os times e fazer aquele baba de respeito! 💪⚽\n\n` +
-        `🗓 *Data:* ${dataFinal} às ${horaFormatada}\n\n` +
-        ` *Confirme sua presença clicando no link abaixo:*\n` +
-        `👇\n` +
-        `🔗 ${linkCompleto}\n\n` +
-        `🔥 _Bora pro jogo!_ 🏃⚽`;
-      
+      const mensagem = `*📢 CONVOCAÇÃO - JOGO CONFIRMADO!* 🔥\n\n` +
+        `Atenção, atletas! A lista de presença para a nossa próxima partida já está disponível.\n\n` +
+        `*Confirme sua vaga clicando no link abaixo:*\n` +
+        `� ${linkCompleto}\n\n` +
+        `Contamos com você para mais um grande jogo! 💪⚽`;
+
+      // Gera a imagem do convite
+      const dataUrl = await toPng(conviteRef.current, {
+        cacheBust: true,
+        pixelRatio: 2, // Aumenta a resolução da imagem
+      });
+      const blob = await (await fetch(dataUrl)).blob();
+      const file = new File([blob], "convite-sorttimes.png", { type: "image/png" });
+
       toast.dismiss(toastId);
 
-      if (navigator.share) {
+      // Tenta compartilhar a imagem e o texto
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
           title: 'Convocação SortTimes',
           text: mensagem,
+          files: [file],
         });
       } else {
+        // Fallback para copiar apenas o texto se o compartilhamento de arquivos não for suportado
         await navigator.clipboard.writeText(mensagem);
-        toast.success('Link de presença copiado para a área de transferência!');
+        toast.success('Mensagem de convocação copiada! O compartilhamento de imagem não é suportado neste navegador.');
       }
     } catch (error) {
       toast.dismiss(toastId);
       console.error('Erro ao gerar link:', error);
-      toast.error('Erro ao gerar link de presença');
+      // Se o erro for de compartilhamento, informa o usuário
+      if (error.name === 'AbortError') {
+        toast.info('Compartilhamento cancelado.');
+      } else {
+        toast.error('Erro ao gerar ou compartilhar o convite.');
+      }
     }
   };
 
@@ -177,6 +191,16 @@ export default function AgendarPartida() {
 
   return (
     <div className="min-h-screen bg-[#020617] text-slate-100 selection:bg-blue-500/30 px-4 py-8 sm:px-6 lg:px-8 relative overflow-hidden flex flex-col justify-center">
+      {/* Componente do convite, renderizado fora da tela para captura */}
+      <div style={{ position: 'fixed', left: '-9999px', top: '-9999px' }}>
+        <ConvitePresenca
+          ref={conviteRef}
+          data={formData.data ? new Date(formData.data + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }).replace(/^\w/, (c) => c.toUpperCase()) : ''}
+          horario={formData.horario}
+          local={formData.local}
+        />
+      </div>
+
       {/* Aurora Background Effects - Inspirado no Dashboard */}
       <div className="fixed inset-0 pointer-events-none -z-10">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse" />
@@ -498,5 +522,3 @@ export default function AgendarPartida() {
     </div>
   );
 }
-
-
