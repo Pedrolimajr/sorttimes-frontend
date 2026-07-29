@@ -1,7 +1,7 @@
 import React from 'react';
 import { FaCalendarAlt, FaClock, FaMapMarkerAlt } from 'react-icons/fa';
 
-const ConvitePresenca = React.forwardRef(({ data, horario, local }, ref) => {
+const ConvitePresenca = React.forwardRef(({ data, horario, local, link }, ref) => {
   return (
     <div
       ref={ref}
@@ -57,9 +57,28 @@ const ConvitePresenca = React.forwardRef(({ data, horario, local }, ref) => {
         )}
       </div>
 
-      <p style={{ marginTop: '25px', fontSize: '14px', textAlign: 'center', color: '#8b949e' }}>
-        Acesse o link no WhatsApp para confirmar.
-      </p>
+      {link && (
+        <div style={{ 
+          marginTop: '30px', 
+          textAlign: 'center', 
+          backgroundColor: '#1a202c', 
+          padding: '15px', 
+          borderRadius: '10px',
+          border: '1px solid #30363d'
+        }}>
+          <p style={{ margin: '0', fontSize: '14px', color: '#8b949e', fontWeight: 'bold' }}>
+            Confirme sua presença:
+          </p>
+          <a 
+            href={link} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            style={{ display: 'block', marginTop: '8px', fontSize: '16px', color: '#58a6ff', textDecoration: 'underline', wordBreak: 'break-all' }}
+          >
+            {link}
+          </a>
+        </div>
+      )}
     </div>
   );
 });

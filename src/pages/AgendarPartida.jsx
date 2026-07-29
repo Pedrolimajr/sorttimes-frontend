@@ -5,6 +5,7 @@ import { FaCalendarAlt, FaClock, FaMapMarkerAlt, FaStickyNote, FaSave, FaShare, 
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import api from '../services/api';
 import { toast, ToastContainer } from 'react-toastify';
+import ReactDOM from 'react-dom';
 import { motion, AnimatePresence } from "framer-motion";
 import ConvitePresenca from "../components/ConvitePresenca";
 import { toPng } from 'html-to-image';
@@ -117,8 +118,26 @@ export default function AgendarPartida() {
       // Capitaliza a primeira letra da data
       const dataFinal = dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1);
 
+      // Renderiza o componente do convite dinamicamente em um container oculto
+      const container = document.createElement('div');
+      container.style.position = 'fixed';
+      container.style.left = '-9999px';
+      container.style.top = '-9999px';
+      document.body.appendChild(container);
+
+      const conviteElement = React.createElement(ConvitePresenca, {
+        ref: conviteRef,
+        data: dataFinal,
+        horario: horaFormatada,
+        local: formData.local,
+        link: linkCompleto,
+      });
+
+      // Usamos ReactDOM.render para renderizar o componente no container temporário
+      ReactDOM.render(conviteElement, container);
+
       // Gera a imagem do convite
-      const dataUrl = await toPng(conviteRef.current, {
+      const dataUrl = await toPng(container.firstChild, {
         cacheBust: true,
         pixelRatio: 2, // Aumenta a resolução da imagem
       });
@@ -172,6 +191,10 @@ export default function AgendarPartida() {
       } else {
         toast.error(error.message || 'Erro ao gerar ou compartilhar o convite.');
       }
+    } finally {
+      // Limpa o container temporário
+      const container = document.querySelector('div[style*="left: -9999px"]');
+      if (container) document.body.removeChild(container);
     }
   };
 
@@ -209,16 +232,6 @@ export default function AgendarPartida() {
 
   return (
     <div className="min-h-screen bg-[#020617] text-slate-100 selection:bg-blue-500/30 px-4 py-8 sm:px-6 lg:px-8 relative overflow-hidden flex flex-col justify-center">
-      {/* Componente do convite, renderizado fora da tela para captura */}
-      <div style={{ position: 'fixed', left: '-9999px', top: '-9999px' }}>
-        <ConvitePresenca
-          ref={conviteRef}
-          data={formData.data ? new Date(formData.data + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }).replace(/^\w/, (c) => c.toUpperCase()) : ''}
-          horario={formData.horario}
-          local={formData.local}
-        />
-      </div>
-
       {/* Aurora Background Effects - Inspirado no Dashboard */}
       <div className="fixed inset-0 pointer-events-none -z-10">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse" />
