@@ -1,5 +1,5 @@
 // src/pages/AgendarPartida.jsx
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FaCalendarAlt, FaClock, FaMapMarkerAlt, FaStickyNote, FaSave, FaShare, FaLink, FaBullhorn, FaTimes, FaCheck } from "react-icons/fa";
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
