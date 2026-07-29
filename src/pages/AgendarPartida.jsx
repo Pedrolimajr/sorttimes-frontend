@@ -5,8 +5,8 @@ import { FaCalendarAlt, FaClock, FaMapMarkerAlt, FaStickyNote, FaSave, FaShare, 
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import api from '../services/api';
 import { toast, ToastContainer } from 'react-toastify';
-import { motion, AnimatePresence } from "framer-motion";
-import ConvitePresenca from "../components/ConvitePresenca";
+import { motion, AnimatePresence } from "framer-motion"; // eslint-disable-line no-unused-vars
+import ConvitePresenca from "../components/ConvitePresenca.jsx";
 import { toPng } from 'html-to-image';
 import ReactDOM from 'react-dom';
 
@@ -451,7 +451,6 @@ export default function AgendarPartida() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-gray-800 rounded-xl w-full max-w-md border border-gray-700 shadow-2xl overflow-hidden"
               className="bg-slate-900 border border-white/10 rounded-[2rem] w-full max-w-md shadow-2xl overflow-hidden backdrop-blur-xl"
               onClick={(e) => e.stopPropagation()}
             >
