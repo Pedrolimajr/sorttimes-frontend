@@ -6,7 +6,7 @@ import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import api from '../services/api';
 import { toast, ToastContainer } from 'react-toastify';
 import { motion, AnimatePresence } from "framer-motion"; // eslint-disable-line no-unused-vars
-import ConvitePresenca from "../components/ConvitePresenca.jsx";
+
 import { toPng } from 'html-to-image';
 import ReactDOM from 'react-dom';
 
