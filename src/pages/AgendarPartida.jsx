@@ -117,42 +117,60 @@ export default function AgendarPartida() {
       // Capitaliza a primeira letra da data
       const dataFinal = dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1);
 
-      const mensagem = `*📢 CONVOCAÇÃO - JOGO CONFIRMADO!* 🔥\n\n` +
-        `Atenção, atletas! A lista de presença para a nossa próxima partida já está disponível.\n\n` +
-        `*Confirme sua vaga clicando no link abaixo:*\n` +
-        `� ${linkCompleto}\n\n` +
-        `Contamos com você para mais um grande jogo! 💪⚽`;
-
       // Gera a imagem do convite
       const dataUrl = await toPng(conviteRef.current, {
         cacheBust: true,
         pixelRatio: 2, // Aumenta a resolução da imagem
       });
-      const blob = await (await fetch(dataUrl)).blob();
-      const file = new File([blob], "convite-sorttimes.png", { type: "image/png" });
+
+      // Faz o upload da imagem para o imgbb para obter um link público
+      const imgbbApiKey = 'd802b76556a850395785229b74953c6e'; // Chave de API pública para o imgbb
+      const uploadFormData = new FormData();
+      // Converte a dataURL (base64) para um formato que a API aceita
+      uploadFormData.append('image', dataUrl.split(',')[1]);
+
+      const uploadResponse = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbApiKey}`, {
+        method: 'POST',
+        body: uploadFormData,
+      });
+
+      const uploadResult = await uploadResponse.json();
+
+      if (!uploadResult.success) {
+        throw new Error('Falha ao fazer upload da imagem do convite.');
+      }
+
+      const imageUrl = uploadResult.data.url;
+
+      // Monta a mensagem final com o link da imagem e o link de confirmação
+      const mensagem = `*📢 CONVOCAÇÃO - JOGO CONFIRMADO!* 🔥\n\n` +
+        `Atenção, atletas! A lista de presença para a nossa próxima partida já está disponível.\n\n` +
+        `*Confirme sua vaga clicando no link abaixo:*\n` +
+        `🔗 ${linkCompleto}\n\n` +
+        `*Veja o convite completo aqui:*\n` +
+        `🖼️ ${imageUrl}\n\n` +
+        `Contamos com você para mais um grande jogo! 💪⚽`;
 
       toast.dismiss(toastId);
 
-      // Tenta compartilhar a imagem e o texto
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      // Agora, compartilhamos apenas o texto, que contém os links
+      if (navigator.share) {
         await navigator.share({
           title: 'Convocação SortTimes',
           text: mensagem,
-          files: [file],
         });
       } else {
-        // Fallback para copiar apenas o texto se o compartilhamento de arquivos não for suportado
+        // Fallback para copiar o texto se o compartilhamento não for suportado
         await navigator.clipboard.writeText(mensagem);
-        toast.success('Mensagem de convocação copiada! O compartilhamento de imagem não é suportado neste navegador.');
+        toast.success('Mensagem de convocação copiada para a área de transferência!');
       }
     } catch (error) {
       toast.dismiss(toastId);
       console.error('Erro ao gerar link:', error);
-      // Se o erro for de compartilhamento, informa o usuário
       if (error.name === 'AbortError') {
         toast.info('Compartilhamento cancelado.');
       } else {
-        toast.error('Erro ao gerar ou compartilhar o convite.');
+        toast.error(error.message || 'Erro ao gerar ou compartilhar o convite.');
       }
     }
   };
