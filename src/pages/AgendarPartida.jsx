@@ -1,14 +1,11 @@
 // src/pages/AgendarPartida.jsx
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FaCalendarAlt, FaClock, FaMapMarkerAlt, FaStickyNote, FaSave, FaShare, FaLink, FaBullhorn, FaTimes, FaCheck } from "react-icons/fa";
 import { RiArrowLeftDoubleLine } from "react-icons/ri";
 import api from '../services/api';
 import { toast, ToastContainer } from 'react-toastify';
-import { motion, AnimatePresence } from "framer-motion"; // eslint-disable-line no-unused-vars
-
-import { toPng } from 'html-to-image';
-import ReactDOM from 'react-dom';
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function AgendarPartida() {
   const navigate = useNavigate();
@@ -29,7 +26,6 @@ export default function AgendarPartida() {
   const [tempTime, setTempTime] = useState({ hour: '20', minute: '00' });
   const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
   const minutes = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'));
-  const conviteRef = useRef(null); // Ref para o componente ConvitePresenca
 
   // Carrega dados da partida para edição
   useEffect(() => {
@@ -87,16 +83,23 @@ export default function AgendarPartida() {
       toast.warning('Preencha a data e o horário para gerar o convite!');
       return;
     }
+
     const toastId = toast.loading("Gerando convite...");
+
     try {
       // Combina data e hora para o formato esperado
       const dataJogo = `${formData.data}T${formData.horario}`;
+
       const response = await api.post('/gerar-link-presenca', {
+        // Não enviamos mais a lista de jogadores, o backend buscará dinamicamente
         dataJogo
       });
+
       const linkId = response.data?.linkId;
       if (!linkId) throw new Error('Não foi possível gerar link');
+
       localStorage.setItem('linkPresencaId', linkId);
+
       const linkCompleto = `${window.location.origin}/confirmar-presenca/${linkId}`;
       
       const dataObj = new Date(dataJogo);
@@ -107,10 +110,11 @@ export default function AgendarPartida() {
       });
       
       const horaFormatada = formData.horario;
+
       // Capitaliza a primeira letra da data
       const dataFinal = dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1);
 
-      // 1. Renderiza o componente ConvitePresenca em um elemento temporário fora da tela
+      // Renderiza o componente do convite dinamicamente em um container oculto
       const container = document.createElement('div');
       container.style.position = 'fixed';
       container.style.left = '-9999px';
@@ -122,24 +126,28 @@ export default function AgendarPartida() {
         data: dataFinal,
         horario: horaFormatada,
         local: formData.local,
-        link: linkCompleto, // Passa o link para ser exibido na imagem
+        link: linkCompleto,
       });
 
+      // Usamos ReactDOM.render para renderizar o componente no container temporário
       ReactDOM.render(conviteElement, container);
 
-      // 2. Gera a imagem do convite a partir do elemento renderizado
+      // Gera a imagem do convite
       const dataUrl = await toPng(container.firstChild, {
         cacheBust: true,
         pixelRatio: 2, // Aumenta a resolução da imagem
       });
 
-      // 3. Faz o upload da imagem para o imgbb para obter um link público
+      // Faz o upload da imagem para o imgbb para obter um link público
       const imgbbApiKey = 'd802b76556a850395785229b74953c6e'; // Chave de API pública para o imgbb
+      
+      // Converte a dataURL (base64) para um Blob (arquivo)
       const fetchRes = await fetch(dataUrl);
       const blob = await fetchRes.blob();
+
       const uploadFormData = new FormData();
       uploadFormData.append('image', blob);
-
+      
       const uploadResponse = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbApiKey}`, {
         method: 'POST',
         body: uploadFormData,
@@ -150,9 +158,10 @@ export default function AgendarPartida() {
       if (!uploadResult.success) {
         throw new Error('Falha ao fazer upload da imagem do convite.');
       }
+
       const imageUrl = uploadResult.data.url;
 
-      // 4. Monta a mensagem final com o link da imagem e o link de confirmação
+      // Monta a mensagem final com o link da imagem e o link de confirmação
       const mensagem = `*📢 CONVOCAÇÃO - JOGO CONFIRMADO!* 🔥\n\n` +
         `Atenção, atletas! A lista de presença para a nossa próxima partida já está disponível.\n\n` +
         `*Confirme sua vaga clicando no link abaixo:*\n` +
@@ -163,13 +172,14 @@ export default function AgendarPartida() {
 
       toast.dismiss(toastId);
 
-      // 5. Tenta compartilhar a mensagem (que agora contém o link da imagem)
+      // Agora, compartilhamos apenas o texto, que contém os links
       if (navigator.share) {
         await navigator.share({
           title: 'Convocação SortTimes',
           text: mensagem,
         });
       } else {
+        // Fallback para copiar o texto se o compartilhamento não for suportado
         await navigator.clipboard.writeText(mensagem);
         toast.success('Mensagem de convocação copiada para a área de transferência!');
       }
@@ -182,12 +192,9 @@ export default function AgendarPartida() {
         toast.error(error.message || 'Erro ao gerar ou compartilhar o convite.');
       }
     } finally {
-      // 6. Limpa o container temporário
+      // Limpa o container temporário
       const container = document.querySelector('div[style*="left: -9999px"]');
-      if (container) {
-        ReactDOM.unmountComponentAtNode(container);
-        container.remove();
-      }
+      if (container) document.body.removeChild(container);
     }
   };
 
@@ -451,6 +458,7 @@ export default function AgendarPartida() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-gray-800 rounded-xl w-full max-w-md border border-gray-700 shadow-2xl overflow-hidden"
               className="bg-slate-900 border border-white/10 rounded-[2rem] w-full max-w-md shadow-2xl overflow-hidden backdrop-blur-xl"
               onClick={(e) => e.stopPropagation()}
             >
