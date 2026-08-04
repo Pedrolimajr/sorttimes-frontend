@@ -11,7 +11,7 @@ import {
   FaIdCard,
   FaTimesCircle,
   FaFileDownload,
-  FaLink,
+  // FaLink, // Removed as per request
   FaSync,
   FaShareAlt,
   FaCopy,
@@ -68,6 +68,7 @@ export default function InformacoesPartida() {
   // Estados para Estatísticas de Atletas
   const [atletaParaStats, setAtletaParaStats] = useState("");
   const [showRankingModal, setShowRankingModal] = useState(false);
+  const [rankingFilter, setRankingFilter] = useState('TODOS'); // New state for ranking filter
   const [showJogadoresSorteioModal, setShowJogadoresSorteioModal] = useState(false);
 
   // Função para compartilhar a lista de jogadores do sorteio
@@ -1746,13 +1747,6 @@ export default function InformacoesPartida() {
                   <FaListOl className="text-blue-400" /> Ranking Geral de Atletas
                 </h3>
                 <div className="flex items-center gap-2">
-                  <button 
-                    onClick={compartilharRankingGeral}
-                    className="text-blue-400 hover:text-blue-300 p-2 bg-blue-500/10 rounded-xl transition-all"
-                    title="Compartilhar Ranking"
-                  >
-                    <FaShareAlt size={18} />
-                  </button>
                   <button onClick={() => setShowRankingModal(false)} className="text-gray-400 hover:text-white p-2">
                     <FaTimesCircle size={24} />
                   </button>
@@ -1760,26 +1754,61 @@ export default function InformacoesPartida() {
               </div>
 
               <div className="overflow-x-auto overflow-y-auto pr-1 no-scrollbar flex-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                {/* Filter Buttons */}
+                <div className="mb-4 flex flex-wrap gap-2 justify-center">
+                  {['TODOS', 'GOLS', 'MELHOR', 'GOLAÇOS', 'CARTÃO AMARELO', 'CARTÃO AZUL', 'CARTÃO VERMELHO'].map(filter => (
+                    <button
+                      key={filter}
+                      onClick={() => setRankingFilter(filter)}
+                      className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
+                        rankingFilter === filter
+                          ? 'bg-blue-600 text-white shadow-md'
+                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
+                      }`}
+                    >
+                      {filter.replace('_', ' ')}
+                    </button>
+                  ))}
+                </div>
+
                 <table className="w-full border-separate border-spacing-y-2">
                   <thead>
                     <tr className="text-gray-500 text-[10px] font-black uppercase tracking-widest text-center">
                       <th className="pb-2 text-left pl-4">Atleta</th>
-                      <th className="pb-2">Gols</th>
-                      <th className="pb-2">Melhor</th>
-                      <th className="pb-2">Golaços</th>
-                      <th className="pb-2">Cartões</th>
+                      {(rankingFilter === 'TODOS' || rankingFilter === 'GOLS') && <th className="pb-2">Gols</th>}
+                      {(rankingFilter === 'TODOS' || rankingFilter === 'MELHOR') && <th className="pb-2">Melhor</th>}
+                      {(rankingFilter === 'TODOS' || rankingFilter === 'GOLAÇOS') && <th className="pb-2">Golaços</th>}
+                      {(rankingFilter === 'TODOS' || rankingFilter.startsWith('CARTAO')) && <th className="pb-2">Cartões</th>}
                     </tr>
                   </thead>
                   <tbody>
                     {Object.values(estatisticasAtletas)
-                      .sort((a, b) => b.gols - a.gols || b.melhor - a.melhor)
+                      .sort((a, b) => {
+                        switch (rankingFilter) {
+                          case 'GOLS': return b.gols - a.gols;
+                          case 'MELHOR': return b.melhor - a.melhor;
+                          case 'GOLAÇOS': return b.golBonito - a.golBonito;
+                          case 'CARTAO_AMARELO': return b.amarelos - a.amarelos;
+                          case 'CARTAO_AZUL': return b.azuis - a.azuis;
+                          case 'CARTAO_VERMELHO': return b.vermelhos - a.vermelhos;
+                          default: // TODOS
+                            // Default sort: Gols, then Melhor
+                            if (b.gols !== a.gols) return b.gols - a.gols;
+                            return b.melhor - a.melhor;
+                        }
+                      })
                       .map((atleta, index) => (
                         <tr key={atleta.nome} className="bg-gray-900/50 hover:bg-gray-700 transition-colors rounded-xl">
                           <td className="py-3 px-4 rounded-l-2xl border-l border-t border-b border-gray-700">
                             <div className="flex items-center gap-3">
                               <span className={`text-[10px] font-bold w-5 ${index < 3 ? 'text-yellow-500' : 'text-gray-600'}`}>#{index + 1}</span>
                               {atleta.foto ? (
-                                <img src={atleta.foto} className="w-8 h-8 rounded-full object-cover border border-gray-600 shadow-md" alt="" />
+                                <img
+                                  src={atleta.foto}
+                                  className="w-8 h-8 rounded-full object-cover border border-gray-600 shadow-md"
+                                  alt=""
+                                  loading="lazy"
+                                />
                               ) : (
                                 <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 text-gray-600"><FaUser size={12}/></div>
                               )}
@@ -1787,26 +1816,36 @@ export default function InformacoesPartida() {
                             </div>
                           </td>
                           <td className="py-3 text-center border-t border-b border-gray-700">
-                            <span className="text-sm font-black text-green-400">⚽ {atleta.gols}</span>
+                            {(rankingFilter === 'TODOS' || rankingFilter === 'GOLS') && <span className="text-sm font-black text-green-400">⚽ {atleta.gols}</span>}
                           </td>
                           <td className="py-3 text-center border-t border-b border-gray-700">
-                            <span className="text-sm font-black text-yellow-500">🏆 {atleta.melhor}</span>
+                            {(rankingFilter === 'TODOS' || rankingFilter === 'MELHOR') && <span className="text-sm font-black text-yellow-500">🏆 {atleta.melhor}</span>}
                           </td>
                           <td className="py-3 text-center border-t border-b border-gray-700">
-                            <span className="text-sm font-black text-purple-400">✨ {atleta.golBonito}</span>
+                            {(rankingFilter === 'TODOS' || rankingFilter === 'GOLAÇOS') && <span className="text-sm font-black text-purple-400">✨ {atleta.golBonito}</span>}
                           </td>
                           <td className="py-3 px-4 rounded-r-2xl border-r border-t border-b border-gray-700 text-center">
                             <div className="flex justify-center gap-2">
-                              {atleta.amarelos > 0 && <span className="text-[10px] font-bold text-yellow-400">🟨{atleta.amarelos}</span>}
-                              {atleta.vermelhos > 0 && <span className="text-[10px] font-bold text-red-500">🟥{atleta.vermelhos}</span>}
-                              {atleta.azuis > 0 && <span className="text-[10px] font-bold text-blue-400">🟦{atleta.azuis}</span>}
-                              {atleta.amarelos + atleta.vermelhos + atleta.azuis === 0 && <span className="text-gray-600 opacity-20">-</span>}
+                              {(rankingFilter === 'TODOS' || rankingFilter === 'CARTAO_AMARELO') && atleta.amarelos > 0 && <span className="text-[10px] font-bold text-yellow-400">🟨{atleta.amarelos}</span>}
+                              {(rankingFilter === 'TODOS' || rankingFilter === 'CARTAO_VERMELHO') && atleta.vermelhos > 0 && <span className="text-[10px] font-bold text-red-500">🟥{atleta.vermelhos}</span>}
+                              {(rankingFilter === 'TODOS' || rankingFilter === 'CARTAO_AZUL') && atleta.azuis > 0 && <span className="text-[10px] font-bold text-blue-400">🟦{atleta.azuis}</span>}
+                              {/* Only show '-' if no cards are present AND no specific card filter is active */}
+                              {rankingFilter === 'TODOS' && atleta.amarelos + atleta.vermelhos + atleta.azuis === 0 && <span className="text-gray-600 opacity-20">-</span>}
+                              {rankingFilter === 'CARTAO_AMARELO' && atleta.amarelos === 0 && <span className="text-gray-600 opacity-20">-</span>}
+                              {rankingFilter === 'CARTAO_VERMELHO' && atleta.vermelhos === 0 && <span className="text-gray-600 opacity-20">-</span>}
+                              {rankingFilter === 'CARTAO_AZUL' && atleta.azuis === 0 && <span className="text-gray-600 opacity-20">-</span>}
                             </div>
                           </td>
                         </tr>
                       ))}
                   </tbody>
                 </table>
+                <button
+                  onClick={compartilharRankingGeral}
+                  className="mt-6 w-full py-3 bg-blue-600 hover:bg-blue-500 rounded-xl font-black text-[10px] tracking-widest text-white uppercase transition-all flex items-center justify-center gap-2"
+                >
+                  <FaShareAlt /> Compartilhar Ranking
+                </button>
               </div>
               <p className="text-[10px] text-gray-500 mt-4 text-center italic uppercase tracking-widest font-bold">* Ranking baseado no histórico completo do sistema</p>
             </motion.div>
