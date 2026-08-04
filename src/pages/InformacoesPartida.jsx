@@ -68,6 +68,7 @@ export default function InformacoesPartida() {
   // Estados para Estatísticas de Atletas
   const [atletaParaStats, setAtletaParaStats] = useState("");
   const [showRankingModal, setShowRankingModal] = useState(false);
+  const [rankingSortBy, setRankingSortBy] = useState('gols'); // 'gols', 'melhor', 'golBonito', 'amarelos', 'azuis', 'vermelhos'
   const [showJogadoresSorteioModal, setShowJogadoresSorteioModal] = useState(false);
 
   // Função para compartilhar a lista de jogadores do sorteio
@@ -804,8 +805,27 @@ export default function InformacoesPartida() {
   };
 
   const compartilharRankingGeral = () => {
-    const listaRanqueada = Object.values(estatisticasAtletas)
-      .sort((a, b) => b.gols - a.gols || b.melhor - a.melhor);
+    const listaRanqueada = Object.values(estatisticasAtletas).sort((a, b) => {
+      switch (rankingSortBy) {
+        case 'gols':
+          return b.gols - a.gols;
+        case 'melhor':
+          return b.melhor - a.melhor;
+        case 'golBonito':
+          return b.golBonito - a.golBonito;
+        case 'amarelos':
+          return a.amarelos - b.amarelos; // Menos cartões é melhor
+        case 'azuis':
+          return a.azuis - b.azuis; // Menos cartões é melhor
+        case 'vermelhos':
+          return a.vermelhos - b.vermelhos; // Menos cartões é melhor
+        default: // Default sort: Gols, Melhor, Golaços
+          return b.gols - a.gols ||
+                 b.melhor - a.melhor ||
+                 b.golBonito - a.golBonito ||
+                 a.amarelos - b.amarelos || a.azuis - b.azuis || a.vermelhos - b.vermelhos;
+      }
+    });
 
     if (listaRanqueada.length === 0) return toast.info("Não há dados para compartilhar.");
 
@@ -1745,6 +1765,30 @@ export default function InformacoesPartida() {
                 <h3 className="text-2xl font-black flex items-center gap-3 text-white uppercase tracking-tighter">
                   <FaListOl className="text-blue-400" /> Ranking Geral de Atletas
                 </h3>
+                <div className="flex items-center gap-3">
+                  <select
+                    value={rankingSortBy}
+                    onChange={(e) => setRankingSortBy(e.target.value)}
+                    className="bg-gray-900 border border-gray-700 rounded-xl p-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
+                  >
+                    <option value="default" className="bg-slate-900">Ordenar por...</option>
+                    <option value="gols" className="bg-slate-900">Gols</option>
+                    <option value="melhor" className="bg-slate-900">Melhor da Partida</option>
+                    <option value="golBonito" className="bg-slate-900">Gol Mais Bonito</option>
+                    <option value="amarelos" className="bg-slate-900">Cartões Amarelos</option>
+                    <option value="azuis" className="bg-slate-900">Cartões Azuis</option>
+                    <option value="vermelhos" className="bg-slate-900">Cartões Vermelhos</option>
+                  </select>
+
+                  {/* Botão de Compartilhar Ranking */}
+                  <button 
+                    onClick={compartilharRankingGeral}
+                    className="text-blue-400 hover:text-blue-300 p-2 bg-blue-500/10 rounded-xl transition-all"
+                    title="Compartilhar Ranking"
+                  >
+                    <FaShareAlt size={18} />
+                  </button>
+                </div>
                 <div className="flex items-center gap-2">
                   <button 
                     onClick={compartilharRankingGeral}
@@ -1772,7 +1816,27 @@ export default function InformacoesPartida() {
                   </thead>
                   <tbody>
                     {Object.values(estatisticasAtletas)
-                      .sort((a, b) => b.gols - a.gols || b.melhor - a.melhor)
+                      .sort((a, b) => {
+                        switch (rankingSortBy) {
+                          case 'gols':
+                            return b.gols - a.gols;
+                          case 'melhor':
+                            return b.melhor - a.melhor;
+                          case 'golBonito':
+                            return b.golBonito - a.golBonito;
+                          case 'amarelos':
+                            return a.amarelos - b.amarelos; // Menos cartões é melhor
+                          case 'azuis':
+                            return a.azuis - b.azuis; // Menos cartões é melhor
+                          case 'vermelhos':
+                            return a.vermelhos - b.vermelhos; // Menos cartões é melhor
+                          default: // Default sort: Gols, Melhor, Golaços
+                            return b.gols - a.gols ||
+                                   b.melhor - a.melhor ||
+                                   b.golBonito - a.golBonito ||
+                                   a.amarelos - b.amarelos || a.azuis - b.azuis || a.vermelhos - b.vermelhos;
+                        }
+                      })
                       .map((atleta, index) => (
                         <tr key={atleta.nome} className="bg-gray-900/50 hover:bg-gray-700 transition-colors rounded-xl">
                           <td className="py-3 px-4 rounded-l-2xl border-l border-t border-b border-gray-700">
