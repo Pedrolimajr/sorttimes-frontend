@@ -14,7 +14,7 @@ import {
   FaLink,
   FaSync,
   FaShareAlt,
-  FaCopy,
+  FaCopy, FaArrowUp, FaArrowDown,
   FaCalendarAlt,
   FaFutbol,
   FaAward,
@@ -68,6 +68,8 @@ export default function InformacoesPartida() {
   // Estados para Estatísticas de Atletas
   const [atletaParaStats, setAtletaParaStats] = useState("");
   const [showRankingModal, setShowRankingModal] = useState(false);
+  const [filtroOrdenacaoRanking, setFiltroOrdenacaoRanking] = useState('gols'); // Default sort by gols
+  const [direcaoOrdenacaoRanking, setDirecaoOrdenacaoRanking] = useState('desc'); // Default descending
   const [showJogadoresSorteioModal, setShowJogadoresSorteioModal] = useState(false);
 
   // Função para compartilhar a lista de jogadores do sorteio
@@ -1746,8 +1748,43 @@ export default function InformacoesPartida() {
                   <FaListOl className="text-blue-400" /> Ranking Geral de Atletas
                 </h3>
                 <div className="flex items-center gap-2">
+                  <label htmlFor="sort-by" className="text-xs font-bold text-gray-400 uppercase tracking-widest">Ordenar por:</label>
+                  <select
+                    id="sort-by"
+                    value={filtroOrdenacaoRanking}
+                    onChange={(e) => setFiltroOrdenacaoRanking(e.target.value)}
+                    className="bg-gray-700 border border-gray-600 rounded-lg p-2 text-sm text-white focus:ring-blue-500 focus:border-blue-500 appearance-none"
+                  >
+                    <option value="gols" className="bg-slate-900">Gols</option>
+                    <option value="melhor" className="bg-slate-900">Melhor da Partida</option>
+                    <option value="golBonito" className="bg-slate-900">Gol Mais Bonito</option>
+                    <option value="amarelos" className="bg-slate-900">Cartões Amarelos</option>
+                    <option value="azuis" className="bg-slate-900">Cartões Azuis</option>
+                    <option value="vermelhos" className="bg-slate-900">Cartões Vermelhos</option>
+                  </select>
+                  <button
+                    onClick={() => setDirecaoOrdenacaoRanking(prev => prev === 'asc' ? 'desc' : 'asc')}
+                    className="p-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-gray-400 hover:text-white transition-colors"
+                    title={direcaoOrdenacaoRanking === 'asc' ? 'Ordenar Decrescente' : 'Ordenar Crescente'}
+                  >
+                    {direcaoOrdenacaoRanking === 'asc' ? <FaArrowUp /> : <FaArrowDown />}
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
                   <button 
-                    onClick={compartilharRankingGeral}
+                    onClick={() => {
+                      const sortedAthletes = Object.values(estatisticasAtletas).sort((a, b) => {
+                        let compare = 0;
+                        if (filtroOrdenacaoRanking === 'gols') compare = a.gols - b.gols;
+                        else if (filtroOrdenacaoRanking === 'melhor') compare = a.melhor - b.melhor;
+                        else if (filtroOrdenacaoRanking === 'golBonito') compare = a.golBonito - b.golBonito;
+                        else if (filtroOrdenacaoRanking === 'amarelos') compare = a.amarelos - b.amarelos;
+                        else if (filtroOrdenacaoRanking === 'azuis') compare = a.azuis - b.azuis;
+                        else if (filtroOrdenacaoRanking === 'vermelhos') compare = a.vermelhos - b.vermelhos;
+                        return direcaoOrdenacaoRanking === 'desc' ? compare * -1 : compare;
+                      });
+                      compartilharRankingGeral(sortedAthletes);
+                    }}
                     className="text-blue-400 hover:text-blue-300 p-2 bg-blue-500/10 rounded-xl transition-all"
                     title="Compartilhar Ranking"
                   >
@@ -1771,7 +1808,24 @@ export default function InformacoesPartida() {
                     </tr>
                   </thead>
                   <tbody>
-                    {Object.values(estatisticasAtletas)
+                    {/* Dynamic sorting based on state */}
+                    {Object.values(estatisticasAtletas).sort((a, b) => {
+                      let compare = 0;
+                      if (filtroOrdenacaoRanking === 'gols') {
+                        compare = a.gols - b.gols;
+                      } else if (filtroOrdenacaoRanking === 'melhor') {
+                        compare = a.melhor - b.melhor;
+                      } else if (filtroOrdenacaoRanking === 'golBonito') {
+                        compare = a.golBonito - b.golBonito;
+                      } else if (filtroOrdenacaoRanking === 'amarelos') {
+                        compare = a.amarelos - b.amarelos;
+                      } else if (filtroOrdenacaoRanking === 'azuis') {
+                        compare = a.azuis - b.azuis;
+                      } else if (filtroOrdenacaoRanking === 'vermelhos') {
+                        compare = a.vermelhos - b.vermelhos;
+                      }
+                      return direcaoOrdenacaoRanking === 'desc' ? compare * -1 : compare;
+                    })
                       .sort((a, b) => b.gols - a.gols || b.melhor - a.melhor)
                       .map((atleta, index) => (
                         <tr key={atleta.nome} className="bg-gray-900/50 hover:bg-gray-700 transition-colors rounded-xl">
